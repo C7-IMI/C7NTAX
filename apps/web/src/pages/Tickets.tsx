@@ -227,7 +227,19 @@ const TICKET_COLUMNS: TicketColumnDef[] = [
 function loadTicketColumns(): string[] {
   try {
     const v = JSON.parse(localStorage.getItem("c7_ticket_columns") || "null");
-    if (Array.isArray(v) && v.length > 0) return v.filter((id) => TICKET_COLUMNS.some((c) => c.id === id));
+    if (Array.isArray(v) && v.length > 0) {
+      const cols = v.filter((id: string) => TICKET_COLUMNS.some((c) => c.id === id));
+      // One-time: Age and SLA arrived with the redesigned queue, and a selection saved from before
+      // them would leave the two columns the queue is read by hidden — with nothing on screen to
+      // say why. They are added once; from then on the choice is the user's, including removing
+      // them again.
+      if (!localStorage.getItem("c7_ticket_columns_v2")) {
+        for (const id of ["age", "sla"]) if (!cols.includes(id)) cols.push(id);
+        localStorage.setItem("c7_ticket_columns", JSON.stringify(cols));
+        localStorage.setItem("c7_ticket_columns_v2", "1");
+      }
+      return cols;
+    }
   } catch { /* ignore */ }
   return TICKET_COLUMNS.filter((c) => c.defaultVisible).map((c) => c.id);
 }
@@ -397,6 +409,17 @@ export function TicketsPage() {
       case "client": return <td key={colId} className="px-3 py-3 text-gray-400">{(t.company as {name?:string})?.name||"-"}</td>;
       case "technician": return <td key={colId} className="px-3 py-3 text-gray-300 text-sm">{t.assignedTo ? `${(t.assignedTo as {firstName?:string;lastName?:string}).firstName||""} ${(t.assignedTo as {firstName?:string;lastName?:string}).lastName||""}`.trim() || "-" : "-"}</td>;
       case "priority": return <td key={colId} className="px-3 py-3"><span className="badge bg-surface-lighter text-gray-300 capitalize">{t.priority || "medium"}</span></td>;
+      // Age and SLA are the two columns a queue is actually triaged by: how long has this been
+      // waiting, and is the clock still on our side. Both come from fields the ticket already has.
+      case "age": return <td key={colId} className="px-3 py-3 text-xs text-gray-500 whitespace-nowrap" title={t.createdAt ? `Created ${new Date(t.createdAt).toLocaleString()}` : ""}>{relativeAge(t.createdAt) || "—"}</td>;
+      case "sla": {
+        const chip = slaChipFor(t);
+        return (
+          <td key={colId} className="px-3 py-3 whitespace-nowrap">
+            {chip ? <span className={`chip ${chip.tone}`} title={chip.title}>{chip.label}</span> : <span className="text-xs text-gray-600" title="This ticket has no due date or SLA target">—</span>}
+          </td>
+        );
+      }
       case "timestamp": {
         const created = t.createdAt ? new Date(t.createdAt) : null;
         const updated = t.updatedAt ? new Date(t.updatedAt) : null;
@@ -436,7 +459,7 @@ export function TicketsPage() {
   // on. This is the scope *without* the view applied — the board and the client, and nothing else —
   // so each chip can say how much it would show before you press it. "Waiting 6" is a reason to
   // look; "Waiting" is not.
-  const [scopeTickets, setScopeTickets] = useState<Array<{ status?: string; priority?: string }>>([]);
+  const [scopeTickets, setScopeTickets] = useState<Array<{ status?: string; priority?: string; assignedToId?: string | null }>>([]);
   useEffect(() => {
     let url = "/tickets?limit=500";
     if (boardId) url += `&boardId=${boardId}`;
@@ -452,7 +475,18 @@ export function TicketsPage() {
   };
   const viewCount = (view: (typeof FILTER_BY_OPTIONS)[number] | null) =>
     view ? scopeTickets.filter(t => viewMatches(view, t)).length : scopeTickets.length;
-  const activeView = statusParam || priorityParam ? filterByFor(statusParam, priorityParam) : "all";
+  const activeView = assignedParam ? "mine" : statusParam || priorityParam ? filterByFor(statusParam, priorityParam) : "everything";
+  // "Assigned to me" is the one view that is about *you* rather than about the ticket, so it is the
+  // one that toggles: pressing it again puts you back to everything.
+  const applyMine = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("status");
+    next.delete("priority");
+    if (assignedParam && assignedParam === currentUser?.id) next.delete("assignedToId");
+    else next.set("assignedToId", currentUser?.id || "");
+    setSearchParams(next);
+    setPage(1);
+  };
   const applyView = (view: (typeof FILTER_BY_OPTIONS)[number] | null) => {
     const next = new URLSearchParams(searchParams);
     if (!view) { next.delete("status"); next.delete("priority"); }
@@ -643,6 +677,8 @@ export function TicketsPage() {
       case "client": return String((t.company as { name?: string } | null)?.name ?? "");
       case "technician": return person ? `${person.firstName || ""} ${person.lastName || ""}`.trim() : "";
       case "priority": return String(t.priority ?? "");
+      case "age": return relativeAge(t.createdAt as string);
+      case "sla": return slaChipFor(t)?.label ?? "";
       case "timestamp": {
         const created = t.createdAt ? new Date(t.createdAt as string) : null;
         const updated = t.updatedAt ? new Date(t.updatedAt as string) : null;
@@ -949,14 +985,6 @@ export function TicketsPage() {
           The five the Filter dialog offers, as a strip you press rather than a dialog you fill in.
           They are the same filters the URL already carries, so a view is a link you can send. */}
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Ticket views">
-        <button
-          type="button"
-          onClick={() => applyView(null)}
-          aria-pressed={activeView === "all"}
-          className={`chip ${activeView === "all" ? "chip--on" : ""}`}
-        >
-          All <span className="chip__n">{viewCount(null)}</span>
-        </button>
         {FILTER_BY_OPTIONS.map(view => (
           <button
             key={view.value}
@@ -968,6 +996,22 @@ export function TicketsPage() {
             {view.label} <span className="chip__n">{viewCount(view)}</span>
           </button>
         ))}
+        <button
+          type="button"
+          onClick={applyMine}
+          aria-pressed={activeView === "mine"}
+          className={`chip ${activeView === "mine" ? "chip--on" : ""}`}
+        >
+          Assigned to me <span className="chip__n">{scopeTickets.filter(t => currentUser?.id && t.assignedToId === currentUser.id).length}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => applyView(null)}
+          aria-pressed={activeView === "everything"}
+          className={`chip ${activeView === "everything" ? "chip--on" : ""}`}
+        >
+          Everything <span className="chip__n">{viewCount(null)}</span>
+        </button>
       </div>
 
       <div className="relative">

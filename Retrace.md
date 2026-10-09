@@ -6785,3 +6785,45 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 **Notes for next time**
 - **"Make sure X is applied" is worth measuring before believing.** The instinct is to go and re-apply something; the answer here was that half of it was done and the other half had never been specified as "the redesign" — it was the mockup's *ticket-specific* design. Taking the measurement first turned a vague request into two concrete, testable features.
 - **A count computed from a filtered list is a lie that looks like data.** It would have been plausible (small numbers next to each chip) and wrong in a way nobody would catch without clicking. Fetch the scope, count the scope.
+
+---
+
+### Prompt 306 — Why don't the ticket screens look like the mockup?
+
+**Timestamp:** 2026-10-08 20:10 | **Status:** Complete | **Duration:** ~5 min (the answer), then folded into prompt 307
+
+**BuildNotes IDs:** **2026.10.8.060**.
+
+**Prompt**
+
+> Why don't the ticket screen and ticket details screen look like Pasted Image 1 and 2? They still look like Pasted Image 3 and 4
+
+**What I did**
+- **Answered honestly, because the answer was "because I did not build them".** What I had applied to those two screens was the *app-wide* chrome — compact header, grouped tabs — plus three additions (views, priority bar, sticky context). The mockup's ticket screens are a different arrangement: a working-set strip, a pill row that edits in place, a docked composer, a CONTEXT rail carrying the client's brief and estate, and Age/SLA columns. Saying "the redesign is applied" while the screens were visibly the old layout was the wrong call, and the fix was to stop describing and start building.
+- **Took the measurement before believing anything**: 16px headers and a 47px shell bar on both screens, which was true and beside the point. "Is the chrome applied" and "does it look like the mockup" are different questions, and only the second one was being asked.
+
+**Notes for next time**
+- **"The redesign" needs an antecedent when there is more than one.** There was the app-wide chrome redesign and the per-screen mockup design; I did the first and reported it as done. When a user points at a picture, the picture is the specification — not the principle behind it.
+
+---
+
+### Prompt 307 — Build the ticket screens to the mockup, then every page
+
+**Timestamp:** 2026-10-08 20:55 | **Status:** In progress — the ticket screens are built and verified; the remaining pages are queued | **Duration:** ~105 min and continuing
+
+**BuildNotes IDs:** **2026.10.8.060** (the ticket screens).
+
+**Prompt**
+
+> After you're done, redesign all the pages to match their mockups. If they didn't have a mockup, create one based on the reimagine theme and redo them
+
+**What I did**
+- **Read the mockup for the two screens rather than inventing a look**, and built what it specified: the record header with pills, the CONTEXT rail with the client brief, the docked composer, counts on the tabs, the client's other open work, and Age/SLA on the queue with *Assigned to me* and *Everything*.
+- **Checked the data before designing the display.** One request against the running API showed the ticket payload already carries `slaResolutionDue`, `dueDate`, `isOverdue`, `tags`, `source`, `serviceAgreement`, and `company.notes` — the client brief the mockup shows is a field this application already has. Nothing had to be invented or fetched that was not already there, and the brief callout renders from data rather than from a hard-coded example.
+- **One chip implementation, used twice.** `slaChipFor()` is shared by the record header and the queue column, so the two screens cannot drift into disagreeing about the same clock — and both read the SLA target *or* the due date, whichever the instance actually set, saying which in the tooltip.
+- **Reused the write path instead of adding one.** Every pill writes through the route the Edit form already uses; the composer's tabs are the existing internal/emailed flag; Log time opens the existing time sheet. The redesign changed how the facts are *arranged*, not how any of them is written — which is what made it safe to change two screens this heavily in one pass.
+- **Handled the preference trap**: Age and SLA are new default columns, and anyone with a saved column selection would have seen the redesign with its two new columns missing and nothing to explain why. A saved selection gets them added once, then belongs to the user again.
+
+**Notes for next time**
+- **Designs that change *structure* need the data checked first.** The reason this went quickly once started is that one API response answered "can the rail show the client's brief, the SLA clock, the source and the agreement?" — all yes. Guessing at that would have produced a rail of plausible-looking dashes.
+- **A shared helper is worth it the moment the same fact appears twice.** The SLA chip looks like a small thing to write inline; written twice it would be two definitions of "breached", and one of them would be wrong.

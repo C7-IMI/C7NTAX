@@ -1,5 +1,40 @@
 [
   {
+    "version": "2026.10.8.060",
+    "date": "2026-10-08",
+    "title": "The ticket screens proper: a record header you press, a context rail, and a composer",
+    "changes": [
+      {
+        "text": "**The ticket's states are pills you press.** The record header is where it sits, what it",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The SLA clock is a chip, and it reads the clock the ticket actually carries** — the",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The right column is a CONTEXT rail.** **Client** — the name, its type, open tickets,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The composer.** A note, a reply to the client and a time entry all start in the same",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Counts on the tabs**, so the strip says how much is behind each one rather than only",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Age and SLA columns on the queue**, both on by default. Age is the compact relative",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The views strip gained *Assigned to me* and renamed *All* to *Everything***, matching",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.059",
     "date": "2026-10-08",
     "title": "The ticket queue becomes an inbox, and the surfaces that were left",

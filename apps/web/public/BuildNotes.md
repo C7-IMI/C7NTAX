@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.059 | Last Updated: 2026-10-08
+## Version: 2026.10.8.060 | Last Updated: 2026-10-08
 
 ---
 
@@ -13,6 +13,51 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.8.060 — The ticket screens proper: a record header you press, a context rail, and a composer
+
+The two commits before this one redesigned the *chrome* the ticket screens share with everything else
+— the compact header, the grouped tabs. This is the screens themselves, built to the mockup: the two
+places a service desk actually works. It is a noticeable change of shape, because the mockup's ticket
+screens are not the application's ticket screens with smaller headings; they are a different
+arrangement of the same facts.
+
+- **[New]** **The ticket's states are pills you press.** The record header is where it sits, what it
+  is, and then the states *themselves* — status, priority, assignee, the SLA clock, the source, the
+  service agreement — with **Copy link** and **Acknowledge** on the right. Changing one is a click
+  rather than a dialog with a form and a save button; every pill writes through the **same route the
+  Edit form uses**, so there is still exactly one place in the application that changes a ticket, and
+  Edit is still there for everything at once.
+- **[New]** **The SLA clock is a chip, and it reads the clock the ticket actually carries** — the
+  board's SLA resolution target, or the due date when that is what the instance set — as *"3d to
+  SLA"*, *"4h to SLA"* (amber, inside four hours) or *"SLA breached · 2d ago"* in red, with the
+  target and the timestamp in the tooltip. Tickets with neither show a dash rather than an invented
+  promise.
+- **[New]** **The right column is a CONTEXT rail.** **Client** — the name, its type, open tickets,
+  service level, agreement, when it was opened, and **the client's own brief** in a callout, which is
+  the note the client record already carries and the thing you need *while* reading, not something to
+  go and look up — then **Contact** (name, email, phone, **Reply** and **Log a call**, plus everyone
+  else on the ticket and how each of them is used), then **Estate**, which is what the
+  Configurations panel is and now says so. It stays with you as the panel scrolls. It is read-only on
+  purpose: a state you change is a pill in the header.
+- **[New]** **The composer.** A note, a reply to the client and a time entry all start in the same
+  place, because they are the same act of recording what you did: the tabs are the *existing*
+  internal/emailed flag rather than a new one, so a reply shows the recipient editor and a note does
+  not, and **Save and log** is the button that was always there. Log time opens the full time sheet —
+  work type, role, rate and billable against the board's billing rules — because shrinking those into
+  one inline row would have dropped the fields the API actually charges from.
+- **[New]** **Counts on the tabs**, so the strip says how much is behind each one rather than only
+  where to look, and **"The client's other open work"** in the record column: the ticket that explains
+  this one is usually already open beside it.
+- **[New]** **Age and SLA columns on the queue**, both on by default. Age is the compact relative
+  figure the queue is triaged by (34m, 4h, 2d) and SLA is the same chip as the record header, so the
+  two screens cannot disagree about the clock. A saved column selection from before them gets them
+  added **once** — a redesign that leaves its two new columns hidden behind an old preference, with
+  nothing on screen to say why, is not finished — and from then on the choice is the user's.
+- **[Update]** **The views strip gained *Assigned to me* and renamed *All* to *Everything***, matching
+  the mockup: the one view that is about *you* rather than about the ticket toggles, and the strip
+  ends on the whole queue. Verified against the running instance: Workable 28, Escalated 0, Waiting
+  17, On Hold 9, New 35, Assigned to me 8, Everything 109.
 
 ## 2026.10.8.059 — The ticket queue becomes an inbox, and the surfaces that were left
 
