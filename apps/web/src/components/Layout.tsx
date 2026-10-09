@@ -11,7 +11,7 @@ import { NavPaneModern } from "./NavPaneModern";
 import { FAVORITES_NODE_ID } from "../lib/navModel";
 import { useNavigationSettings } from "../hooks/useNavigationStyle";
 import {
-  LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical,
+  LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Users, Settings, Menu, X, LogOut, ChevronRight, ChevronDown, GripVertical, Plus,
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
   Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen, Search, Calendar, Clock, HelpCircle, Home,
   AlertTriangle, XCircle, Settings2, ListOrdered, Globe, Package, Presentation, Filter, Radio, Bot,
@@ -413,6 +413,7 @@ export function Layout({ children }: { children: ReactNode }) {
   }, [redesign]);
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
+  const segments = location.pathname.split("/").filter(Boolean);
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(loadExpanded);
@@ -1291,6 +1292,40 @@ export function Layout({ children }: { children: ReactNode }) {
               aria-label="Dismiss alert"
             >
               <XCircle size={16} />
+            </button>
+          </div>
+        )}
+        {/* ── The working set ────────────────────────────────────────────────────────────────
+            What you have open: the section you are in, the record you are in, and the way to open
+            something else. It sits above the page and below the header because it is neither — the
+            header is the application's, the page is the record's, and this is the hand you are
+            holding. Only the redesigned interface shows it. */}
+        {redesign && (
+          <div className="flex items-stretch gap-0.5 border-b border-surface-border bg-surface/60 px-2 shrink-0 overflow-x-auto whitespace-nowrap">
+            <Link
+              to={`/${location.pathname.split("/")[1] || ""}`}
+              className={`flex items-center gap-2 border-b-2 px-3 py-1.5 text-xs transition-colors ${
+                segments.length < 3 ? "border-cyber-500 text-white" : "border-transparent text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              {getPageTitle(NAV_TREE, `/${location.pathname.split("/")[1] || ""}`)}
+            </Link>
+            {segments.length >= 3 && (
+              <Link
+                to={location.pathname}
+                className="flex items-center gap-2 border-b-2 border-cyber-500 px-3 py-1.5 text-xs text-white"
+                title={getPageTitle(NAV_TREE, location.pathname)}
+              >
+                <span className="max-w-[16rem] truncate">{getPageTitle(NAV_TREE, location.pathname)}</span>
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => { if (UI_P1) setPaletteOpen(true); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-gray-600 transition-colors hover:text-gray-300"
+              title={UI_P1 ? "Open something (Ctrl/⌘ K)" : "Open something"}
+            >
+              <Plus size={12} /> <kbd className="text-[10px]">⌘K</kbd> to open something
             </button>
           </div>
         )}

@@ -38,9 +38,41 @@ export interface NavigationSettings {
   assistantInRail: boolean;
   /** Which screens: the redesigned ones, or the classic ones. */
   interfaceStyle: InterfaceStyle;
+  /**
+   * Whether a record shows its **context column** — the client, the contact and the estate beside
+   * the work. On by default, because that is the redesigned record: those facts are what you read
+   * *while* working, and a record that hides them behind a tab is the thing this replaces. It is a
+   * personal preference rather than an instance setting: it is about how much room *you* want beside
+   * a record, and it can be turned off from the account menu.
+   */
+  contextPane: boolean;
 }
 
-const DEFAULT_SETTING: NavigationSettings = { style: "modern", assistantInRail: false, interfaceStyle: "redesign" };
+const DEFAULT_SETTING: NavigationSettings = { style: "modern", assistantInRail: false, interfaceStyle: "redesign", contextPane: true };
+
+/** The context column's own preference. Not a build flag and not a server setting — see above. */
+const CONTEXT_PANE_STORAGE_KEY = "c7_ui_context";
+
+/** `null` when this browser has never expressed a preference, so the default stands. */
+export function contextPaneOverride(): boolean | null {
+  try {
+    const raw = localStorage.getItem(CONTEXT_PANE_STORAGE_KEY);
+    if (raw === "0") return false;
+    if (raw === "1") return true;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function setContextPane(enabled: boolean): void {
+  try {
+    localStorage.setItem(CONTEXT_PANE_STORAGE_KEY, enabled ? "1" : "0");
+  } catch {
+    /* ignore */
+  }
+  overrideSubscribers.forEach((notify) => notify());
+}
 
 let cached: NavigationSettings | null = null;
 let inflight: Promise<NavigationSettings> | null = null;
@@ -71,6 +103,8 @@ export function parseNavigationSettings(value: unknown): NavigationSettings {
     assistantInRail: appearance?.assistantInRail === true,
     // The redesign is the default; only an explicit "classic" reverts it.
     interfaceStyle: appearance?.interfaceStyle === "classic" ? "classic" : "redesign",
+    // Not from the server: the context column is a personal preference, and the default is on.
+    contextPane: true,
   };
 }
 
@@ -87,6 +121,8 @@ export function applyLocalOverride(setting: NavigationSettings): NavigationSetti
     const redesign = redesignOverride();
     if (redesign !== null) next = { ...next, interfaceStyle: redesign ? "redesign" : "classic" };
   }
+  const contextPane = contextPaneOverride();
+  if (contextPane !== null) next = { ...next, contextPane };
   return next;
 }
 
@@ -183,4 +219,14 @@ export function setInterfacePreference(style: InterfaceStyle): void {
  */
 export function useRedesign(): boolean {
   return useNavigationSettings().interfaceStyle === "redesign";
+}
+
+/**
+ * Whether a record should show its context column.
+ *
+ * A screen asks this rather than reading the preference, so the account menu's choice reaches every
+ * record that has one, and the default — shown — is in one place.
+ */
+export function useContextPane(): boolean {
+  return useNavigationSettings().contextPane;
 }

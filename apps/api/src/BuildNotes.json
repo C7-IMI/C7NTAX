@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.8.062",
+    "date": "2026-10-08",
+    "title": "The composer logs time, the context pane is a preference, and the working set",
+    "changes": [
+      {
+        "text": "**The composer now does the whole job, not a third of it.** It carries **Work type**,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The context pane is a preference, and it is on by default.** It is what the redesigned",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The working set**, above the page and below the header: the section you are in, the",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The tab strip is the mockup's flat one** — underlined tabs with their counts on the",
+        "type": "Update"
+      },
+      {
+        "text": "**The pill row says what it is for** — *\"Click a pill to change it — no dialog, no",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.061",
     "date": "2026-10-08",
     "title": "The modern theme, and the ticket record as the mockup lays it out",

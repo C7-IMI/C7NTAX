@@ -18,7 +18,7 @@ import { absoluteUrl, copyText, openInNewTab, openInNewWindow, viewMenuEntries }
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { apiErrorMessage } from "../lib/apiError";
 import { TableSkeleton, PageSkeleton } from "../components/ui/Skeleton";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useRedesign, useContextPane, setContextPane as setContextPanePreference } from "../hooks/useNavigationStyle";
 
 const STATUS_COLORS: Record<string, string> = {
   new: "bg-blue-600/20 text-blue-400", in_progress: "bg-cyber-600/20 text-cyber-400",
@@ -1282,6 +1282,16 @@ export function TicketDetailPage() {
   // Read while the ticket is open rather than from a tab: a request is rarely the only thing a
   // client has in flight, and the ticket that explains this one is often already open beside it.
   const [clientTickets, setClientTickets] = useState<Array<{ id: string; ticketNumber: string; title: string; status: string; updatedAt?: string }>>([]);
+  /*
+   * The composer's own state. A note, a reply and a time entry are the same act of recording what
+   * you did, so they share one box: the mode decides whether the text is emailed and whether the
+   * internal flag is on, and the hours decide whether a time entry is written with it.
+   */
+  const [composerMode, setComposerMode] = useState<"note" | "reply" | "time">("note");
+  const [composerHours, setComposerHours] = useState("0.25");
+  const [composerWorkType, setComposerWorkType] = useState("Remote");
+  const [composerRole, setComposerRole] = useState("Technician");
+  const [composerBillable, setComposerBillable] = useState(true);
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState<Record<string,string>>({});
   const [saving, setSaving] = useState(false);
@@ -1340,6 +1350,7 @@ export function TicketDetailPage() {
   // ── Tabbed toolbar state ──
   const [activeTab, setActiveTab] = useState("ticket");
   const redesign = useRedesign();
+  const contextPane = useContextPane();
   // Which sub-tab of each group was last used, so clicking back into a group returns you to the
   // panel you were on rather than resetting you to its first one.
   const [tabByGroup, setTabByGroup] = useState<Record<string, string>>({});
@@ -1851,8 +1862,48 @@ export function TicketDetailPage() {
     }
   };
 
-  const applyTicketField = async (field: "status" | "priority", value: string) => {
-    setMoreActionsBusy(true);
+  /*
+   * The composer's "Save and log": the text goes where its tab says it should, and the hours — if
+   * there are any — become a time entry at the same time. The API takes minutes directly, so nothing
+   * has to invent a start and an end to express "a quarter of an hour".
+   */
+  const logComposerTime = async (): Promise<boolean> => {
+    const minutes = Math.round((Number(composerHours) || 0) * 60);
+    if (minutes <= 0) return false;
+    try {
+      await api.post(`/tickets/${id}/time`, {
+        date: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10),
+        description: noteText.trim() || "Time logged from the ticket composer",
+        workType: composerWorkType || undefined,
+        workRole: composerRole || undefined,
+        billable: composerBillable,
+        minutes,
+        userId: currentUser?.id,
+      });
+      return true;
+    } catch (error) {
+      toast.error(apiErrorMessage(error, "Could not log the time"));
+      return false;
+    }
+  };
+
+  const submitComposer = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const minutes = Math.round((Number(composerHours) || 0) * 60);
+    if (!noteText.trim() && minutes <= 0) {
+      toast.error("Write something, or enter the hours you spent");
+      return;
+    }
+    if (noteText.trim()) await handlePostNote(event);
+    if (minutes > 0 && await logComposerTime()) {
+      toast.success("Time logged");
+      setComposerHours("0.25");
+      setTabRefresh(value => value + 1);
+      load();
+    }
+  };
+
+  const applyTicketField = async (field: "status" | "priority", value: string) => {    setMoreActionsBusy(true);
     try {
       await api.patch(`/tickets/${id}`, { [field]: value });
       toast.success(`${field === "status" ? "Status" : "Priority"} updated`);
@@ -2127,6 +2178,7 @@ export function TicketDetailPage() {
             <span className="chip ml-auto" title="Every field, in one form">
               <button onClick={() => setEditing(true)} className="flex items-center gap-1.5"><Edit3 size={12} /> Edit</button>
             </span>
+            <span className="hidden lg:inline text-[11px] text-gray-600">Click a pill to change it — no dialog, no form, no save</span>
             {editing && (<>
               <button onClick={() => setEditing(false)} className="btn-secondary text-xs">Cancel</button>
               <button onClick={handleSave} disabled={saving} className="btn-primary text-xs">{saving ? "Saving…" : "Save"}</button>
@@ -2166,10 +2218,10 @@ export function TicketDetailPage() {
                 <button
                   key={group.id}
                   onClick={() => pickGroup(group)}
-                  className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  className={`shrink-0 flex items-center gap-1.5 px-1 pb-1.5 text-sm border-b-2 -mb-px transition-colors ${
                     activeGroup.id === group.id
-                      ? "bg-surface-lighter text-white"
-                      : "text-gray-400 hover:text-white hover:bg-surface-lighter"
+                      ? "border-cyber-500 text-white font-medium"
+                      : "border-transparent text-gray-500 hover:text-gray-300"
                   }`}
                 >
                   <group.icon size={13} />{group.label}
@@ -2269,8 +2321,8 @@ export function TicketDetailPage() {
           </section>
 
           {activeTab === "ticket" && (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-2 space-y-5">
+      <div className={redesign ? (contextPane ? "grid grid-cols-1 xl:grid-cols-3 gap-5" : "grid grid-cols-1 gap-5") : "grid grid-cols-1 lg:grid-cols-3 gap-5"}>
+        <div className={redesign ? (contextPane ? "xl:col-span-2 space-y-5" : "space-y-5") : "lg:col-span-2 space-y-5"}>
           {/* General / The record */}
           <div className="card space-y-3">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{redesign ? "The record" : "General"}</h3>
@@ -2358,41 +2410,65 @@ export function TicketDetailPage() {
             {redesign ? (
               <>
                 <div className="flex items-center gap-1 flex-wrap">
-                  <button
-                    type="button"
-                    onClick={() => setNoteInternal(true)}
-                    aria-pressed={noteInternal}
-                    className={`chip ${noteInternal ? "chip--on" : ""}`}
-                  >
-                    <ShieldCheck size={12} /> Note
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setNoteInternal(false)}
-                    aria-pressed={!noteInternal}
-                    className={`chip ${!noteInternal ? "chip--on" : ""}`}
-                  >
-                    <Mail size={12} /> Reply to client
-                  </button>
-                  <button type="button" onClick={() => { setActiveTab("time"); openTimeEntryModal(); }} className="chip">
-                    <Timer size={12} /> Log time
-                  </button>
-                  <span className="ml-auto text-[11px] text-gray-600 hidden lg:inline">The composer is always here.</span>
+                  {([["note", "Note", ShieldCheck], ["reply", "Reply to client", Mail], ["time", "Log time", Timer]] as const).map(([key, label, Icon]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => { setComposerMode(key); setNoteInternal(key !== "reply"); }}
+                      aria-pressed={composerMode === key}
+                      className={`shrink-0 border-b-2 px-1 pb-1.5 text-sm transition-colors ${
+                        composerMode === key ? "border-cyber-500 text-white" : "border-transparent text-gray-500 hover:text-gray-300"
+                      }`}
+                    >
+                      <span className="inline-flex items-center gap-1.5"><Icon size={13} />{label}</span>
+                    </button>
+                  ))}
                 </div>
               </>
             ) : (
               <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Notes</h3>
             )}
-            <form onSubmit={handlePostNote} className="space-y-2">
+            <form onSubmit={redesign ? submitComposer : handlePostNote} className="space-y-2">
               <textarea
                 ref={noteInputRef}
                 rows={redesign ? 3 : 4}
                 className="input-field w-full text-sm resize-y min-h-[6.5rem]"
-                placeholder={noteInternal ? "What did you do? (Ctrl+Enter to submit)" : "Reply to the client — this is emailed to the ticket contact (Ctrl+Enter to submit)"}
+                placeholder={composerMode === "reply" ? "Reply to the client — this is emailed to the ticket contact (Ctrl+Enter to submit)" : composerMode === "time" ? "What did you work on? (Ctrl+Enter to submit)" : "What did you do? (Ctrl+Enter to submit)"}
                 value={noteText}
                 onChange={e=>setNoteText(e.target.value)}
                 onKeyDown={e=>{ if(e.key==="Enter" && (e.ctrlKey||e.metaKey)) handlePostNote(e); }}
               />
+              {/* The job a time entry is made of. Always visible rather than behind the Log time
+                  tab, because a note and a time entry are the same act of recording what you did —
+                  and because a field you have to go and find is a field that goes unfilled. */}
+              {redesign && (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
+                  <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer select-none">
+                    <input type="checkbox" checked={noteInternal} onChange={e => setNoteInternal(e.target.checked)} className="accent-cyber-500" />
+                    Internal
+                  </label>
+                  <label className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-gray-500">
+                    Work type
+                    <select className="input-field w-auto py-1 text-xs" value={composerWorkType} onChange={e => setComposerWorkType(e.target.value)} aria-label="Work type">
+                      {WORK_TYPES.map(type => <option key={type} value={type}>{type}</option>)}
+                    </select>
+                  </label>
+                  <label className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-gray-500">
+                    Role
+                    <select className="input-field w-auto py-1 text-xs" value={composerRole} onChange={e => setComposerRole(e.target.value)} aria-label="Role">
+                      {WORK_ROLES.map(role => <option key={role} value={role}>{role}</option>)}
+                    </select>
+                  </label>
+                  <label className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-gray-500">
+                    Hours
+                    <input className="input-field w-20 py-1 text-xs tabular-nums" value={composerHours} onChange={e => setComposerHours(e.target.value)} aria-label="Hours" inputMode="decimal" />
+                  </label>
+                  <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer select-none">
+                    <input type="checkbox" checked={composerBillable} onChange={e => setComposerBillable(e.target.checked)} className="accent-cyber-500" />
+                    Billable
+                  </label>
+                </div>
+              )}
               <div className="flex items-center justify-between gap-3">
                 <span className={`inline-flex items-center gap-1.5 self-start -mt-1 text-[11px] font-medium ${noteInternal?"text-amber-400":"text-blue-400"}`}>
                   {noteInternal ? <ShieldCheck size={11}/> : <Mail size={11}/>}
@@ -2509,8 +2585,23 @@ export function TicketDetailPage() {
         {/* Right column — the CONTEXT rail, and it follows you down the panel: whose ticket this is,
             who to talk to and what they run are facts you read *while* working, not a tab you visit.
             Read-only on purpose — a state you change is a pill in the header, and the rest is Edit. */}
+        {(!redesign || editing || contextPane) && (
         <div className={`space-y-5 ${redesign ? "xl:sticky xl:top-20 xl:self-start" : ""}`}>
-          {redesign && !editing ? (<>
+          {redesign && contextPane && !editing ? (<>
+            {/* The context column says what it is and can be put away — a rail you cannot dismiss is
+                a rail that is part of the page rather than something you chose to have. */}
+            <div className="flex items-center justify-between">
+              <h3 className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-gray-500"><Columns3 size={12} /> Context</h3>
+              <button
+                type="button"
+                onClick={() => setContextPanePreference(false)}
+                title="Hide the context column"
+                aria-label="Hide the context column"
+                className="text-gray-600 transition-colors hover:text-white"
+              >
+                <X size={12} />
+              </button>
+            </div>
             <div className="card space-y-3">
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5"><Building2 size={12} /> Client</h3>
               <div className="flex items-center gap-2 flex-wrap">
@@ -2697,6 +2788,7 @@ export function TicketDetailPage() {
           </div>
           </>)}
         </div>
+        )}
       </div>)}
 
       {/* ── Configurations tab ── */}

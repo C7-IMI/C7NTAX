@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  AlignJustify, HelpCircle, LayoutPanelLeft, ListTree, LogOut, Moon, Settings2, Shield, Sparkles, Sun, UserCircle,
+  AlignJustify, HelpCircle, LayoutPanelLeft, ListTree, LogOut, Moon, PanelRight, Rows3, Settings2, Shield, Sparkles, Sun, UserCircle,
 } from "lucide-react";
 import { useAppVersion } from "../hooks/useAppVersion";
 import { useAuth } from "../hooks/useAuth";
 import { useClientIp } from "../hooks/useClientIp";
-import { setInterfacePreference, setNavigationPreference, useNavigationSettings } from "../hooks/useNavigationStyle";
+import { setContextPane, setInterfacePreference, setNavigationPreference, useNavigationSettings } from "../hooks/useNavigationStyle";
 import { useTheme } from "../hooks/useTheme";
 import { UI_NAV_AVAILABLE, UI_P1, UI_PALETTE, UI_REDESIGN_AVAILABLE } from "../lib/uiFlags";
 import { getDensity, setDensity, type Density } from "../lib/density";
@@ -50,7 +50,7 @@ function initials(user: MenuUser | null): string {
 export function MyAccountMenu() {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
-  const { style: navStyle, interfaceStyle } = useNavigationSettings();
+  const { style: navStyle, interfaceStyle, contextPane } = useNavigationSettings();
   const clientIp = useClientIp();
   const appVersion = useAppVersion();
   const navigate = useNavigate();
@@ -227,6 +227,20 @@ export function MyAccountMenu() {
                   </button>
                   <button className={chipClass(navStyle === "classic")} onClick={() => setNavigationPreference("classic")} aria-pressed={navStyle === "classic"}>
                     <span className="flex items-center justify-center gap-1.5"><ListTree size={12} /> Classic</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {UI_REDESIGN_AVAILABLE && (
+              <div className="px-2 pb-1.5">
+                <p className="px-0.5 pb-1 text-[10px] text-gray-500">Layout</p>
+                <div className="flex items-center gap-1 rounded-md bg-surface-light p-0.5">
+                  <button className={chipClass(contextPane)} onClick={() => setContextPane(true)} aria-pressed={contextPane}>
+                    <span className="flex items-center justify-center gap-1.5"><PanelRight size={12} /> Context pane</span>
+                  </button>
+                  <button className={chipClass(!contextPane)} onClick={() => setContextPane(false)} aria-pressed={!contextPane}>
+                    <span className="flex items-center justify-center gap-1.5"><Rows3 size={12} /> Hide it</span>
                   </button>
                 </div>
               </div>

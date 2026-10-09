@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.061 | Last Updated: 2026-10-08
+## Version: 2026.10.8.062 | Last Updated: 2026-10-08
 
 ---
 
@@ -13,6 +13,28 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.8.062 — The composer logs time, the context pane is a preference, and the working set
+
+- **[New]** **The composer now does the whole job, not a third of it.** It carries **Work type**,
+  **Role**, **Hours** and **Billable** inline, as the mockup does — so "Save and log" writes the note
+  *and* the time entry in one action, and the fields are visible whether or not the time sheet is
+  open. The API takes minutes directly, so a quarter of an hour is recorded as a quarter of an hour
+  rather than as an invented start and end. The **Internal** toggle sits in the same row, and a reply
+  still reveals the recipients.
+- **[New]** **The context pane is a preference, and it is on by default.** It is what the redesigned
+  record is — the client, the contact and the estate beside the work rather than behind a tab — so it
+  starts shown and can be put away two ways: the **×** in its own CONTEXT header, or
+  **My Account → Appearance → Layout → Context pane / Hide it**. The choice is per browser and
+  per person; nothing about the record changes when it is hidden, the panel simply stops taking room.
+- **[New]** **The working set**, above the page and below the header: the section you are in, the
+  record you are in, and *⌘K to open something*. It is neither the application's header nor the
+  record's page — it is the hand you are holding, kept in front of you as you move between a queue
+  and the records in it.
+- **[Update]** **The tab strip is the mockup's flat one** — underlined tabs with their counts on the
+  same row as the record's actions, rather than a boxed segmented control.
+- **[Update]** **The pill row says what it is for** — *"Click a pill to change it — no dialog, no
+  form, no save"* — because a control that looks like a label is one nobody presses.
 
 ## 2026.10.8.061 — The modern theme, and the ticket record as the mockup lays it out
 
