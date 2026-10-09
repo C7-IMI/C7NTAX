@@ -346,6 +346,7 @@ export const HELP_SECTIONS: HelpSection[] = [
         ["Customer notifications on notes, time and status", "/help/faq"],
         ["Closing a ticket: telling the client, and the reply that reopens it", "/help/walkthroughs/shortcuts"],
         ["Procurement: raising a purchase order, moving it along, fixing the lines", "/help/walkthroughs/procurement"],
+        ["Ticket numbers: what the three parts mean, and renumbering old ones", "/help/walkthroughs/shortcuts"],
       ] },
       { kind: "h", text: "Billing, expenses & catalog" },
       { kind: "table", headers: ["Topic", "Where"], rows: [
@@ -1065,6 +1066,23 @@ export const HELP_SECTIONS: HelpSection[] = [
         "The button says what will happen (**Close and email the client**, or **Close silently**), so the last thing before the action is what the action does.",
       ] },
       { kind: "note", text: "The closing email ends by telling the client that a reply reopens the ticket, and the email connector acts on it: a reply from one of that client's contacts restores the ticket to **Customer reopened** and it reappears in the queue with the reply on it. The ticket's **owner is emailed** at the same time — the assignee, or whoever raised the ticket when nobody owns it — with who replied and what they said, because a ticket that has come back is work again and a queue is not something everybody watches. Ticket closed by mistake, contact has left, duplicate — those are the cases **Close silently** exists for." },
+      { kind: "h", text: "How a ticket number reads" },
+      { kind: "p", text: "Every ticket's number is three parts joined by dashes — **`MSP-04-1005`** — and each part answers a different question:" },
+      { kind: "table", headers: ["Part", "What it is"], rows: [
+        ["`MSP`", "The **board's ticket code**, set on Administration → Service Boards. It is the queue the ticket was raised on. A board with no code falls back to the client's type, which is what every number was built from before this scheme."],
+        ["`04`", "The **client**, as a short number. Client 1004 reads `04`, the tenth client `10`, the hundredth `100`."],
+        ["`1005`", "The **sequence**, counted **per board and per client together** — so one queue's growth never moves another queue's numbers."],
+      ] },
+      { kind: "note", text: "The sequence is a count, not a guarantee of order: numbers are reused for nothing and never go backwards, but a gap appears whenever a ticket is deleted. That is deliberate — reusing a number after a delete would hand two tickets the same reference." },
+      { kind: "p", text: "Numbers written before this scheme are left exactly as they are — they are the threading key in every email already sent and the reference a client may quote back — unless you run the renumbering script deliberately (see below). Because of that, an instance that has been running a while shows both conventions side by side." },
+      { kind: "h", text: "Renumbering what is already there" },
+      { kind: "steps", items: [
+        "`npx tsx src/renumber-tickets.ts` in `apps/api` is a **dry run**: it prints what would change and writes nothing.",
+        "`npx tsx src/renumber-tickets.ts --apply` performs it and writes a map of every number that moved to `out/ticket-renumber-map-<timestamp>.json`.",
+        "It keeps each ticket's own sequence, so a ticket people know as `…-1008` stays `…-1008`; only the board code and the client's octet are added or rewritten.",
+        "Two old numbers can land on the same target. The earliest ticket keeps it and the others are given the next free sequence, and each of those is listed in the output — a number that moved for that reason is one whose history will not match what was printed last month.",
+      ] },
+      { kind: "tip", text: "A client's reply finds its ticket by the number in the subject, so renumbering changes the reference in any email still in somebody's inbox. The map the script writes is what you would reconcile against if a client ever asks about an old number." },
       { kind: "h", text: "Ticket list columns" },
       { kind: "steps", items: [
         "Select Choose Columns above the ticket card to open the column picker.",

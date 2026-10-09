@@ -14,6 +14,7 @@
  */
 
 import { PrismaClient, Prisma } from "@prisma/client";
+import { clientOctet } from "./services/ticketNumberFormat";
 
 const prisma = new PrismaClient();
 

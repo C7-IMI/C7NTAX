@@ -1,5 +1,44 @@
 [
   {
+    "version": "2026.10.9.001",
+    "date": "2026-10-09",
+    "title": "Ticket numbers now name the queue, the client and the ticket — in eleven characters",
+    "changes": [
+      {
+        "text": "**A number is `{board code}-{client}-{sequence}`.** The first octet is the board's",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The sequence is per board *and* client**, so one queue's growth no longer moves another",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A reply can no longer land on the wrong ticket.** The email connector resolved a quoted",
+        "type": "Fix"
+      },
+      {
+        "text": "**`apps/api/src/renumber-tickets.ts`** brings existing tickets into the scheme, keeping each",
+        "type": "New Feature"
+      },
+      {
+        "text": "The formatter lives in `services/ticketNumberFormat.ts`, away from the Prisma import, so",
+        "type": "Update"
+      },
+      {
+        "text": "`seed-ticket-samples.ts` writes the same shape, and the board editor's Ticket Code caption",
+        "type": "Update"
+      },
+      {
+        "text": "`HelpDoc.tsx`: a **How a ticket number reads** section (the three parts as a table, why the",
+        "type": "Update"
+      },
+      {
+        "text": "`.gitignore` gains `out/`, which holds generated output from maintenance scripts.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.080",
     "date": "2026-10-08",
     "title": "Every close asks, the owner hears about a reopen, and receiving fills the inventory",

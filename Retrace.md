@@ -7682,3 +7682,39 @@ so no version applies.
   while F's prefix records the board it was `+raised` on and can drift if the ticket is later moved.
 - Named the work: A is one generator function plus the reply-lookup fix; A + F adds a `code` field on
   `ServiceBoard`, an admin field and a code per existing board (four in this instance).
+
+
+### Prompt 327 — Option A + F: ticket numbers name the queue, the client and the ticket
+
+**Timestamp:** 2026-10-09 00:05 | **Status:** Complete | **Duration:** ~70 min
+
+**BuildNotes IDs:** **2026.10.9.001**.
+
+**Prompt**
+
+> Go with A+F then
+
+**What I did**
+- Rewrote `generateTicketNumber` to `{board ticketCode}-{client octet}-{sequence}`, where the octet is
+  `clientId - 1000` padded to two digits, and the sequence is counted **per board and client together**
+  and continues from the highest number that pair already has. It reads both the new and the previous
+  shapes when it looks for that highest number, so a client with eight tickets does not start again at
+  `1001`.
+- **Fixed the reply matcher**, which is the change this scheme depends on: `contains` resolved a tag to
+  whichever ticket matched first, and short numbers are substrings of each other. Exact number, then exact
+  id, then a substring match with the longest candidate winning.
+- Wrote `renumber-tickets.ts` (dry run by default, `--apply` writes a map, collisions resolved and
+  reported), ran it: **109 tickets, 0 collisions**, all now in the new shape with no duplicates.
+- Found that the board's `ticketCode` field already existed and was already editable, so F turned out to
+  be "use the field you have" rather than a new column — which is why the plan went from "add a field"
+  to "no schema change" between the mockup and the implementation.
+
+**Notes for next time**
+- **Check whether the field already exists before designing the schema change.** I had planned a new
+  `code` column on `ServiceBoard`; the model already had `ticketCode`, used by the board filter. The
+  mockup's own data had been built from it without my noticing.
+- **A format change is a lookup change.** Shortening a number silently changes what `contains` means, and
+  the matcher was the only place it mattered. Reading every consumer of the value before changing its
+  shape is what found it.
+- **Renumbering is a one-way door for email.** The script keeps each ticket's own sequence, refuses to run
+  without `--apply`, and writes a map, because the number in an email already sent cannot be changed.

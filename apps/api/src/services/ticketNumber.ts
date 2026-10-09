@@ -27,15 +27,9 @@
  */
 import { prisma } from "../index";
 import { randomUUID } from "crypto";
+import { clientOctet, CLIENT_ID_BASE } from "./ticketNumberFormat";
 
-/** This instance numbers its clients from 1000: the first client is 1001 and its octet is `01`. */
-const CLIENT_ID_BASE = 1000;
-
-/** `1004` → `04`; `1010` → `10`; `1100` → `100`. */
-export function clientOctet(clientId: number): string {
-  const n = Math.max(1, Math.trunc(clientId) - CLIENT_ID_BASE);
-  return n < 10 ? String(n).padStart(2, "0") : String(n);
-}
+export { clientOctet, CLIENT_ID_BASE } from "./ticketNumberFormat";
 
 export interface TicketNumberOptions {
   companyId: string | null;

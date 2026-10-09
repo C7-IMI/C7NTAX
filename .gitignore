@@ -32,3 +32,7 @@ dist-electron/
 # local scratch: login test payload
 .login-body.json
 apps/api/data/ticket-attachments/
+
+# Generated output from maintenance scripts — `out/c7ntax-m365-app.json`, the ticket-renumbering map,
+# and anything else a one-off script writes. Not source, and specific to the run that produced it.
+out/

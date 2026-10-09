@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.080 | Last Updated: 2026-10-08
+## Version: 2026.10.9.001 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,52 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.001 — Ticket numbers now name the queue, the client and the ticket — in eleven characters
+
+`INF-1004-1005` was thirteen characters of which the middle four were the client's internal id, and the
+first three were the **client's type** — so the prefix read like the board and was not. It is now
+`MSP-04-1005`: the board's own code, the client as a short octet, and the ticket.
+
+- **[New]** **A number is `{board code}-{client}-{sequence}`.** The first octet is the board's
+  `ticketCode` (already editable at Administration → Service Boards), so the prefix names the queue the
+  work was raised on; a board with no code falls back to the client's type, which is what every previous
+  number was built from, so an un-coded board keeps working rather than failing. The middle octet is
+  `clientId − 1000`, padded to two digits — client 1004 reads `04`, the tenth client `10`, the hundredth
+  `100`. It is deliberately not "the last two digits" of the id, which would collide client 1104 with
+  client 1004; subtracting the base cannot collide, because `clientId` is unique.
+- **[New]** **The sequence is per board *and* client**, so one queue's growth no longer moves another
+  queue's numbers, and it continues from the highest number that pair already has rather than from a row
+  count — a count goes backwards when a ticket is deleted and hands the same number out twice.
+- **[Fix]** **A reply can no longer land on the wrong ticket.** The email connector resolved a quoted
+  number with a `contains` lookup, and once numbers are short enough to be substrings of each other
+  (`MSP-04-1005` inside a longer one) that would file a client's answer against whichever ticket matched
+  first. It now tries an exact match on the number, then on the id, and only then a substring match with
+  the longest candidate winning.
+- **[New]** **`apps/api/src/renumber-tickets.ts`** brings existing tickets into the scheme, keeping each
+  ticket's own sequence so a ticket people know as `…-1008` stays `…-1008`. It is a **dry run unless you
+  pass `--apply`**, because a ticket number is the threading key in every email already sent; it resolves
+  collisions rather than failing on the unique constraint (earliest ticket keeps the number, the rest move
+  along and are reported), and `--apply` writes a map of every number that moved to
+  `out/ticket-renumber-map-<timestamp>.json`. Applied to this instance: 109 tickets, no collisions.
+- **[Update]** The formatter lives in `services/ticketNumberFormat.ts`, away from the Prisma import, so
+  the maintenance script can read the format without starting the API server as a side effect.
+- **[Update]** `seed-ticket-samples.ts` writes the same shape, and the board editor's Ticket Code caption
+  now explains what the code does ("The first part of every number raised on this board") instead of
+  quoting the old two-octet example.
+- **[Update]** `HelpDoc.tsx`: a **How a ticket number reads** section (the three parts as a table, why the
+  sequence is per board and client, and both conventions showing side by side on an existing instance)
+  and a **Renumbering what is already there** walkthrough with the dry-run/apply commands.
+- **[Update]** `.gitignore` gains `out/`, which holds generated output from maintenance scripts.
+
+**Verification:** API and web `tsc --noEmit` clean, `check-help-links` green. Driven against the running
+instance: the dry run reported 109 tickets and 0 collisions; applying it left 109 tickets all in the new
+shape with no duplicates; `INF-1004-1005` (Umbrella Corp, MSP Service Desk) became `MSP-04-1005` exactly as
+designed; and every board-and-client pair has unique sequences. The reply-resolution change is verified
+against the real `appendEmailToTicket` path, which still reopens a closed ticket and still refuses a reply
+from a staff address.
 
 ---
 
