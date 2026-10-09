@@ -7634,3 +7634,32 @@ changed, so no version applies.
 - **Compression has to be checked against the regexes that read it.** The inbound tag pattern tolerates
   1–8 digits per octet, so shorter numbers thread fine — but a scheme without the separators would not
   match at all, and the reply path would start raising duplicate tickets instead of appending.
+
+
+### Prompt 325 — A mockup of the numbering schemes, and the options as a list
+
+**Timestamp:** 2026-10-09 01:40 | **Status:** Complete | **Duration:** ~15 min
+
+**BuildNotes IDs:** none — a mockup and a list for a decision, with nothing changed in the application,
+so no version applies.
+
+**Prompt**
+
+> show me examples of the different ticket number schemes. Do a quick mockup and dispaly it. No changes,
+> just the mockup
+> > list them as options so I can say go with option a, b, c, etc.
+
+**What I did**
+- Built `ticket-numbering-mockup.html` in the session workspace: the eight real tickets from this
+  instance re-rendered from one source (client type, client id, per-client sequence) in each scheme, with
+  the octets coloured so the parts are visible, a scheme switcher, the client's-eye email subject, the
+  character count against today's 13, an all-eight-at-once table and a per-scheme caveat.
+- Read the mockup's own numbers back from the page to check the renderers rather than trusting the code.
+- Lettered the options A—H so the next message can be "go with option C".
+
+**Notes for next time**
+- **Render the mockup from real rows.** Using this instance's clients (1001—1005) and their boards made
+  the difference between A and F visible: the same Umbrella ticket is `INF-04-1005` under A and
+  `MSD-04-1005` under F, which is the whole argument for a board code.
+- **The sample set is the design.** Eight tickets across four boards and five clients is enough to show
+  padding, collisions and width; a single example would have shown a format and nothing else.
