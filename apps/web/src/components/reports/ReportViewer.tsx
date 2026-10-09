@@ -14,11 +14,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../../api";
 import toast from "react-hot-toast";
-import { AlertTriangle, Download, Printer, RefreshCw, X } from "lucide-react";
+import { AlertTriangle, Download, FileSpreadsheet, FileText, Printer, RefreshCw, X } from "lucide-react";
 import { ReportsSkeleton } from "../ui/Skeleton";
 import { apiErrorMessage } from "../../lib/apiError";
 import { downloadCsv } from "../../lib/csv";
-import { ReportBody, exportCsv, exportExcel, exportPdf, number, printReport, sectionsToTables, type Section } from "./reportKit";
+import { documentBrandOf } from "../../hooks/useBrandKit";
+import { useAuth } from "../../hooks/useAuth";
+import { ORIENTATION_LABELS, PAPER_SIZES } from "./documentLanguage";
+import {
+  basisFromPayload, exportCsv, exportExcel, exportPdf, number, printReport, sectionsToTables,
+  ReportBody, type ReportDocument, type Section,
+} from "./reportKit";
 import type { StandardReport } from "./standardReports";
 import { useRedesign } from "../../hooks/useNavigationStyle";
 
@@ -214,6 +220,7 @@ export function ReportViewer({
 }) {
   const [payload, setPayload] = useState<unknown>(null);
   const redesign = useRedesign();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showExport, setShowExport] = useState(false);
@@ -234,9 +241,26 @@ export function ReportViewer({
     () => sections.reduce((n, s) => n + (s.kind === "table" || s.kind === "bars" ? s.rows.length : 0), 0),
     [sections],
   );
-  const document_ = useMemo(
-    () => ({ title: report.title, subtitle: report.description, period: periodLabel(payload), sections }),
-    [report, payload, sections],
+  /*
+   * The document, as the paper it becomes. It carries the four facts the meta line needs — the client
+   * the report was narrowed to (or "All clients"), the period the server applied, the endpoint's own
+   * basis, and who is producing it — because a document that has to guess one of those prints "undefined"
+   * in front of a client. `family` decides the letterhead, the paper default and the basis default.
+   */
+  const clientLabel = filters.clientId ? (options.clients.find(c => c.id === filters.clientId)?.name ?? report.title) : "All clients";
+  const generatedBy = user ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() + (user.email ? ` (${user.email})` : "") : undefined;
+  const document_: ReportDocument = useMemo(
+    () => ({
+      title: report.title,
+      subtitle: report.description,
+      client: clientLabel,
+      period: periodLabel(payload),
+      family: "report.standard",
+      generatedBy,
+      basis: basisFromPayload(payload),
+      sections,
+    }),
+    [report, payload, sections, clientLabel, generatedBy],
   );
 
   return (
@@ -250,8 +274,19 @@ export function ReportViewer({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button className="btn-secondary text-xs flex items-center gap-1.5" onClick={() => printReport(document_)} disabled={!payload}><Printer size={13} /> Print</button>
-          <button className="btn-secondary text-xs flex items-center gap-1.5" onClick={() => setShowExport(true)} disabled={!payload}><Download size={13} /> Export</button>
+          {/* The modern screen offers one control — Produce — because Print, PDF, Excel and CSV are one
+              decision. The classic screen keeps the two buttons it has always had, and its Print goes
+              straight to paper; the chooser is the dialog behind Export. */}
+          {redesign ? (
+            <button className="chip chip--on" onClick={() => setShowExport(true)} disabled={!payload}>
+              Produce<span className="chip__n">{sections.length}</span>
+            </button>
+          ) : (
+            <>
+              <button className="btn-secondary text-xs flex items-center gap-1.5" onClick={() => printReport(document_)} disabled={!payload}><Printer size={13} /> Print</button>
+              <button className="btn-secondary text-xs flex items-center gap-1.5" onClick={() => setShowExport(true)} disabled={!payload}><Download size={13} /> Export</button>
+            </>
+          )}
           {onClose && <button className="btn-secondary text-xs" onClick={onClose}>Close</button>}
         </div>
       </div>
@@ -308,20 +343,64 @@ export function ReportViewer({
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  Export — the filters offered here are applied, not decorative
+//  The output chooser — one decision, four answers
 // ═══════════════════════════════════════════════════════════════════
 
+type OutputFormat = "print" | "pdf" | "excel" | "csv";
+
+/**
+ * The four ways out, with the sentence each one owes the reader.
+ *
+ * The `sentence` takes the counts because Excel's promise is a count of what is being written, read
+ * from the loader that prepares the file rather than described from the screen it was opened on.
+ */
+const OUTPUT_FORMATS: Array<{ id: OutputFormat; label: string; chip: string; sentence: (counts: string) => string }> = [
+  { id: "print", label: "Print on paper now", chip: "1:1", sentence: () => "The sheets print at the size this document is designed in. Nothing is scaled to fit the browser's default paper." },
+  { id: "pdf", label: "PDF — the same pages, as a file", chip: "chosen", sentence: () => "Vector text, the pages you saw, at the paper chosen below. This used to be always landscape A4 whatever the screen showed." },
+  { id: "excel", label: "Excel — one sheet per table, typed cells", chip: ".xls", sentence: counts => `The figures without the document: ${counts}. Figures arrive as numbers, not as the strings a PDF draws.` },
+  { id: "csv", label: "CSV — every table stacked in one file", chip: ".csv", sentence: () => "For whatever reads it next. Rules, pages and column widths do not exist here, and the basis block is the topmost paragraph rather than a last sheet." },
+];
+
+
+/**
+ * Choosing what to produce, once.
+ *
+ * Print, PDF, Excel and CSV are one decision, not three buttons with a fourth on the toolbar, and the
+ * two questions a person actually needs answered here are **paper** — size and orientation, because a
+ * matrix that fits landscape does not fit portrait — and whether the **basis block** travels with the
+ * file, because a spreadsheet and a PDF disagree about what "where these figures came from" even means.
+ *
+ * Two designs, deliberately. The modern arrangement is the redesign's own furniture: a sheet with a
+ * sentence beside each of the four ways out, the paper as a choice you press, and a countable footer.
+ * The classic arrangement is a form — a heading, labelled fields in a grid, a select per question and
+ * Cancel/Confirm — and it lists "Print now, on paper" as the fourth entry in the format select, because
+ * a classic dialog is a form with one act at the bottom. The state, the API call and the words are
+ * shared; the arrangement is not.
+ *
+ * What the panel is allowed to promise, and what it must not. It states the paper in millimetres and
+ * what changes on the page because of it, what the basis block contains and what leaving it out costs
+ * the reader, and the counts — read from the loader that prepares the file. It does not state a page
+ * count nobody measured, and it says nothing about the reader's printer: the sheets print at their own
+ * size and the printer's "fit to page" is the printer's business.
+ */
 export function ExportDialog({
   document_, report, filters, options, onClose, values,
 }: {
-  document_: { title: string; subtitle?: string; period?: string; sections: Section[] };
+  document_: ReportDocument;
   report: StandardReport;
   filters: ReportFilters;
   options: FilterOptions;
   onClose: () => void;
   values: ReportOptionValues;
 }) {
-  const [format, setFormat] = useState<"pdf" | "excel" | "csv">("pdf");
+  const redesign = useRedesign();
+  // The paper and the basis block start where the document's own family says they should, so the
+  // answer a person does not change is the one the instance designed.
+  const defaults = documentBrandOf(document_.family ?? "report.standard").presentation;
+  const [format, setFormat] = useState<OutputFormat>("pdf");
+  const [paper, setPaper] = useState<"a4" | "letter">(defaults.pageSize);
+  const [orientation, setOrientation] = useState<"portrait" | "landscape">(defaults.orientation);
+  const [basis, setBasis] = useState(defaults.showBasis);
   const [exportFilters, setExportFilters] = useState<ReportFilters>({ ...filters });
   // The report's own choices are editable here too — an export is often the moment somebody wants
   // "every client at 60 days" rather than whatever the screen was showing.
@@ -351,99 +430,230 @@ export function ExportDialog({
   const tables = preview ? sectionsToTables(preview) : [];
   const rowCount = tables.reduce((sum, t) => sum + t.rows.length, 0);
   const changed = JSON.stringify(exportFilters) !== JSON.stringify(filters);
+  const counts = `${tables.length} table${tables.length === 1 ? "" : "s"} · ${number(rowCount)} row${rowCount === 1 ? "" : "s"}`;
+  const paperLabel = PAPER_SIZES[paper].label;
+  const orientationLabel = ORIENTATION_LABELS[orientation];
+  const basisSentence = document_.basis
+    ? "The last sheet says where the figures came from, what was excluded and what cannot be known."
+    : "This report supplies no basis block, so there is nothing to add or remove.";
 
-  const doExport = () => {
+  /** One handler, both arrangements. The choice is applied to *this* export as a presentation override. */
+  const produce = () => {
     if (!preview) return;
-    const doc = { ...document_, period: previewPeriod || document_.period, sections: preview };
-    if (format === "pdf") exportPdf(doc);
-    else if (format === "excel") exportExcel(doc);
-    else exportCsv(doc, downloadCsv);
-    toast.success(`${report.title} exported as ${format === "excel" ? "Excel" : format.toUpperCase()}`);
+    const doc: ReportDocument = { ...document_, period: previewPeriod || document_.period, sections: preview };
+    const output = { presentation: { pageSize: paper, orientation, showBasis: basis } };
+    if (format === "print") printReport(doc, output);
+    else if (format === "pdf") exportPdf(doc, output);
+    else if (format === "excel") exportExcel(doc, output);
+    else exportCsv(doc, downloadCsv, output);
+    toast.success(format === "print"
+      ? `${report.title} sent to print`
+      : `${report.title} exported as ${format === "excel" ? "Excel" : format.toUpperCase()}`);
     onClose();
   };
+
+  const confirmLabel = format === "print"
+    ? "Print now"
+    : `Export ${format === "excel" ? "Excel" : format.toUpperCase()}`;
+
+  /* The report's own filters and options, shared by both arrangements — a select in the classic grid,
+     and left where they were set above the report in the modern sheet (which asks only the four
+     questions that change the artefact). */
+  const filterFields = (
+    <>
+      {report.filters.period && (
+        <>
+          <div><label className="text-xs text-gray-500 block mb-1">From</label><input type="date" className="input-field" value={exportFilters.from} onChange={e => setExportFilters({ ...exportFilters, from: e.target.value })} /></div>
+          <div><label className="text-xs text-gray-500 block mb-1">To</label><input type="date" className="input-field" value={exportFilters.to} onChange={e => setExportFilters({ ...exportFilters, to: e.target.value })} /></div>
+        </>
+      )}
+      {report.filters.client && (
+        <div>
+          <label className="text-xs text-gray-500 block mb-1">Report by client</label>
+          <select className="input-field" value={exportFilters.clientId} onChange={e => setExportFilters({ ...exportFilters, clientId: e.target.value })}>
+            <option value="">All clients</option>
+            {options.clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </div>
+      )}
+      {report.filters.board && (
+        <div>
+          <label className="text-xs text-gray-500 block mb-1">Board</label>
+          <select className="input-field" value={exportFilters.boardId} onChange={e => setExportFilters({ ...exportFilters, boardId: e.target.value })}>
+            <option value="">All boards</option>
+            {options.boards.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
+        </div>
+      )}
+      {(report.options ?? []).map(option => {
+        const value = exportValues[option.key] ?? option.default;
+        if (option.kind === "boolean") {
+          return (
+            <label key={option.key} className="flex items-center gap-2 cursor-pointer" title={option.hint}>
+              <input type="checkbox" checked={Boolean(value)} onChange={e => setExportValues({ ...exportValues, [option.key]: e.target.checked })} />
+              <span className="text-xs text-gray-300">{option.label}</span>
+            </label>
+          );
+        }
+        if (option.kind === "tenant") {
+          if (options.tenants.length === 0) return null;
+          return (
+            <div key={option.key} title={option.hint}>
+              <label className="text-xs text-gray-500 block mb-1">{option.label}</label>
+              <select className="input-field" value={String(value)} onChange={e => setExportValues({ ...exportValues, [option.key]: e.target.value })}>
+                <option value="">All tenants</option>
+                {options.tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+          );
+        }
+        return (
+          <div key={option.key} title={option.hint}>
+            <label className="text-xs text-gray-500 block mb-1">{option.label}{option.suffix ? ` (${option.suffix})` : ""}</label>
+            <input type="number" min={1} className="input-field" value={Number(value)} onChange={e => setExportValues({ ...exportValues, [option.key]: Number(e.target.value) || option.default })} />
+          </div>
+        );
+      })}
+    </>
+  );
+
+  const previewPanel = (compact: boolean) => (
+    <div className={compact ? "bg-surface-lighter rounded-lg p-3 max-h-40 overflow-auto" : "bg-surface-lighter rounded-lg p-3 max-h-72 overflow-auto"}>
+      {busy ? <p className="text-sm text-gray-500">Preparing…</p>
+        : preview && preview.length ? <ReportBody sections={preview} compact /> : <p className="text-sm text-gray-500">Nothing to preview.</p>}
+    </div>
+  );
+
+  if (redesign) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4" onClick={onClose}>
+        <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-surface-border bg-surface animate-slide-up" onClick={e => e.stopPropagation()}>
+          <div className="flex items-start justify-between gap-3 border-b border-surface-border px-5 py-4">
+            <div>
+              <h3 className="text-base font-semibold text-white">Produce the {report.title}</h3>
+              <p className="mt-1 text-xs text-gray-500">
+                {document_.client ?? "All clients"}{document_.period ? ` · ${document_.period}` : ""} · {counts}
+                {document_.basis?.asOf ? ` · as of ${document_.basis.asOf}` : ""}
+              </p>
+            </div>
+            <button onClick={onClose} className="text-gray-500 hover:text-white" aria-label="Close"><X size={18} /></button>
+          </div>
+
+          <div className="px-5 py-4">
+            <p className="text-[11px] uppercase tracking-wider text-gray-500">The four ways out</p>
+            <div className="mt-2 space-y-2">
+              {OUTPUT_FORMATS.map(way => (
+                <button
+                  key={way.id}
+                  type="button"
+                  aria-pressed={format === way.id}
+                  onClick={() => setFormat(way.id)}
+                  className={`w-full rounded-xl border px-4 py-3 text-left transition-colors ${format === way.id ? "border-cyber-500/50 bg-cyber-600/15" : "border-surface-border hover:bg-surface-lighter"}`}
+                >
+                  <span className="flex items-center gap-2">
+                    <span className={`text-sm font-medium ${format === way.id ? "text-cyber-400" : "text-gray-200"}`}>{way.label}</span>
+                    <span className="ml-auto chip">{way.chip}</span>
+                  </span>
+                  <span className="mt-1 block text-xs text-gray-500">{way.sentence(counts)}</span>
+                </button>
+              ))}
+            </div>
+
+            <p className="mt-5 text-[11px] uppercase tracking-wider text-gray-500">The two answers</p>
+            <div className="mt-2 space-y-4">
+              <div>
+                <div className="flex flex-wrap gap-1.5" role="group" aria-label="Paper size">
+                  {(["a4", "letter"] as const).map(id => (
+                    <button key={id} type="button" aria-pressed={paper === id} onClick={() => setPaper(id)} className={`chip ${paper === id ? "chip--on" : ""}`}>{PAPER_SIZES[id].label}</button>
+                  ))}
+                </div>
+                <p className="mt-1.5 text-xs text-gray-500">The margin is 18mm whatever the sheet, so a Letter page simply has 5.9mm more column.</p>
+              </div>
+              <div>
+                <div className="flex flex-wrap gap-1.5" role="group" aria-label="Orientation">
+                  {(["portrait", "landscape"] as const).map(id => (
+                    <button key={id} type="button" aria-pressed={orientation === id} onClick={() => setOrientation(id)} className={`chip ${orientation === id ? "chip--on" : ""}`}>{ORIENTATION_LABELS[id]}</button>
+                  ))}
+                </div>
+                <p className="mt-1.5 text-xs text-gray-500">Portrait prints the columns that carry money; landscape fits the wider table at the same 9pt. Neither scales the type down to make a table fit.</p>
+              </div>
+              <div>
+                <div className="flex flex-wrap gap-1.5" role="group" aria-label="Basis block">
+                  <button type="button" aria-pressed={basis} onClick={() => setBasis(true)} className={`chip ${basis ? "chip--on" : ""}`}>Send the basis block</button>
+                  <button type="button" aria-pressed={!basis} onClick={() => setBasis(false)} className={`chip ${!basis ? "chip--on" : ""}`}>Figures alone</button>
+                </div>
+                <p className="mt-1.5 text-xs text-gray-500">
+                  {basisSentence}{basis ? "" : " Switch it off and the file is the figures alone — a file whose reader will take the total as fact."}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-3 border-t border-surface-border px-5 py-4">
+            <span className="text-xs text-gray-500 tabular-nums">
+              {format === "print" ? "Print" : format === "excel" ? "Excel" : format.toUpperCase()} · {paperLabel} · {orientationLabel.split(" — ")[0]} · {basis ? "basis block included" : "basis block left out"} · {counts}
+            </span>
+            <span className="flex shrink-0 gap-2">
+              <button onClick={onClose} className="btn-secondary text-sm">Cancel</button>
+              <button onClick={produce} className="btn-primary text-sm" disabled={!preview || busy}>{confirmLabel}</button>
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
       <div className="card w-full max-w-3xl max-h-[90vh] overflow-y-auto space-y-4" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-white">Export {report.title}</h3>
-            <p className="text-xs text-gray-500">{tables.length} table{tables.length === 1 ? "" : "s"} · {number(rowCount)} rows{previewPeriod ? ` · ${previewPeriod}` : ""}</p>
+            <h3 className="text-lg font-semibold text-white">Export report</h3>
+            <p className="text-xs text-gray-500">{report.title} · {document_.client ?? "All clients"}{document_.period ? ` · ${document_.period}` : ""} · {counts}</p>
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-white" aria-label="Close"><X size={18} /></button>
         </div>
 
-        <div>
-          <label className="text-xs text-gray-500 block mb-2">Format</label>
-          <div className="flex gap-2 flex-wrap">
-            {([{ id: "pdf", label: "PDF", hint: "Print-ready, one table per block" }, { id: "excel", label: "Excel (.xls)", hint: "A sheet per table, typed cells" }, { id: "csv", label: "CSV", hint: "Every table, stacked" }] as const).map(f => (
-              <button
-                key={f.id}
-                onClick={() => setFormat(f.id)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors text-left ${format === f.id ? "bg-cyber-600/20 border-cyber-500/40 text-cyber-400" : "border-surface-border text-gray-400 hover:text-white hover:bg-surface-lighter"}`}
-              >
-                <span className="block">{f.label}</span>
-                <span className="block text-[10px] text-gray-500">{f.hint}</span>
-              </button>
-            ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">File format</label>
+            <select className="input-field" value={format} onChange={e => setFormat(e.target.value as OutputFormat)}>
+              <option value="pdf">PDF — print-ready</option>
+              <option value="excel">Microsoft Excel (.xls)</option>
+              <option value="csv">CSV — comma separated</option>
+              <option value="print">Print now, on paper</option>
+            </select>
           </div>
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">Paper size</label>
+            <select className="input-field" value={paper} onChange={e => setPaper(e.target.value as "a4" | "letter")}>
+              <option value="a4">{PAPER_SIZES.a4.label}</option>
+              <option value="letter">{PAPER_SIZES.letter.label}</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">Orientation</label>
+            <select className="input-field" value={orientation} onChange={e => setOrientation(e.target.value as "portrait" | "landscape")}>
+              <option value="portrait">{ORIENTATION_LABELS.portrait}</option>
+              <option value="landscape">{ORIENTATION_LABELS.landscape}</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">Basis block</label>
+            <select className="input-field" value={basis ? "include" : "leave-out"} onChange={e => setBasis(e.target.value === "include")}>
+              <option value="include">Include — the last sheet</option>
+              <option value="leave-out">Leave out</option>
+            </select>
+          </div>
+          {filterFields}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {report.filters.period && (
-            <>
-              <div><label className="text-xs text-gray-500 block mb-1">From</label><input type="date" className="input-field" value={exportFilters.from} onChange={e => setExportFilters({ ...exportFilters, from: e.target.value })} /></div>
-              <div><label className="text-xs text-gray-500 block mb-1">To</label><input type="date" className="input-field" value={exportFilters.to} onChange={e => setExportFilters({ ...exportFilters, to: e.target.value })} /></div>
-            </>
-          )}
-          {report.filters.client && (
-            <div>
-              <label className="text-xs text-gray-500 block mb-1">Report by client</label>
-              <select className="input-field" value={exportFilters.clientId} onChange={e => setExportFilters({ ...exportFilters, clientId: e.target.value })}>
-                <option value="">All clients</option>
-                {options.clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </div>
-          )}
-          {report.filters.board && (
-            <div>
-              <label className="text-xs text-gray-500 block mb-1">Board</label>
-              <select className="input-field" value={exportFilters.boardId} onChange={e => setExportFilters({ ...exportFilters, boardId: e.target.value })}>
-                <option value="">All boards</option>
-                {options.boards.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
-              </select>
-            </div>
-          )}
-          {(report.options ?? []).map(option => {
-            const value = exportValues[option.key] ?? option.default;
-            if (option.kind === "boolean") {
-              return (
-                <label key={option.key} className="flex items-center gap-2 cursor-pointer" title={option.hint}>
-                  <input type="checkbox" checked={Boolean(value)} onChange={e => setExportValues({ ...exportValues, [option.key]: e.target.checked })} />
-                  <span className="text-xs text-gray-300">{option.label}</span>
-                </label>
-              );
-            }
-            if (option.kind === "tenant") {
-              if (options.tenants.length === 0) return null;
-              return (
-                <div key={option.key} title={option.hint}>
-                  <label className="text-xs text-gray-500 block mb-1">{option.label}</label>
-                  <select className="input-field" value={String(value)} onChange={e => setExportValues({ ...exportValues, [option.key]: e.target.value })}>
-                    <option value="">All tenants</option>
-                    {options.tenants.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                  </select>
-                </div>
-              );
-            }
-            return (
-              <div key={option.key} title={option.hint}>
-                <label className="text-xs text-gray-500 block mb-1">{option.label}{option.suffix ? ` (${option.suffix})` : ""}</label>
-                <input type="number" min={1} className="input-field" value={Number(value)} onChange={e => setExportValues({ ...exportValues, [option.key]: Number(e.target.value) || option.default })} />
-              </div>
-            );
-          })}
-        </div>
+        {!basis && document_.basis && (
+          <div className="rounded-lg border border-amber-600/40 bg-amber-600/10 p-3">
+            <p className="text-xs text-amber-300 flex items-center gap-2"><AlertTriangle size={13} /> Leaving the basis block out removes the last sheet.</p>
+            <p className="text-xs text-gray-400 mt-1">What remains still prints the figures, but nothing on it says where they came from or what they cannot answer.</p>
+          </div>
+        )}
 
         <div>
           <div className="flex items-center justify-between mb-2">
@@ -454,19 +664,20 @@ export function ExportDialog({
               </button>
             )}
           </div>
-          <div className="bg-surface-lighter rounded-lg p-3 max-h-72 overflow-auto">
-            {busy ? <p className="text-sm text-gray-500">Preparing…</p>
-              : preview && preview.length ? <ReportBody sections={preview} compact /> : <p className="text-sm text-gray-500">Nothing to preview.</p>}
-          </div>
+          {previewPanel(false)}
         </div>
 
-        <div className="flex gap-2 justify-end">
-          <button onClick={onClose} className="btn-secondary text-sm">Cancel</button>
-          <button onClick={doExport} className="btn-primary text-sm flex items-center gap-1.5" disabled={!preview || busy}>
-            <Download size={14} /> Export {format === "excel" ? "Excel" : format.toUpperCase()}
-          </button>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[11px] text-gray-500">{paperLabel} · {orientationLabel} · {basis ? "basis block included" : "basis block left out"}</span>
+          <span className="flex gap-2">
+            <button onClick={onClose} className="btn-secondary text-sm">Cancel</button>
+            <button onClick={produce} className="btn-primary text-sm flex items-center gap-1.5" disabled={!preview || busy}>
+              {format === "print" ? <Printer size={14} /> : format === "excel" ? <FileSpreadsheet size={14} /> : format === "csv" ? <FileText size={14} /> : <Download size={14} />}
+              {confirmLabel}
+            </button>
+          </span>
         </div>
       </div>
     </div>
   );
-}
+}

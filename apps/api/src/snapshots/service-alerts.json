@@ -1092,20 +1092,6 @@
     "updatedAt": "2026-10-08T04:57:40.204Z"
   },
   {
-    "id": "44953696-587e-4dd4-bc58-81cc7d868ccd",
-    "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
-    "title": "Delayed Costs data in the Compliance API",
-    "description": "Status: Identified Some customers may continue to experience delayed Costs data through the Compliance API. ChatGPT usage and API Platform requests are not affected, and other reporting channels remain available. We have identified the cause and are continuing work to restore normal data freshness. We will provide another update as work progresses. Affected components Compliance API (Degraded performance)",
-    "severity": "degraded",
-    "status": "active",
-    "source": "rss",
-    "sourceUrl": "https://status.openai.com//incidents/01M4GV1M2A3K38T73JCVCD9G0R",
-    "detectedAt": "2026-10-09T17:26:38.782Z",
-    "resolvedAt": null,
-    "createdAt": "2026-10-09T17:26:38.784Z",
-    "updatedAt": "2026-10-09T18:48:02.034Z"
-  },
-  {
     "id": "dc9c78ac-cc36-4cdd-b68f-51bf6f6040b2",
     "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
     "title": "Unable to create new ChatGPT Work threads in latest version of desktop app",
@@ -2000,5 +1986,19 @@
     "resolvedAt": "2026-10-06T20:11:52.212Z",
     "createdAt": "2026-10-06T15:53:47.102Z",
     "updatedAt": "2026-10-06T20:11:52.214Z"
+  },
+  {
+    "id": "44953696-587e-4dd4-bc58-81cc7d868ccd",
+    "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
+    "title": "Delayed Costs data in the Compliance API",
+    "description": "Status: Monitoring We have implemented a mitigation, and delayed Costs data is now processing through the Compliance API. Some customers may continue to see incomplete Costs data while the backlog catches up. We expect this catch-up process to continue through Sunday, October 11. ChatGPT usage and API Platform requests remain unaffected. We are monitoring recovery. Affected components Compliance API (Degraded performance)",
+    "severity": "outage",
+    "status": "active",
+    "source": "rss",
+    "sourceUrl": "https://status.openai.com//incidents/01M4GV1M2A3K38T73JCVCD9G0R",
+    "detectedAt": "2026-10-09T17:26:38.782Z",
+    "resolvedAt": null,
+    "createdAt": "2026-10-09T17:26:38.784Z",
+    "updatedAt": "2026-10-09T22:06:11.085Z"
   }
 ]

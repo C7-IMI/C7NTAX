@@ -10,6 +10,8 @@ export * from "./reportExpression";
 export * from "./reportTemplate";
 export * from "./reportLayout";
 export * from "./reportChart";
+export * from "./emailTemplate";
+export * from "./brand";
 export * from "./appConfiguration";
 export * from "./addinPlugin";
 export * from "./console";

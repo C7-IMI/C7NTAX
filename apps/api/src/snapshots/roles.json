@@ -29,6 +29,82 @@
     "updatedAt": "2026-10-08T19:26:03.542Z"
   },
   {
+    "id": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
+    "name": "Read Only",
+    "systemRole": "read_only",
+    "permissions": [
+      "ticket:view",
+      "board:view",
+      "client:view",
+      "report:view",
+      "servicealert:view",
+      "contact:view",
+      "billing:view",
+      "project:view",
+      "asset:view",
+      "kb:view",
+      "schedule:view",
+      "chat:view",
+      "product:view"
+    ],
+    "isDefault": false,
+    "createdAt": "2026-08-12T06:04:14.722Z",
+    "updatedAt": "2026-10-07T10:34:29.639Z"
+  },
+  {
+    "id": "d077b89f-73e4-4f50-ab39-20c9f1f7964a",
+    "name": "Client Admin",
+    "systemRole": "client_admin",
+    "permissions": [
+      "ticket:view",
+      "ticket:create",
+      "ticket:edit",
+      "board:view",
+      "client:view",
+      "billing:view",
+      "servicealert:view",
+      "ticket:close",
+      "contact:view",
+      "project:view",
+      "asset:view",
+      "kb:view",
+      "schedule:view",
+      "report:view"
+    ],
+    "isDefault": false,
+    "createdAt": "2026-08-12T06:04:14.721Z",
+    "updatedAt": "2026-10-07T02:18:01.383Z"
+  },
+  {
+    "id": "f032badc-4d32-463c-973d-5cf0559f273a",
+    "name": "Technician",
+    "systemRole": "technician",
+    "permissions": [
+      "ticket:view",
+      "ticket:create",
+      "ticket:edit",
+      "ticket:assign",
+      "ticket:close",
+      "board:view",
+      "client:view",
+      "integration:view",
+      "report:view",
+      "servicealert:view",
+      "contact:view",
+      "project:view",
+      "asset:view",
+      "kb:view",
+      "schedule:view",
+      "chat:view",
+      "inference:view",
+      "product:view",
+      "console:use"
+    ],
+    "isDefault": false,
+    "createdAt": "2026-08-12T06:04:14.721Z",
+    "updatedAt": "2026-10-09T19:15:49.739Z"
+  },
+  {
     "id": "d31dd21f-eb8f-4d04-a30c-2d9a66e2fc3b",
     "name": "Developer Admin",
     "systemRole": "developer_admin",
@@ -143,58 +219,13 @@
       "kumo:link:manage",
       "console:use",
       "developer:view",
-      "developer:purge"
+      "developer:purge",
+      "email:view",
+      "email:manage"
     ],
     "isDefault": false,
     "createdAt": "2026-10-09T18:40:38.778Z",
-    "updatedAt": "2026-10-09T18:49:44.105Z"
-  },
-  {
-    "id": "e6c90eaa-f7ab-441c-aa23-2c146365a956",
-    "name": "Read Only",
-    "systemRole": "read_only",
-    "permissions": [
-      "ticket:view",
-      "board:view",
-      "client:view",
-      "report:view",
-      "servicealert:view",
-      "contact:view",
-      "billing:view",
-      "project:view",
-      "asset:view",
-      "kb:view",
-      "schedule:view",
-      "chat:view",
-      "product:view"
-    ],
-    "isDefault": false,
-    "createdAt": "2026-08-12T06:04:14.722Z",
-    "updatedAt": "2026-10-07T10:34:29.639Z"
-  },
-  {
-    "id": "d077b89f-73e4-4f50-ab39-20c9f1f7964a",
-    "name": "Client Admin",
-    "systemRole": "client_admin",
-    "permissions": [
-      "ticket:view",
-      "ticket:create",
-      "ticket:edit",
-      "board:view",
-      "client:view",
-      "billing:view",
-      "servicealert:view",
-      "ticket:close",
-      "contact:view",
-      "project:view",
-      "asset:view",
-      "kb:view",
-      "schedule:view",
-      "report:view"
-    ],
-    "isDefault": false,
-    "createdAt": "2026-08-12T06:04:14.721Z",
-    "updatedAt": "2026-10-07T02:18:01.383Z"
+    "updatedAt": "2026-10-09T21:58:57.078Z"
   },
   {
     "id": "52f22c12-60e7-4489-a606-f82710131221",
@@ -309,11 +340,13 @@
       "product:edit",
       "product:delete",
       "product:manage",
-      "console:use"
+      "console:use",
+      "email:view",
+      "email:manage"
     ],
     "isDefault": true,
     "createdAt": "2026-08-12T06:04:14.720Z",
-    "updatedAt": "2026-10-08T19:26:03.546Z"
+    "updatedAt": "2026-10-09T21:58:57.082Z"
   },
   {
     "id": "ead437af-8f98-4b1c-8716-9435830d4877",
@@ -430,39 +463,12 @@
       "product:manage",
       "console:use",
       "developer:view",
-      "developer:purge"
+      "developer:purge",
+      "email:view",
+      "email:manage"
     ],
     "isDefault": false,
     "createdAt": "2026-08-12T06:04:14.718Z",
-    "updatedAt": "2026-10-09T18:51:58.059Z"
-  },
-  {
-    "id": "f032badc-4d32-463c-973d-5cf0559f273a",
-    "name": "Technician",
-    "systemRole": "technician",
-    "permissions": [
-      "ticket:view",
-      "ticket:create",
-      "ticket:edit",
-      "ticket:assign",
-      "ticket:close",
-      "board:view",
-      "client:view",
-      "integration:view",
-      "report:view",
-      "servicealert:view",
-      "contact:view",
-      "project:view",
-      "asset:view",
-      "kb:view",
-      "schedule:view",
-      "chat:view",
-      "inference:view",
-      "product:view",
-      "console:use"
-    ],
-    "isDefault": false,
-    "createdAt": "2026-08-12T06:04:14.721Z",
-    "updatedAt": "2026-10-09T19:15:49.739Z"
+    "updatedAt": "2026-10-09T21:58:57.083Z"
   }
 ]

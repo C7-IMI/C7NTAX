@@ -348,39 +348,158 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; 
 
 .ticket-print-only { display: none; }
 
+/* ── Printed documents ───────────────────────────────────────────────────────
+   The ticket sheet is the one page this application prints with the browser's own Print, so it is the
+   one page whose paper the browser would otherwise choose. `@page` states the size the ticket family
+   is drawn at, and every `.ticket-sheet` is exactly that size to the millimetre, so nothing is scaled
+   to fit the browser's default paper and no sheet overflows.
+
+   Paper is white and ink is the document palette's `#0f172a` **whatever the interface theme is**: a
+   printed page has no theme to follow, and a document that came out dark is the defect this replaces.
+   Type is in points with an 8.5pt floor (the sheet used to print at 12pt serif with a 20pt heading, an
+   unrelated scale), and every money or quantity column is tabular.
+
+   Every selector is scoped to `.ticket-print-only`, and the sheet's own type, colour and rules reach
+   for `!important`. That is not decoration: the interface's table rules (`html[data-ui-redesign="true"]
+   table thead th` sets an 11px header, a tinted sticky header row and its own padding) are written for
+   the screen, sit later in this file, and would otherwise restyle a *printed table* — which is exactly
+   the kind of leak the third-surface rule in DESIGN.md §8 forbids. A print block is the one place
+   where the printed surface must win outright.
+
+   The page is paginated in `Tickets.tsx`, not by the browser: the sheet is built as explicit page divs,
+   so its "page n of m" is a number this code counted. */
 @media print {
-  @page { margin: 16mm; }
-  body { background: #ffffff !important; color: #111111 !important; }
+  @page { size: A4 portrait; margin: 0; }
+  html, body { background: #ffffff !important; }
+  body { color: #0f172a !important; }
   body * { visibility: hidden !important; }
   .ticket-print-only,
   .ticket-print-only * { visibility: visible !important; }
   .ticket-print-only {
     display: block !important;
     position: absolute;
-    inset: 0;
-    width: 100%;
-    padding: 0;
-    color: #111111 !important;
+    inset: 0 auto auto 0;
+    color: #0f172a !important;
     background: #ffffff !important;
-    font: 12pt/1.5 Georgia, serif;
+    font: 9pt/1.45 "Inter", -apple-system, "Segoe UI", Roboto, Helvetica, sans-serif !important;
+    font-variant-numeric: tabular-nums;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-  .ticket-print-only h1 { font-size: 20pt; margin-bottom: 4pt; }
-  .ticket-print-only h2 { font-size: 16pt; margin-bottom: 8pt; }
-  .ticket-print-only h3 { font-size: 13pt; margin: 16pt 0 6pt; }
-  .ticket-print-only dl { display: grid; grid-template-columns: 1fr 1fr; gap: 6pt 18pt; margin: 14pt 0; }
-  .ticket-print-only dl div { display: flex; gap: 6pt; }
-  .ticket-print-only dt { font-weight: 700; }
-  .ticket-print-only dd { margin: 0; }
-  .ticket-print-activity { border-top: 1px solid #cccccc; padding: 6pt 0; break-inside: avoid; }
-  .ticket-print-activity p { white-space: pre-wrap; margin: 3pt 0; }
-  .ticket-print-activity small { color: #555555; }
-  /* The letterhead every printed document wears — the shield on its tile, the wordmark with the
-     crimson 7, and who made it. See components/PrintLetterhead.tsx. */
-  .print-letterhead { display: flex; align-items: center; gap: 10pt; padding-bottom: 6pt; }
-  .print-letterhead img { width: 26pt; height: 26pt; border-radius: 6pt; }
-  .print-letterhead__mark { font: 700 17pt/1 -apple-system, "Segoe UI", Roboto, Helvetica, sans-serif; color: #0f172a; }
-  .print-letterhead__mark b { color: #c00000; }
-  .print-letterhead__who { margin-left: auto; text-align: right; font: 8pt/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, sans-serif; color: #64748b; }
+  .ticket-print-only .ticket-sheet {
+    position: relative !important;
+    box-sizing: border-box;
+    display: flex !important;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 16mm 18mm 20mm !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    break-after: page;
+    page-break-after: always;
+  }
+  .ticket-print-only .ticket-sheet:last-child { break-after: auto; page-break-after: auto; }
+  .ticket-print-only .ticket-sheet__body { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+  .ticket-print-only .ticket-sheet__foot {
+    position: absolute !important;
+    left: 18mm;
+    right: 18mm;
+    bottom: 0;
+    height: 20mm;
+    padding-top: 2.5mm !important;
+    border-top: 0.5pt solid #e2e8f0;
+    display: flex !important;
+    justify-content: space-between;
+    gap: 6mm;
+    font-size: 8.5pt !important;
+    color: #64748b !important;
+    background: #ffffff !important;
+  }
+  .ticket-print-only .ticket-sheet h1 {
+    font-size: 17pt !important; line-height: 1.15; margin: 4mm 0 0 !important;
+    color: #0f172a !important; letter-spacing: -0.015em; font-weight: 700 !important;
+  }
+  .ticket-print-only .ticket-sheet h2 {
+    font-size: 12pt !important; line-height: 1.25; margin: 1mm 0 0 !important;
+    color: #334155 !important; font-weight: 600 !important;
+  }
+  .ticket-print-only .ticket-sheet h3 {
+    font-size: 9pt !important; font-weight: 700 !important; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #334155 !important; background: none !important;
+    border-bottom: 0.6pt solid #e2e8f0; border-top: 0; padding: 0 0 1.4mm 0 !important;
+    margin: 6mm 0 2.2mm !important; position: static !important; break-after: avoid;
+  }
+  .ticket-print-only .ticket-sheet__lead {
+    font-size: 9pt !important; color: #334155 !important; margin-top: 3mm; white-space: pre-wrap;
+  }
+  .ticket-print-only .ticket-sheet__runhead {
+    display: flex !important; justify-content: space-between; gap: 6mm;
+    font-size: 8.5pt !important; color: #64748b !important;
+    border-bottom: 0.6pt solid #e2e8f0; padding-bottom: 2mm;
+  }
+  .ticket-print-only .ticket-sheet__runhead span:first-child { font-weight: 600 !important; color: #0f172a !important; }
+  .ticket-print-only .ticket-sheet__facts { display: grid !important; grid-template-columns: 1fr 1fr; gap: 0 8mm; }
+  .ticket-print-only .ticket-sheet__facts div {
+    display: flex !important; justify-content: space-between; gap: 3mm;
+    border-bottom: 0.4pt solid #e2e8f0; padding: 1.3mm 0 !important;
+  }
+  .ticket-print-only .ticket-sheet__facts dt { font-size: 9pt !important; color: #64748b !important; }
+  .ticket-print-only .ticket-sheet__facts dd {
+    font-size: 9pt !important; font-weight: 600 !important; color: #0f172a !important;
+    margin: 0 !important; text-align: right !important;
+  }
+  .ticket-print-only .ticket-sheet__table {
+    width: 100% !important; border-collapse: collapse !important; border-spacing: 0 !important;
+    font-size: 9pt !important; background: none !important;
+  }
+  .ticket-print-only .ticket-sheet__table thead { display: table-header-group !important; }
+  .ticket-print-only .ticket-sheet__table thead th {
+    font-size: 8.5pt !important; font-weight: 600 !important; text-transform: uppercase;
+    letter-spacing: 0.04em !important; color: #64748b !important; background: none !important;
+    position: static !important; text-align: left !important;
+    padding: 0 2mm 1.4mm 2mm !important; border-bottom: 0.6pt solid #0f172a;
+    border-top: 0; vertical-align: bottom;
+  }
+  .ticket-print-only .ticket-sheet__table td {
+    font-size: 9pt !important; padding: 1.3mm 2mm !important;
+    border-bottom: 0.4pt solid #e2e8f0; color: #334155 !important;
+    vertical-align: top; background: none !important; text-transform: none !important;
+    letter-spacing: normal !important;
+  }
+  .ticket-print-only .ticket-sheet__table .num {
+    text-align: right !important; font-variant-numeric: tabular-nums;
+  }
+  /* A total is marked by a rule above it and a heavier weight, never by a fill. */
+  .ticket-print-only .ticket-sheet__table tfoot td {
+    border-bottom: none; border-top: 0.5pt solid #0f172a;
+    font-weight: 700 !important; color: #0f172a !important;
+  }
+  .ticket-print-only .ticket-sheet__note { font-size: 8.5pt !important; color: #64748b !important; margin-top: 1.5mm; }
+  .ticket-print-only .ticket-print-activity {
+    border-bottom: 0.4pt solid #e2e8f0; padding: 1.6mm 0 !important; break-inside: avoid;
+  }
+  .ticket-print-only .ticket-print-activity p {
+    white-space: pre-wrap; margin: 0.6mm 0 !important; font-size: 9pt !important; color: #334155 !important;
+  }
+  .ticket-print-only .ticket-print-activity strong {
+    font-size: 8.5pt !important; text-transform: uppercase; letter-spacing: 0.06em; color: #334155 !important;
+  }
+  .ticket-print-only .ticket-print-activity small { font-size: 8.5pt !important; color: #64748b !important; }
+  /* The letterhead every printed document wears — the brand's mark, the wordmark, and who made it.
+     See components/PrintLetterhead.tsx. */
+  .ticket-print-only .print-letterhead {
+    display: flex !important; align-items: center; gap: 3mm;
+    padding: 0 0 2mm 0 !important; border-bottom: 0.6pt solid #0f172a;
+  }
+  .ticket-print-only .print-letterhead img { width: 9mm; height: 9mm; object-fit: contain; }
+  .ticket-print-only .print-letterhead__mark {
+    font: 700 15pt/1 "Inter", -apple-system, "Segoe UI", Roboto, Helvetica, sans-serif !important;
+    letter-spacing: -0.01em;
+  }
+  .ticket-print-only .print-letterhead__who {
+    margin-left: auto; text-align: right;
+    font: 8.5pt/1.45 "Inter", -apple-system, "Segoe UI", Roboto, Helvetica, sans-serif !important;
+  }
 }
 
 /* ── P1 modernization ─────────────────────────────────────────────────────

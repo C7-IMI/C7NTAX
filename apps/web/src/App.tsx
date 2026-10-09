@@ -37,6 +37,9 @@ import { ConfigurationHub, ConfigurationSectionPage } from "./pages/Configuratio
 import { SecurityPage } from "./pages/Security";
 import { CustomerPortalSettingsPage } from "./pages/CustomerPortalSettings";
 import { ChangelogPage } from "./pages/Changelog";
+import { EmailStudioPage } from "./pages/EmailStudio";
+import { EmailBrandPage } from "./pages/EmailBrand";
+import { EmailLogPage } from "./pages/EmailLog";
 import { ConsolePage } from "./pages/ConsolePage";
 import { CalendarPage } from "./pages/Calendar";
 import { PTOPage } from "./pages/PTO";
@@ -127,6 +130,10 @@ function ProtectedRoutes() {
         <Route path="/service-alerts/monitors" element={<MonitorsPage />} />
         <Route path="/admin/webhooks" element={<WebhooksPage />} />
         <Route path="/admin/sso" element={<SingleSignOnPage />} />
+        {/* The Email Studio: every message this instance sends, with the templates behind them. */}
+        <Route path="/admin/email" element={<EmailStudioPage />} />
+        <Route path="/admin/email/brand" element={<EmailBrandPage />} />
+        <Route path="/admin/email/log" element={<EmailLogPage />} />
         <Route path="/ai-actions" element={<AiActionsPage />} />
         {/* The console as a page: the same component as the popup, plus a URL worth sharing. */}
         <Route path="/console" element={<ConsolePage />} />

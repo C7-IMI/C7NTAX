@@ -9979,6 +9979,143 @@ rule was then applied to the header chrome, which was still naming the hidden pa
   logo, `--kumo-red` for Kumo), and the light theme keeps a compatibility list of re-mapped Tailwind palette
   classes. Both are the kind of rule that only exists in a code comment; a model needs them written down.
 
+---
+
+### Prompt 367 — Plain text has to be readable when HTML is stripped
+
+**Timestamp:** 2026-10-09 16:52 | **Status:** In progress (folded into the Email Studio build) | **Duration:** —
+
+**BuildNotes IDs:** part of **2026.10.9.031** (the Email Studio), written with it.
+
+**Prompt**
+
+> Also make sure that even though the email get sent as HTML, there is either an option to send a plain text
+> or that the informaiton still gets displayed properly when sent as plain text. Some mail systems strip the
+> HTML out of it, so I still want the e-mail to be readable.
+
+**What it changed in the build**
+- `send()` in `packages/email/src/EmailService.ts` already accepts a `text` part, so this is a rule about the
+  template layer rather than the transport: **every message is sent with both parts**, and the text part is
+  derived from the same blocks as the HTML so the two cannot carry different facts.
+- `EmailTemplate.text` is `null` by default — derived and therefore unable to drift — and only becomes a
+  string when somebody edits it deliberately; the contract's `derivedText` is always present so the
+  interface can show both and say when they differ.
+- Every block has a text form that keeps its information: a button becomes `Label: <full url>` rather than
+  link text with the URL hidden, `facts` and `table` become `Label: value` lines, a quote is `> ` prefixed,
+  an image always carries its words because a picture may not arrive, an attachment is named. A message must
+  never depend on an image or a hover state to make sense — which is also why the block model has no
+  two-column or decorative block in it at all.
+- The Studio's preview and the send sheet both show the text part beside the HTML, so the person approving a
+  message approves both of what is going out.
+
+**Notes for next time**
+- **The requirement arrived after the briefs, and it is the kind of rule that has to reach *every* builder
+  rather than one.** It went to all four agents in one message, because a template layer that derives a text
+  part while the send path drops it would have been a half-implementation nobody could see from any one
+  file.
+
+---
+
+### Prompt 368 — The printable reports and PDFs, reimagined
+
+**Timestamp:** 2026-10-09 17:05 | **Status:** In progress (mockups only, as asked) | **Duration:** —
+
+**BuildNotes IDs:** none — drawings only, no product behaviour changes.
+
+**Prompt**
+
+> Do mockups of the different printable reports and PDFs. I want to reimagine how they look as well. Use
+> modern and cutting edge design principles, while staying professional. I like how you redesigned them
+> originally, but they still need more tuning.
+>
+> Mockups only. No changes yet
+
+**What I found before drawing anything**
+
+There are **five document families produced by four mechanisms, in two visual languages** — which is why they
+read as unfinished:
+
+| Family | Renderer | State |
+|---|---|---|
+| Standard reports (16) | `reportKit.tsx` — `documentToPrintWindow`, `exportPdf`, plus a legacy `tablesToPdf` still on some paths | the light, section-based letterhead document — the good one |
+| Business reviews | the same kit, composed as a pack | long documents with no cover and no running head |
+| Custom banded reports | `lib/reportOutput.ts` + the banded engine | millimetre-accurate bands and vector text in jsPDF — already right, and a *different* visual language from the kit |
+| Invoice | `GET /billing/invoices/:id/pdf`, `billing.ts:399` | **dark-themed HTML**, opened in a window — the most customer-facing document in the product |
+| Ticket sheet | `.ticket-print-only` in `Tickets.tsx` and `index.css` | a browser print of a hidden section, **no shared letterhead** |
+
+So the tuning is not cosmetic: two of the five are drawn as *screens*, one has no letterhead, and one family
+(the quote) has no printable output at all.
+
+**What is being drawn** (two files, two agents, one shared document language — paper first, in millimetres, in
+a light document palette whatever the interface theme is; a letterhead from `documentBrand.ts`; a masthead of
+3–5 tabular figures; hairlines and a baseline grid rather than cards; tables without zebra striping; a running
+head and a footer with page *n* of *m*; and the **basis block** the repository's own honesty rule requires,
+saying where the figures came from and what could not be known):
+
+- `docs/mockups/documents-reports.html` — the report family: the system on one page, a real standard report
+  (Aging Report) in portrait and landscape, a business-review pack with a cover and running heads, the banded
+  engine's structure with its bands annotated, and the output chooser.
+- `docs/mockups/documents-customer-facing.html` — the documents that leave the building: the invoice (with a
+  multi-page and part-paid case, since that is where an invoice design breaks), the quote as a proposal, the
+  ticket sheet read by the client first, and the overdue reminder as the attachment its email travels with.
+
+**Notes for next time**
+- **"It still needs tuning" was a real signal, and the cause was structural rather than stylistic.** Five
+  families, four renderers and two visual languages had grown one at a time, each reasonable on its own. The
+  fix is one document language and one canvas, with the banded engine's millimetre accuracy kept — not six
+  restyles.
+
+---
+
+### Prompt 369 — Build the documents, and let me brand them
+
+**Timestamp:** 2026-10-09 17:21 | **Status:** In progress | **Duration:** —
+
+**BuildNotes IDs:** none yet — the entry is written when the build lands (expected **2026.10.9.032**).
+
+**Prompt**
+
+> Approved. build the new printable reports and PDFs. One change is that I need to be able to change the
+> header and and logo. RIght now it says C7NTAX, but I want to be able to add/upload a company logo and icon.
+> AKA change the header.
+>
+> This may require the ability to modify the existing reports, which is a good idea now that I think about
+> it.
+>
+> I want to be able to brand the reports, essentially.
+>
+> This can be a simple interface that lets me change the branding globally or on a case by case basis.
+> Ideallyboth options. Maybe even a Branding subsection with configurations/settings/pages that let me
+> control the branding of the application
+>
+> Go ahead and just build that out
+
+The attachment is today's letterhead from a generated document: the shield, the wordmark with its crimson 7,
+"Cyber 7 Group, LLC · Professional Services", "info@cyber7group.com · +1-555-0100". Every one of those five
+things is a literal in the product rather than a setting, which is exactly what is being fixed.
+
+**What was verified before building**
+
+- **The invoice's tax line is wrong for the customer.** `reportData.ts:1912` already records that `taxRate` is
+  written two ways — invoices carry a percentage (`8.5`), service agreements a fraction (`0.085`) — and the
+  PDF route multiplies by 100 unconditionally, so `billing.ts:494` prints **"Tax (850.0%)"** beside a correct
+  $680.00. Two independent confirmations: the route's own arithmetic, and `snapshots/invoices.json`
+  (`taxRate: 8.5`). The rate/percent trap is a recorded one and it reaches the customer on the one document a
+  customer keeps.
+- **The ticket sheet leaks internal notes.** `Tickets.tsx:2650` maps `comments.slice(0, 10)` with no
+  `isInternal` filter and labels each one `"Internal Note"`, so a hidden internal note is printed, and is
+  printed on the copy the client is sent.
+- The invoice "PDF" is a **dark** screen (`background:#0b1120`) opened in a popup, and the menu entry that
+  calls it says **Download PDF** while it fetches HTML.
+
+**The shape of the build**
+
+Two separable concerns, which is why they are being built as such: **the document language** (what a page
+looks like) and **the brand** (whose page it is). The renderers take a brand object rather than reading
+literals, so branding is one source of truth consumed by documents, reports, PDFs and email alike — including
+the email brand kit the parallel Email Studio work introduced, which is being promoted from an email-only
+setting to the instance's identity rather than left as a second place to change a logo.
+
 
 
 

@@ -8,14 +8,20 @@
  * remote content.
  */
 
-const EMAIL_TAGS = new Set([
+/**
+ * The tags a message may contain. Exported so a *check* can assert against this set rather than a copy
+ * of it: `apps/api/src/email-studio-probe.ts` proves the renderer stays inside it, and a check holding
+ * its own list would stop noticing the day the two drifted.
+ */
+export const EMAIL_TAGS = new Set([
   "p", "br", "div", "span", "strong", "b", "em", "i", "u", "s", "strike", "del", "sub", "sup",
   "ul", "ol", "li", "blockquote", "a", "h1", "h2", "h3", "h4", "hr", "pre", "code",
   "table", "thead", "tbody", "tr", "td", "th", "img",
 ]);
 const EMAIL_VOID_TAGS = new Set(["br", "hr", "img"]);
 const EMAIL_DROP_WITH_CONTENT = ["script", "style", "iframe", "object", "embed", "form", "svg", "template"];
-const EMAIL_STYLE_PROPS = new Set([
+/** The inline style properties that survive; everything else is dropped rather than escaped. */
+export const EMAIL_STYLE_PROPS = new Set([
   "color", "background-color", "font-size", "font-family", "font-weight", "font-style",
   "text-decoration", "text-align", "margin-left", "padding-left", "line-height",
 ]);

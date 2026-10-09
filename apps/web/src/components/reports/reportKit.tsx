@@ -1,20 +1,34 @@
 /**
- * The report kit (PLAN-020).
+ * The report kit (PLAN-020, and the document language of §8/`docs/mockups/documents-reports.html`).
  *
  * A report is described once as a list of sections — KPI blocks, bar lists, tables, note lists and
  * fact pairs — and every way of consuming it reads that same list: the screen draws it, **Print**
- * renders it to a print window, **PDF** lays each table out with autoTable and **Excel/CSV** write
- * the same tables out. There is no second code path that decides what a report "really" contains,
- * which is what used to let an exported file disagree with the screen it came from.
+ * renders it to a print window, **PDF** lays it out with jsPDF and **Excel/CSV** write the same tables
+ * out. There is no second code path that decides what a report "really" contains, which is what used
+ * to let an exported file disagree with the screen it came from.
+ *
+ * **The paper is not this file's business.** The paper sizes, margins, type scale, rules and the basis
+ * block live in one module (`documentLanguage.ts`) and the branding lives in one place (`@C7NTAX/shared`
+ * plus the cache in `hooks/useBrandKit`). This file maps sections onto the language's blocks and hands
+ * the resolved `DocumentBrand` through. That is why there is no company name, no hex literal for the
+ * brand and no hardcoded page size below: the PDF used to be **always** landscape A4 whatever the
+ * screen showed, and the print window had no `@page` rule at all, so the browser chose the paper. Both
+ * of those were the same defect — a renderer deciding for itself — and both are gone.
  */
 import type { ReactNode } from "react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { DOCUMENT_BRAND, documentMetaLine, shieldDataUrl } from "../../lib/documentBrand";
 import {
   duration as durationValue, formatValue as formatValueIn, labelFor as labelForValue,
-  money as moneyValue, number as numberValue, unwrapValue, type ValueFormat,
+  money as moneyValue, number as numberValue, unwrapValue,
+  type DocumentBrand, type DocumentFamily, type DocumentPresentation, type ValueFormat,
 } from "@C7NTAX/shared";
+import { documentBrandOf } from "../../hooks/useBrandKit";
+import { shieldDataUrl } from "../../lib/documentBrand";
+import {
+  DOC_MARGIN, TYPE_PT, basisBlocks, contentWidthMm, pageBox, ptToMm, renderPrintDocument,
+  type BasisBlock, type PrintBlock,
+} from "./documentLanguage";
 
 export type Tone = "neutral" | "good" | "warn" | "bad" | "info";
 /** The formats a column can ask for. Defined once in `@C7NTAX/shared` so the banded engine and this kit agree. */
@@ -32,7 +46,31 @@ export type Section =
   | { kind: "notes"; title: string; items: string[]; tone: Tone }
   | { kind: "facts"; title: string; items: FactItem[] };
 
-export interface ReportDocument { title: string; subtitle?: string; period?: string; sections: Section[] }
+/**
+ * A report, as the document it is.
+ *
+ * `family` decides which letterhead, paper size and basis default the document wears; it is optional so
+ * a caller that has only sections still gets the shipped standard-report sheet. `basis` is the
+ * **endpoint's own** account of where its figures came from — the kit never composes one.
+ */
+export interface ReportDocument {
+  title: string;
+  subtitle?: string;
+  /** The period the server actually applied, as the endpoint named it. */
+  period?: string;
+  /** The client the report was run for, when the caller narrowed it. */
+  client?: string;
+  /** Who produced the document. The fourth fact of the meta line, and the first question asked of a disputed figure. */
+  generatedBy?: string;
+  family?: DocumentFamily;
+  basis?: BasisBlock;
+  sections: Section[];
+}
+
+/** A per-export choice: paper, orientation, and whether the basis block travels with the file. */
+export interface ExportOptions {
+  presentation?: Partial<DocumentPresentation> | null;
+}
 
 // ── Formatting ──────────────────────────────────────────────────────
 
@@ -73,6 +111,10 @@ const BAR_TONE: Record<Tone, string> = {
 };
 
 // ── On-screen rendering ─────────────────────────────────────────────
+//
+// The screen is the application's surface, not paper: it keeps the cards, the tints and the theme
+// tokens. Only the *sections* are shared with the document, which is the property that stops a file
+// disagreeing with the screen it came from.
 
 function SectionHeading({ children }: { children: ReactNode }) {
   return <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{children}</h4>;
@@ -228,8 +270,6 @@ const fileBase = (title: string) => title.replace(/[^\w]+/g, "-");
 /** A workbook name safe for SpreadsheetML and for a filename. */
 export const reportFileBase = fileBase;
 
-const escapeHtml = (value: string) => value.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
-
 // ── The writers, over plain tables ──────────────────────────────────
 //
 // These take `FlatTable[]` rather than a `ReportDocument`, so a banded template — which produces its
@@ -283,9 +323,17 @@ const csvCell = (value: unknown): string => {
   return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 };
 
-/** Every table as CSV, one after another with a blank line between, which is what a reader expects. */
-export function tablesToCsv(tables: FlatTable[]): string {
+/**
+ * Every table as CSV, one after another with a blank line between, which is what a reader expects.
+ *
+ * `preamble` is the basis block, and it goes **first** rather than last: a spreadsheet has no pages, so
+ * "the last sheet" is not a place. As the opening paragraph it is the one thing a reader of the file
+ * cannot miss, which is what a caveat needs to be.
+ */
+export function tablesToCsv(tables: FlatTable[], preamble: string[] = []): string {
   const lines: string[] = [];
+  for (const line of preamble) lines.push(csvCell(line));
+  if (preamble.length) lines.push("");
   for (const table of tables) {
     lines.push(csvCell(table.title));
     lines.push(table.columns.map(c => csvCell(c.label)).join(","));
@@ -295,473 +343,622 @@ export function tablesToCsv(tables: FlatTable[]): string {
   return lines.join("\r\n");
 }
 
-/** The landscape PDF the standard reports use: a heading, then one autoTable per table. */
-export function tablesToPdf(tables: FlatTable[], title: string, subtitle?: string, period?: string): void {
-  const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
-  const width = doc.internal.pageSize.getWidth();
-  doc.setFontSize(16);
-  doc.text(title, 40, 40);
-  doc.setFontSize(9);
-  doc.setTextColor(100);
-  doc.text([subtitle, period, `Generated ${new Date().toLocaleString()} — C7NTAX Reporting`].filter(Boolean).join(" · "), 40, 56);
-  doc.setTextColor(0);
-
-  let cursor = 76;
-  for (const table of tables) {
-    if (cursor > doc.internal.pageSize.getHeight() - 80) { doc.addPage(); cursor = 60; }
-    doc.setFontSize(11);
-    doc.text(table.title, 40, cursor);
-    cursor += 6;
-    autoTable(doc, {
-      head: [table.columns.map(c => c.label)],
-      body: table.rows.map(row => table.columns.map(c => String(row[c.key] ?? "—"))),
-      startY: cursor,
-      styles: { fontSize: 8, cellPadding: 4 },
-      headStyles: { fillColor: [34, 211, 238], textColor: 15 },
-      alternateRowStyles: { fillColor: [247, 250, 252] },
-      margin: { left: 40, right: 40 },
-      tableWidth: width - 80,
-    });
-    const final = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable;
-    cursor = (final?.finalY ?? cursor) + 26;
-  }
-  doc.save(`${fileBase(title)}.pdf`);
+/**
+ * The printable version of plain tables — the banded designer's output.
+ *
+ * A designed report is **deliberately exempt** from the letterhead: its author placed header bands by
+ * hand, and stamping the instance's mark above them would be overruling the person who designed the
+ * page. It still gets the document's paper, its type floor and its rules, because a sheet is a sheet.
+ */
+export function tablesToPrintWindow(
+  tables: FlatTable[], title: string, subtitle?: string, period?: string, options?: ExportOptions,
+): Window | null {
+  const brand = documentBrandOf("report.designer", options?.presentation ? { presentation: options.presentation } : null);
+  const generatedAt = new Date();
+  const blocks: PrintBlock[] = tables.map(table => ({
+    kind: "table" as const,
+    title: table.title,
+    columns: table.columns.map(c => ({ label: c.label })),
+    rows: table.rows.map(row => table.columns.map(c => String(row[c.key] ?? "—"))),
+  }));
+  return openPrintWindow({
+    brand, blocks, title,
+    metaLine: metaLineOf({ subtitle, period }, brand, generatedAt),
+    runningHead: [title, subtitle].filter(Boolean).join(" · "),
+    footerLeft: footerLeftOf(brand, generatedAt),
+  });
 }
 
-/** The printable report as HTML tables — the same content as the PDF. */
-export function tablesToPrintWindow(tables: FlatTable[], title: string, subtitle?: string, period?: string): Window | null {
-  const body = tables.map(table => `
-    <h2>${escapeHtml(table.title)}</h2>
-    <table>
-      <thead><tr>${table.columns.map(c => `<th>${escapeHtml(c.label)}</th>`).join("")}</tr></thead>
-      <tbody>${table.rows.map(row => `<tr>${table.columns.map(c => `<td>${escapeHtml(String(row[c.key] ?? "—"))}</td>`).join("")}</tr>`).join("")}</tbody>
-    </table>`).join("");
+// ── The document language adapter ───────────────────────────────────
+//
+// Everything below turns a `ReportDocument` into the language's blocks and hands them to one of two
+// renderers. Neither renderer knows what a "section" is, and neither holds a brand: they are given a
+// resolved `DocumentBrand` and a list of blocks.
 
-  const window_ = window.open("", "_blank", "width=980,height=760");
+const brandOf = (document_: ReportDocument, options?: ExportOptions): DocumentBrand =>
+  documentBrandOf(
+    document_.family ?? "report.standard",
+    options?.presentation ? { presentation: options.presentation } : null,
+  );
+
+/** `S. Simmons` — the footer's version of a name, where there is no room for the whole of it. */
+function shortName(who?: string): string {
+  if (!who) return "";
+  const match = who.match(/^\s*([^\s@]+)(?:\s+([^\s@]+))?/);
+  if (!match) return who;
+  const first = match[1] ?? "";
+  const last = match[2] ?? "";
+  return last ? `${first.charAt(0).toUpperCase()}. ${last}` : first;
+}
+
+/** Client · period · as-of · generated at · who generated it. */
+function metaLineOf(document_: Pick<ReportDocument, "client" | "subtitle" | "period" | "generatedBy">, brand: DocumentBrand, at: Date, asOf?: string): string {
+  const who = document_.generatedBy;
+  return [
+    document_.client ?? document_.subtitle,
+    document_.period,
+    asOf ? `As of ${asOf}` : null,
+    `Generated ${at.toLocaleString()}${who ? ` by ${who}` : ""}`,
+  ].filter(Boolean).join(" · ") || `Generated ${at.toLocaleString()}`;
+}
+
+/** instance · generated at by whom · the confidential line. The page count is counted by the renderer. */
+function footerLeftOf(brand: DocumentBrand, at: Date, generatedBy?: string): string {
+  const host = typeof window === "undefined" ? "" : window.location.host;
+  return [
+    host,
+    at.toLocaleString(),
+    shortName(generatedBy),
+    brand.legalText ?? `Confidential — ${brand.company}`,
+  ].filter(Boolean).join(" · ");
+}
+
+/** The masthead: 3–5 key figures, the ones needing attention carrying the accent in the *weight* of the rule. */
+function mastheadFigures(items: KpiItem[]): PrintBlock {
+  const figures = items.slice(0, 5).map(item => ({
+    label: item.label,
+    value: item.value,
+    sub: item.sub,
+    attention: item.tone === "warn" || item.tone === "bad",
+  }));
+  return { kind: "masthead", figures };
+}
+
+/**
+ * The sections, as the document's blocks.
+ *
+ * The first KPI block becomes the masthead and every later one becomes a masthead of its own; a table's
+ * rows are pre-formatted here so the language's renderer never has to know what a `money` format is;
+ * and any row carrying `__total: true` is lifted out of the body and drawn with a rule above it.
+ */
+function blocksFromSections(sections: Section[]): PrintBlock[] {
+  const blocks: PrintBlock[] = [];
+  let index = 0;
+  for (const section of sections) {
+    if (section.kind === "kpis") {
+      if (section.items.length) blocks.push(mastheadFigures(section.items));
+      continue;
+    }
+    index += 1;
+    if (section.kind === "bars") {
+      const max = Math.max(...section.rows.map(row => Math.abs(row.value)), 0);
+      const accentAt = section.rows.reduce((best, row, index) =>
+        Math.abs(row.value) > Math.abs(section.rows[best]?.value ?? 0) ? index : best, 0);
+      blocks.push({
+        kind: "bars",
+        number: index,
+        title: section.title,
+        rows: section.rows.map((row, index) => ({
+          label: row.label,
+          value: row.display ?? number(row.value),
+          fraction: max > 0 ? Math.abs(row.value) / max : 0,
+          // One bar carries the accent — the largest, which is the one the next action is about. The
+          // rest are ink, so the chart needs no legend and survives a greyscale photocopy.
+          accent: max > 0 && index === accentAt && row.value !== 0,
+        })),
+        axis: ["0%", "50%", "100%"],
+        note: section.note,
+      });
+      continue;
+    }
+    if (section.kind === "table") {
+      const rows = section.rows.filter(row => row.__total !== true);
+      const totalRow = section.rows.find(row => row.__total === true);
+      blocks.push({
+        kind: "table",
+        number: index,
+        title: section.title,
+        columns: section.columns.map(column => ({
+          label: column.label,
+          numeric: column.align === "right" || (column.format !== undefined && column.format !== "text"),
+        })),
+        rows: rows.map(row => section.columns.map(column => formatValue(row[column.key], column.format))),
+        total: totalRow ? section.columns.map(column => formatValue(totalRow[column.key], column.format)) : undefined,
+        note: section.rows.length === 0 ? (section.emptyText ?? "No rows matched.") : section.note,
+      });
+      continue;
+    }
+    if (section.kind === "facts") {
+      blocks.push({ kind: "facts", number: index, title: section.title, items: section.items.map(item => ({ label: item.label, value: item.value })) });
+      continue;
+    }
+    blocks.push({ kind: "callout", number: index, title: section.title, items: section.items });
+  }
+  return blocks;
+}
+
+/** The basis, in the shape the language's block builder expects. Null when there is nothing to print. */
+function basisOf(document_: ReportDocument, brand: DocumentBrand): BasisBlock | null {
+  if (!brand.presentation.showBasis || !document_.basis) return null;
+  const { asOf, measures, notes } = document_.basis;
+  /*
+   * A note the document already prints has already been said.
+   *
+   * Several builders render the endpoint's `notes` as a `notes` section of their own — the ageing
+   * report's "Read this before dunning" is one — and printing the same two sentences again under
+   * "What this cannot say" would be the document repeating itself. The basis block keeps only what the
+   * report has not already said, so nothing is said twice and nothing is dropped.
+   */
+  const alreadySaid = new Set(
+    document_.sections.flatMap(section => (section.kind === "notes" ? section.items.map(item => item.trim()) : [])),
+  );
+  const remaining = notes.filter(note => !alreadySaid.has(note.trim()));
+  if (!measures.length && !remaining.length) return null;
+  return { asOf: readableAsOf(asOf), measures, notes: remaining };
+}
+
+/** A payload's `asOf` is an ISO date; a reader gets the same shape as every other date on the page. */
+function readableAsOf(asOf?: string): string | undefined {
+  if (!asOf) return undefined;
+  if (!/^\d{4}-\d{2}-\d{2}/.test(asOf)) return asOf;
+  const parsed = new Date(asOf);
+  return Number.isNaN(parsed.getTime()) ? asOf : parsed.toLocaleDateString();
+}
+
+/**
+ * A report's payload, as the basis block.
+ *
+ * The endpoint already carries `basis`, `notes` and, on the ageing report, an `asOf`; the report
+ * *builders* consume them for the screen in prose a file's reader never sees. This reads them off the
+ * raw payload so what is printed cannot drift from what was measured, and it names an unknown key the
+ * way the payload did rather than dropping it — a basis block that quietly omits a rule is worse than
+ * one that prints a rule in an unfamiliar word.
+ */
+export function basisFromPayload(payload: unknown): BasisBlock | undefined {
+  if (!payload || typeof payload !== "object") return undefined;
+  const source = payload as Record<string, unknown>;
+  const raw = source.basis;
+  const measures: Array<{ label: string; value: string }> = [];
+  if (raw && typeof raw === "object") {
+    for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+      if (value === null || value === undefined || value === "") continue;
+      const text = Array.isArray(value) ? value.map(String).join(", ") : String(value);
+      if (!text) continue;
+      measures.push({ label: key.replace(/([A-Z])/g, " $1").replace(/^./, c => c.toUpperCase()).trim(), value: text });
+    }
+  }
+  const notes = Array.isArray(source.notes) ? source.notes.map(String).filter(Boolean) : [];
+  const asOf = typeof source.asOf === "string" ? source.asOf : undefined;
+  if (!measures.length && !notes.length) return undefined;
+  return { asOf, measures, notes };
+}
+
+/** The basis as rows a spreadsheet can hold. */
+function basisRows(basis: BasisBlock | null): FlatTable["rows"] {
+  if (!basis) return [];
+  return [
+    ...basis.measures.map(measure => ({ metric: measure.label, value: measure.value })),
+    ...basis.notes.map(note => ({ metric: "What this cannot say", value: note })),
+  ];
+}
+
+function openPrintWindow(input: {
+  brand: DocumentBrand; blocks: PrintBlock[]; title: string; metaLine: string; runningHead: string; footerLeft: string; autoPrint?: boolean;
+}): Window | null {
+  const window_ = window.open("", "_blank", "width=1000,height=780");
   if (!window_) return null;
-  window_.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#fff;color:#1e293b;padding:28px}
-  h1{font-size:21px;color:#0b1120;border-bottom:3px solid #22d3ee;padding-bottom:6px}
-  .meta{font-size:12px;color:#64748b;margin:6px 0 18px}
-  h2{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:#334155;margin:18px 0 6px}
-  table{width:100%;border-collapse:collapse;font-size:11px}
-  th{text-align:left;padding:6px 8px;background:#f1f5f9;border-bottom:2px solid #cbd5e1;font-weight:600;color:#334155}
-  td{padding:6px 8px;border-bottom:1px solid #e2e8f0;vertical-align:top}
-  tr:nth-child(even) td{background:#f8fafc}
-  @media print{body{padding:12px}h2{page-break-after:avoid}table{page-break-inside:auto}}
-</style></head><body>
-<h1>${escapeHtml(title)}</h1>
-<p class="meta">${escapeHtml([subtitle, period].filter(Boolean).join(" · "))} · Generated ${new Date().toLocaleString()} — C7NTAX Reporting</p>
-${body || "<p>No data available.</p>"}
-</body></html>`);
+  window_.document.write(renderPrintDocument({
+    brand: input.brand,
+    title: input.title,
+    metaLine: input.metaLine,
+    runningHead: input.runningHead,
+    blocks: input.blocks,
+    footerLeft: input.footerLeft,
+    autoPrint: input.autoPrint,
+  }));
   window_.document.close();
   window_.focus();
   return window_;
 }
 
-// ── Generated documents ─────────────────────────────────────────────
+// ── jsPDF ───────────────────────────────────────────────────────────
 //
-// A *generated* document — a standard report, a dashboard, the queue's own print — is laid out here
-// from its sections, so a KPI block prints as tiles, a bar list prints as bars and a table prints as
-// a table. The table writers above stay for the banded designer's output, whose bands decide their
-// own geometry and whose author placed the header themselves.
-//
-// The brand is in `lib/documentBrand.ts`; nothing below invents a colour.
+// Drawn in **millimetres** at the paper the document chose. jsPDF's core fonts are the ones it can
+// embed without a font file, so the PDF sets Helvetica where the screen sets Inter — the one place the
+// two surfaces cannot be identical, and the reason the type *scale* is shared rather than the face.
 
-/** Tone colours on paper, matched to the screen's tones so a figure reads the same both places. */
-const TONE_INK: Record<Tone, { fill: string; ink: string }> = {
-  neutral: { fill: DOCUMENT_BRAND.tint, ink: DOCUMENT_BRAND.ink },
-  good: { fill: "#dcfce7", ink: "#166534" },
-  warn: { fill: "#fef3c7", ink: "#92400e" },
-  bad: { fill: "#fee2e2", ink: "#991b1b" },
-  info: { fill: "#cffafe", ink: "#155e75" },
-};
-
-const hexToRgb = (hex: string): [number, number, number] => {
+const rgb = (hex: string): [number, number, number] => {
   const value = hex.replace("#", "");
-  return [parseInt(value.slice(0, 2), 16), parseInt(value.slice(2, 4), 16), parseInt(value.slice(4, 6), 16)];
+  const full = value.length === 3 ? value.split("").map(c => c + c).join("") : value;
+  return [parseInt(full.slice(0, 2), 16), parseInt(full.slice(2, 4), 16), parseInt(full.slice(4, 6), 16)];
 };
 
-/**
- * The letterhead, drawn once per document: the shield, the product's wordmark with its crimson 7, the
- * company, then the title, the meta line and the accent rule the document hangs from.
- *
- * The wordmark is drawn as three runs rather than one because the 7 is crimson and the rest is ink —
- * the same treatment the interface gives it through two masks, done here with three `text` calls and
- * the measured width of what came before.
- */
-function drawLetterhead(doc: jsPDF, title: string, subtitle?: string, period?: string, shield?: string | null): number {
-  const margin = 40;
-  const width = doc.internal.pageSize.getWidth();
-  let textLeft = margin;
-
-  if (shield) {
-    try {
-      doc.addImage(shield, "PNG", margin, 32, 24, 24);
-      textLeft = margin + 32;
-    } catch {
-      textLeft = margin; // An unreadable image must not cost the document its identity or its layout.
-    }
-  }
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
-  doc.setTextColor(DOCUMENT_BRAND.ink);
-  doc.text("C", textLeft, 50);
-  const afterC = textLeft + doc.getTextWidth("C");
-  doc.setTextColor(DOCUMENT_BRAND.crimson);
-  doc.text("7", afterC, 50);
-  const afterSeven = afterC + doc.getTextWidth("7");
-  doc.setTextColor(DOCUMENT_BRAND.ink);
-  doc.text("NTAX", afterSeven + 3.4, 50); // the logotype's own tracking between the 7 and the N
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  doc.setTextColor(DOCUMENT_BRAND.muted);
-  doc.text(DOCUMENT_BRAND.company, width - margin, 44, { align: "right" });
-  doc.text("Reporting", width - margin, 54, { align: "right" });
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(17);
-  doc.setTextColor(DOCUMENT_BRAND.ink);
-  doc.text(title, margin, 80);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(DOCUMENT_BRAND.muted);
-  doc.text(documentMetaLine(subtitle, period), margin, 93);
-
-  doc.setDrawColor(...hexToRgb(DOCUMENT_BRAND.accent));
-  doc.setLineWidth(2);
-  doc.line(margin, 100, width - margin, 100);
-  return 118;
+interface PdfContext {
+  doc: jsPDF; brand: DocumentBrand;
+  pageW: number; pageH: number;
+  left: number; right: number; top: number; bottom: number; contentW: number;
+  y: number; title: string; runningHead: string; footerLeft: string;
 }
 
-/** A section heading: a small caps label over a hairline, so a page of figures still has chapters. */
-function drawSectionHeading(doc: jsPDF, label: string, y: number): number {
-  const margin = 40;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  doc.setTextColor(DOCUMENT_BRAND.body);
-  doc.text(label.toUpperCase(), margin, y, { charSpace: 0.6 });
-  doc.setDrawColor(...hexToRgb(DOCUMENT_BRAND.hairline));
-  doc.setLineWidth(0.6);
-  doc.line(margin, y + 5, doc.internal.pageSize.getWidth() - margin, y + 5);
-  return y + 18;
+function pdfLine(ctx: PdfContext, x1: number, y1: number, x2: number, y2: number, colour: string, widthPt: number): void {
+  ctx.doc.setDrawColor(...rgb(colour));
+  ctx.doc.setLineWidth(ptToMm(widthPt));
+  ctx.doc.line(x1, y1, x2, y2);
 }
 
-function drawKpis(doc: jsPDF, section: Extract<Section, { kind: "kpis" }>, y: number): number {
-  const margin = 40;
-  const gap = 10;
-  const perRow = 4;
-  const width = doc.internal.pageSize.getWidth();
-  const tileWidth = (width - margin * 2 - gap * (perRow - 1)) / perRow;
-  const tileHeight = 46;
+/** The running head a continuation sheet wears: the document, the client, and no letterhead. */
+function pdfRunningHead(ctx: PdfContext): void {
+  const { doc } = ctx;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(TYPE_PT.small);
+  doc.setTextColor(...rgb(ctx.brand.palette.ink));
+  doc.text(ctx.runningHead, ctx.left, ctx.top + 2);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...rgb(ctx.brand.palette.muted));
+  doc.text("continued", ctx.right, ctx.top + 2, { align: "right" });
+  pdfLine(ctx, ctx.left, ctx.top + 4.6, ctx.right, ctx.top + 4.6, ctx.brand.palette.hairline, 0.6);
+  ctx.y = ctx.top + 10;
+}
 
-  section.items.forEach((item, index) => {
-    const column = index % perRow;
-    const row = Math.floor(index / perRow);
-    const x = margin + column * (tileWidth + gap);
-    const top = y + row * (tileHeight + gap);
-    const tone = TONE_INK[item.tone ?? "neutral"];
+function pdfNewPage(ctx: PdfContext): void {
+  ctx.doc.addPage();
+  pdfRunningHead(ctx);
+}
 
-    doc.setFillColor(...hexToRgb(tone.fill));
-    doc.setDrawColor(...hexToRgb(DOCUMENT_BRAND.hairline));
-    doc.setLineWidth(0.6);
-    doc.roundedRect(x, top, tileWidth, tileHeight, 3, 3, "FD");
+/** Start a sheet when `needed` millimetres will not fit above the bottom margin. */
+function pdfRoom(ctx: PdfContext, needed: number): void {
+  if (ctx.y + needed > ctx.pageH - ctx.bottom) pdfNewPage(ctx);
+}
 
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.8);
-    doc.setTextColor(DOCUMENT_BRAND.muted);
-    doc.text(item.label.toUpperCase(), x + 8, top + 12, { charSpace: 0.4 });
+function pdfWrapped(ctx: PdfContext, text: string, x: number, sizePt: number, colour: string, style: "normal" | "bold" | "italic" = "normal"): number {
+  const { doc } = ctx;
+  doc.setFont("helvetica", style);
+  doc.setFontSize(sizePt);
+  doc.setTextColor(...rgb(colour));
+  const lines = doc.splitTextToSize(text, ctx.contentW) as string[];
+  const step = sizePt * 1.45 * ptToMm(1);
+  doc.text(lines, x, ctx.y);
+  return lines.length * step;
+}
 
+function pdfSectionHead(ctx: PdfContext, number: number | undefined, title: string | undefined): void {
+  if (!title) return;
+  const { doc } = ctx;
+  pdfRoom(ctx, 14);
+  let x = ctx.left;
+  if (number !== undefined) {
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.setTextColor(...hexToRgb(tone.ink));
-    doc.text(item.value, x + 8, top + 30);
+    doc.setFontSize(TYPE_PT.section);
+    doc.setTextColor(...rgb(ctx.brand.accent));
+    doc.text(String(number), x, ctx.y);
+    x += 6;
+  }
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(TYPE_PT.section);
+  doc.setTextColor(...rgb(ctx.brand.palette.body));
+  doc.text(title.toUpperCase(), x, ctx.y, { charSpace: 0.5 });
+  pdfLine(ctx, ctx.left, ctx.y + 1.8, ctx.right, ctx.y + 1.8, ctx.brand.palette.hairline, 0.6);
+  ctx.y += 5.5;
+}
 
-    if (item.sub) {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
-      doc.setTextColor(DOCUMENT_BRAND.muted);
-      doc.text(item.sub, x + 8, top + 40);
-    }
+function pdfMasthead(ctx: PdfContext, block: Extract<PrintBlock, { kind: "masthead" }>): void {
+  const { doc } = ctx;
+  const gap = 5;
+  const count = Math.max(1, block.figures.length);
+  const width = (ctx.contentW - gap * (count - 1)) / count;
+  pdfRoom(ctx, 26);
+  const top = ctx.y;
+  block.figures.forEach((figure, index) => {
+    const x = ctx.left + index * (width + gap);
+    pdfLine(ctx, x, top, x + width, top, figure.attention ? ctx.brand.accent : ctx.brand.palette.hairline, figure.attention ? 1.4 : 0.5);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(TYPE_PT.masthead);
+    doc.setTextColor(...rgb(ctx.brand.palette.ink));
+    doc.text(figure.value, x, top + 8);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(TYPE_PT.small);
+    doc.setTextColor(...rgb(ctx.brand.palette.muted));
+    doc.text(figure.label.toUpperCase(), x, top + 12.5, { charSpace: 0.3 });
+    if (figure.sub) doc.text(doc.splitTextToSize(figure.sub, width) as string[], x, top + 16);
   });
-
-  const rows = Math.max(1, Math.ceil(section.items.length / perRow));
-  return y + rows * (tileHeight + gap) + 6;
+  const tallest = block.figures.some(figure => figure.sub) ? 20 : 15;
+  ctx.y = top + tallest;
 }
 
-function drawBars(doc: jsPDF, section: Extract<Section, { kind: "bars" }>, y: number): number {
-  const margin = 40;
-  const width = doc.internal.pageSize.getWidth();
-  const trackWidth = width - margin * 2 - 150;
-  const max = Math.max(...section.rows.map(row => row.value), 1);
-
-  for (const row of section.rows) {
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(DOCUMENT_BRAND.body);
-    doc.text(row.label, margin, y + 5);
-
-    doc.setFillColor(...hexToRgb(DOCUMENT_BRAND.tint));
-    doc.roundedRect(margin + 110, y - 1, trackWidth, 7, 3.5, 3.5, "F");
-    const filled = Math.max(4, (row.value / max) * trackWidth);
-    const tone = TONE_INK[row.tone ?? "neutral"];
-    doc.setFillColor(...hexToRgb(row.tone === "neutral" || !row.tone ? DOCUMENT_BRAND.accent : tone.ink));
-    doc.roundedRect(margin + 110, y - 1, filled, 7, 3.5, 3.5, "F");
-
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(DOCUMENT_BRAND.body);
-    doc.text(row.display ?? number(row.value), width - margin, y + 5, { align: "right" });
-    y += 15;
+function pdfTable(ctx: PdfContext, block: Extract<PrintBlock, { kind: "table" }>): void {
+  const { doc, brand } = ctx;
+  pdfSectionHead(ctx, block.number, block.title);
+  if (!block.rows.length && !block.total) {
+    ctx.y += pdfWrapped(ctx, block.note ?? "No rows matched.", ctx.left, TYPE_PT.body, brand.palette.muted, "italic");
+    return;
   }
-  return y + (section.note ? 0 : 8);
+  const body = block.rows.slice();
+  const totalIndex = block.total ? body.length : -1;
+  if (block.total) body.push(block.total);
+  autoTable(doc, {
+    // The label is drawn in caps here for the same reason the HTML sets `text-transform: uppercase`:
+    // the two surfaces are the same document, and a column written one way on screen and another on
+    // paper is the drift this whole module exists to remove.
+    head: [block.columns.map(column => column.label.toUpperCase())],
+    body,
+    startY: ctx.y,
+    margin: { left: ctx.left, right: ctx.pageW - ctx.right, bottom: ctx.bottom },
+    theme: "plain",
+    // No zebra: alternateRowStyles on paper is dithering. Structure is carried by hairlines and space.
+    styles: {
+      font: "helvetica",
+      fontSize: TYPE_PT.table,
+      cellPadding: { top: 1.3, bottom: 1.3, left: 2, right: 2 },
+      textColor: rgb(brand.palette.body),
+      lineColor: rgb(brand.palette.hairline),
+    },
+    // A rule **under the labels**, never an ink-filled header: 0.6 pt carries the same structure for a
+    // fraction of the toner and cannot photocopy into a black bar.
+    headStyles: {
+      fontStyle: "bold", fontSize: TYPE_PT.small, textColor: rgb(brand.palette.muted),
+      fillColor: false, lineColor: rgb(brand.palette.ink), lineWidth: { bottom: ptToMm(0.6) },
+    },
+    bodyStyles: { lineWidth: { bottom: ptToMm(0.4) } },
+    columnStyles: Object.fromEntries(
+      block.columns.map((column, index) => [index, { halign: column.numeric ? "right" : "left" }]),
+    ),
+    didParseCell: data => {
+      if (data.section === "body" && data.row.index === totalIndex) {
+        data.cell.styles.fontStyle = "bold";
+        data.cell.styles.textColor = rgb(brand.palette.ink);
+        data.cell.styles.lineColor = rgb(brand.palette.ink);
+        data.cell.styles.lineWidth = { top: ptToMm(0.5), bottom: 0 };
+      }
+    },
+  });
+  const final = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable;
+  ctx.y = (final?.finalY ?? ctx.y) + 4;
+  if (block.note) ctx.y += pdfWrapped(ctx, block.note, ctx.left, TYPE_PT.small, brand.palette.muted, "italic");
 }
 
-function drawFacts(doc: jsPDF, section: Extract<Section, { kind: "facts" }>, y: number): number {
-  const margin = 40;
-  const width = doc.internal.pageSize.getWidth();
-  const half = (width - margin * 2 - 20) / 2;
+function pdfBars(ctx: PdfContext, block: Extract<PrintBlock, { kind: "bars" }>): void {
+  const { doc, brand } = ctx;
+  pdfSectionHead(ctx, block.number, block.title);
+  const trackX = ctx.left + 62;
+  const trackW = Math.max(20, ctx.contentW - 62 - 33);
+  for (const row of block.rows) {
+    pdfRoom(ctx, 6);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(TYPE_PT.body);
+    doc.setTextColor(...rgb(brand.palette.body));
+    doc.text(doc.splitTextToSize(row.label, 58) as string[], ctx.left, ctx.y + 1);
+    doc.setFillColor(...rgb(brand.palette.tint));
+    doc.rect(trackX, ctx.y - 1.2, trackW, 2.4, "F");
+    // A zero-length bar is drawn as an empty cell rather than omitted, so five bands always print as
+    // five bands and the reader can see that three of them are empty.
+    doc.setFillColor(...rgb(row.accent ? brand.accent : brand.palette.body));
+    doc.rect(trackX, ctx.y - 1.2, trackW * Math.max(0, Math.min(1, row.fraction)), 2.4, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...rgb(brand.palette.body));
+    doc.text(row.value, ctx.right, ctx.y + 1, { align: "right" });
+    ctx.y += 5;
+  }
+  // The values are written beside every bar, so the chart needs no legend.
+  ctx.y += 1;
+  if (block.caption) ctx.y += pdfWrapped(ctx, block.caption, ctx.left, TYPE_PT.small, brand.palette.muted, "italic");
+  if (block.note) ctx.y += pdfWrapped(ctx, block.note, ctx.left, TYPE_PT.small, brand.palette.muted, "italic");
+  ctx.y += 2;
+}
 
-  section.items.forEach((item, index) => {
+function pdfFacts(ctx: PdfContext, block: Extract<PrintBlock, { kind: "facts" }>): void {
+  const { doc, brand } = ctx;
+  pdfSectionHead(ctx, block.number, block.title);
+  if (block.lead) ctx.y += pdfWrapped(ctx, block.lead, ctx.left, TYPE_PT.body, brand.palette.body) + 1.5;
+  const half = (ctx.contentW - 8) / 2;
+  const rows = Math.ceil(block.items.length / 2);
+  pdfRoom(ctx, rows * 5.5 + 2);
+  block.items.forEach((item, index) => {
     const column = index % 2;
     const row = Math.floor(index / 2);
-    const x = margin + column * (half + 20);
-    const top = y + row * 15;
+    const x = ctx.left + column * (half + 8);
+    const top = ctx.y + row * 5.5;
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-    doc.setTextColor(DOCUMENT_BRAND.muted);
-    doc.text(item.label, x, top);
+    doc.setFontSize(TYPE_PT.body);
+    doc.setTextColor(...rgb(brand.palette.muted));
+    doc.text(doc.splitTextToSize(item.label, half - 6) as string[], x, top);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(DOCUMENT_BRAND.ink);
-    doc.text(item.value, x + half, top, { align: "right" });
+    doc.setTextColor(...rgb(brand.palette.ink));
+    doc.text(doc.splitTextToSize(item.value, half - 6) as string[], x + half, top, { align: "right" });
+    pdfLine(ctx, x, top + 1.6, x + half, top + 1.6, brand.palette.hairline, 0.4);
   });
-
-  return y + Math.ceil(section.items.length / 2) * 15 + 6;
+  ctx.y += rows * 5.5 + 2;
 }
 
-function drawNotes(doc: jsPDF, section: Extract<Section, { kind: "notes" }>, y: number): number {
-  const margin = 40;
-  const width = doc.internal.pageSize.getWidth();
-  const tone = TONE_INK[section.tone];
-  doc.setFillColor(...hexToRgb(tone.fill));
-  doc.roundedRect(margin, y - 10, width - margin * 2, section.items.length * 13 + 16, 3, 3, "F");
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  doc.setTextColor(...hexToRgb(tone.ink));
-  section.items.forEach((item, index) => {
-    doc.text(`•  ${item}`, margin + 10, y + index * 13 + 4);
-  });
-  return y + section.items.length * 13 + 18;
-}
-
-/** The footer the whole document wears, written after the pages exist so it can count them. */
-function drawFooters(doc: jsPDF, title: string): void {
-  const margin = 40;
-  const width = doc.internal.pageSize.getWidth();
-  const height = doc.internal.pageSize.getHeight();
-  const total = doc.getNumberOfPages();
-
-  for (let page = 1; page <= total; page++) {
-    doc.setPage(page);
-    doc.setDrawColor(...hexToRgb(DOCUMENT_BRAND.hairline));
-    doc.setLineWidth(0.6);
-    doc.line(margin, height - 34, width - margin, height - 34);
-
+function pdfCallout(ctx: PdfContext, block: Extract<PrintBlock, { kind: "callout" }>): void {
+  const { doc, brand } = ctx;
+  if (block.title) {
+    pdfSectionHead(ctx, block.number, block.title);
+  } else {
+    pdfRoom(ctx, 10);
+  }
+  const indent = ctx.left + 4;
+  const textW = ctx.contentW - 6;
+  const startY = ctx.y;
+  let offset = 0;
+  for (const item of block.items) {
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(7.5);
-    doc.setTextColor(DOCUMENT_BRAND.muted);
-    doc.text(`${DOCUMENT_BRAND.product} Reporting · ${title}`, margin, height - 22);
-    doc.text(`Page ${page} of ${total}`, width - margin, height - 22, { align: "right" });
+    doc.setFontSize(TYPE_PT.body);
+    doc.setTextColor(...rgb(brand.palette.body));
+    const lines = doc.splitTextToSize(item, textW) as string[];
+    lines.forEach((line, index) => {
+      doc.text(line, indent, startY + offset + index * 4.2);
+    });
+    offset += lines.length * 4.2 + 1;
+  }
+  // One accent, carried by the weight of the stroke: 1.4 pt against the 0.5 pt hairlines around it.
+  doc.setFillColor(...rgb(brand.accent));
+  doc.rect(ctx.left, startY - 3.4, ptToMm(1.4), offset + 1, "F");
+  ctx.y = startY + offset + 3;
+}
+
+function pdfBlock(ctx: PdfContext, block: PrintBlock): void {
+  const { doc, brand } = ctx;
+  switch (block.kind) {
+    case "masthead": pdfMasthead(ctx, block); return;
+    case "section": pdfSectionHead(ctx, block.number, block.title); return;
+    case "lead": ctx.y += pdfWrapped(ctx, block.text, ctx.left, TYPE_PT.body, brand.palette.body) + 2; return;
+    case "note": ctx.y += pdfWrapped(ctx, block.text, ctx.left, TYPE_PT.small, brand.palette.muted, "italic"); return;
+    case "table": pdfTable(ctx, block); return;
+    case "bars": pdfBars(ctx, block); return;
+    case "facts": pdfFacts(ctx, block); return;
+    case "callout": pdfCallout(ctx, block); return;
+  }
+}
+
+/** The letterhead: the brand's mark, its name, the title, the meta line and the one accent rule. */
+async function pdfLetterhead(ctx: PdfContext, title: string, metaLine: string): Promise<void> {
+  const { doc, brand } = ctx;
+  const mark = await shieldDataUrl(brand.mark);
+  let textLeft = ctx.left;
+  if (mark) {
+    try {
+      doc.addImage(mark, "PNG", ctx.left, ctx.top - 1, 9, 9);
+      textLeft = ctx.left + 11;
+    } catch {
+      textLeft = ctx.left; // An unreadable image must not cost the document its identity or its layout.
+    }
+  }
+  if (brand.mark.kind === "wordmark" || mark) {
+    // The numeral of the wordmark takes the accent, and that accent is then the document's only one.
+    const word = brand.wordmark;
+    const digit = word.match(/\d/);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(15);
+    let x = textLeft;
+    if (digit && digit.index !== undefined) {
+      const before = word.slice(0, digit.index);
+      const numeral = word.slice(digit.index, digit.index + 1);
+      const after = word.slice(digit.index + 1);
+      doc.setTextColor(...rgb(brand.palette.ink));
+      if (before) { doc.text(before, x, ctx.top + 6); x += doc.getTextWidth(before); }
+      doc.setTextColor(...rgb(brand.accent));
+      doc.text(numeral, x, ctx.top + 6); x += doc.getTextWidth(numeral) + 0.6;
+      doc.setTextColor(...rgb(brand.palette.ink));
+      doc.text(after, x, ctx.top + 6);
+    } else {
+      doc.setTextColor(...rgb(brand.palette.ink));
+      doc.text(word, x, ctx.top + 6);
+    }
+  }
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(TYPE_PT.small);
+  doc.setTextColor(...rgb(brand.accent));
+  doc.text(brand.company, ctx.right, ctx.top + 3, { align: "right" });
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...rgb(brand.palette.muted));
+  doc.text(brand.tagline ?? brand.product, ctx.right, ctx.top + 7, { align: "right" });
+  // A hairline, not a coloured band: 0.6 pt of ink where the letterhead ends.
+  pdfLine(ctx, ctx.left, ctx.top + 11, ctx.right, ctx.top + 11, brand.palette.ink, 0.6);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(TYPE_PT.title);
+  doc.setTextColor(...rgb(brand.palette.ink));
+  doc.text(title, ctx.left, ctx.top + 19.5);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(TYPE_PT.small);
+  doc.setTextColor(...rgb(brand.palette.muted));
+  doc.text(metaLine, ctx.left, ctx.top + 24);
+  pdfLine(ctx, ctx.left, ctx.top + 27, ctx.right, ctx.top + 27, brand.accent, 1.4);
+  ctx.y = ctx.top + 33;
+}
+
+/** The footer on every sheet: the instance, the time, the confidential line, and page n of m. */
+function pdfFooters(ctx: PdfContext): void {
+  const { doc, brand } = ctx;
+  const total = doc.getNumberOfPages();
+  for (let page = 1; page <= total; page += 1) {
+    doc.setPage(page);
+    pdfLine(ctx, ctx.left, ctx.pageH - ctx.bottom + 1.5, ctx.right, ctx.pageH - ctx.bottom + 1.5, brand.palette.hairline, 0.5);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(TYPE_PT.small);
+    doc.setTextColor(...rgb(brand.palette.muted));
+    doc.text(ctx.footerLeft, ctx.left, ctx.pageH - ctx.bottom + 6);
+    doc.text(`Page ${page} of ${total}`, ctx.right, ctx.pageH - ctx.bottom + 6, { align: "right" });
   }
 }
 
 /**
- * The PDF of a generated document, laid out from its sections.
+ * The PDF of a generated document, laid out from its blocks at the paper the document chose.
  *
- * Asynchronous only because the shield is an image: everything else is drawn synchronously once the
- * data URL is in hand. A missing badge costs the letterhead its glyph and nothing else.
+ * Asynchronous only because the mark is an image: everything else is drawn synchronously once the data
+ * URL is in hand. A missing badge costs the letterhead its glyph and nothing else.
  */
-export async function documentToPdf(document_: ReportDocument): Promise<void> {
-  const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
-  const shield = await shieldDataUrl();
-  let y = drawLetterhead(doc, document_.title, document_.subtitle, document_.period, shield);
-  const bottom = doc.internal.pageSize.getHeight() - 52;
-
-  const newPage = () => { doc.addPage(); y = 52; };
-
-  for (const section of document_.sections) {
-    // A section that cannot fit under the cursor starts a page rather than being broken across two,
-    // because a table split under its own heading reads as a table without a heading.
-    if (y > bottom - 60) newPage();
-
-    if (section.kind === "kpis" || section.kind === "bars" || section.kind === "facts" || section.kind === "notes") {
-      if (section.title) y = drawSectionHeading(doc, section.title, y);
-      if (section.kind === "kpis") y = drawKpis(doc, section, y);
-      else if (section.kind === "bars") y = drawBars(doc, section, y);
-      else if (section.kind === "facts") y = drawFacts(doc, section, y);
-      else y = drawNotes(doc, section, y);
-      y += 10;
-      continue;
-    }
-
-    y = drawSectionHeading(doc, section.title, y);
-    const numeric = section.columns.map(column => column.format !== undefined && column.format !== "text");
-    autoTable(doc, {
-      head: [section.columns.map(column => column.label)],
-      body: section.rows.map(row => section.columns.map(column => String(row[column.key] ?? "—"))),
-      startY: y - 8,
-      styles: { fontSize: 8, cellPadding: { top: 5, bottom: 5, left: 7, right: 7 }, lineColor: hexToRgb(DOCUMENT_BRAND.hairline), lineWidth: 0.4, textColor: hexToRgb(DOCUMENT_BRAND.body) },
-      headStyles: { fillColor: hexToRgb(DOCUMENT_BRAND.ink), textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
-      alternateRowStyles: { fillColor: hexToRgb(DOCUMENT_BRAND.zebra) },
-      columnStyles: Object.fromEntries(numeric.map((isNumeric, index) => [index, { halign: isNumeric ? "right" : "left" }])),
-      margin: { left: 40, right: 40, bottom: 52 },
-      didParseCell: data => {
-        if (data.section === "body" && data.column.index === 0) data.cell.styles.textColor = hexToRgb(DOCUMENT_BRAND.ink);
-      },
-    });
-    const final = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable;
-    y = (final?.finalY ?? y) + (section.note ? 24 : 30);
-    if (section.note) {
-      doc.setFont("helvetica", "italic");
-      doc.setFontSize(7.5);
-      doc.setTextColor(DOCUMENT_BRAND.muted);
-      doc.text(section.note, 40, y - 14);
-    }
-  }
-
-  drawFooters(doc, document_.title);
+export async function documentToPdf(document_: ReportDocument, options?: ExportOptions): Promise<void> {
+  const brand = brandOf(document_, options);
+  const { widthMm, heightMm } = pageBox(brand.presentation);
+  const doc = new jsPDF({
+    orientation: brand.presentation.orientation === "landscape" ? "landscape" : "portrait",
+    unit: "mm",
+    format: [widthMm, heightMm],
+    compress: true,
+  });
+  const at = new Date();
+  const basis = basisOf(document_, brand);
+  const blocks = [
+    ...blocksFromSections(document_.sections),
+    ...(basis ? basisBlocks(basis) : []),
+  ];
+  const ctx: PdfContext = {
+    doc,
+    brand,
+    pageW: doc.internal.pageSize.getWidth(),
+    pageH: doc.internal.pageSize.getHeight(),
+    left: DOC_MARGIN.left,
+    right: doc.internal.pageSize.getWidth() - DOC_MARGIN.right,
+    top: DOC_MARGIN.top,
+    bottom: DOC_MARGIN.bottom,
+    contentW: contentWidthMm(brand.presentation),
+    y: DOC_MARGIN.top,
+    title: document_.title,
+    runningHead: [document_.title, document_.client].filter(Boolean).join(" · "),
+    footerLeft: footerLeftOf(brand, at, document_.generatedBy),
+  };
+  await pdfLetterhead(ctx, document_.title, metaLineOf(document_, brand, at, basis?.asOf));
+  for (const block of blocks) pdfBlock(ctx, block);
+  pdfFooters(ctx);
   doc.save(`${fileBase(document_.title)}.pdf`);
 }
 
 /**
- * The printable version of a generated document — the same document as the PDF, in HTML.
+ * The printable version of a generated document — the same document as the PDF, in HTML and paginated.
  *
- * It is a real document rather than `window.print()` on the screen, because printing the screen
- * printed the sidebar and the header with it. The shield is an `<img>` here (a print window is HTML
- * and can fetch one), the page boxes are the browser's, and `thead` repeats on every page because a
- * table that loses its column labels on page two is a table nobody can read.
+ * It is a real document rather than `window.print()` on the screen, because printing the screen printed
+ * the sidebar and the header with it. Paper and orientation are the document's own (`@page` says so, and
+ * every sheet is that size to the millimetre), the tables repeat their header through `thead`, and the
+ * page numbers are counted by the paginator in `documentLanguage.ts` rather than left to the browser.
  */
-export function documentToPrintWindow(document_: ReportDocument): Window | null {
-  const window_ = window.open("", "_blank", "width=1000,height=780");
-  if (!window_) return null;
-
-  const tiles = (section: Extract<Section, { kind: "kpis" }>) => `
-    ${section.title ? `<h2>${escapeHtml(section.title)}</h2>` : ""}
-    <div class="tiles">${section.items.map(item => `
-      <div class="tile tone-${item.tone ?? "neutral"}">
-        <p class="tile__label">${escapeHtml(item.label)}</p>
-        <p class="tile__value">${escapeHtml(item.value)}</p>
-        ${item.sub ? `<p class="tile__sub">${escapeHtml(item.sub)}</p>` : ""}
-      </div>`).join("")}</div>`;
-
-  const bars = (section: Extract<Section, { kind: "bars" }>) => {
-    const max = Math.max(...section.rows.map(row => row.value), 1);
-    return `
-    <h2>${escapeHtml(section.title)}</h2>
-    ${section.rows.map(row => `
-      <div class="bar">
-        <span class="bar__label">${escapeHtml(row.label)}</span>
-        <span class="bar__track"><span class="bar__fill tone-${row.tone ?? "neutral"}" style="width:${Math.max(2, Math.round((row.value / max) * 100))}%"></span></span>
-        <span class="bar__value">${escapeHtml(row.display ?? number(row.value))}</span>
-      </div>`).join("")}
-    ${section.note ? `<p class="note">${escapeHtml(section.note)}</p>` : ""}`;
-  };
-
-  const facts = (section: Extract<Section, { kind: "facts" }>) => `
-    <h2>${escapeHtml(section.title)}</h2>
-    <dl class="facts">${section.items.map(item => `
-      <div><dt>${escapeHtml(item.label)}</dt><dd>${escapeHtml(item.value)}</dd></div>`).join("")}
-    </dl>`;
-
-  const notes = (section: Extract<Section, { kind: "notes" }>) => `
-    <div class="callout tone-${section.tone}">
-      <h3>${escapeHtml(section.title)}</h3>
-      <ul>${section.items.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
-    </div>`;
-
-  const table = (section: Extract<Section, { kind: "table" }>) => `
-    <h2>${escapeHtml(section.title)}</h2>
-    <table>
-      <thead><tr>${section.columns.map(column => `<th class="${column.format && column.format !== "text" ? "num" : ""}">${escapeHtml(column.label)}</th>`).join("")}</tr></thead>
-      <tbody>${section.rows.map(row => `<tr>${section.columns.map(column => `<td class="${column.format && column.format !== "text" ? "num" : ""}">${escapeHtml(String(row[column.key] ?? "—"))}</td>`).join("")}</tr>`).join("")}</tbody>
-    </table>
-    ${section.note ? `<p class="note">${escapeHtml(section.note)}</p>` : ""}`;
-
-  const body = document_.sections.map(section => {
-    if (section.kind === "kpis") return tiles(section);
-    if (section.kind === "bars") return bars(section);
-    if (section.kind === "facts") return facts(section);
-    if (section.kind === "notes") return notes(section);
-    return table(section);
-  }).join("");
-
-  window_.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(document_.title)}</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  @page{margin:14mm}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#fff;color:${DOCUMENT_BRAND.body};padding:26px 30px 40px}
-  .letterhead{display:flex;align-items:center;gap:12px;padding-bottom:10px}
-  .letterhead img{width:30px;height:30px;border-radius:8px}
-  .letterhead .mark{font-size:19px;font-weight:700;color:${DOCUMENT_BRAND.ink};letter-spacing:.01em}
-  .letterhead .mark b{color:${DOCUMENT_BRAND.crimson}}
-  .letterhead .who{margin-left:auto;text-align:right;font-size:10px;color:${DOCUMENT_BRAND.muted};line-height:1.5}
-  h1{font-size:21px;color:${DOCUMENT_BRAND.ink};margin-top:8px}
-  .meta{font-size:11px;color:${DOCUMENT_BRAND.muted};margin:5px 0 0}
-  .rule{height:2px;background:${DOCUMENT_BRAND.accent};margin:12px 0 22px;border-radius:2px}
-  h2{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:${DOCUMENT_BRAND.body};margin:24px 0 8px;padding-bottom:5px;border-bottom:1px solid ${DOCUMENT_BRAND.hairline};page-break-after:avoid}
-  h2:first-of-type{margin-top:6px}
-  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;page-break-inside:avoid}
-  .tile{border:1px solid ${DOCUMENT_BRAND.hairline};border-radius:8px;padding:9px 11px;background:${DOCUMENT_BRAND.tint}}
-  .tile__label{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:${DOCUMENT_BRAND.muted}}
-  .tile__value{font-size:19px;font-weight:700;color:${DOCUMENT_BRAND.ink};margin-top:3px}
-  .tile__sub{font-size:10px;color:${DOCUMENT_BRAND.muted};margin-top:2px}
-  .tone-good{background:#dcfce7;border-color:#bbf7d0} .tone-good .tile__value{color:#166534}
-  .tone-warn{background:#fef3c7;border-color:#fde68a} .tone-warn .tile__value{color:#92400e}
-  .tone-bad{background:#fee2e2;border-color:#fecaca} .tone-bad .tile__value{color:#991b1b}
-  .tone-info{background:#cffafe;border-color:#a5f3fc} .tone-info .tile__value{color:#155e75}
-  .bar{display:grid;grid-template-columns:190px 1fr 80px;align-items:center;gap:10px;padding:3px 0;page-break-inside:avoid}
-  .bar__label{font-size:11px}
-  .bar__track{height:9px;background:${DOCUMENT_BRAND.tint};border-radius:99px;overflow:hidden}
-  .bar__fill{display:block;height:100%;border-radius:99px;background:${DOCUMENT_BRAND.accent}}
-  .tone-good.bar__fill{background:#16a34a} .tone-warn.bar__fill{background:#f59e0b} .tone-bad.bar__fill{background:#dc2626}
-  .bar__value{font-size:11px;text-align:right;font-variant-numeric:tabular-nums}
-  .facts{display:grid;grid-template-columns:1fr 1fr;gap:0 24px}
-  .facts div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid ${DOCUMENT_BRAND.hairline};padding:5px 0}
-  .facts dt{font-size:11px;color:${DOCUMENT_BRAND.muted}}
-  .facts dd{font-size:11px;font-weight:600;color:${DOCUMENT_BRAND.ink}}
-  .callout{border-radius:8px;padding:12px 14px;background:${DOCUMENT_BRAND.tint};border:1px solid ${DOCUMENT_BRAND.hairline}}
-  .callout h3{font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
-  .callout ul{margin-left:16px;font-size:11px} .callout li{margin:2px 0}
-  table{width:100%;border-collapse:collapse;font-size:11px}
-  thead{display:table-header-group}
-  th{text-align:left;padding:7px 9px;background:${DOCUMENT_BRAND.ink};color:#fff;font-weight:600;font-size:10px}
-  td{padding:6px 9px;border-bottom:1px solid ${DOCUMENT_BRAND.hairline};vertical-align:top}
-  tbody tr:nth-child(even) td{background:${DOCUMENT_BRAND.zebra}}
-  td:first-child{color:${DOCUMENT_BRAND.ink}}
-  .num{text-align:right;font-variant-numeric:tabular-nums}
-  .note{font-size:10px;color:${DOCUMENT_BRAND.muted};margin-top:6px;font-style:italic}
-  .foot{margin-top:28px;padding-top:8px;border-top:1px solid ${DOCUMENT_BRAND.hairline};font-size:9.5px;color:${DOCUMENT_BRAND.muted};display:flex;justify-content:space-between}
-  @media print{body{padding:0} .tiles,.bar,.facts div{page-break-inside:avoid}}
-</style></head><body>
-<div class="letterhead">
-  <img src="${DOCUMENT_BRAND.shield}" alt="">
-  <span class="mark">C<b>7</b>NTAX</span>
-  <span class="who">${escapeHtml(DOCUMENT_BRAND.company)}<br>Reporting</span>
-</div>
-<h1>${escapeHtml(document_.title)}</h1>
-<p class="meta">${escapeHtml(documentMetaLine(document_.subtitle, document_.period))}</p>
-<div class="rule"></div>
-${body || "<p>No data available.</p>"}
-<div class="foot"><span>${escapeHtml(DOCUMENT_BRAND.product)} Reporting · ${escapeHtml(document_.title)}</span><span>${escapeHtml(new Date().toLocaleString())}</span></div>
-</body></html>`);
-  window_.document.close();
-  window_.focus();
-  return window_;
+export function documentToPrintWindow(document_: ReportDocument, options?: ExportOptions): Window | null {
+  const brand = brandOf(document_, options);
+  const at = new Date();
+  const basis = basisOf(document_, brand);
+  const blocks = [
+    ...blocksFromSections(document_.sections),
+    ...(basis ? basisBlocks(basis) : []),
+  ];
+  return openPrintWindow({
+    brand,
+    blocks,
+    title: document_.title,
+    metaLine: metaLineOf(document_, brand, at, basis?.asOf),
+    runningHead: [document_.title, document_.client].filter(Boolean).join(" · "),
+    footerLeft: footerLeftOf(brand, at, document_.generatedBy),
+    autoPrint: false,
+  });
 }
 
 // ── Print ───────────────────────────────────────────────────────────
@@ -770,29 +967,76 @@ ${body || "<p>No data available.</p>"}
  * The printable report. It is a real document rather than `window.print()` on the console, because
  * printing the application printed the sidebar, the header and whatever else was on screen — which
  * is what the Print button used to do.
+ *
+ * The window prints itself once its sheets exist, so nothing is printed before the pages have been
+ * counted and the mark has loaded.
  */
-export function printReport(document_: ReportDocument): void {
-  const window_ = documentToPrintWindow(document_);
-  if (!window_) return;
-  setTimeout(() => window_.print(), 400);
+export function printReport(document_: ReportDocument, options?: ExportOptions): void {
+  const brand = brandOf(document_, options);
+  const at = new Date();
+  const basis = basisOf(document_, brand);
+  const blocks = [
+    ...blocksFromSections(document_.sections),
+    ...(basis ? basisBlocks(basis) : []),
+  ];
+  openPrintWindow({
+    brand,
+    blocks,
+    title: document_.title,
+    metaLine: metaLineOf(document_, brand, at, basis?.asOf),
+    runningHead: [document_.title, document_.client].filter(Boolean).join(" · "),
+    footerLeft: footerLeftOf(brand, at, document_.generatedBy),
+    autoPrint: true,
+  });
 }
 
 // ── PDF ─────────────────────────────────────────────────────────────
 
-export function exportPdf(document_: ReportDocument): void {
-  // The shield is an image, so the document is drawn once it has one; the caller does not wait for a
+export function exportPdf(document_: ReportDocument, options?: ExportOptions): void {
+  // The mark is an image, so the document is drawn once it has one; the caller does not wait for a
   // download it did not ask to manage.
-  void documentToPdf(document_);
+  void documentToPdf(document_, options);
 }
 
 // ── CSV ─────────────────────────────────────────────────────────────
 
-export function exportCsv(document_: ReportDocument, download: (filename: string, csv: string) => void): void {
-  download(`${fileBase(document_.title)}.csv`, tablesToCsv(sectionsToTables(document_.sections)));
+/**
+ * Every table, stacked in one file, with the basis block as the **topmost paragraph** — a spreadsheet
+ * has no pages, so "the last sheet" is not a place it can be.
+ */
+export function exportCsv(
+  document_: ReportDocument,
+  download: (filename: string, csv: string) => void,
+  options?: ExportOptions,
+): void {
+  const brand = brandOf(document_, options);
+  const basis = basisOf(document_, brand);
+  const preamble: string[] = [];
+  if (basis) {
+    preamble.push("How this is measured, and what it cannot say");
+    if (basis.asOf) preamble.push(`Every figure in this file is as at ${basis.asOf}.`);
+    for (const measure of basis.measures) preamble.push(`${measure.label}: ${measure.value}`);
+    if (basis.notes.length) {
+      preamble.push("What this cannot say:");
+      for (const note of basis.notes) preamble.push(`  ${note}`);
+    }
+  }
+  download(`${fileBase(document_.title)}.csv`, tablesToCsv(sectionsToTables(document_.sections), preamble));
 }
 
 // ── Excel ───────────────────────────────────────────────────────────
 
-export function exportExcel(document_: ReportDocument): void {
-  tablesToExcel(sectionsToTables(document_.sections), document_.title, document_.subtitle, document_.period);
+/** One sheet per table, typed cells, and a Basis sheet when the basis block travels with the file. */
+export function exportExcel(document_: ReportDocument, options?: ExportOptions): void {
+  const brand = brandOf(document_, options);
+  const basis = basisOf(document_, brand);
+  const tables = sectionsToTables(document_.sections);
+  if (basis) {
+    tables.push({
+      title: "Basis",
+      columns: [{ key: "metric", label: "Metric" }, { key: "value", label: "Value" }],
+      rows: basisRows(basis),
+    });
+  }
+  tablesToExcel(tables, document_.title, document_.subtitle, document_.period);
 }

@@ -240,6 +240,14 @@ model Company {
   portalAccentColor String?
   /// Logo shown on the portal, absolute URL or a path under the API's `/uploads`.
   portalLogoUrl   String?
+  /// The client's own branding for documents addressed to it, as `BrandOverride` in
+  /// `packages/shared/src/brand.ts` — an entity invoiced under its own name and address.
+  ///
+  /// Every field is optional and absent means "the instance's own", so a client whose form was never
+  /// filled in produces exactly the document it produced before this column existed. `portalLogoUrl`
+  /// above is the *portal's* logo from an earlier era; where a client has one and no `logoUrl` here,
+  /// the document falls back to it, because a client has one logo and two would drift.
+  brandOverride   Json?
 
   // Portal policy for this client. A null on any of these means "use the instance's own
   // setting" — so a deployment configures the portal once and only the clients that differ
@@ -2319,4 +2327,190 @@ model PortalSession {
 
   @@index([contactId])
   @@index([expiresAt])
+}
+
+// ─── The Email Studio ───────────────────────────────────────────────
+// Every message this product sends, as words somebody can change rather than as a string literal in
+// a template function. The tables below are the whole feature: what a message says (and the history
+// of what it said), what the instance's brand is, and what left the building when.
+
+/// One message's stored template.
+///
+/// **The row is optional, and that is the point.** No row means the built-in default in
+/// `services/emailMessages.ts` renders — the same words the hard-coded sender produced before this
+/// table existed — so an instance that has never opened the Studio sends exactly what it always
+/// sent, and `POST /templates/:key/reset` deletes the row rather than restoring a copy of it.
+model EmailTemplate {
+  id          String   @id @default(uuid())
+  /// An `EmailMessageKey` (`ticket.activity`). Stable: it is what a message is filed under.
+  key         String   @unique
+  subject     String
+  /// `EmailBlock[]` — the vocabulary in `packages/shared/src/emailTemplate.ts`.
+  blocks      Json     @default("[]")
+  /// The plain-text part. Null means "derive it from the blocks", the default and the only setting
+  /// that cannot drift from what the HTML says: a message read in a client that strips HTML has to
+  /// carry the same facts. A string means somebody edited it, and the API then returns both so the
+  /// difference can be seen — and warns when the information the two carry differs.
+  text        String?
+  /// Bumped on every save. A send records the version it used, so the delivery log can answer
+  /// "which words did the customer actually get" after the template has moved on.
+  version     Int      @default(1)
+  updatedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  versions    EmailTemplateVersion[]
+}
+
+/// One saved version of a template, written on every save.
+///
+/// v0 is not a row here: it is `emailMessages.ts`. That is what makes "reset to default" mean
+/// something — the code's version is always there to return to, and it is not a copy somebody could
+/// have edited into disagreement with the code.
+model EmailTemplateVersion {
+  id         String        @id @default(uuid())
+  templateId String
+  template   EmailTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  version    Int
+  subject    String
+  blocks     Json
+  text       String?
+  /// Why it was saved, when the person said.
+  note       String?
+  savedById  String?
+  savedAt    DateTime      @default(now())
+
+  @@unique([templateId, version])
+  @@index([templateId, savedAt])
+}
+
+/// The instance's brand kit — the colours, the assets, the footer and the sender identity every
+/// message is measured against. Exactly one row (id `instance`), shared with the PDF letterhead
+/// rather than being a second brand for email: `apps/web/src/lib/documentBrand.ts` already carries
+/// the shield, the wordmark and `#c00000`, and a brand kit that disagreed with the documents this
+/// product prints would be a bug rather than a feature.
+/// The instance's identity — one row, id `instance`.
+///
+/// Renamed from `EmailBrandKit` because it stopped being an email setting: this record now decides
+/// the letterhead on every report, PDF, invoice, statement and ticket sheet as well as the sender
+/// identity and the footer of every email. The rename is the point — a table called `EmailBrandKit`
+/// that draws invoices is exactly the kind of quiet lie that costs somebody an afternoon.
+///
+/// Every field is optional or defaulted, so a row that has never been edited renders the documents
+/// the product shipped with. `packages/shared/src/brand.ts` owns the defaults and the resolution;
+/// nothing here should be read directly by a renderer.
+model BrandKit {
+  id           String   @id @default(uuid())
+  productName  String   @default("C7NTAX")
+  companyName  String   @default("Cyber 7 Group, LLC")
+  /// The line under the company name on a document: "Professional Services".
+  tagline      String?
+  /// The letterhead lockup, and the text wordmark a client that refuses images must fall back to.
+  logoUrl      String?
+  logoDarkUrl  String?
+  /// The square mark on its own — the app icon, the favicon, and a report's letterhead.
+  iconUrl      String?
+  wordmark     String?
+  /// Contact details as they should read on paper.
+  contactLine  String?
+  addressLines Json     @default("[]")
+  website      String?
+  /// The banner and button colour, and now the one accent a printed page uses. Today's sends write
+  /// `#c00000` into the markup; this is that value made a setting.
+  primaryColor String   @default("#c00000")
+  /// The interface's and email's secondary colour. Deliberately not printed: it measures 2.1:1 on white.
+  accentColor  String   @default("#00c0f4")
+  /// The sign-off and the legal line, drawn by the `signature` and `footer` blocks so a change to
+  /// either is one change rather than one per message.
+  footerText   String?
+  /// The sentence at the foot of every generated document — payment terms, a confidentiality line.
+  documentFooter String?
+  legalText    String?
+  /// Per-family `DocumentPresentation` (`packages/shared/src/brand.ts`), keyed by `DocumentFamily`:
+  /// paper size, orientation, letterhead, footer, page numbers, the basis block. Absent keys fall back
+  /// to the family's default, so adding a family is a code change and not a migration.
+  documentPresentation Json?
+  /// Sender identity. A blank `fromEmail` means "whatever `SMTP_FROM` the API was started with",
+  /// which is what every message uses today.
+  fromName     String?
+  fromEmail    String?
+  replyTo      String?
+  updatedById  String?
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
+}
+
+/// An uploaded logo or icon.
+///
+/// Stored as bytes in the database rather than as a file on disk, for three reasons that all bite in
+/// production: a document's logo is fetched by the API that renders the document and by a customer's
+/// mail client, so it must be reachable **without a session** — and an unauthenticated route that
+/// serves a file from a directory is a path-traversal bug waiting to be found, whereas a row addressed
+/// by an opaque id cannot escape its directory because there is none. It also survives a redeploy,
+/// which a container's local volume does not.
+///
+/// The bytes are served at `GET /api/brand/asset/:id` with the stored content type, immutably — a new
+/// upload is a new id, so a cached logo can never be stale.
+model BrandAsset {
+  id          String   @id @default(uuid())
+  /// `logo` | `icon` | `logoDark`. Not an enum: the kind only decides which field it fills.
+  kind        String
+  contentType String
+  bytes       Bytes
+  byteSize    Int
+  width       Int?
+  height      Int?
+  uploadedById String?
+  createdAt   DateTime @default(now())
+}
+
+/// What one report looks like, for the reports the product ships.
+///
+/// The sixteen standard reports and the review packs are defined in code — their *figures* are code,
+/// and should stay there. What a person legitimately wants to change is the presentation: the title,
+/// whether the basis block prints, the paper. That is this row, and its absence means the code's own
+/// default, so a report nobody has touched prints exactly what it printed before.
+model ReportPresentation {
+  id           String   @id @default(uuid())
+  /// The report's stable key — `STANDARD_REPORTS`' own id, or a review pack's.
+  reportKey    String   @unique
+  /// A `DocumentPresentation` plus the title/subtitle overrides.
+  presentation Json
+  updatedById  String?
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
+}
+
+/// One attempt to send one message.
+///
+/// Nothing in the product recorded a send before this table, which is why "we changed the template"
+/// had no evidence and "the invoice never arrived" had no answer. The row is written whatever the
+/// outcome, because the row that says *failed*, and why, is the one worth having. Deliberately not
+/// related to `User` by foreign key: an account outlives a person's membership, and a delivery log
+/// that loses its rows when an account is removed is worse than one that keeps a name it can no
+/// longer resolve (the `AiActionAudit` convention).
+model EmailMessageLog {
+  id                String   @id @default(uuid())
+  /// An `EmailMessageKey`.
+  key               String
+  /// The `To` list as it was sent, comma-joined.
+  to                String
+  cc                String?
+  subject           String
+  templateKey       String
+  /// Null when the built-in default was sent, because a default is not a saved version.
+  templateVersion   Int?
+  /// What the relay called it, when it answered.
+  providerMessageId String?
+  /// `sent` or `failed`.
+  result            String
+  error             String?
+  /// True for a Studio test send, so a test is never mistaken for a message a customer received.
+  test              Boolean  @default(false)
+  sentById          String?
+  at                DateTime @default(now())
+
+  @@index([at])
+  @@index([key, at])
+  @@index([result, at])
 }

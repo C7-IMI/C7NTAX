@@ -35,6 +35,8 @@ import { billingRouter } from "./routes/billing";
 import { cloudConnectRouter } from "./routes/cloudconnect";
 import { flexpointRouter } from "./routes/flexpoint";
 import { apiKeysRouter } from "./routes/apiKeys";
+import { emailRouter } from "./routes/email";
+import { brandRouter } from "./routes/brand";
 import { eventsRouter } from "./routes/events";
 import { securityRouter } from "./routes/security";
 import { crmRouter } from "./routes/crm";
@@ -318,6 +320,10 @@ app.use("/api/nav", navRouter);
 app.use("/api/ai-actions", aiActionsRouter);
 app.use("/api/alert-webhooks", alertWebhooksRouter);
 app.use("/api/configuration", configurationRouter);
+// The Email Studio: the words of every message this instance sends, the brand kit they are measured
+// against, and the record of what left the building. `email:view` reads, `email:manage` changes.
+app.use("/api/email", emailRouter);
+app.use("/api/brand", brandRouter);
 // PLAN-030 / the Developer section: the environment inspector, the purge and its dry run, the repo
 // guards, and the go-live checklist. Gated on `developer:view`, which Super Admin and Admin deliberately
 // do not hold — see routes/developer.ts for why the purge needs `developer:purge` chained on top.

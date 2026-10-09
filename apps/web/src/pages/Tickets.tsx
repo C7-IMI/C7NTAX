@@ -13,6 +13,8 @@ import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "
 import { TicketBoardTabs } from "../components/TicketBoardTabs";
 import { RichTextEditor, toAttachmentDraft, EMAIL_PROFILE, type EmailAttachmentDraft } from "../components/richText";
 import { PrintLetterhead } from "../components/PrintLetterhead";
+import { documentBrandOf } from "../hooks/useBrandKit";
+import { pageBox } from "../components/reports/documentLanguage";
 import { RecipientField, recipientFromContact, offOrgRecipients, offOrgSummary, type Recipient, type RecipientSuggestion } from "../components/RecipientField";
 import { ProductPicker } from "../components/ProductPicker";
 import { absoluteUrl, copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
@@ -2627,27 +2629,205 @@ export function TicketDetailPage() {
       </div>
 
       <section className="ticket-print-only" aria-hidden="true">
+        {/*
+          The ticket as a real document: paginated sheets of exactly A4 portrait with an 18 mm margin,
+          the instance's letterhead on the first sheet and a running head on the rest, and a footer on
+          every sheet carrying the company, the time and "page n of m" — a count this code made, not
+          the browser's guess. Everything it prints is customer-facing, which is the fix: the sheet is
+          sent to the client on request, so an internal note must not be on it at all.
+        */}
+        {(() => {
+          const brand = documentBrandOf("ticket");
+          const { widthMm, heightMm } = pageBox(brand.presentation);
+          const printedAt = new Date().toLocaleString();
+          const printedBy = currentUser
+            ? `${currentUser.firstName ?? ""} ${currentUser.lastName ?? ""}`.trim() || currentUser.email
+            : "";
+          const ticketNumber = (ticket.ticketNumber as string) || `Ticket ${id}`;
+          const ticketTitle = (ticket.title as string) || "Untitled ticket";
+          const person = (who: unknown): string => {
+            const value = who as { firstName?: string; lastName?: string; email?: string } | null;
+            if (!value) return "—";
+            return `${value.firstName ?? ""} ${value.lastName ?? ""}`.trim() || value.email || "—";
+          };
+          const when = (value: unknown): string => (value ? new Date(String(value)).toLocaleString() : "—");
+          const totalMinutes = (entries: Array<{ minutes?: unknown }>) =>
+            entries.reduce((sum, entry) => sum + (Number(entry.minutes) || 0), 0);
+          const inHours = (minutes: number) => `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, "0")}m`;
+
+          /*
+            Only what the client may see.
+            
+            An internal note is **built out of the list rather than blanked**: there is nothing on this
+            sheet to redact, so there is nothing to leak. The field-change records ("Status: New → In
+            Progress") go the same way — they are the system's bookkeeping, not correspondence, and they
+            are written as internal notes anyway.
+          */
+          const visible = (((ticket.comments as any[]) || []))
+            .filter((comment: any) => !comment.isInternal)
+            .filter((comment: any) => !isSystemActivity(comment.body ?? comment.content))
+            .map((comment: any) => ({
+              id: String(comment.id),
+              kind: comment.isEmail ? "Email" : "Note",
+              body: String(comment.body ?? comment.content ?? ""),
+              at: comment.createdAt,
+              by: person(comment.author) === "—" ? String(comment.fromEmail || "System") : person(comment.author),
+            }));
+
+          /*
+            The resolution.
+
+            The ticket record has no resolution column, so the resolution a reader is given is the one
+            the product itself writes when a ticket is closed: the closing note, which `CloseTicketDialog`
+            records as a **customer-visible** comment precisely because it is the client's copy of "this
+            is finished". It is printed only where the ticket really is resolved or closed, and it can
+            only ever be a note that was not internal.
+          */
+          const resolved = Boolean(ticket.resolvedAt || ticket.closedAt) || ["resolved", "closed"].includes(String(ticket.status));
+          const closingNote = resolved ? [...visible].reverse().find(note => note.kind === "Note") ?? [...visible].reverse()[0] : undefined;
+
+          const timeEntries = (ticketTimeEntries as any[]);
+          const attachments = ((ticket.attachments as any[]) || []);
+
+          const sheets: any[] = [];
+          const resolutionRows: Array<[string, string]> = [];
+          if (ticket.resolvedAt) resolutionRows.push(["Resolved", when(ticket.resolvedAt)]);
+          if (ticket.closedAt) resolutionRows.push(["Closed", when(ticket.closedAt)]);
+
+          sheets.push(
+            <div key="sheet-1">
               <PrintLetterhead
                 kind="Ticket"
-                subject={(ticket.ticketNumber as string) || undefined}
-                meta={`Printed ${new Date().toLocaleString()}`}
+                subject={ticketNumber}
+                meta={`${(ticket.company as { name?: string } | null)?.name || "—"} · Printed ${printedAt}${printedBy ? ` by ${printedBy}` : ""}`}
               />
-              <h1>{(ticket.ticketNumber as string) || `Ticket ${id}`}</h1>
-              <h2>{(ticket.title as string) || "Untitled ticket"}</h2>
-              <p>{(ticket.description as string) || "No description provided."}</p>
-              <dl>
-                <div><dt>Status</dt><dd>{String(ticket.status || "-").replace(/_/g, " ")}</dd></div>
-                <div><dt>Priority</dt><dd>{String(ticket.priority || "-")}</dd></div>
-                <div><dt>Board</dt><dd>{(ticket.board as any)?.name || "-"}</dd></div>
-                <div><dt>Client</dt><dd>{(ticket.company as any)?.name || "-"}</dd></div>
-                <div><dt>Contact</dt><dd>{`${(ticket.contact as any)?.firstName || ""} ${(ticket.contact as any)?.lastName || ""}`.trim() || "-"}</dd></div>
-                <div><dt>Assigned To</dt><dd>{`${(ticket.assignedTo as any)?.firstName || ""} ${(ticket.assignedTo as any)?.lastName || ""}`.trim() || "-"}</dd></div>
-                <div><dt>Due</dt><dd>{ticket.dueDate ? new Date(ticket.dueDate as string).toLocaleString() : "-"}</dd></div>
+              <h1>{ticketNumber}</h1>
+              <h2>{ticketTitle}</h2>
+              <p className="ticket-sheet__lead">{String(ticket.description || "No description provided.")}</p>
+              <h3>The record</h3>
+              <dl className="ticket-sheet__facts">
+                <div><dt>Status</dt><dd>{String(ticket.status || "—").replace(/_/g, " ")}</dd></div>
+                <div><dt>Priority</dt><dd>{String(ticket.priority || "—")}</dd></div>
+                <div><dt>Board</dt><dd>{(ticket.board as { name?: string } | null)?.name || "—"}</dd></div>
+                <div><dt>Client</dt><dd>{(ticket.company as { name?: string } | null)?.name || "—"}</dd></div>
+                <div><dt>Contact</dt><dd>{person(ticket.contact)}</dd></div>
+                <div><dt>Assigned to</dt><dd>{person(ticket.assignedTo)}</dd></div>
+                <div><dt>Opened</dt><dd>{when(ticket.createdAt)}</dd></div>
+                <div><dt>Target</dt><dd>{when(ticket.slaResolutionDue || ticket.dueDate)}</dd></div>
               </dl>
-              <h3>Recent Activity</h3>
-              {((ticket.comments as any[]) || []).slice(0, 10).map((comment: any) => (
-                <div key={comment.id} className="ticket-print-activity"><strong>{comment.isEmail ? "Email" : comment.isInternal ? "Internal Note" : "Note"}</strong><p>{comment.body || comment.content}</p><small>{comment.author?.firstName || "System"} · {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ""}</small></div>
-              ))}
+              {resolved && (
+                <>
+                  <h3>Resolution</h3>
+                  {resolutionRows.length > 0 && (
+                    <dl className="ticket-sheet__facts" style={{ gridTemplateColumns: "1fr 1fr" }}>
+                      {resolutionRows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+                    </dl>
+                  )}
+                  <p className="ticket-sheet__lead">
+                    {closingNote ? closingNote.body : "No closing note was recorded against this ticket."}
+                  </p>
+                  {closingNote && <p className="ticket-sheet__note">{closingNote.by} · {when(closingNote.at)}</p>}
+                </>
+              )}
+            </div>,
+          );
+
+          if (timeEntries.length > 0 || attachments.length > 0) {
+            sheets.push(
+              <div key="sheet-2">
+                <h3>Time entries</h3>
+                {timeEntries.length === 0
+                  ? <p className="ticket-sheet__note">No time was recorded against this ticket.</p>
+                  : (
+                    <table className="ticket-sheet__table">
+                      <thead>
+                        <tr><th>Date</th><th>Who</th><th>Work</th><th className="num">Hours</th><th>Charging</th></tr>
+                      </thead>
+                      <tbody>
+                        {timeEntries.map((entry: any, index: number) => (
+                          <tr key={entry.id ?? `${entry.date ?? "entry"}-${index}`}>
+                            <td>{entry.date ? new Date(entry.date).toLocaleDateString() : "—"}</td>
+                            <td>{person(entry.user)}</td>
+                            <td>{String(entry.description || entry.workType || "—")}</td>
+                            <td className="num">{inHours(Number(entry.minutes) || 0)}</td>
+                            <td>{entry.noCharge ? "No charge" : entry.billable ? "Billable" : "Not billable"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr><td colSpan={3}>Total time</td><td className="num">{inHours(totalMinutes(timeEntries))}</td><td /></tr>
+                      </tfoot>
+                    </table>
+                  )}
+                <h3>Attachments</h3>
+                {attachments.length === 0
+                  ? <p className="ticket-sheet__note">No files were attached to this ticket.</p>
+                  : (
+                    <table className="ticket-sheet__table">
+                      <thead>
+                        <tr><th>File</th><th>Type</th><th className="num">Size</th><th>Added</th></tr>
+                      </thead>
+                      <tbody>
+                        {attachments.map((file: any, index: number) => (
+                          <tr key={file.id ?? `${file.filename ?? "file"}-${index}`}>
+                            <td>{String(file.filename || "—")}</td>
+                            <td>{String(file.mimeType || "—")}</td>
+                            <td className="num">{file.size ? (file.size < 1048576 ? `${Math.max(1, Math.round(file.size / 1024))} KB` : `${(file.size / 1048576).toFixed(1)} MB`) : "—"}</td>
+                            <td>{when(file.createdAt)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+              </div>,
+            );
+          }
+
+          // Eight notes to a sheet: enough that a sheet is worth turning, few enough that no sheet
+          // overflows the page whatever the browser's line breaking does.
+          const perSheet = 8;
+          for (let start = 0; start < visible.length; start += perSheet) {
+            const page = visible.slice(start, start + perSheet);
+            sheets.push(
+              <div key={`activity-${start}`}>
+                <h3>Activity{start > 0 ? " — continued" : ""}</h3>
+                {page.map(note => (
+                  <div key={note.id} className="ticket-print-activity">
+                    <strong>{note.kind}</strong>
+                    <p>{note.body}</p>
+                    <small>{note.by} · {when(note.at)}</small>
+                  </div>
+                ))}
+              </div>,
+            );
+          }
+
+          return sheets.map((body, index) => (
+            <div
+              className="ticket-sheet"
+              key={index}
+              style={{
+                width: `${widthMm}mm`,
+                height: `${heightMm}mm`,
+                fontWeight: "normal",
+              }}
+            >
+              <div className="ticket-sheet__body">
+                {index > 0 && (
+                  <div className="ticket-sheet__runhead">
+                    <span>{ticketNumber} · {ticketTitle}</span>
+                    <span>continued</span>
+                  </div>
+                )}
+                {body}
+              </div>
+              <div className="ticket-sheet__foot">
+                <span>{brand.company} · {printedAt}{printedBy ? ` · ${printedBy}` : ""} · {brand.legalText ?? `Confidential — ${brand.company}`}</span>
+                <span>Page {index + 1} of {sheets.length}</span>
+              </div>
+            </div>
+          ));
+        })()}
           </section>
 
           {activeTab === "ticket" && (

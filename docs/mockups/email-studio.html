@@ -1,0 +1,2477 @@
+<!DOCTYPE html>
+<!--
+  MOCKUP ONLY — nothing in the application has been changed. No route, no component, no schema, no
+  Prisma model, no configuration section and no Help section was touched for this drawing; the only
+  artefact is this file, and reverting it is deleting it. Not one line of the proposal below exists in
+  the product yet.
+
+  THE EMAIL STUDIO — the section where every message this product can send is visible, editable and
+  previewable, in the idiom of the report designer (a palette of blocks and fields, a canvas, an
+  inspector), with a preview against a real record, a version history with a way back, and an explicit
+  per-message choice of what information is sent, kept separate from how it looks.
+
+  THE CLAIM, AND WHY IT IS WORTH STATING. Every message this product sends is written in code today.
+  `packages/email/src/EmailService.ts` is 310 lines: a generic
+  `send({ to, subject, html, text?, cc?, bcc?, attachments? })`, seven template functions that return
+  inline HTML with every colour written into the markup, and eight senders. Every subject is a template
+  literal, every footer is a concatenated paragraph, and nobody can see, change or choose any of it
+  without a deployment. There is no template system, no template table and no template route, and no
+  Email or Templates section among the eight sections of `packages/shared/src/appConfiguration.ts` —
+  "C7NC & Email" holds the *connectors*, not the copy. That is the whole argument for this screen, and
+  it is a fact read out of the repository rather than a premise.
+
+  WHAT IS REAL (read in the working copy on 9 October 2026, against the corrected catalogue):
+   · the ten messages in the list, their subjects, their senders and every caller, verified across the
+     repository. Eight are live and two are *written and never called*;
+   · the two dead senders, which are the strongest argument this feature has. `sendInvoice` is
+     well-formed — subject `Invoice ${n} — Due ${due}` and `invoice-<n>.pdf` attached — and nothing
+     calls it, so an invoice's "sent" is a status change rather than a message. `sendTicketAutoClose`
+     is written and unused too, while the real closure mail is `notifyTicketClosure`, sent through
+     `ticket.activity`;
+   · the hard-coded footer in `apps/api/src/routes/tickets/index.ts:515` — the typed body followed by
+     `<hr>` and a fixed paragraph naming the ticket and the client — which is the "these words are in a
+     string literal today" example;
+   · the safe tag set and inline-style allowlist in `apps/api/src/services/emailHtml.ts` (30 tags, a
+     drop-with-content list of 8, 11 allowed style properties, a safe-URL rule and the inline-image
+     limits), which the editor enforces *visibly* rather than silently;
+   · the records: tickets `MSP-1001-1001` "Email server not sending outbound messages" (Acme
+     Corporation, David Chen, John Smith), `MSP-1003-1001` (Initech Solutions, waiting on client) and
+     `MSP-1005-1002` (Stark Enterprises); invoices `INV-2026-004` ($13,050.00, Stark, draft),
+     `INV-2026-003` ($3,788.75, Initech, overdue) and `INV-2026-001` ($2,712.50, Acme, paid); from
+     `apps/api/src/seed-full.ts`. The report schedule row — weekly · Monday · 06:00 ·
+     ops@example.com · pdf — is from `apps/api/src/seed-coverage.ts`;
+   · the five companies, thirteen contacts and eight tickets, and the accounts (Admin User, John
+     Smith, Sarah Jones, Mike Wilson, Lisa Brown) from the same seed.
+
+  WHAT COULD NOT BE GROUNDED, said in the file rather than hidden: four keys the shared vocabulary
+  reserves — `report.scheduled`, `quote.send`, `auth.password_changed`, `user.password_reset` — have no
+  sender in the code at all; and the version history below the imported v0 is drawn, because nothing has
+  ever been saved, so there is no history to read.
+
+  WHY IT IS COMPOSED THIS WAY. The person who asked for this asked for three things — to see what the
+  e-mails look like, to edit and preview them, and to choose what information is sent. Those are three
+  different surfaces and merging them is how template editors get ruined: layout live in a canvas, the
+  choice of content live in switches a person can read, and the truth about a message live in a preview
+  against a real record. So the section is one list, one editor of three panes, one preview in two
+  widths, one history, and one panel that says what an internal message is *not*.
+
+  TWO INTERFACES, TWO DESIGNS. This is the modern arrangement, built from the redesign's own furniture
+  (a rail of choices, chips you press, a status track you step along, sentences beside the control that
+  acts, a countable footer). The classic arrangement — labelled fields in a grid, a dialog with a
+  heading and Save/Cancel, a table where the modern screen has cards — is described in the closing
+  panel, because this repository keeps two designs of every screen and they are not one screen with a
+  class toggled.
+
+  The page is a drawing, not a prototype: the theme toggle, the screen picker and the "Why" controls
+  move, and nothing else does.
+-->
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — The Email Studio: every message, visible, editable and previewable</title>
+<style>
+  /* ── The application's own tokens, copied from apps/web/src/index.css ───────────────────────── */
+  :root {
+    --navy-50:#e8edf5; --navy-100:#c5d1e5; --navy-200:#9eb3d3; --navy-300:#7895c1; --navy-400:#5b7db3;
+    --navy-500:#3e64a5; --navy-600:#365796; --navy-700:#2b4783; --navy-800:#223771; --navy-900:#142454;
+    --navy-950:#0a1628;
+
+    --cyber-50:#e0f7fe; --cyber-100:#b3edfc; --cyber-200:#80e2fa; --cyber-300:#4dd6f8; --cyber-400:#26cbf6;
+    --cyber-500:#00c0f4; --cyber-600:#00aae0; --cyber-700:#0090c4; --cyber-800:#0077a9; --cyber-900:#00507d;
+
+    --brand-crimson:#c00000;
+
+    --surface:#0f1a2e; --surface-light:#162238; --surface-lighter:#1e2d48; --surface-border:#2a3a5c;
+
+    --alert-red:#ef4444; --alert-amber:#f59e0b; --alert-green:#22c55e;
+
+    --status-new:#38bdf8; --status-open:#60a5fa; --status-progress:#fbbf24; --status-waiting-client:#c084fc;
+    --status-waiting-vendor:#a5b4fc; --status-resolved:#4ade80; --status-closed:#9ca3af; --status-reopened:#fb923c;
+
+    --text-primary:#ffffff; --text-secondary:#d1d5db; --text-tertiary:#9ca3af;
+    --text-muted:#8b93a1; --text-muted-alt:#7c8598;
+
+    --card-shadow: 0 1px 2px rgb(0 0 0 / 0.35), 0 12px 32px -22px rgb(0 0 0 / 0.75);
+    --btn-primary-fg:#ffffff;
+
+    /* The message as it is actually mailed: EmailService.ts writes these hex values into the markup,
+       so the canvas draws the real thing rather than a themed approximation. */
+    --mail-bg:#0f1923; --mail-panel:#1e293b; --mail-border:#334155;
+    --mail-text:#cbd5e1; --mail-dim:#94a3b8; --mail-faint:#64748b; --mail-accent:#ff5c5c;
+  }
+
+  /* Light theme — the same overrides the application makes, including the darkened status tokens. */
+  html[data-theme="light"] {
+    --navy-950:#ffffff; --navy-900:#0d0d0d; --navy-800:#1a1a1a; --navy-700:#2b2b2b; --navy-600:#424242;
+    --navy-500:#5c5c5c; --navy-400:#808080; --navy-300:#b3b3b3; --navy-200:#d9d9d9; --navy-100:#ebebeb;
+    --navy-50:#f5f5f5;
+
+    --cyber-50:#f0f9ff; --cyber-100:#e0f2fe; --cyber-200:#bae6fd; --cyber-300:#075985; --cyber-400:#0369a1;
+    --cyber-500:#0ea5e9; --cyber-600:#0284c7; --cyber-700:#0369a1; --cyber-800:#075985; --cyber-900:#0c4a6e;
+
+    --surface:#ffffff; --surface-light:#f7f7f7; --surface-lighter:#f0f0f0; --surface-border:#b8b8b8;
+
+    --alert-red:#dc2626; --alert-amber:#d97706; --alert-green:#16a34a;
+
+    --status-new:#075985; --status-open:#1e40af; --status-progress:#92400e; --status-waiting-client:#6b21a8;
+    --status-waiting-vendor:#3730a3; --status-resolved:#166534; --status-closed:#374151; --status-reopened:#9a3412;
+
+    --text-primary:#1a1a1a; --text-secondary:#363636; --text-tertiary:#525252;
+    --text-muted:#595959; --text-muted-alt:#666666;
+
+    --card-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 10px 28px -22px rgb(0 0 0 / 0.3);
+  }
+
+  /* ── Base ──────────────────────────────────────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    min-height: 100dvh; line-height: 1.6;
+    background: var(--navy-950); color: var(--text-secondary);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+  }
+  h1, h2, h3, h4 { font-weight: 600; color: var(--text-primary); line-height: 1.3; }
+  p { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  code, .mono, kbd { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  .num { font-variant-numeric: tabular-nums; }
+  :focus-visible { outline: 2px solid var(--cyber-400); outline-offset: 2px; }
+  .sprite { display: none; }
+  .ico { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8;
+         stroke-linecap: round; stroke-linejoin: round; }
+  .ico--lg { width: 18px; height: 18px; }
+  .stack > * + * { margin-top: 12px; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 980px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+
+  /* ── Mockup-only scaffolding ───────────────────────────────────────────────────────────────── */
+  .mock-frame { max-width: 1660px; margin: 0 auto; padding: 28px 24px 56px; }
+  .mock-tag {
+    display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 9999px;
+    font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--alert-red); background: color-mix(in srgb, var(--alert-red) 16%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--alert-red) 45%, transparent);
+  }
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px; z-index: 20;
+    display: inline-flex; gap: 2px; padding: 3px; border-radius: 9999px;
+    background: var(--surface); border: 1px solid var(--surface-border); box-shadow: var(--card-shadow);
+  }
+  .theme-toggle button {
+    font: inherit; font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+    background: transparent; border: 0; border-radius: 9999px; padding: 4px 11px; cursor: pointer;
+  }
+  .theme-toggle button[aria-pressed="true"] { background: var(--cyber-600); color: var(--btn-primary-fg); }
+  .why {
+    display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 9999px;
+    cursor: pointer; font: inherit; font-size: 11px; line-height: 18px; font-weight: 500;
+    color: var(--text-muted); background: transparent; border: 1px dashed var(--surface-border);
+  }
+  .why:hover { color: var(--text-primary); border-color: var(--text-muted); }
+  .why[aria-expanded="true"] { color: var(--cyber-300); border-style: solid;
+    border-color: color-mix(in srgb, var(--cyber-500) 40%, transparent); }
+  .why .chev { transition: transform 150ms; }
+  .why[aria-expanded="true"] .chev { transform: rotate(180deg); }
+  .why-body[hidden] { display: none; }
+  .why-body {
+    margin-top: 8px; padding: 10px 12px; border-radius: 10px;
+    background: var(--surface-light); border: 1px dashed var(--surface-border);
+  }
+  .why-body p { font-size: 11.5px; color: var(--text-muted); line-height: 1.65; }
+  .why-body p + p { margin-top: 6px; }
+  .mock-note { font-size: 11px; color: var(--text-muted-alt); }
+
+  /* ── The application's components, at their real values ───────────────────────────────────── */
+  .card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: 12px; padding: 18px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; flex: none; white-space: nowrap;
+    border-radius: 10px; border: 1px solid var(--surface-border); background: var(--surface-lighter);
+    padding: 4px 10px; font-size: 12px; font-weight: 500; color: var(--text-secondary);
+  }
+  button.chip { font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; }
+  .chip--on {
+    color: var(--cyber-300);
+    border-color: color-mix(in srgb, var(--cyber-500) 45%, transparent);
+    background-color: color-mix(in srgb, var(--cyber-600) 18%, transparent);
+  }
+  .chip__n { border-radius: 9999px; background: var(--surface-border); padding: 0 6px;
+    font-size: 10px; font-weight: 600; color: var(--text-tertiary); }
+  .chip--on .chip__n { background: color-mix(in srgb, var(--cyber-500) 25%, transparent); color: var(--text-primary); }
+  .chip--good { color:#34d399; border-color: color-mix(in srgb,#34d399 40%, transparent);
+    background-color: color-mix(in srgb,#34d399 14%, transparent); }
+  .chip--warn { color:#fbbf24; border-color: color-mix(in srgb,#fbbf24 40%, transparent);
+    background-color: color-mix(in srgb,#fbbf24 14%, transparent); }
+  .chip--bad { color: var(--alert-red); border-color: color-mix(in srgb,var(--alert-red) 42%, transparent);
+    background-color: color-mix(in srgb,var(--alert-red) 13%, transparent); }
+  .chip--lock { color:#fbbf24; border-color: color-mix(in srgb,#fbbf24 42%, transparent);
+    background-color: color-mix(in srgb,#fbbf24 12%, transparent); }
+  html[data-theme="light"] .chip--good { color:#166534; border-color: color-mix(in srgb,#166534 40%, transparent);
+    background-color: color-mix(in srgb,#166534 12%, transparent); }
+  html[data-theme="light"] .chip--warn, html[data-theme="light"] .chip--lock { color:#92400e;
+    border-color: color-mix(in srgb,#92400e 40%, transparent); background-color: color-mix(in srgb,#92400e 12%, transparent); }
+  html[data-theme="light"] .chip--bad { color:#b91c1c; border-color: color-mix(in srgb,#b91c1c 40%, transparent);
+    background-color: color-mix(in srgb,#b91c1c 12%, transparent); }
+
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 9999px;
+    font-size: 11px; font-weight: 500; white-space: nowrap;
+    background-color: color-mix(in srgb, currentColor 18%, transparent); }
+  .badge--default { color: var(--text-tertiary); }
+  .badge--customised { color: var(--status-new); }
+  .badge--overridden { color: var(--status-waiting-client); }
+  .badge--never { color: var(--alert-amber); }
+  .badge--internal { color: var(--status-reopened); }
+  .badge--customer { color: var(--status-resolved); }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; font-weight: 500;
+    border-radius: 10px; padding: 6px 12px; cursor: pointer; border: 1px solid transparent; }
+  .btn--primary { background: var(--cyber-600); color: var(--btn-primary-fg); }
+  .btn--secondary { background: var(--surface-lighter); border-color: var(--surface-border); color: var(--text-primary); }
+  .btn--quiet { background: transparent; border-color: var(--surface-border); color: var(--text-secondary); }
+  .btn--danger { background: var(--brand-crimson); color: #fff; }
+  .btn--locked { background: var(--surface-lighter); border-color: var(--surface-border); color: var(--text-muted-alt);
+    cursor: not-allowed; }
+  .btn[disabled] { opacity: .55; cursor: not-allowed; }
+
+  .input-field {
+    width: 100%; background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 10px; padding: 7px 11px; font: inherit; font-size: 13px; color: var(--text-primary);
+  }
+  .input-field::placeholder { color: var(--text-muted); }
+  .input-field[disabled] { background: var(--surface-light); color: var(--text-muted-alt); }
+
+  .stat { background: var(--surface); border: 1px solid var(--surface-border); border-radius: 12px; padding: 12px 13px; }
+  .stat__label { font-size: 11px; color: var(--text-muted); line-height: 1.3; }
+  .stat__n { margin-top: 7px; font-size: 22px; font-weight: 600; line-height: 1; color: var(--text-primary);
+    letter-spacing: -.01em; }
+  .stat__foot { margin-top: 7px; font-size: 11px; color: var(--text-muted-alt); line-height: 1.5; }
+  .stat--good { border-color: color-mix(in srgb, var(--alert-green) 35%, transparent); }
+  .stat--warn { border-color: color-mix(in srgb, var(--alert-amber) 40%, transparent); }
+
+  .glyph { width: 24px; height: 24px; border-radius: 8px; flex: none;
+    display: inline-flex; align-items: center; justify-content: center; }
+  .glyph--cyber { background: color-mix(in srgb, var(--cyber-600) 20%, transparent); color: var(--cyber-400); }
+  .glyph--amber { background: color-mix(in srgb, var(--alert-amber) 15%, transparent); color: var(--alert-amber); }
+  .glyph--red { background: color-mix(in srgb, var(--alert-red) 15%, transparent); color: var(--alert-red); }
+  .glyph--green { background: color-mix(in srgb, var(--alert-green) 15%, transparent); color: var(--alert-green); }
+  .glyph--neutral { background: var(--surface-lighter); color: var(--text-tertiary); }
+
+  .ptable { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  .ptable th, .ptable td { text-align: left; padding: 8px 10px 8px 0; font-size: 12px;
+    border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 60%, transparent); vertical-align: top; }
+  .ptable th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted-alt);
+    font-weight: 600; border-bottom-color: var(--surface-border); }
+  .ptable td { color: var(--text-secondary); }
+  .ptable tbody tr:last-child td { border-bottom: 0; }
+  .ptable .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+
+  .kv { display: flex; align-items: baseline; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+  .kv + .kv { margin-top: 5px; }
+  .kv__k { flex: none; width: 150px; color: var(--text-muted); font-size: 11.5px; }
+  .kv__v { color: var(--text-primary); }
+  .say { font-size: 11.5px; color: var(--text-muted); line-height: 1.6; }
+  .keys { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--text-muted-alt); }
+  .kbd { font-size: 10.5px; border: 1px solid var(--surface-border); border-radius: 5px;
+    padding: 0 4px; color: var(--text-muted); background: var(--surface-lighter); }
+
+  .seg { display: inline-flex; gap: 3px; padding: 3px; border-radius: 12px; background: var(--surface-lighter);
+    border: 1px solid var(--surface-border); }
+  .seg__opt { font: inherit; font-size: 12px; font-weight: 500; color: var(--text-secondary);
+    background: transparent; border: 1px solid transparent; border-radius: 10px; padding: 6px 11px;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .seg__opt--on { background: var(--cyber-600); color: var(--btn-primary-fg); font-weight: 600; }
+  .seg--sm .seg__opt { padding: 3px 9px; font-size: 11px; }
+
+  /* ── The composed screens ─────────────────────────────────────────────────────────────────── */
+  .screen { margin-top: 30px; }
+  .screen[hidden] { display: none; }
+  .screen__label { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); }
+  .screen__label::after { content: ""; flex: 1; height: 1px; background: var(--surface-border); }
+  .screen__head { margin-top: 10px; }
+  .screen__head h2 { font-size: 16px; }
+  .screen__head p { margin-top: 4px; max-width: 120ch; font-size: 13px; color: var(--text-muted); }
+  .today { margin-top: 10px; padding: 10px 13px; border-radius: 10px; font-size: 12px; line-height: 1.65;
+    color: var(--text-muted); background: color-mix(in srgb, var(--surface-lighter) 60%, transparent);
+    border: 1px dashed var(--surface-border); max-width: 160ch; }
+  .today b { color: var(--text-tertiary); font-weight: 600; }
+
+  .pick { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+  .pick__opt { flex: 1 1 250px; text-align: left; font: inherit; cursor: pointer;
+    background: var(--surface); border: 1px solid var(--surface-border); border-radius: 12px;
+    padding: 12px 14px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 3px; }
+  .pick__opt:hover { border-color: color-mix(in srgb, var(--cyber-500) 40%, transparent); }
+  .pick__opt--on { background: color-mix(in srgb, var(--cyber-600) 14%, transparent);
+    border-color: color-mix(in srgb, var(--cyber-500) 55%, transparent); }
+  .pick__t { font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 7px; }
+  .pick__d { font-size: 11px; color: var(--text-muted); line-height: 1.45; text-wrap: pretty; }
+  .pick__n { font-size: 11px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+  .pick__opt--on .pick__n { color: var(--cyber-300); }
+
+  /* Two columns: the rail of groups, and the list of messages */
+  .studio-grid { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 14px; margin-top: 14px; align-items: start; }
+  @media (max-width: 1080px) { .studio-grid { grid-template-columns: minmax(0, 1fr); }
+    .rail { display: flex; flex-wrap: wrap; gap: 8px; }
+    .rail__group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .rail__head { width: 100%; } .rail__item { width: auto; } }
+
+  .rail { padding: 12px; }
+  .rail__head { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--text-muted-alt); margin: 0 0 6px 2px; }
+  .rail__group + .rail__group { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--surface-border); }
+  .rail__item { display: flex; flex-direction: column; gap: 4px; width: 100%; text-align: left; font: inherit;
+    background: transparent; border: 1px solid transparent; border-radius: 10px;
+    padding: 7px 9px; cursor: pointer; color: var(--text-secondary); }
+  .rail__item:hover { background: var(--surface-lighter); color: var(--text-primary); }
+  .rail__item--on { background: color-mix(in srgb, var(--cyber-600) 14%, transparent);
+    border-color: color-mix(in srgb, var(--cyber-500) 40%, transparent); color: var(--text-primary); }
+  .rail__line { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .rail__name { font-size: 13px; font-weight: 500; min-width: 0; }
+  .rail__n { font-size: 11px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+  .rail__item--on .rail__n { color: var(--cyber-300); }
+  .rail__meta { font-size: 10.5px; color: var(--text-muted-alt); line-height: 1.45; text-wrap: pretty; }
+  .rail__foot { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--surface-border);
+    font-size: 10.5px; color: var(--text-muted-alt); line-height: 1.5; }
+
+  /* A message in the list: the trigger, the reader, the state, in that order. */
+  .cat { padding: 0; margin-bottom: 14px; }
+  .cat__head { padding: 13px 16px; border-bottom: 1px solid var(--surface-border);
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .cat__title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .cat__say { font-size: 11.5px; color: var(--text-muted); flex: 1 1 320px; min-width: 0; }
+  .cat__n { font-size: 11px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+  .msg { padding: 13px 16px; border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 55%, transparent); }
+  .msg:last-child { border-bottom: 0; }
+  .msg:hover { background: color-mix(in srgb, var(--surface-light) 60%, transparent); }
+  .msg--intern { border-left: 2px solid color-mix(in srgb, var(--status-reopened) 60%, transparent); }
+  .msg--never { border-left: 2px solid color-mix(in srgb, var(--alert-amber) 55%, transparent); }
+  .msg__top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .msg__name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .msg__key { font-size: 10.5px; color: var(--cyber-300); }
+  .msg__chips { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+  .msg__rows { margin-top: 6px; display: grid; gap: 4px; }
+  .mr { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; font-size: 11.5px; line-height: 1.55; }
+  .mr__k { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--text-muted-alt); padding-top: 1px; }
+  .mr__v { color: var(--text-secondary); }
+  .mr--trigger .mr__k { color: var(--cyber-400); }
+  .mr--to .mr__k { color: var(--alert-green); }
+  .mr--never .mr__k { color: var(--alert-amber); }
+  @media (max-width: 700px) { .mr { grid-template-columns: minmax(0, 1fr); gap: 1px; } }
+  .msg__subject { margin-top: 7px; padding: 6px 9px; border-radius: 8px; background: var(--surface-light);
+    border: 1px solid color-mix(in srgb, var(--surface-border) 70%, transparent);
+    font-size: 11.5px; color: var(--text-tertiary); overflow-wrap: anywhere; }
+
+  .band { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-radius: 12px;
+    border: 1px solid var(--surface-border); border-left: 2px solid var(--cyber-500);
+    background: var(--surface-lighter); padding: 11px 14px; }
+  .band--warn { border-left-color: var(--alert-amber);
+    background: color-mix(in srgb, var(--alert-amber) 9%, transparent);
+    border-color: color-mix(in srgb, var(--alert-amber) 32%, transparent); }
+  .band--lock { border-left-color: var(--alert-amber);
+    background: color-mix(in srgb, var(--alert-amber) 8%, transparent);
+    border-color: color-mix(in srgb, var(--alert-amber) 30%, transparent); }
+  .band--kill { border-left-color: var(--brand-crimson);
+    background: color-mix(in srgb, var(--brand-crimson) 12%, transparent);
+    border-color: color-mix(in srgb, var(--alert-red) 38%, transparent); }
+  .band--good { border-left-color: var(--alert-green);
+    background: color-mix(in srgb, var(--alert-green) 7%, transparent);
+    border-color: color-mix(in srgb, var(--alert-green) 30%, transparent); }
+  .band__t { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+  .band__d { font-size: 11.5px; color: var(--text-muted); flex: 1 1 300px; min-width: 0; }
+  .band__right { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  /* The step track: how a change to a customer-facing message gets from draft to live. */
+  .track { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+  @media (max-width: 900px) { .track { grid-template-columns: minmax(0, 1fr); } }
+  .step { position: relative; padding: 12px 13px; background: var(--surface-light);
+    border: 1px solid var(--surface-border); border-radius: 12px; }
+  .step--done { border-color: color-mix(in srgb, var(--alert-green) 32%, transparent); }
+  .step--now { border-color: color-mix(in srgb, var(--cyber-500) 55%, transparent);
+    background: color-mix(in srgb, var(--cyber-600) 10%, transparent); }
+  .step--lock.step--now { border-color: color-mix(in srgb, var(--alert-amber) 55%, transparent);
+    background: color-mix(in srgb, var(--alert-amber) 10%, transparent); }
+  .step__lg { display: flex; align-items: center; gap: 7px; }
+  .step__dot { width: 8px; height: 8px; border-radius: 9999px; background: var(--surface-border); }
+  .step--done .step__dot { background: var(--alert-green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--alert-green) 20%, transparent); }
+  .step--now .step__dot { background: var(--cyber-500); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyber-500) 22%, transparent); }
+  .step--lock.step--now .step__dot { background: var(--alert-amber); box-shadow: 0 0 0 3px color-mix(in srgb, var(--alert-amber) 22%, transparent); }
+  .step__n { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted-alt); }
+  .step__t { margin-top: 7px; font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .step__say { margin-top: 4px; font-size: 11px; color: var(--text-muted); line-height: 1.55; }
+  .step__val { margin-top: 6px; font-size: 11.5px; color: var(--text-secondary); }
+
+  /* ── The editor: palette, canvas, inspector ─────────────────────────────────────────────── */
+  .editor-grid { display: grid; grid-template-columns: 246px minmax(0, 1fr) 330px; gap: 14px; margin-top: 14px; align-items: start; }
+  @media (max-width: 1340px) { .editor-grid { grid-template-columns: 232px minmax(0, 1fr); }
+    .inspector { grid-column: 1 / -1; } }
+  @media (max-width: 900px) { .editor-grid { grid-template-columns: minmax(0, 1fr); } }
+  .pane { padding: 0; }
+  .pane__head { padding: 12px 14px; border-bottom: 1px solid var(--surface-border);
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .pane__t { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+  .pane__n { margin-left: auto; font-size: 10.5px; font-weight: 600; color: var(--text-muted); }
+  .pane__body { padding: 10px 12px 14px; }
+  .pane__group + .pane__group { margin-top: 12px; padding-top: 11px; border-top: 1px solid var(--surface-border); }
+  .pane__label { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--text-muted-alt); margin-bottom: 7px; }
+
+  .block { display: flex; align-items: flex-start; gap: 8px; width: 100%; text-align: left; font: inherit;
+    background: transparent; border: 1px solid transparent; border-radius: 10px; padding: 7px 8px;
+    cursor: pointer; color: var(--text-secondary); }
+  .block:hover { background: var(--surface-lighter); color: var(--text-primary); }
+  .block--on { background: color-mix(in srgb, var(--cyber-600) 14%, transparent);
+    border-color: color-mix(in srgb, var(--cyber-500) 40%, transparent); color: var(--text-primary); }
+  .block--locked { opacity: .6; cursor: not-allowed; }
+  .block__grip { color: var(--text-muted-alt); font-size: 11px; line-height: 1.5; flex: none; }
+  .block__t { display: block; font-size: 12.5px; font-weight: 500; min-width: 0; }
+  .block__d { display: block; font-size: 10.5px; color: var(--text-muted-alt); line-height: 1.45; }
+
+  .fgroup { margin-bottom: 9px; }
+  .fgroup__head { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600;
+    color: var(--text-tertiary); margin-bottom: 5px; }
+  .fgroup__head span { font-size: 10px; font-weight: 600; color: var(--text-muted-alt); }
+  .fchips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .fieldchip { display: inline-flex; align-items: baseline; gap: 5px; border-radius: 8px;
+    border: 1px dashed color-mix(in srgb, var(--cyber-500) 38%, transparent);
+    background: color-mix(in srgb, var(--cyber-600) 10%, transparent);
+    padding: 2px 7px; font-size: 10.5px; color: var(--cyber-300); cursor: default; }
+  .fieldchip em { font-style: normal; color: var(--text-muted-alt); font-size: 10px; }
+
+  /* The canvas: the message as the recipient's mail client will lay it out. */
+  .canvas { padding: 0; }
+  .canvas__bar { padding: 10px 14px; border-bottom: 1px solid var(--surface-border);
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .canvas__stage { padding: 18px; background:
+    repeating-linear-gradient(45deg, transparent 0 9px, color-mix(in srgb, var(--surface-border) 26%, transparent) 9px 10px),
+    var(--surface-light); border-radius: 0 0 12px 12px; }
+
+  .mail { width: 520px; max-width: 100%; margin: 0 auto; border-radius: 12px; overflow: hidden;
+    background: var(--mail-bg); border: 1px solid var(--mail-border); }
+  .mail__head { background: var(--brand-crimson); padding: 20px 24px; display: flex; align-items: center;
+    justify-content: space-between; gap: 10px; }
+  .mail__brand { font-size: 18px; font-weight: 700; letter-spacing: .5px; color: #fff; }
+  .mail__meta { font-size: 11px; color: #ffd9d9; }
+  .mail__body { padding: 26px 24px; }
+  .mail__foot { padding: 14px 24px 18px; border-top: 1px solid var(--mail-border); }
+  .mail__foot p { font-size: 11px; color: var(--mail-faint); line-height: 1.6; }
+  .mail--plain .mail__head { background: var(--mail-panel); }
+  .mail--locked { border-color: color-mix(in srgb, var(--alert-amber) 45%, var(--mail-border)); }
+
+  .mf-h1 { font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 10px; }
+  .mf-p { font-size: 13.5px; color: var(--mail-text); margin: 0 0 12px; }
+  .mf-dim { color: var(--mail-dim); }
+  .mf-small { font-size: 12px; color: var(--mail-faint); }
+  .mf-facts { display: grid; grid-template-columns: 104px minmax(0, 1fr); gap: 3px 10px; margin: 0 0 16px;
+    padding: 12px 14px; border-radius: 8px; background: var(--mail-panel); border: 1px solid var(--mail-border); }
+  .mf-facts dt { font-size: 11px; color: var(--mail-dim); }
+  .mf-facts dd { font-size: 12.5px; color: #fff; margin: 0; }
+  .mf-quote { margin: 0 0 16px; padding: 12px 14px; border-radius: 8px; background: var(--mail-panel);
+    border: 1px solid var(--mail-border); border-left: 3px solid #ea580c; font-size: 12.5px; color: var(--mail-text); }
+  .mf-cta { display: inline-block; background: var(--brand-crimson); color: #fff; padding: 11px 21px;
+    border-radius: 6px; font-size: 13px; font-weight: 600; }
+  .mf-hr { border: 0; border-top: 1px solid var(--mail-border); margin: 16px 0; }
+  .mf-lines { width: 100%; border-collapse: collapse; margin: 0 0 14px; }
+  .mf-lines th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--mail-dim); font-weight: 600; padding: 0 0 6px; }
+  .mf-lines td { font-size: 12.5px; color: var(--mail-text); padding: 5px 0;
+    border-top: 1px solid color-mix(in srgb, var(--mail-border) 70%, transparent); }
+  .mf-lines .amt { text-align: right; color: #fff; font-variant-numeric: tabular-nums; }
+  .mf-total { display: flex; justify-content: space-between; gap: 10px; padding-top: 8px;
+    border-top: 1px solid var(--mail-border); font-size: 15px; font-weight: 700; color: var(--mail-accent); }
+
+  /* A conditional in the canvas, drawn as the rail it is rather than a note about one. */
+  .cond { position: relative; margin: 0 0 14px; padding: 12px 14px 12px 16px; border-radius: 10px;
+    border: 1px dashed color-mix(in srgb, var(--status-waiting-client) 55%, transparent);
+    background: color-mix(in srgb, var(--status-waiting-client) 8%, transparent); }
+  .cond__tag { position: absolute; top: -9px; left: 12px; padding: 1px 8px; border-radius: 9999px;
+    font-size: 10px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase;
+    color: var(--status-waiting-client); background: var(--surface); border: 1px solid color-mix(in srgb, var(--status-waiting-client) 45%, transparent); }
+  .cond__say { font-size: 10.5px; color: var(--text-muted); margin-top: 6px; }
+
+  /* A pasted element the sanitiser would strip — shown stripped, at editing time. */
+  .strip { margin: 0 0 14px; padding: 11px 13px; border-radius: 10px;
+    border: 1px dashed color-mix(in srgb, var(--alert-red) 55%, transparent);
+    background: color-mix(in srgb, var(--alert-red) 8%, transparent); }
+  .strip__tag { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--alert-red); }
+  .strip__src { margin-top: 5px; font-size: 11px; color: var(--text-muted); overflow-wrap: anywhere; }
+  .strip__why { margin-top: 5px; font-size: 11px; color: var(--text-muted); line-height: 1.55; }
+  .strip__kept { margin-top: 6px; font-size: 11.5px; color: var(--text-secondary); }
+
+  .lock { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 9999px;
+    font-size: 10.5px; font-weight: 600; color: var(--alert-amber);
+    background: color-mix(in srgb, var(--alert-amber) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--alert-amber) 40%, transparent); }
+
+  .inspector { padding: 0; }
+  .insp { padding: 12px 14px; border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 65%, transparent); }
+  .insp:last-child { border-bottom: 0; }
+  .insp__t { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--text-muted-alt); margin-bottom: 8px; }
+  .insp__row { display: flex; gap: 8px; align-items: baseline; font-size: 12px; }
+  .insp__row + .insp__row { margin-top: 6px; }
+  .insp__k { flex: none; width: 96px; font-size: 11px; color: var(--text-muted); }
+
+  /* A switch, drawn as the setting it is: a sentence beside the control that acts. */
+  .sw { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 50%, transparent); }
+  .sw:last-child { border-bottom: 0; }
+  .sw__track { flex: none; width: 34px; height: 20px; border-radius: 9999px; margin-top: 2px;
+    background: var(--surface-border); position: relative; }
+  .sw__knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 9999px;
+    background: var(--surface); box-shadow: 0 1px 2px rgb(0 0 0 / .35); }
+  .sw--on .sw__track { background: var(--cyber-600); }
+  .sw--on .sw__knob { left: auto; right: 2px; }
+  .sw--locked .sw__track { background: color-mix(in srgb, var(--alert-amber) 45%, transparent); }
+  .sw__t { display: block; font-size: 12.5px; color: var(--text-primary); font-weight: 500; }
+  .sw__d { display: block; font-size: 11px; color: var(--text-muted); line-height: 1.55; margin-top: 2px; }
+
+  .plaintext { width: 100%; font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    font-size: 11.5px; line-height: 1.7; color: var(--text-secondary); background: var(--surface-light);
+    border: 1px solid var(--surface-border); border-radius: 10px; padding: 12px 13px; white-space: pre-wrap;
+    overflow-wrap: anywhere; }
+
+  /* ── Preview: two widths, and they are two layouts ─────────────────────────────────────── */
+  .frames { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 14px; margin-top: 14px; align-items: start; }
+  @media (max-width: 1080px) { .frames { grid-template-columns: minmax(0, 1fr); } }
+  .fr { padding: 0; }
+  .fr__head { padding: 11px 14px; border-bottom: 1px solid var(--surface-border);
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .fr__t { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+  .fr__w { margin-left: auto; font-size: 11px; font-weight: 600; color: var(--text-muted); }
+  .fr__stage { padding: 16px; background: var(--surface-light); }
+  .fr--phone .fr__stage { display: flex; justify-content: center; }
+  .phone { width: 366px; max-width: 100%; border-radius: 26px; padding: 10px;
+    border: 2px solid var(--surface-border); background: var(--surface-lighter); }
+  .phone__notch { width: 74px; height: 5px; border-radius: 9999px; background: var(--surface-border); margin: 2px auto 9px; }
+  .phone .mail { width: 340px; }
+
+  /* The mobile arrangement is a different arrangement, not the desktop one squeezed:
+     the lockup stacks, the fact pairs become one column, the invoice lines become rows,
+     and the button fills the width. */
+  .mail--mobile .mail__head { flex-direction: column; align-items: flex-start; gap: 5px; padding: 13px 16px; }
+  .mail--mobile .mail__brand { font-size: 16px; }
+  .mail--mobile .mail__body { padding: 18px 16px; }
+  .mail--mobile .mail__foot { padding: 12px 16px 15px; }
+  .mail--mobile .mf-h1 { font-size: 18px; margin-bottom: 8px; }
+  .mail--mobile .mf-p { font-size: 13px; }
+  .mail--mobile .mf-facts { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 11px 12px; }
+  .mail--mobile .mf-facts dt { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; margin-top: 8px; }
+  .mail--mobile .mf-facts dt:first-child { margin-top: 0; }
+  .mail--mobile .mf-facts dd { font-size: 13px; }
+  .mail--mobile .mf-quote { font-size: 12.5px; padding: 11px 12px; }
+  .mail--mobile .mf-cta { display: block; text-align: center; padding: 13px 16px; }
+  .mail--mobile .mf-lines thead { display: none; }
+  .mail--mobile .mf-lines tr { display: block; padding: 8px 0;
+    border-top: 1px solid color-mix(in srgb, var(--mail-border) 70%, transparent); }
+  .mail--mobile .mf-lines td { display: block; border: 0; padding: 1px 0; }
+  .mail--mobile .mf-lines td.amt { text-align: left; }
+  .mail--mobile .mf-lines td.desc { color: #fff; font-weight: 600; }
+  @media (max-width: 720px) {
+    .mail { width: auto; }
+    .mail__head { flex-direction: column; align-items: flex-start; gap: 5px; }
+    .mail__body { padding: 18px 16px; }
+    .mf-facts { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  /* ── History ───────────────────────────────────────────────────────────────────────────── */
+  .vrow { display: grid; grid-template-columns: 44px minmax(0, 1fr) 150px 96px; gap: 12px; align-items: start;
+    padding: 12px 16px; border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 55%, transparent); }
+  .vrow:last-child { border-bottom: 0; }
+  .vrow--head { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--text-muted-alt); padding-top: 10px; padding-bottom: 8px; }
+  @media (max-width: 900px) { .vrow { grid-template-columns: 44px minmax(0, 1fr); } .vrow--head { display: none; } }
+  .vrow__n { font-size: 12px; font-weight: 600; color: var(--cyber-300); }
+  .vrow__t { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+  .vrow__d { display: block; font-size: 11px; color: var(--text-muted); line-height: 1.55; margin-top: 2px; }
+  .vrow__m { font-size: 11px; color: var(--text-muted-alt); }
+  .diff { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+  @media (max-width: 900px) { .diff { grid-template-columns: minmax(0, 1fr); } }
+  .diff__col { border-radius: 10px; border: 1px solid var(--surface-border); background: var(--surface-light);
+    padding: 11px 12px; }
+  .diff__col--old { border-color: color-mix(in srgb, var(--alert-red) 40%, transparent); }
+  .diff__col--new { border-color: color-mix(in srgb, var(--alert-green) 40%, transparent); }
+  .diff__t { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 7px; }
+  .diff__col--old .diff__t { color: var(--alert-red); }
+  .diff__col--new .diff__t { color: var(--alert-green); }
+  .diff p { font-size: 12px; color: var(--text-secondary); line-height: 1.65; }
+  .diff p + p { margin-top: 7px; }
+
+  .empty { padding: 18px 16px; text-align: left; }
+  .empty__t { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+  .empty__d { font-size: 11.5px; color: var(--text-muted); line-height: 1.6; margin-top: 5px; max-width: 120ch; }
+
+  footer.mock-foot { margin-top: 34px; padding-top: 16px; border-top: 1px solid var(--surface-border); max-width: 140ch; }
+</style>
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7.5 9 6 9-6"/></symbol>
+  <symbol id="i-ticket" viewBox="0 0 24 24"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1.5a2.5 2.5 0 0 0 0 5V16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1.5a2.5 2.5 0 0 0 0-5Z"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4l10-10-4-4L4 16ZM14 6l4 4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.6"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.5 19.5 6v6c0 4.2-3 7-7.5 8.5C7.5 19 4.5 16.2 4.5 12V6Z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 8h10M18 8h2M4 16h4M12 16h8M15 5.5v5M8 13.5v5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4.5 21 20H3ZM12 10v4.5M12 17.2v.3"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-cash" viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2"/><circle cx="12" cy="12" r="2.6"/><path d="M6.5 10v4M17.5 10v4"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8.5" cy="12" r="3.5"/><path d="M12 12h8M17 12v3M19.5 12v2.2"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.5 2.4 14 0 17M12 3.5c-2.4 2.5-2.4 14 0 17"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16M8 20v-6M12.5 20V9M17 20v-9.5"/></symbol>
+  <symbol id="i-block" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="10" height="6" rx="1.5"/></symbol>
+  <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 3v5M15 3v5M6.5 8h11v3.5a5.5 5.5 0 0 1-11 0ZM12 17v4"/></symbol>
+</svg>
+
+<div class="theme-toggle" role="group" aria-label="Theme">
+  <button type="button" data-theme-btn="dark" aria-pressed="true">Dark</button>
+  <button type="button" data-theme-btn="light" aria-pressed="false">Light</button>
+</div>
+
+<div class="mock-frame">
+
+  <header class="stack">
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <span class="mock-tag">Mockup — nothing changed</span>
+      <span class="mock-note">The modern interface only (<code>useRedesign()</code>) · proposed as <b>Administration → Email Studio</b></span>
+    </div>
+    <h1 style="font-size:22px; letter-spacing:-.01em;">Every message this product sends is written in code. Nobody can see it, change it, or choose what is in it without a deployment.</h1>
+    <p style="max-width:130ch; font-size:13.5px; color:var(--text-muted);">
+      <code>packages/email/src/EmailService.ts</code> is <b>310 lines</b>: one generic
+      <code>send()</code>, <b>seven</b> template functions that return inline HTML with every colour written into the
+      markup, and <b>eight</b> senders. Every subject is a template literal, the ticket composer's footer is a
+      concatenated paragraph in <code>routes/tickets/index.ts:515</code>, and there is no template table, no
+      template route, and no Email or Templates section among the <b>eight</b> sections of
+      <code>appConfiguration.ts</code> — <i>C7NC &amp; Email</i> holds the connectors, not the copy. The Email
+      Studio is the screen where all of that becomes <b>visible, editable and previewable</b>: a list of every
+      message, an editor in the report designer's idiom, a preview against a real record, a way back, and an
+      explicit choice of what information is sent — kept separate from how it looks.
+    </p>
+    <p class="mock-note" style="max-width:130ch;">
+      Every message, subject, sender and caller below was read out of the working copy on 9 October 2026 — the
+      senders and template functions in <code>packages/email/src/EmailService.ts</code>, the callers in
+      <code>services/ticketNotifications.ts</code>, <code>worker.ts</code>, <code>routes/tickets/index.ts</code>,
+      <code>routes/portal.ts</code>, <code>routes/users.ts</code> and <code>routes/auth.ts</code>, the sanitiser
+      in <code>services/emailHtml.ts</code>, the records in <code>seed-full.ts</code> and the report schedule in
+      <code>seed-coverage.ts</code>. Where a message has no sender, or a screen has no history to read, the file
+      says so rather than illustrating one.
+    </p>
+  </header>
+
+  <!-- The screen picker. Five screens, one file; the control is the section's own rail. -->
+  <nav class="pick" role="group" aria-label="Email Studio screens">
+    <button type="button" class="pick__opt pick__opt--on" data-screen-btn="messages" aria-pressed="true">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-mail"/></svg> Messages
+        <span class="pick__n">10 messages · 5 groups</span></span>
+      <span class="pick__d">Every message the product can send, grouped by what a person is doing when it
+        goes, with its trigger, its reader and whether anybody has changed it.</span>
+    </button>
+    <button type="button" class="pick__opt" data-screen-btn="editor" aria-pressed="false">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-edit"/></svg> The editor
+        <span class="pick__n">blocks · fields · conditionals</span></span>
+      <span class="pick__d">Palette, canvas, inspector — the report designer's three panes, with the safe-tag
+        set shown as stripped elements and the choice of content kept out of the layout.</span>
+    </button>
+    <button type="button" class="pick__opt" data-screen-btn="preview" aria-pressed="false">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-eye"/></svg> Preview
+        <span class="pick__n">a real ticket · a real invoice</span></span>
+      <span class="pick__d">Desktop and mobile side by side — two arrangements, not one squeezed — the plain-text
+        alternative, the attachments, and a test send.</span>
+    </button>
+    <button type="button" class="pick__opt" data-screen-btn="history" aria-pressed="false">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-clock"/></svg> History &amp; reset
+        <span class="pick__n">1 version · v0 imported</span></span>
+      <span class="pick__d">Who changed a template, what it said before, the difference from the code's own
+        default, restore, and the overrides that sit under the instance.</span>
+    </button>
+    <button type="button" class="pick__opt" data-screen-btn="internal" aria-pressed="false"
+            style="border-style:dashed;">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-shield"/></svg> What an internal message is not
+        <span class="pick__n">2 senders</span></span>
+      <span class="pick__d">The distinction the code already draws — internal, plain, no brand kit — and which
+        messages are deliberately plain.</span>
+    </button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN ONE — MESSAGES
+
+       The problem, in full. There is no template system. `EmailService.ts` is a class with eight
+       senders, seven of them wrapping a template function that returns a template literal of inline
+       HTML with the hex colours written into it, and a generic `send()`. Two senders are never called:
+       `sendInvoice` (subject `Invoice ${n} — Due ${due}`, `invoice-<n>.pdf` attached) and
+       `sendTicketAutoClose` (subject `[${n}] Ticket Closed — ${title}`). The real closure mail is
+       `notifyTicketClosure`, which goes out through `ticket.activity` with the label "Ticket closed"
+       or "Ticket resolved" or "Ticket cancelled". The composer in `routes/tickets/index.ts:515` is the
+       ninth message and the least templateable: the typed body, then `<hr>` and a fixed paragraph
+       naming the ticket and the client — words in a string literal, which is precisely what a template
+       should own.
+
+       So the list is grouped by what a person is doing when the message goes, and every row answers, in
+       the same order: what fires it, who reads it, and whether anybody has changed it. `default` and
+       `customised` are drawn as visibly different rows because "which of these have we changed?" is the
+       first question anyone asks this screen — and because the answer today is "none of them, and you
+       cannot", which is the reason the screen exists.
+
+       A third state joins them, and it is the one this feature has the best argument for: a sender that
+       is written and never called. `invoice.send` is well-formed, correct, and dead. An invoice marked
+       "sent" today is a row in a table, not a message that left the building.
+       ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="messages" id="messages">
+    <div class="screen__label">Screen one — Messages</div>
+    <div class="screen__head">
+      <h2>Every message, in one list, each row saying what fires it, who reads it, and whether it has been changed</h2>
+      <p>
+        Five groups by what a person is doing when the message goes. Each row carries its stable key, its
+        subject <i>as written in the code</i>, its trigger, its reader, whether it is customer-facing or internal,
+        whether it carries attachments, and its state.
+      </p>
+    </div>
+    <div class="today">
+      <b>Today, from <code>EmailService.ts</code>:</b> 310 lines, one <code>send()</code>, seven template functions
+      and eight senders. The subjects are template literals (<code>`[${ticketNumber}] …`</code>,
+      <code>`Invoice ${invoiceNumber} — Due ${dueDate}`</code>, <code>"C7NTAX — Your Verification Code"</code>), the
+      bodies are inline HTML with <code>#0f1923</code> and <code>#c00000</code> written into them, and the composer's
+      footer is <code>`&lt;hr&gt;&lt;p&gt;Ticket: … — …&lt;br&gt;Client: …&lt;/p&gt;`</code>. There is no place to look
+      any of it up and no way to change a word of it without a deployment.
+    </div>
+
+    <div class="studio-grid">
+      <!-- ── The rail: the groups, with their live counts ───────────────────────────────────── -->
+      <aside class="card rail" aria-label="Message groups">
+        <div class="rail__group">
+          <p class="rail__head">Groups</p>
+          <button type="button" class="rail__item rail__item--on" aria-pressed="true">
+            <span class="rail__line"><span class="rail__name">All messages</span><span class="rail__n num">10</span></span>
+            <span class="rail__meta">8 live · 2 written and never called</span>
+          </button>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">Ticket activity</span><span class="rail__n num">5</span></span>
+            <span class="rail__meta">4 customer-facing, 1 internal</span>
+          </button>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">Money</span><span class="rail__n num">2</span></span>
+            <span class="rail__meta">1 live, 1 written and never sent</span>
+          </button>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">Access &amp; security</span><span class="rail__n num">2</span></span>
+            <span class="rail__meta">Both security-class — locked bodies</span>
+          </button>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">Portal</span><span class="rail__n num">1</span></span>
+            <span class="rail__meta">Security-class — locked body</span>
+          </button>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">Reports</span><span class="rail__n num">0</span></span>
+            <span class="rail__meta">A schedule row exists; no sender does</span>
+          </button>
+        </div>
+
+        <div class="rail__group">
+          <p class="rail__head">State</p>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">Default</span><span class="rail__n num">10</span></span>
+            <span class="rail__meta">Nobody has edited any of them, because nobody can</span>
+          </button>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">Customised</span><span class="rail__n num">0</span></span>
+            <span class="rail__meta">An instance-level edit, above the code</span>
+          </button>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">Overridden</span><span class="rail__n num">0</span></span>
+            <span class="rail__meta">This instance holds 5 clients and 4 service boards</span>
+          </button>
+          <button type="button" class="rail__item" aria-pressed="false">
+            <span class="rail__line"><span class="rail__name">Never sent</span><span class="rail__n num">2</span></span>
+            <span class="rail__meta">The sender is written; no caller exists</span>
+          </button>
+        </div>
+
+        <div class="rail__foot">
+          The counts are the states the section introduces. Every one of the ten is <code>default</code>
+          today, and the two amber rows cannot be edited at all — they are not templates, they are code
+          that nothing invokes.
+        </div>
+      </aside>
+
+      <!-- ── The list ──────────────────────────────────────────────────────────────────────── -->
+      <div>
+        <div class="band band--warn" style="margin-bottom:14px;">
+          <svg class="ico ico--lg" style="color:var(--alert-amber);"><use href="#i-alert"/></svg>
+          <span class="band__t">Two of these ten are written and never called</span>
+          <span class="band__d">
+            <code>sendInvoice</code> renders a correct invoice email and attaches <code>invoice-{n}.pdf</code>;
+            nothing calls it, so an invoice marked <i>sent</i> is a status change, not a message that left the
+            building. <code>sendTicketAutoClose</code> is in the same position — the real closure mail is
+            <code>notifyTicketClosure</code>, sent through <code>ticket.activity</code>.
+          </span>
+          <span class="band__right"><button type="button" class="btn btn--secondary" data-goto="editor">See how the invoice would be edited <svg class="ico"><use href="#i-arrow"/></svg></button></span>
+        </div>
+
+        <!-- Ticket activity -->
+        <div class="card cat">
+          <div class="cat__head">
+            <svg class="ico ico--lg" style="color:var(--cyber-400);"><use href="#i-ticket"/></svg>
+            <span class="cat__title">Ticket activity</span>
+            <span class="cat__say">Written while somebody is working a ticket: a note, a time entry, a status, a reply, a reminder.</span>
+            <span class="cat__n num">5 messages</span>
+          </div>
+
+          <div class="msg">
+            <div class="msg__top">
+              <span class="msg__name">Email from the ticket</span>
+              <span class="msg__key mono">ticket.note</span>
+              <span class="msg__chips">
+                <span class="badge badge--customer">Customer</span>
+                <span class="badge badge--default">default</span>
+                <span class="chip" style="padding:1px 7px; font-size:10.5px;">attachments up to 10 + inline images</span>
+              </span>
+            </div>
+            <div class="msg__rows">
+              <div class="mr mr--trigger"><span class="mr__k">Fires when</span><span class="mr__v">a technician writes and sends an email from the ticket composer — <code>routes/tickets/index.ts:515</code>.</span></div>
+              <div class="mr mr--to"><span class="mr__k">Reader</span><span class="mr__v">the primary contact unless removed, plus anyone picked; the ticket's <b>cc</b> contacts copied; ad-hoc <b>bcc</b> allowed.</span></div>
+              <div class="mr"><span class="mr__k">The words</span><span class="mr__v">the technician's own body, then a hard-coded <code>&lt;hr&gt;</code> and <b>"Ticket: … — … / Client: …"</b>. These words are in a string literal today — exactly the paragraph a template should own.</span></div>
+            </div>
+            <div class="msg__subject">Subject as written: <code>[MSP-1001-1001] &lt;the technician's subject, up to 200 characters&gt;</code></div>
+          </div>
+
+          <div class="msg">
+            <div class="msg__top">
+              <span class="msg__name">Ticket update</span>
+              <span class="msg__key mono">ticket.activity</span>
+              <span class="msg__chips">
+                <span class="badge badge--customer">Customer</span>
+                <span class="badge badge--default">default</span>
+              </span>
+            </div>
+            <div class="msg__rows">
+              <div class="mr mr--trigger"><span class="mr__k">Fires when</span><span class="mr__v">a customer-visible event happens — a non-internal note is added, time is logged, or the status changes. <code>notifyTicketContact</code>, <code>services/ticketNotifications.ts:87</code>.</span></div>
+              <div class="mr mr--to"><span class="mr__k">Reader</span><span class="mr__v">the primary contact in <i>To</i>; every <b>cc</b> contact copied; an <b>additional</b> contact only for a note, and only while their own <code>notifyOnNote</code> switch is on.</span></div>
+              <div class="mr"><span class="mr__k">Body</span><span class="mr__v"><code>ticketActivityTemplate</code> — a crimson header, a greeting if there is a contact name, the ticket line, the event label, the detail in a panel, and "If you have any questions, simply reply to this email."</span></div>
+            </div>
+            <div class="msg__subject">Subject as written: <code>[MSP-1001-1001] New note added — Email server not sending outbound messages</code></div>
+          </div>
+
+          <div class="msg msg--never">
+            <div class="msg__top">
+              <span class="msg__name">Ticket closed</span>
+              <span class="msg__key mono">ticket.closure</span>
+              <span class="msg__chips">
+                <span class="badge badge--customer">Customer</span>
+                <span class="badge badge--never">never sent</span>
+              </span>
+            </div>
+            <div class="msg__rows">
+              <div class="mr mr--never"><span class="mr__k">Written at</span><span class="mr__v"><code>sendTicketAutoClose</code> → <code>autoCloseTemplate</code>: a slate header reading <b>Ticket Closed</b>, then "This ticket was automatically closed due to inactivity."</span></div>
+              <div class="mr mr--never"><span class="mr__k">Called from</span><span class="mr__v"><b>nothing.</b> A grep across the whole repository finds no caller. The closure a client actually receives is <code>notifyTicketClosure</code>, which goes out as <code>ticket.activity</code> with the label <i>Ticket closed</i>, <i>Ticket resolved</i> or <i>Ticket cancelled</i> — and which carries the one line that matters.</span></div>
+              <div class="mr"><span class="mr__k">The line</span><span class="mr__v">"If this is not resolved, reply to this email — the reply reopens the ticket and puts it back in the queue." That sentence is the mechanism: the reply is what reopens the ticket. It belongs to a required block, not to a paragraph somebody can delete.</span></div>
+            </div>
+          </div>
+
+          <div class="msg">
+            <div class="msg__top">
+              <span class="msg__name">Waiting on you</span>
+              <span class="msg__key mono">ticket.follow_up</span>
+              <span class="msg__chips">
+                <span class="badge badge--customer">Customer</span>
+                <span class="badge badge--default">default</span>
+              </span>
+            </div>
+            <div class="msg__rows">
+              <div class="mr mr--trigger"><span class="mr__k">Fires when</span><span class="mr__v">the background worker, every 24 hours a ticket sits <code>waiting_on_client</code>, until the board's <code>autoCloseDays</code> — <code>worker.ts:80</code>, <code>startWorkers()</code> inside the API process.</span></div>
+              <div class="mr mr--to"><span class="mr__k">Reader</span><span class="mr__v"><code>company.email || company.billingEmail</code> — <b>the company's address, never the contact's</b>. For <b>MSP-1003-1001</b> that is <code>support@initech.io</code>; this ticket carries no primary contact at all in the seed, which is precisely why the company's own address is the one the code reaches for.</span></div>
+              <div class="mr"><span class="mr__k">Body</span><span class="mr__v"><code>followUpTemplate</code> — an amber header reading <b>Action Required</b>, the days idle, and the sentence "If no response is received within the timeframe, this ticket may be automatically closed."</span></div>
+            </div>
+            <div class="msg__subject">Subject as written: <code>[MSP-1003-1001] Action Required — VPN connection drops every 15 minutes</code></div>
+          </div>
+
+          <div class="msg msg--intern">
+            <div class="msg__top">
+              <span class="msg__name">Reopened by the client</span>
+              <span class="msg__key mono">ticket.reopened_internal</span>
+              <span class="msg__chips">
+                <span class="badge badge--internal">Internal</span>
+                <span class="badge badge--default">default</span>
+                <span class="chip chip--lock" style="font-size:10.5px;">no brand kit</span>
+              </span>
+            </div>
+            <div class="msg__rows">
+              <div class="mr mr--trigger"><span class="mr__k">Fires when</span><span class="mr__v">a client replies to a ticket that was closed — <code>notifyTicketReopenedByClient</code>, <code>services/ticketNotifications.ts:198</code>, from <code>emailToTicket.ts:587</code>.</span></div>
+              <div class="mr mr--to"><span class="mr__k">Reader</span><span class="mr__v">the assignee; with nobody assigned, whoever raised the ticket. Never the client. <code>sendTicketReopened</code>.</span></div>
+              <div class="mr"><span class="mr__k">Body</span><span class="mr__v">an orange header, who replied, what they said in a quoted panel, and a button to <b>open the ticket</b> — an internal message that asked somebody to reply by email would put the answer in the wrong place.</span></div>
+            </div>
+            <div class="msg__subject">Subject as written: <code>[MSP-1001-1001] Reopened by the client — Email server not sending outbound messages</code></div>
+          </div>
+        </div>
+
+        <!-- Money -->
+        <div class="card cat">
+          <div class="cat__head">
+            <svg class="ico ico--lg" style="color:var(--alert-green);"><use href="#i-cash"/></svg>
+            <span class="cat__title">Money</span>
+            <span class="cat__say">Written while somebody is collecting: an invoice and a reminder about one.</span>
+            <span class="cat__n num">2 messages</span>
+          </div>
+
+          <div class="msg">
+            <div class="msg__top">
+              <span class="msg__name">Invoice overdue reminder</span>
+              <span class="msg__key mono">invoice.overdue</span>
+              <span class="msg__chips">
+                <span class="badge badge--customer">Customer</span>
+                <span class="badge badge--default">default</span>
+              </span>
+            </div>
+            <div class="msg__rows">
+              <div class="mr mr--trigger"><span class="mr__k">Fires when</span><span class="mr__v">the worker, while an invoice is overdue and the days overdue are a multiple of 7 — <code>worker.ts:195</code>, <code>sendOverdueReminder</code>.</span></div>
+              <div class="mr mr--to"><span class="mr__k">Reader</span><span class="mr__v"><code>invoice.company.email</code>. For <b>INV-2026-003</b> of Initech Solutions that is <code>support@initech.io</code>, total <b>$3,788.75</b>, 15 days overdue.</span></div>
+              <div class="mr"><span class="mr__k">Body</span><span class="mr__v"><code>overdueTemplate</code> — a red header reading <b>Payment Overdue</b>, the outstanding balance in red, the invoice number and days overdue, and a <b>Pay Now</b> button pointing at the portal.</span></div>
+            </div>
+            <div class="msg__subject">Subject as written: <code>Overdue Invoice INV-2026-003 — Payment Required</code></div>
+          </div>
+
+          <div class="msg msg--never">
+            <div class="msg__top">
+              <span class="msg__name">Invoice</span>
+              <span class="msg__key mono">invoice.send</span>
+              <span class="msg__chips">
+                <span class="badge badge--customer">Customer</span>
+                <span class="badge badge--never">never sent</span>
+                <span class="chip" style="padding:1px 7px; font-size:10.5px;">invoice-{n}.pdf</span>
+              </span>
+            </div>
+            <div class="msg__rows">
+              <div class="mr mr--never"><span class="mr__k">Written at</span><span class="mr__v"><code>sendInvoice</code> → <code>invoiceTemplate</code>: a crimson header reading <b>Invoice {n}</b>, the amount due large and in <code>#ff5c5c</code>, the due date, a <b>View &amp; Pay Invoice</b> button, and the PDF attached as <code>invoice-{n}.pdf</code>.</span></div>
+              <div class="mr mr--never"><span class="mr__k">Called from</span><span class="mr__v"><b>nothing.</b> No route, worker or service calls it. <b>INV-2026-004</b> for Stark Enterprises — $13,050.00, due in 28 days — would be a well-formed email nobody will ever receive.</span></div>
+              <div class="mr"><span class="mr__k">Why it matters</span><span class="mr__v">This is the strongest argument the section has. The owner's "send an invoice out of C7NTAX" is <i>already written and already correct</i>; what is missing is a place to see it, choose what it carries, and preview it against a real invoice before it goes. Draw the invoice case here as what the section would make possible.</span></div>
+            </div>
+            <div class="msg__subject">Subject as written: <code>Invoice INV-2026-004 — Due 2026-11-06</code></div>
+          </div>
+        </div>
+
+        <!-- Access & security -->
+        <div class="card cat">
+          <div class="cat__head">
+            <svg class="ico ico--lg" style="color:var(--alert-amber);"><use href="#i-key"/></svg>
+            <span class="cat__title">Access &amp; security</span>
+            <span class="cat__say">Written while somebody is getting in — or being let in. Both are security-class.</span>
+            <span class="cat__n num">2 messages</span>
+          </div>
+
+          <div class="msg">
+            <div class="msg__top">
+              <span class="msg__name">Sign-in verification code</span>
+              <span class="msg__key mono">auth.mfa_code</span>
+              <span class="msg__chips">
+                <span class="badge badge--internal">Internal</span>
+                <span class="badge badge--default">default</span>
+                <span class="chip chip--lock" style="font-size:10.5px;">body locked</span>
+              </span>
+            </div>
+            <div class="msg__rows">
+              <div class="mr mr--trigger"><span class="mr__k">Fires when</span><span class="mr__v">a password sign-in needs the emailed code — <code>routes/auth.ts:398</code>, <code>sendMfaCode</code>.</span></div>
+              <div class="mr mr--to"><span class="mr__k">Reader</span><span class="mr__v">the person signing in, at their own address.</span></div>
+              <div class="mr"><span class="mr__k">Body</span><span class="mr__v"><code>mfaTemplate</code> — a crimson header, "Verification Code", "It expires in 10 minutes", and the code in 32px letterspaced type. <b>Fixed for a reason:</b> it is read once, in a hurry, possibly on a phone in a bad signal area. A hero image and a marketing footer make the code harder to find and slower to arrive, and a code that has to be found is a code that gets lost.</span></div>
+            </div>
+            <div class="msg__subject">Subject as written: <code>C7NTAX — Your Verification Code</code></div>
+          </div>
+
+          <div class="msg">
+            <div class="msg__top">
+              <span class="msg__name">Your account is ready</span>
+              <span class="msg__key mono">user.invite</span>
+              <span class="msg__chips">
+                <span class="badge badge--internal">Internal</span>
+                <span class="badge badge--default">default</span>
+                <span class="chip chip--lock" style="font-size:10.5px;">carries a credential</span>
+              </span>
+            </div>
+            <div class="msg__rows">
+              <div class="mr mr--trigger"><span class="mr__k">Fires when</span><span class="mr__v">an administrator creates an account with <code>credentialMode: "invite"</code>, or ticks <i>email it</i> — <code>routes/users.ts:99</code> (<code>sendWelcomeEmail</code>), called at <code>:323</code> and <code>:387</code>.</span></div>
+              <div class="mr mr--to"><span class="mr__k">Reader</span><span class="mr__v">the new account's own address. The temporary password is never shown to the administrator on the invite path.</span></div>
+              <div class="mr"><span class="mr__k">Body</span><span class="mr__v">Six <code>&lt;p&gt;</code> elements joined by newlines — no header, no footer, no brand element at all. It names the sign-in address and the temporary password, and says either "You will be asked to choose your own password the first time you sign in" or "Please keep this password somewhere safe."</span></div>
+              <div class="mr"><span class="mr__k">Also used for</span><span class="mr__v">a <b>password reset</b>: <code>POST /users/:id/reset-password</code> with <code>sendEmail</code> calls the same function, so a reset arrives under the same subject and the same first line — <i>"An account has been created for you in C7NTAX."</i> That is the sentence <code>user.password_reset</code> is reserved to fix.</span></div>
+            </div>
+            <div class="msg__subject">Subject as written: <code>C7NTAX — Your account is ready</code></div>
+          </div>
+        </div>
+
+        <!-- Portal -->
+        <div class="card cat">
+          <div class="cat__head">
+            <svg class="ico ico--lg" style="color:var(--cyber-400);"><use href="#i-globe"/></svg>
+            <span class="cat__title">Portal</span>
+            <span class="cat__say">Written while a customer is signing themselves in.</span>
+            <span class="cat__n num">1 message</span>
+          </div>
+
+          <div class="msg">
+            <div class="msg__top">
+              <span class="msg__name">Portal sign-in code</span>
+              <span class="msg__key mono">portal.login_code</span>
+              <span class="msg__chips">
+                <span class="badge badge--customer">Customer</span>
+                <span class="badge badge--default">default</span>
+                <span class="chip chip--lock" style="font-size:10.5px;">body locked</span>
+              </span>
+            </div>
+            <div class="msg__rows">
+              <div class="mr mr--trigger"><span class="mr__k">Fires when</span><span class="mr__v">somebody asks for a portal sign-in code — <code>routes/portal.ts:146</code>. The route answers 202 whatever happens, so the message is the only evidence a request was made.</span></div>
+              <div class="mr mr--to"><span class="mr__k">Reader</span><span class="mr__v">the contact's address, and only if that contact belongs to a client with the portal enabled.</span></div>
+              <div class="mr"><span class="mr__k">Body</span><span class="mr__v">A single <code>&lt;p&gt;</code> with the code in <code>font-size:18px; letter-spacing:2px</code>, plus a plain-text alternative built in the same call — one of only two messages in the product that already sends a <code>text</code> part. <b>Locked:</b> the same reason as the verification code, and one more — this one is the only barrier in front of a customer's ticket list.</span></div>
+            </div>
+            <div class="msg__subject">Subject as written: <code>Your C7NTAX portal sign-in code</code></div>
+          </div>
+        </div>
+
+        <!-- Reports — the empty group -->
+        <div class="card cat">
+          <div class="cat__head">
+            <svg class="ico ico--lg" style="color:var(--text-tertiary);"><use href="#i-chart"/></svg>
+            <span class="cat__title">Reports</span>
+            <span class="cat__say">The group the owner will look for first, and the one with nothing in it.</span>
+            <span class="cat__n num">0 messages</span>
+          </div>
+          <div class="empty">
+            <p class="empty__t">A schedule row exists. No sender does.</p>
+            <p class="empty__d">
+              <code>reportSchedule</code> is a real model with real fields — <code>frequency</code>,
+              <code>dayOfWeek</code>, <code>dayOfMonth</code>, <code>timeOfDay</code>, <code>recipients</code>,
+              <code>format</code>, <code>lastSentAt</code> — and this instance holds a real row:
+              <b>weekly · Monday · 06:00 · ops@example.com · pdf</b>, written by
+              <code>POST /reports/:id/schedules</code> and created in <code>seed-coverage.ts</code>. There is even
+              an endpoint that stamps <code>lastSentAt</code>. There is no code anywhere that renders the PDF or
+              mails it. So <code>report.scheduled</code> is a key the section reserves, and this group is drawn
+              empty rather than illustrated — a message invented to fill the space would be the one thing this
+              file cannot afford.
+            </p>
+            <div class="keys" style="margin-top:11px;">
+              <span class="kbd mono">report.scheduled</span>
+              <span>reserved · no sender · the schedule row it would read is real</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- The state legend, and the answer to the first question -->
+        <div class="card" style="padding:0;">
+          <div class="cat__head">
+            <span class="cat__title">What the states mean, and which of these have we changed?</span>
+            <span class="cat__n">answered on the row, not in a report</span>
+          </div>
+          <div style="padding:13px 16px;">
+            <div class="kv"><span class="kv__k"><span class="badge badge--default">default</span></span><span class="kv__v">Never edited. The body is exactly what <code>EmailService.ts</code> returns today — including the colours written into the markup.</span></div>
+            <div class="kv"><span class="kv__k"><span class="badge badge--customised">customised</span></span><span class="kv__v">Edited at the instance. The code's version stays as the default, and <b>reset to default</b> always has something to return to.</span></div>
+            <div class="kv"><span class="kv__k"><span class="badge badge--overridden">overridden for 2</span></span><span class="kv__v">Some clients get different words — a count on the badge, and the list of them on the row's own override panel.</span></div>
+            <div class="kv"><span class="kv__k"><span class="badge badge--never">never sent</span></span><span class="kv__v">A sender with no caller. Editable like any other, but the list says plainly that no code path reaches it yet, so nobody mistakes a well-formed email for a delivered one.</span></div>
+            <p class="say" style="margin-top:12px; max-width:130ch;">
+              <b>Which of these have we changed?</b> Today the honest answer is <b>none of them</b> — not because
+              nobody wanted to, but because there is no way to. That is why <i>default</i> and <i>customised</i>
+              are drawn as different rows rather than as a column of one word: the moment the first template is
+              edited, this list has to answer a question it has never been able to answer before.
+            </p>
+          </div>
+        </div>
+
+        <!-- Reserved keys -->
+        <div class="card" style="padding:0; margin-top:14px;">
+          <div class="cat__head">
+            <svg class="ico ico--lg" style="color:var(--text-tertiary);"><use href="#i-plug"/></svg>
+            <span class="cat__title">Keys the shared vocabulary reserves, and no code sends</span>
+            <span class="cat__n num">4 keys</span>
+          </div>
+          <div style="padding:4px 16px 14px;">
+            <p class="say" style="max-width:130ch; margin:10px 0 12px;">
+              All three companion mockups share one vocabulary. These four keys are reserved in it and have no
+              sender anywhere in the repository — so they are listed here as reserved rather than counted as
+              messages, and each one says what it would replace.
+            </p>
+            <table class="ptable">
+              <thead>
+                <tr><th>Key</th><th>Nothing sends it</th><th>What it is for</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>report.scheduled</code></td>
+                  <td>no sender · no renderer</td>
+                  <td>A scheduled report's PDF, mailed to the <code>reportSchedule.recipients</code> — a real row exists, weekly · Monday · 06:00 · <code>ops@example.com</code> · pdf.</td>
+                </tr>
+                <tr>
+                  <td><code>quote.send</code></td>
+                  <td>no sender · no template</td>
+                  <td>Sending a quote to a client. Quotes are real rows and convert to invoices; nothing emails one.</td>
+                </tr>
+                <tr>
+                  <td><code>user.password_reset</code></td>
+                  <td>folded into <code>user.invite</code></td>
+                  <td>A reset sent as a reset. Today it reuses the welcome mail and arrives saying <i>"An account has been created for you"</i>.</td>
+                </tr>
+                <tr>
+                  <td><code>auth.password_changed</code></td>
+                  <td>no sender at all</td>
+                  <td>Telling somebody their password changed. <code>POST /auth/change-password</code> emails nothing today, so a change nobody made is silent.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN TWO — THE EDITOR
+
+       The heart of it, in the report designer's idiom: `ReportDesigner.tsx` is three panes over one
+       document — the palette on the left (bands, data, parameters, fields, expressions, schedule),
+       the canvas in the middle, the property grid on the right (`Inspector`, `Selection`), with
+       undo/redo held as `past`/`future` arrays, a design/preview/data tab row, and save blocked by
+       errors rather than by warnings. The Email Studio is the same three panes over a message.
+
+       Three things have to be visible rather than described:
+
+        · a FIELD being inserted, and the sample value it resolves to for a real record;
+        · a CONDITIONAL block — "only when there is a note to quote" — drawn as a rail on the block;
+        · the SAFE-TAG CONSTRAINT. `services/emailHtml.ts` keeps 30 tags, unwraps what is not in the
+          set (keeping the text), drops 8 elements with their content, refuses every `on*` handler and
+          every `style` value it does not recognise, allows 11 style properties, and rules on URLs.
+          A pasted element that the sanitiser would strip is shown stripped *now*, at editing time,
+          with the reason — because the alternative is discovering it after the client has read it.
+
+       And one thing has to be kept apart from the layout: the choice of what is sent. "Which fields
+       of the ticket appear", "is the thread quoted", "are time entries included" are switches a
+       person can read, not edits to a block. Mixing them into the canvas is how a template editor
+       becomes a thing nobody trusts.
+       ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="editor" id="editor" hidden>
+    <div class="screen__label">Screen two — The editor</div>
+    <div class="screen__head">
+      <h2>A palette of blocks and fields, a canvas that is the message, and an inspector for the block and the message</h2>
+      <p>
+        Editing <code>ticket.activity</code> against <b>MSP-1001-1001</b>. The right-hand inspector holds two
+        things, and they are kept apart: the <i>selected block</i> (its fields, its conditional, its style) and
+        the <i>message</i> (subject, from, reply-to, the recipients rule, the attachments).
+      </p>
+    </div>
+
+    <!-- The class of the message, decided before anything is edited. -->
+    <div class="band band--lock" style="margin-top:12px;">
+      <svg class="ico ico--lg" style="color:var(--alert-amber);"><use href="#i-lock"/></svg>
+      <span class="band__t">Four editing classes, and the locked ones are locked in the interface</span>
+      <span class="band__d">
+        Not every message is a template. A verification code that arrives as a designed newsletter is a
+        verification code somebody has to hunt for, so the three security messages open with the body fixed and
+        only the sender and the footer live.
+      </span>
+      <span class="band__right">
+        <span class="chip chip--on">Full editor <span class="chip__n">6</span></span>
+        <span class="chip chip--lock">Security — body locked <span class="chip__n">3</span></span>
+        <span class="chip chip--good">Internal — no brand kit <span class="chip__n">1</span></span>
+      </span>
+    </div>
+
+    <!-- Why the classes exist, and which message is in which. -->
+    <div class="grid2" style="margin-top:12px;">
+      <div class="card" style="padding:0;">
+        <div class="cat__head"><span class="cat__title">Which message is in which class</span><span class="cat__n">the decision, made visible</span></div>
+        <div style="padding:4px 16px 14px;">
+          <table class="ptable">
+            <thead><tr><th>Class</th><th>Messages</th><th>What may be edited</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span class="chip chip--on" style="font-size:11px;">Full editor</span></td>
+                <td><code>ticket.note</code> · <code>ticket.activity</code> · <code>ticket.follow_up</code> · <code>ticket.closure</code> · <code>invoice.send</code> · <code>invoice.overdue</code></td>
+                <td>Everything: subject, blocks, fields, conditionals, attachments, the brand kit's inheritance.</td>
+              </tr>
+              <tr>
+                <td><span class="chip chip--lock" style="font-size:11px;">Security — body locked</span></td>
+                <td><code>auth.mfa_code</code> · <code>portal.login_code</code> · <code>user.invite</code></td>
+                <td><b>Sender and footer only.</b> The body is a fixed, plain sentence plus the code or the credential. The block list is drawn padlocked and the canvas carries a plate saying so.</td>
+              </tr>
+              <tr>
+                <td><span class="chip chip--good" style="font-size:11px;">Internal — no brand kit</span></td>
+                <td><code>ticket.reopened_internal</code></td>
+                <td>Fully editable, <b>but the brand kit is not applied</b> and cannot be: no logo, no marketing footer, no unsubscribe. It is read by a technician, not by a customer.</td>
+              </tr>
+              <tr>
+                <td><span class="chip chip--bad" style="font-size:11px;">Nothing to edit</span></td>
+                <td><code>ticket.closure</code> (the dead sender) · <code>report.scheduled</code></td>
+                <td>Listed, openable, and honest: the section says no code path reaches these yet rather than offering an editor over them.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;">
+        <div class="cat__head"><span class="cat__title">The one line that is not decoration</span><span class="cat__n">a mechanism, not copy</span></div>
+        <div style="padding:13px 16px;">
+          <p class="say" style="max-width:110ch;">
+            Two sentences in these messages do something rather than say something. They are required blocks:
+            their <b>wording</b> is editable, their <b>presence</b> is not.
+          </p>
+          <div class="kv" style="margin-top:11px;"><span class="kv__k">In <code>ticket.closure</code></span><span class="kv__v">"If this is not resolved, reply to this email — the reply reopens the ticket and puts it back in the queue." A reply is what reopens the ticket; an email without this line is a closed door with no handle.</span></div>
+          <div class="kv"><span class="kv__k">In <code>ticket.follow_up</code></span><span class="kv__v">"If no response is received within the timeframe, this ticket may be automatically closed." The auto-close worker acts on this promise, so the promise stays.</span></div>
+          <p class="say" style="margin-top:11px;">
+            Both are drawn on the canvas as <span class="chip chip--lock" style="font-size:10.5px;">required</span>
+            blocks and cannot be removed, reordered out of the body, or made conditional.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="card" style="margin-top:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 13px;">
+      <span class="seg" role="group" aria-label="What you are editing">
+        <button type="button" class="seg__opt seg__opt--on">Design</button>
+        <button type="button" class="seg__opt">What gets sent</button>
+        <button type="button" class="seg__opt">Plain text</button>
+        <button type="button" class="seg__opt">Overrides</button>
+      </span>
+      <span style="width:1px; height:18px; background:var(--surface-border);"></span>
+      <button type="button" class="btn btn--quiet" disabled>Undo</button>
+      <button type="button" class="btn btn--quiet" disabled>Redo</button>
+      <span class="chip chip--warn">unsaved</span>
+      <span style="margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <span class="chip">state: <b>default</b> — the code's own version</span>
+        <button type="button" class="btn btn--secondary" data-goto="preview">Preview against a record <svg class="ico"><use href="#i-eye"/></svg></button>
+        <button type="button" class="btn btn--primary">Save template</button>
+      </span>
+    </div>
+    <div class="say" style="margin-top:8px;">
+      <b>Save is blocked by a broken reference, not by a warning</b> — the report designer's rule, kept: a field
+      that does not exist on the chosen source, an absolute URL the mail sanitiser would refuse, or a required
+      block that has been removed stops the save and says which one it is.
+    </div>
+
+    <div class="editor-grid">
+      <!-- ── The palette ─────────────────────────────────────────────────────────────────── -->
+      <aside class="card pane" aria-label="Blocks and fields">
+        <div class="pane__head">
+          <span class="pane__t">Blocks</span>
+          <span class="pane__n">9 kinds</span>
+        </div>
+        <div class="pane__body">
+          <button type="button" class="block block--on" aria-pressed="true">
+            <span class="block__grip">⣿</span>
+            <span><span class="block__t">Fact pairs</span><span class="block__d">Label and value on a line — Ticket, Client, Status, Technician</span></span>
+          </button>
+          <button type="button" class="block" aria-pressed="false">
+            <span class="block__grip">⣿</span>
+            <span><span class="block__t">Heading</span><span class="block__d"><code>h1</code>–<code>h4</code> only; <code>h5</code> and <code>h6</code> are not in the tag set</span></span>
+          </button>
+          <button type="button" class="block" aria-pressed="false">
+            <span class="block__grip">⣿</span>
+            <span><span class="block__t">Paragraph</span><span class="block__d">The thing itself, with fields in it</span></span>
+          </button>
+          <button type="button" class="block" aria-pressed="false">
+            <span class="block__grip">⣿</span>
+            <span><span class="block__t">Quote — the conversation so far</span><span class="block__d">Almost always conditional: only when there is a note to quote</span></span>
+          </button>
+          <button type="button" class="block" aria-pressed="false">
+            <span class="block__grip">⣿</span>
+            <span><span class="block__t">Button</span><span class="block__d">One link, https/mailto/tel or a path</span></span>
+          </button>
+          <button type="button" class="block" aria-pressed="false">
+            <span class="block__grip">⣿</span>
+            <span><span class="block__t">Table</span><span class="block__d">For invoice lines and time entries</span></span>
+          </button>
+          <button type="button" class="block" aria-pressed="false">
+            <span class="block__grip">⣿</span>
+            <span><span class="block__t">Image</span><span class="block__d">Inline only — pulled out into a <code>cid:</code> part before sending</span></span>
+          </button>
+          <button type="button" class="block" aria-pressed="false">
+            <span class="block__grip">⣿</span>
+            <span><span class="block__t">Divider</span><span class="block__d">The <code>&lt;hr&gt;</code> the composer already writes</span></span>
+          </button>
+          <button type="button" class="block" aria-pressed="false">
+            <span class="block__grip">⣿</span>
+            <span><span class="block__t">Attachment / report block</span><span class="block__d">Names the PDF that travels with the message</span></span>
+          </button>
+
+          <div class="pane__group">
+            <div class="pane__label">Fields · grouped by source</div>
+            <div class="fgroup">
+              <div class="fgroup__head"><svg class="ico" style="width:11px;height:11px;"><use href="#i-ticket"/></svg> Ticket <span>· MSP-1001-1001</span></div>
+              <div class="fchips">
+                <span class="fieldchip">Ticket.Number <em>MSP-1001-1001</em></span>
+                <span class="fieldchip">Ticket.Title <em>Email server not sending outbound messages</em></span>
+                <span class="fieldchip">Ticket.Status <em>In Progress</em></span>
+                <span class="fieldchip">Ticket.Priority <em>High</em></span>
+                <span class="fieldchip">Ticket.URL <em>/tickets/…</em></span>
+              </div>
+            </div>
+            <div class="fgroup">
+              <div class="fgroup__head">Client <span>· Acme Corporation</span></div>
+              <div class="fchips">
+                <span class="fieldchip">Client.Name <em>Acme Corporation</em></span>
+                <span class="fieldchip">Client.ClientId <em>1001</em></span>
+                <span class="fieldchip">Client.Email <em>info@acmecorp.com</em></span>
+              </div>
+            </div>
+            <div class="fgroup">
+              <div class="fgroup__head">Contact <span>· David Chen</span></div>
+              <div class="fchips">
+                <span class="fieldchip">Contact.FirstName <em>David</em></span>
+                <span class="fieldchip">Contact.FullName <em>David Chen</em></span>
+                <span class="fieldchip">Contact.Title <em>IT Director</em></span>
+              </div>
+            </div>
+            <div class="fgroup">
+              <div class="fgroup__head">Technician <span>· John Smith</span></div>
+              <div class="fchips">
+                <span class="fieldchip">Technician.Name <em>John Smith</em></span>
+                <span class="fieldchip">Technician.Email <em>john.smith@c7ntax.com</em></span>
+              </div>
+            </div>
+            <div class="fgroup">
+              <div class="fgroup__head">Technician · work <span>· from the ticket</span></div>
+              <div class="fchips">
+                <span class="fieldchip">Ticket.HoursLogged</span>
+                <span class="fieldchip">Ticket.LastNote</span>
+                <span class="fieldchip">Ticket.SlaDue</span>
+              </div>
+            </div>
+            <div class="fgroup">
+              <div class="fgroup__head">Invoice <span>· INV-2026-004</span></div>
+              <div class="fchips">
+                <span class="fieldchip">Invoice.Number <em>INV-2026-004</em></span>
+                <span class="fieldchip">Invoice.Total <em>$13,050.00</em></span>
+                <span class="fieldchip">Invoice.DueDate <em>2026-11-06</em></span>
+                <span class="fieldchip">Invoice.DaysOverdue <em>15</em></span>
+              </div>
+            </div>
+            <div class="fgroup">
+              <div class="fgroup__head">Report <span>· scheduled</span></div>
+              <div class="fchips">
+                <span class="fieldchip">Report.Name</span>
+                <span class="fieldchip">Report.Period</span>
+              </div>
+            </div>
+            <div class="fgroup">
+              <div class="fgroup__head">Instance <span>· this deployment</span></div>
+              <div class="fchips">
+                <span class="fieldchip">Instance.CompanyName <em>Cyber 7 Group</em></span>
+                <span class="fieldchip">Instance.PortalURL</span>
+                <span class="fieldchip">Instance.SupportEmail</span>
+              </div>
+            </div>
+            <div class="why-wrap" style="margin-top:10px;">
+              <button type="button" class="why" aria-expanded="false">
+                <svg class="ico" style="width:11px;height:11px;"><use href="#i-sliders"/></svg> Why every field carries a sample
+                <svg class="ico chev" style="width:11px;height:11px;"><use href="#i-chev"/></svg>
+              </button>
+              <div class="why-body" hidden>
+                <p>
+                  A field list without values is a list of names, and a name is what makes "{{Ticket.Status}}"
+                  look fine while it resolves to a blank. Each chip shows what the field holds <i>for the record
+                  currently chosen in the preview</i>, so a field that is empty on this ticket reads as empty here.
+                </p>
+                <p class="why-changes">
+                  Each source is a group you can insert from. Nothing enters the document except through a chip,
+                  because a field typed by hand is a field nothing can validate.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ── The canvas ──────────────────────────────────────────────────────────────────── -->
+      <div class="card canvas">
+        <div class="canvas__bar">
+          <span class="pane__t">Canvas — ticket.activity</span>
+          <span class="chip">6 blocks</span>
+          <span class="chip chip--on">1 conditional</span>
+          <span style="margin-left:auto;" class="mock-note">520 px · the width the message is actually mailed at</span>
+        </div>
+        <div class="canvas__stage">
+          <div class="mail">
+            <div class="mail__head">
+              <span class="mail__brand">C7NTAX</span>
+              <span class="mail__meta">Cyber 7 Group</span>
+            </div>
+            <div class="mail__body">
+
+              <!-- A field, inserted, resolving to the real value. -->
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px;">
+                <span class="fieldchip">Contact.FirstName <em>→ David</em></span>
+                <span class="mock-note">inserted from the Contact group</span>
+              </div>
+              <h2 class="mf-h1">Hi David,</h2>
+
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px;">
+                <span class="fieldchip">Ticket.Number <em>→ MSP-1001-1001</em></span>
+                <span class="fieldchip">Ticket.Title <em>→ Email server not sending outbound messages</em></span>
+              </div>
+              <p class="mf-p">
+                Ticket <strong style="color:#fff;">[MSP-1001-1001]</strong> —
+                <em>Email server not sending outbound messages</em>
+              </p>
+
+              <!-- The conditional, drawn as a rail rather than as a note about one. -->
+              <div class="cond">
+                <span class="cond__tag">Only when there is a note to quote</span>
+                <div class="mf-quote">
+                  Mail flow from the on-premises connector is queueing. I have re-issued the receive connector
+                  certificate and the queue is draining — can you confirm external delivery from Reception?
+                </div>
+                <p class="cond__say">
+                  Drawn on the canvas with its condition attached, and the condition is editable here rather than in a
+                  properties grid on another pane. When the condition is false the block is not sent <i>at all</i> —
+                  not sent empty — which is the difference between a message with a hole in it and a message without
+                  that paragraph in it.
+                </p>
+              </div>
+
+              <dl class="mf-facts">
+                <dt>Status</dt><dd>In Progress</dd>
+                <dt>Priority</dt><dd>High</dd>
+                <dt>Technician</dt><dd>John Smith</dd>
+                <dt>Client</dt><dd>Acme Corporation</dd>
+              </dl>
+
+              <!-- A pasted element the sanitiser would strip — shown stripped, now. -->
+              <div class="strip">
+                <div class="strip__tag">Pasted element — stripped at editing time, not after sending</div>
+                <div class="strip__src mono">&lt;h5 style="position:absolute; top:0; left:0; font-size:22px"&gt;Service notice&lt;/h5&gt;</div>
+                <div class="strip__why">
+                  <b>Unwrapped:</b> <code>h5</code> is not in the tag set — the 30 tags are
+                  <code>p br div span strong b em i u s del sub sup ul ol li blockquote a h1 h2 h3 h4 hr pre code table thead tbody tr td th img</code>,
+                  so the tag goes and the text is kept.
+                  <b>Dropped:</b> <code>position</code> is not one of the 11 allowed style properties
+                  (<code>color background-color font-size font-family font-weight font-style text-decoration text-align margin-left padding-left line-height</code>),
+                  so the whole declaration goes.
+                </div>
+                <div class="strip__kept">The message will read: <b>Service notice</b></div>
+              </div>
+
+              <div class="strip">
+                <div class="strip__tag">Pasted element — dropped with its content</div>
+                <div class="strip__src mono">&lt;script&gt;trackOpen()&lt;/script&gt; · &lt;iframe src="…"&gt;&lt;/iframe&gt; · &lt;svg&gt;…&lt;/svg&gt;</div>
+                <div class="strip__why">
+                  <code>script</code>, <code>style</code>, <code>iframe</code>, <code>object</code>,
+                  <code>embed</code>, <code>form</code>, <code>svg</code> and <code>template</code> are removed
+                  <b>with everything inside them</b>, and <code>javascript:</code> in a link is refused rather than
+                  escaped. This is why the canvas is the sanitiser's canvas: what is drawn here is what
+                  <code>sanitizeEmailHtml()</code> would let out of the building.
+                </div>
+              </div>
+
+              <a class="mf-cta" href="#">View &amp; reply in the portal</a>
+
+              <hr class="mf-hr" />
+              <p class="mf-small">
+                Ticket: MSP-1001-1001 — Email server not sending outbound messages<br />
+                Client: Acme Corporation
+              </p>
+            </div>
+            <div class="mail__foot">
+              <p>
+                Cyber 7 Group · the footer, the legal line and the unsubscribe rule are inherited from the
+                <b>brand kit</b> (drawn in the companion mockup) — a template references it, it does not restate it.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── The inspector ───────────────────────────────────────────────────────────────── -->
+      <aside class="card inspector" aria-label="Inspector">
+        <div class="insp">
+          <div class="insp__t">Selected block — Fact pairs</div>
+          <div class="insp__row"><span class="insp__k">Rows</span><span>4 of 9 ticket facts — Status, Priority, Technician, Client</span></div>
+          <div class="insp__row"><span class="insp__k">Label width</span><span>104 px</span></div>
+          <div class="insp__row"><span class="insp__k">Style</span><span><code>font-size: 12.5px</code>, <code>color</code> from the brand kit</span></div>
+          <div class="insp__row"><span class="insp__k">Condition</span><span>none</span></div>
+          <button type="button" class="btn btn--secondary" style="margin-top:9px;">Insert a field into this block</button>
+        </div>
+
+        <div class="insp">
+          <div class="insp__t">Selected block — Quote (conditional)</div>
+          <div class="insp__row"><span class="insp__k">Condition</span><span><code>Ticket.LastNote is not empty</code></span></div>
+          <div class="insp__row"><span class="insp__k">Else</span><span><b>Send nothing</b> — not an empty panel</span></div>
+          <div class="insp__row"><span class="insp__k">Source</span><span>the note, or the whole thread if "quote the thread" is on</span></div>
+        </div>
+
+        <div class="insp">
+          <div class="insp__t">The message — ticket.activity</div>
+          <div class="insp__row"><span class="insp__k">Subject</span><span><code class="mono">[{{Ticket.Number}}] {{Activity.Label}} — {{Ticket.Title}}</code></span></div>
+          <div class="insp__row"><span class="insp__k">From</span><span><code>noreply@cyber7group.com</code></span></div>
+          <div class="insp__row"><span class="insp__k">Reply-to</span><span>blank — a reply becomes a ticket comment</span></div>
+        </div>
+
+        <div class="insp">
+          <div class="insp__t">The recipients rule — what the code does today</div>
+          <div class="insp__row"><span class="insp__k">To</span><span>the primary contact — David Chen, <code>david@acmecorp.com</code></span></div>
+          <div class="insp__row"><span class="insp__k">Cc</span><span>every ticket contact with role <code>cc</code>, copied on all of it — Maria Garcia, James Wilson</span></div>
+          <div class="insp__row"><span class="insp__k">Notes only</span><span>a contact with role <code>additional</code>, only while their own <code>notifyOnNote</code> switch is on</span></div>
+          <div class="insp__row"><span class="insp__k">Cc only</span><span>never sent alone: with no <code>To</code>, the first copy is promoted, because a mail client needs one</span></div>
+          <p class="say" style="margin-top:8px;">
+            This is read-only here, and deliberately. Who receives a message is a fact about the ticket, not a
+            word in the template — the rule is shown so the person editing can see who will read it.
+          </p>
+        </div>
+
+        <div class="insp">
+          <div class="insp__t">Attachments this message may carry</div>
+          <div class="insp__row"><span class="insp__k">Allowed</span><span>the ticket's own files (up to 10), pasted images as inline <code>cid:</code> parts (up to 20 · 2 MB each · 8 MB total)</span></div>
+          <div class="insp__row"><span class="insp__k">For invoice.send</span><span><code>invoice-{n}.pdf</code>, generated</span></div>
+          <div class="insp__row"><span class="insp__k">For report.scheduled</span><span>the report PDF — no renderer exists yet</span></div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- ── What gets sent: separate from how it looks ─────────────────────────────────────── -->
+    <div class="grid2" style="margin-top:14px;">
+      <div class="card" style="padding:0;">
+        <div class="cat__head">
+          <svg class="ico ico--lg" style="color:var(--alert-green);"><use href="#i-sliders"/></svg>
+          <span class="cat__title">What gets sent</span>
+          <span class="cat__n">a choice, not a layout</span>
+        </div>
+        <div style="padding:8px 16px 14px;">
+          <p class="say" style="max-width:120ch; margin:10px 0 4px;">
+            The owner asked to choose what information goes out. That is this panel, and it is kept out of the canvas
+            on purpose: a paragraph is a way of saying something, and a switch is a decision about whether to say it
+            at all. Every switch reads as a sentence with the consequence beside it.
+          </p>
+
+          <div class="sw sw--on">
+            <span class="sw__track"><span class="sw__knob"></span></span>
+            <span><span class="sw__t">Name the person it is addressed to</span>
+              <span class="sw__d">Adds the greeting. When off, the message opens with the ticket line and the reader has to work out who they are from the address bar.</span></span>
+          </div>
+          <div class="sw sw--on">
+            <span class="sw__track"><span class="sw__knob"></span></span>
+            <span><span class="sw__t">Show the ticket number and title</span>
+              <span class="sw__d">On for all four customer-facing ticket messages today, because the number is the reference a client quotes back.</span></span>
+          </div>
+          <div class="sw sw--on">
+            <span class="sw__track"><span class="sw__knob"></span></span>
+            <span><span class="sw__t">Quote what was said</span>
+              <span class="sw__d">On for a note. Off for a status change, where there is nothing to quote — which is exactly the conditional drawn on the canvas.</span></span>
+          </div>
+          <div class="sw">
+            <span class="sw__track"><span class="sw__knob"></span></span>
+            <span><span class="sw__t">Quote the whole thread, not just this note</span>
+              <span class="sw__d">Off. Turning it on puts every previous note in the message; on a ticket with 12 comments that is a long email to somebody who asked one question.</span></span>
+          </div>
+          <div class="sw">
+            <span class="sw__track"><span class="sw__knob"></span></span>
+            <span><span class="sw__t">Include time entries</span>
+              <span class="sw__d">Off. Time logged is a customer-visible activity today and does notify the contact; making it a line in the message body as well would tell the client how long the work took on every update.</span></span>
+          </div>
+          <div class="sw">
+            <span class="sw__track"><span class="sw__knob"></span></span>
+            <span><span class="sw__t">Include the status history</span>
+              <span class="sw__d">Off. The current status is a fact pair; the history is a report, and a report belongs in a report.</span></span>
+          </div>
+          <div class="sw sw--on">
+            <span class="sw__track"><span class="sw__knob"></span></span>
+            <span><span class="sw__t">Name the technician</span>
+              <span class="sw__d">On. A named person is a person the client can ask for.</span></span>
+          </div>
+          <div class="sw sw--on">
+            <span class="sw__track"><span class="sw__knob"></span></span>
+            <span><span class="sw__t">Show the client's own name in the footer</span>
+              <span class="sw__d">On — and this is the paragraph the composer writes as a string literal today. Here it is a block with a switch behind it.</span></span>
+          </div>
+
+          <div class="band band--good" style="margin-top:12px;">
+            <span class="band__t">This message will contain 4 of 9 ticket facts</span>
+            <span class="band__d">and will quote 1 item — counted from the switches, not asserted.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;">
+        <div class="cat__head">
+          <span class="cat__title">Plain text — derived from the blocks, and editable</span>
+          <span class="cat__n">the multipart alternative</span>
+        </div>
+        <div style="padding:12px 16px 16px;">
+          <pre class="plaintext">Hi David,
+
+Ticket [MSP-1001-1001] — Email server not sending outbound messages
+
+New note added
+
+Mail flow from the on-premises connector is queueing. I have re-issued the
+receive connector certificate and the queue is draining — can you confirm
+external delivery from Reception?
+
+Status: In Progress
+Priority: High
+Technician: John Smith
+Client: Acme Corporation
+
+View &amp; reply in the portal:
+https://portal.cyber7group.com/tickets/…
+
+--
+Ticket: MSP-1001-1001 — Email server not sending outbound messages
+Client: Acme Corporation</pre>
+          <p class="say" style="margin-top:10px;">
+            <b>Derived, then editable, then honest about which it is.</b> <code>htmlToText()</code> already turns a
+            sanitised body into this — <code>&lt;br&gt;</code> becomes a newline, a list item becomes
+            <code>• </code>, and the entities are unescaped. The panel shows the derivation, lets somebody correct
+            it, and marks the message <i>plain text overridden</i> the moment it stops matching, because a text part
+            that quietly drifts from the HTML is a text part that tells a different story.
+          </p>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:11px;">
+            <button type="button" class="btn btn--secondary">Use the derived text</button>
+            <span class="chip chip--warn">plain text overridden</span>
+            <span class="chip">only 2 of 10 messages send a <code>text</code> part today</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN THREE — THE PREVIEW
+
+       Against real records, read out of `seed-full.ts`: the ticket MSP-1001-1001 of Acme Corporation
+       (David Chen, IT Director, John Smith) and the invoice INV-2026-003 of Initech Solutions
+       ($3,788.75, 15 days overdue, support@initech.io, Michael Brown) — plus INV-2026-004 for Stark
+       Enterprises, the draft that `sendInvoice` would mail, and which nothing does.
+
+       THE MOBILE FRAME IS A DIFFERENT ARRANGEMENT, NOT A NARROWER ONE. The header lockup stacks, the
+       fact pairs become one column, the invoice lines become blocks instead of rows, the button fills
+       the width and the padding comes in. `.mail--mobile` is a set of rules, not a transform: a phone
+       frame holding the 520px layout would answer no question anybody has. The widths are printed on
+       the frame heads so the reader can check them.
+
+       The test send is drawn with its own honest limit: this product has no mail sandbox, so there is
+       nowhere for a test to go except a real address, and the panel says so rather than implying a
+       safety net that does not exist.
+       ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="preview" id="preview" hidden>
+    <div class="screen__label">Screen three — Preview</div>
+    <div class="screen__head">
+      <h2>Two widths at once, because the question is "does it still read on a phone"</h2>
+      <p>
+        The record is chosen first — a real ticket, a real invoice — and then the message is drawn at the width it
+        is actually mailed at, beside the width it will most often be opened at.
+      </p>
+    </div>
+
+    <!-- The record picker -->
+    <div class="card" style="margin-top:12px; padding:12px 14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <span class="pane__t">Record</span>
+      <span class="seg" role="group" aria-label="Which record">
+        <button type="button" class="seg__opt seg__opt--on">MSP-1001-1001 · Acme Corporation</button>
+        <button type="button" class="seg__opt">MSP-1003-1001 · Initech Solutions</button>
+        <button type="button" class="seg__opt">INV-2026-003 · Initech Solutions</button>
+        <button type="button" class="seg__opt">INV-2026-004 · Stark Enterprises</button>
+      </span>
+      <span class="chip chip--on" style="margin-left:auto;">ticket.activity</span>
+      <span class="chip">state: default</span>
+    </div>
+
+    <!-- ── Ticket, desktop and mobile ─────────────────────────────────────────────────────── -->
+    <div class="frames">
+      <div class="card fr">
+        <div class="fr__head">
+          <svg class="ico ico--lg" style="color:var(--cyber-400);"><use href="#i-eye"/></svg>
+          <span class="fr__t">Desktop — the width it is mailed at</span>
+          <span class="fr__w num">520 px</span>
+        </div>
+        <div class="fr__stage">
+          <div class="mail">
+            <div class="mail__head">
+              <span class="mail__brand">C7NTAX</span>
+              <span class="mail__meta">Cyber 7 Group</span>
+            </div>
+            <div class="mail__body">
+              <h2 class="mf-h1">Hi David,</h2>
+              <p class="mf-p">Ticket <strong style="color:#fff;">[MSP-1001-1001]</strong> — <em>Email server not sending outbound messages</em></p>
+              <p class="mf-p"><strong style="color:#fff;">New note added</strong></p>
+              <div class="mf-quote">
+                Mail flow from the on-premises connector is queueing. I have re-issued the receive connector
+                certificate and the queue is draining — can you confirm external delivery from Reception?
+              </div>
+              <dl class="mf-facts">
+                <dt>Status</dt><dd>In Progress</dd>
+                <dt>Priority</dt><dd>High</dd>
+                <dt>Technician</dt><dd>John Smith</dd>
+                <dt>Client</dt><dd>Acme Corporation</dd>
+              </dl>
+              <a class="mf-cta" href="#">View &amp; reply in the portal</a>
+              <hr class="mf-hr" />
+              <p class="mf-small">
+                Ticket: MSP-1001-1001 — Email server not sending outbound messages<br />
+                Client: Acme Corporation
+              </p>
+            </div>
+            <div class="mail__foot">
+              <p>Cyber 7 Group · sent by C7NTAX on behalf of Acme Corporation</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card fr fr--phone">
+        <div class="fr__head">
+          <svg class="ico ico--lg" style="color:var(--text-tertiary);"><use href="#i-mail"/></svg>
+          <span class="fr__t">Mobile</span>
+          <span class="fr__w num">340 px</span>
+        </div>
+        <div class="fr__stage">
+          <div class="phone">
+            <div class="phone__notch"></div>
+            <div class="mail mail--mobile">
+              <div class="mail__head">
+                <span class="mail__brand">C7NTAX</span>
+                <span class="mail__meta">Cyber 7 Group</span>
+              </div>
+              <div class="mail__body">
+                <h2 class="mf-h1">Hi David,</h2>
+                <p class="mf-p">Ticket <strong style="color:#fff;">[MSP-1001-1001]</strong> — <em>Email server not sending outbound messages</em></p>
+                <p class="mf-p"><strong style="color:#fff;">New note added</strong></p>
+                <div class="mf-quote">
+                  Mail flow from the on-premises connector is queueing. I have re-issued the receive connector
+                  certificate and the queue is draining — can you confirm external delivery from Reception?
+                </div>
+                <dl class="mf-facts">
+                  <dt>Status</dt><dd>In Progress</dd>
+                  <dt>Priority</dt><dd>High</dd>
+                  <dt>Technician</dt><dd>John Smith</dd>
+                  <dt>Client</dt><dd>Acme Corporation</dd>
+                </dl>
+                <a class="mf-cta" href="#">View &amp; reply in the portal</a>
+                <hr class="mf-hr" />
+                <p class="mf-small">
+                  Ticket: MSP-1001-1001 — Email server not sending outbound messages<br />
+                  Client: Acme Corporation
+                </p>
+              </div>
+              <div class="mail__foot">
+                <p>Cyber 7 Group · sent by C7NTAX on behalf of Acme Corporation</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="say" style="margin-top:9px; max-width:130ch;">
+      <b>What reflowed:</b> the brand lockup and the company name went from one line to two; the fact pairs went
+      from label-beside-value to label-above-value, which is the difference between four short lines and four
+      wrapped ones; the body padding came in from 26/24 to 18/16 so the blocks keep a readable measure; and the
+      button stopped being an inline block beside nothing and became a full-width target, because a thumb is not a
+      cursor.
+    </p>
+
+    <!-- ── Invoice, the message that is written and never sent ───────────────────────────── -->
+    <div class="band band--warn" style="margin-top:14px;">
+      <svg class="ico ico--lg" style="color:var(--alert-amber);"><use href="#i-alert"/></svg>
+      <span class="band__t">This one has no caller — preview it precisely because it has never been seen</span>
+      <span class="band__d">
+        <code>invoice.send</code> renders correctly and nothing invokes it. Drawing it is the whole point: the
+        first time anybody in this business sees what the product would send a client is the first time they can
+        decide whether it is right.
+      </span>
+    </div>
+
+    <div class="frames">
+      <div class="card fr">
+        <div class="fr__head">
+          <svg class="ico ico--lg" style="color:var(--alert-green);"><use href="#i-cash"/></svg>
+          <span class="fr__t">Desktop — invoice.send against INV-2026-003</span>
+          <span class="fr__w num">520 px</span>
+        </div>
+        <div class="fr__stage">
+          <div class="mail">
+            <div class="mail__head">
+              <span class="mail__brand">Invoice INV-2026-003</span>
+              <span class="mail__meta">Initech Solutions</span>
+            </div>
+            <div class="mail__body">
+              <p class="mf-p mf-dim">Amount Due:</p>
+              <p style="font-size:28px; font-weight:700; color:var(--mail-accent); margin:0 0 14px;">$3,788.75</p>
+              <p class="mf-p mf-dim">Due Date: <strong style="color:#fff;">2026-09-24</strong></p>
+              <table class="mf-lines">
+                <thead><tr><th>Line</th><th class="amt">Amount</th></tr></thead>
+                <tbody>
+                  <tr><td class="desc">Managed services — September</td><td class="amt">$3,500.00</td></tr>
+                  <tr><td class="desc">Tax at 8.25%</td><td class="amt">$288.75</td></tr>
+                </tbody>
+              </table>
+              <div class="mf-total"><span>Total</span><span>$3,788.75</span></div>
+              <div style="margin-top:16px;"><a class="mf-cta" href="#">View &amp; Pay Invoice</a></div>
+              <hr class="mf-hr" />
+              <p class="mf-small">
+                Attached: <b>invoice-INV-2026-003.pdf</b><br />
+                Questions? Reply to this email and it reaches the billing desk.
+              </p>
+            </div>
+            <div class="mail__foot">
+              <p>Initech Solutions · invoice INV-2026-003 · this message carries a PDF attachment</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card fr fr--phone">
+        <div class="fr__head">
+          <svg class="ico ico--lg" style="color:var(--text-tertiary);"><use href="#i-mail"/></svg>
+          <span class="fr__t">Mobile — the same template, and the lines reflow</span>
+          <span class="fr__w num">340 px</span>
+        </div>
+        <div class="fr__stage">
+          <div class="phone">
+            <div class="phone__notch"></div>
+            <div class="mail mail--mobile">
+              <div class="mail__head">
+                <span class="mail__brand">Invoice INV-2026-003</span>
+                <span class="mail__meta">Initech Solutions</span>
+              </div>
+              <div class="mail__body">
+                <p class="mf-p mf-dim">Amount Due:</p>
+                <p style="font-size:28px; font-weight:700; color:var(--mail-accent); margin:0 0 14px;">$3,788.75</p>
+                <p class="mf-p mf-dim">Due Date: <strong style="color:#fff;">2026-09-24</strong></p>
+                <table class="mf-lines">
+                  <thead><tr><th>Line</th><th class="amt">Amount</th></tr></thead>
+                  <tbody>
+                    <tr><td class="desc">Managed services — September</td><td class="amt">$3,500.00</td></tr>
+                    <tr><td class="desc">Tax at 8.25%</td><td class="amt">$288.75</td></tr>
+                  </tbody>
+                </table>
+                <div class="mf-total"><span>Total</span><span>$3,788.75</span></div>
+                <div style="margin-top:16px;"><a class="mf-cta" href="#">View &amp; Pay Invoice</a></div>
+                <hr class="mf-hr" />
+                <p class="mf-small">
+                  Attached: <b>invoice-INV-2026-003.pdf</b><br />
+                  Questions? Reply to this email and it reaches the billing desk.
+                </p>
+              </div>
+              <div class="mail__foot">
+                <p>Initech Solutions · invoice INV-2026-003 · this message carries a PDF attachment</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Plain text, attachments and the test send ─────────────────────────────────────── -->
+    <div class="grid2" style="margin-top:14px;">
+      <div class="card" style="padding:0;">
+        <div class="cat__head">
+          <span class="cat__title">Plain text, as it would be sent</span>
+          <span class="cat__n">the alternative part</span>
+        </div>
+        <div style="padding:12px 16px 16px;">
+          <pre class="plaintext">Invoice INV-2026-003 — Due 2026-09-24
+
+Amount Due: $3,788.75
+Due Date: 2026-09-24
+
+Managed services — September   $3,500.00
+Tax at 8.25%                    $288.75
+Total                          $3,788.75
+
+View &amp; Pay Invoice:
+https://portal.cyber7group.com/invoices/…
+
+Attached: invoice-INV-2026-003.pdf</pre>
+          <p class="say" style="margin-top:10px;">
+            Two of the ten messages send a <code>text</code> part today: the portal sign-in code (written by hand in
+            <code>portal.ts</code>) and the ticket composer (<code>plainBody || htmlToText()</code>). Everything else
+            is HTML-only, so this panel is drawn as the derivation an editor would introduce — and the mockup says
+            plainly that it is a derivation, not a description of today.
+          </p>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card" style="padding:0;">
+          <div class="cat__head">
+            <span class="cat__title">Attachments this send would carry</span>
+            <span class="cat__n">1 file</span>
+          </div>
+          <div style="padding:12px 16px 16px;">
+            <div class="kv"><span class="kv__k">Attachment</span><span class="kv__v"><code>invoice-INV-2026-003.pdf</code> · <code>application/pdf</code> · the invoice as generated</span></div>
+            <div class="kv"><span class="kv__k">Inline images</span><span class="kv__v">none — the logo is a <code>cid:</code> part only when the brand kit's asset is embedded, and today there is no logo at all: <code>EmailService.ts</code> has none</span></div>
+            <div class="kv"><span class="kv__k">Size</span><span class="kv__v">under the API's own body cap; the mail path refuses anything over 10 MB of HTML and 8 MB of inline images</span></div>
+          </div>
+        </div>
+
+        <div class="card" style="padding:0;">
+          <div class="cat__head">
+            <svg class="ico ico--lg" style="color:var(--cyber-400);"><use href="#i-mail"/></svg>
+            <span class="cat__title">Send a test</span>
+            <span class="cat__n">one press, one address</span>
+          </div>
+          <div style="padding:12px 16px 16px;">
+            <p class="say" style="max-width:110ch;">
+              Send this exact render, with the brackets and the field values already resolved, to one address — the
+              only way to see what a real mail client does to it, because a canvas is a browser and a browser is
+              not Outlook.
+            </p>
+            <div style="display:flex; gap:8px; align-items:center; margin-top:11px; flex-wrap:wrap;">
+              <input class="input-field" style="max-width:280px;" value="john.smith@c7ntax.com" readonly />
+              <button type="button" class="btn btn--primary">Send a test</button>
+            </div>
+            <div class="band band--warn" style="margin-top:11px;">
+              <span class="band__t">There is no mail sandbox</span>
+              <span class="band__d">
+                A test send goes to a real mailbox through the same SMTP connection the customers' mail uses —
+                <code>SMTP_HOST</code>, <code>SMTP_PORT</code>, <code>SMTP_FROM</code>. Every test send is recorded
+                in the message's history so nobody has to guess whether a client got the draft. The Developer
+                section's mockup draws the mail sandbox as an empty state for the same reason: it does not exist.
+              </span>
+            </div>
+            <p class="say" style="margin-top:11px;">
+              Last test: <b>ticket.activity</b> against <b>MSP-1001-1001</b> → <code>john.smith@c7ntax.com</code>,
+              delivered — reported by <code>send()</code> as a <code>messageId</code>, which is all nodemailer
+              returns and all the section can honestly claim.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN FOUR — HISTORY AND RESET
+
+       Nobody turns a customer-facing message over to an editor without a way back. The honest problem
+       this screen has is that there is nothing to show: nothing has ever been saved, because nothing
+       can be saved today. So v0 is real — it is the body `ticketActivityTemplate` returns right now,
+       imported read-only from the code — and everything below it is drawn and labelled as drawn. A
+       history screen that invented five plausible revisions would be the one screen in this file that
+       lies, and a history screen is the worst place in a product to lie.
+
+       The overrides ladder is the vocabulary's order, kept exactly: instance → per-board → per-client
+       → per-language. The boards and clients named in it are the seeded ones from `seed-full.ts`:
+       Helpdesk, Security and Client Onboarding; Acme Corporation, Globex Industries, Initech
+       Solutions, Umbrella Corp and Stark Enterprises.
+       ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="history" id="history" hidden>
+    <div class="screen__label">Screen four — History and reset</div>
+    <div class="screen__head">
+      <h2>What it said before, who changed it, and the way back to what the code writes</h2>
+      <p>
+        For <code>ticket.activity</code>. The default is not a blank document — it is the version in
+        <code>EmailService.ts</code>, which is why <b>reset to default</b> always has somewhere to go.
+      </p>
+    </div>
+
+    <div class="band band--warn" style="margin-top:12px;">
+      <svg class="ico ico--lg" style="color:var(--alert-amber);"><use href="#i-alert"/></svg>
+      <span class="band__t">Only one row on this screen exists</span>
+      <span class="band__d">
+        <b>v0</b> is real: it is the body <code>ticketActivityTemplate</code> returns today, imported read-only the
+        first time the Studio was opened. The two rows below it are <b>labelled as drawn</b>, because nothing has
+        ever been saved and a history that invented revisions would be worse than an empty one.
+      </span>
+    </div>
+
+    <!-- The status track: a change to a customer-facing message, step by step. -->
+    <div class="card" style="margin-top:14px;">
+      <div style="display:flex; align-items:baseline; gap:10px; flex-wrap:wrap;">
+        <span class="pane__t">How a change gets to a client</span>
+        <span class="say" style="flex:1 1 320px; min-width:0;">
+          Nothing that leaves the building skips a step. The track is the same for every message, and it is
+          the reason a template edit is not a text field with a Save button.
+        </span>
+      </div>
+      <div class="track">
+        <div class="step step--done">
+          <div class="step__lg"><span class="step__dot"></span><span class="step__n">Step 1</span></div>
+          <div class="step__t">v0 imported</div>
+          <div class="step__say">The body the code writes, read out of <code>EmailService.ts</code> and kept as the default forever.</div>
+          <div class="step__val">ticket.activity · v0</div>
+        </div>
+        <div class="step step--done">
+          <div class="step__lg"><span class="step__dot"></span><span class="step__n">Step 2</span></div>
+          <div class="step__t">Edited as a draft</div>
+          <div class="step__say">Blocks, fields and conditionals, with a save blocked by a broken reference rather than by a warning.</div>
+          <div class="step__val">v1 · unsaved</div>
+        </div>
+        <div class="step step--now">
+          <div class="step__lg"><span class="step__dot"></span><span class="step__n">Step 3 — here</span></div>
+          <div class="step__t">Previewed against a record</div>
+          <div class="step__say">A real ticket and a real invoice, at 520 px and at 340 px, plus the plain-text derivation. The mobile width is compulsory, not optional.</div>
+          <div class="step__val">MSP-1001-1001 · INV-2026-003</div>
+        </div>
+        <div class="step">
+          <div class="step__lg"><span class="step__dot"></span><span class="step__n">Step 4</span></div>
+          <div class="step__t">Sent as a test</div>
+          <div class="step__say">To one address, through the real SMTP connection, because a canvas is a browser and a browser is not Outlook. There is no sandbox to soften this step.</div>
+          <div class="step__val">recorded in the version history</div>
+        </div>
+        <div class="step step--lock">
+          <div class="step__lg"><span class="step__dot"></span><span class="step__n">Step 5</span></div>
+          <div class="step__t">Saved as live</div>
+          <div class="step__say">For a security-class message the track stops at step 2: there is nothing to preview or test that has not already been fixed.</div>
+          <div class="step__val">3 messages end at step 2</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:0; margin-top:14px;">
+      <div class="cat__head">
+        <svg class="ico ico--lg" style="color:var(--text-tertiary);"><use href="#i-clock"/></svg>
+        <span class="cat__title">Versions of ticket.activity</span>
+        <span class="cat__n num">1 real · 2 drawn</span>
+      </div>
+
+      <div class="vrow vrow--head">
+        <span>v</span><span>What changed</span><span>Who · when</span><span></span>
+      </div>
+
+      <div class="vrow">
+        <span class="vrow__n mono">v0</span>
+        <span>
+          <span class="vrow__t">Imported from <code>EmailService.ts</code> — the default</span>
+          <span class="vrow__d">
+            A crimson header reading <b>Ticket Update</b>; a greeting line built only when the ticket has a contact
+            name; the ticket number and title; the event label in bold; the detail in a panel with a
+            <code>#334155</code> border and newlines turned into <code>&lt;br&gt;</code>; "If you have any questions,
+            simply reply to this email."; then the client's name in 13px <code>#64748b</code>. Every value escaped by
+            <code>escapeHtml()</code>.
+          </span>
+        </span>
+        <span class="vrow__m">read from the code<br />not authored here</span>
+        <span><span class="badge badge--default">default</span></span>
+      </div>
+
+      <div class="vrow" style="border-left:2px solid color-mix(in srgb, var(--cyber-500) 45%, transparent);">
+        <span class="vrow__n mono">v1</span>
+        <span>
+          <span class="vrow__t">The client's name leaves the footer and becomes a fact pair <span class="badge badge--customised">drawn</span></span>
+          <span class="vrow__d">
+            Four blocks instead of six, "Client: Acme Corporation" moved out of the closing 13px line and into the
+            facts panel where a client's own name belongs. Nothing else touched.
+          </span>
+        </span>
+        <span class="vrow__m">Mike Wilson<br />9 Oct 2026 · 16:12</span>
+        <span><button type="button" class="btn btn--quiet">Compare</button></span>
+      </div>
+
+      <div class="vrow" style="opacity:.72;">
+        <span class="vrow__n mono">v2</span>
+        <span>
+          <span class="vrow__t">A logo in the header, and a marketing footer <span class="badge badge--overridden">drawn · discarded</span></span>
+          <span class="vrow__d">
+            Kept as the example of why the history exists: the header image pushed the ticket number below the fold
+            on a 340px screen, and the footer's unsubscribe line is wrong on a transactional message. Discarded, not
+            deleted, so the next person can see why.
+          </span>
+        </span>
+        <span class="vrow__m">Lisa Brown<br />9 Oct 2026 · 16:26</span>
+        <span><button type="button" class="btn btn--quiet">Restore</button></span>
+      </div>
+    </div>
+
+    <!-- The difference from the default -->
+    <div class="grid2" style="margin-top:14px;">
+      <div class="card" style="padding:0;">
+        <div class="cat__head">
+          <span class="cat__title">The difference from the default</span>
+          <span class="cat__n">default → v1</span>
+        </div>
+        <div style="padding:12px 16px 16px;">
+          <div class="diff">
+            <div class="diff__col diff__col--old">
+              <div class="diff__t">As the code writes it (v0)</div>
+              <p class="mono" style="font-size:11.5px;">
+                ${closing}<br />
+                &lt;p style="color:#64748b; font-size:13px;"&gt;<em>Acme Corporation</em>&lt;/p&gt;
+              </p>
+              <p>…where <code>closing</code> is "If you have any questions, simply reply to this email."</p>
+            </div>
+            <div class="diff__col diff__col--new">
+              <div class="diff__t">As v1 would send it</div>
+              <p class="mono" style="font-size:11.5px;">
+                &lt;dl class="facts"&gt;<br />
+                &nbsp;&nbsp;&lt;dt&gt;Client&lt;/dt&gt;&lt;dd&gt;<em>Acme Corporation</em>&lt;/dd&gt;<br />
+                &lt;/dl&gt;
+              </p>
+              <p>…and the closing paragraph is gone, because a sentence that only repeats a name is a sentence the reader pays for and does not need.</p>
+            </div>
+          </div>
+          <p class="say" style="margin-top:11px;">
+            The diff is against <b>the default</b>, not against the previous version, because the question somebody
+            actually asks is "how far have we moved from what the product shipped", and that question has the same
+            answer on every row.
+          </p>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+            <button type="button" class="btn btn--primary">Save as v2</button>
+            <button type="button" class="btn btn--secondary">Restore v0</button>
+            <button type="button" class="btn btn--quiet">Reset this template to default</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="card" style="padding:0;">
+          <div class="cat__head">
+            <span class="cat__title">Overrides — instance, then board, then client, then language</span>
+            <span class="cat__n">the order is fixed</span>
+          </div>
+          <div style="padding:4px 16px 14px;">
+            <table class="ptable">
+              <thead><tr><th>Level</th><th>Scope</th><th>Message</th><th>State</th></tr></thead>
+              <tbody>
+                <tr><td>1 · Instance</td><td>everything</td><td><code>ticket.activity</code></td><td><span class="badge badge--customised">v1</span></td></tr>
+                <tr><td>2 · Board</td><td>Helpdesk · Security · Client Onboarding</td><td>none</td><td><span class="badge badge--default">inherits</span></td></tr>
+                <tr><td>3 · Client</td><td>Acme Corporation · Globex Industries · Initech Solutions · Umbrella Corp · Stark Enterprises</td><td>none</td><td><span class="badge badge--default">inherits</span></td></tr>
+                <tr><td>4 · Language</td><td>shown only when a language other than the instance default is enabled</td><td>none</td><td><span class="badge badge--default">inherits</span></td></tr>
+              </tbody>
+            </table>
+            <p class="say" style="margin-top:10px;">
+              A more specific level wins, and every row says what it is inheriting <i>from</i> rather than only that it
+              inherits. That is the whole reason the ladder is drawn as a ladder: on a message with an override at
+              level 3, the person editing at level 2 needs to know their change will reach four clients and not one.
+            </p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="font-size:13px;">Why the way back is not optional</h3>
+          <p class="say" style="margin-top:8px; max-width:110ch;">
+            This is the first screen in the product that lets somebody change what a client reads without a
+            deployment, a pull request or a code review. The default is preserved forever — the code keeps its own
+            version, so <b>reset to default</b> is always available and always returns to a body that exists in the
+            repository rather than to an earlier draft somebody has forgotten. Every save, restore, reset and test
+            send is recorded with the person, the time and the difference, and the record names the version it
+            replaced rather than only the version it created.
+          </p>
+          <div class="keys" style="margin-top:11px;">
+            <span class="kbd">restore v0</span>
+            <span class="kbd">reset to default</span>
+            <span class="kbd">compare</span>
+            <span class="kbd">save as v1</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN FIVE — WHAT AN INTERNAL MESSAGE IS NOT
+
+       The distinction is already in the code, and it is argued there at length. `sendTicketReopened`'s
+       own comment: "Internal, and therefore not the customer template with different words: it names
+       who replied and quotes what they said, because the person reading it has to decide what to do
+       about it and the client is already in the thread. The ticket's own page is the link — an
+       internal email that asks somebody to reply by email would put the answer in the wrong place."
+       `ticketReopenedTemplate` repeats it: "Its own template rather than the customer one with
+       different words."
+
+       What that means for a template editor is four classes of treatment, and the section has to draw
+       which message is in which — because the moment there is one editor, the pressure to make every
+       message use it is the pressure that ruins the four plain ones.
+       ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="internal" id="internal" hidden>
+    <div class="screen__label">Screen five — What an internal message is not</div>
+    <div class="screen__head">
+      <h2>The distinction the code already draws, and which messages are deliberately plain</h2>
+      <p>
+        One message of the ten goes to a member of staff. It is not the customer message with different words, it
+        does not carry the brand kit, and it is not a place to be consistent with the others.
+      </p>
+    </div>
+
+    <div class="grid2" style="margin-top:14px;">
+      <div class="card" style="padding:0;">
+        <div class="cat__head">
+          <span class="cat__title">What the code says, in its own words</span>
+          <span class="cat__n">two comments, quoted</span>
+        </div>
+        <div style="padding:13px 16px;">
+          <p class="say mono" style="font-size:11.5px; line-height:1.8; padding:11px 12px;           border-radius:10px; background:var(--surface-light); border-left:2px solid var(--cyber-500);">
+            "Internal, and therefore not the customer template with different words: it names who replied and
+            quotes what they said, because the person reading it has to decide what to do about it and the client
+            is already in the thread. The ticket's own page is the link — an internal email that asks somebody to
+            reply by email would put the answer in the wrong place."
+          </p>
+          <p class="say mono" style="font-size:11.5px; line-height:1.8; margin-top:10px; padding:11px 12px; border-radius:10px; background:var(--surface-light); border-left:2px solid var(--status-reopened);">
+            "An internal notification: a ticket the client has just reopened. Its own template rather than the
+            customer one with different words. The reader is a technician who has to decide what to do next, so it
+            names the person who replied and quotes what they said, and it links to the ticket instead of inviting
+            a reply — the answer belongs in the thread, not in an inbox."
+          </p>
+          <p class="say" style="margin-top:11px;">
+            The section's job is not to repeat that. It is to make sure an editor cannot quietly undo it: the brand
+            kit's logo, colours, marketing footer and unsubscribe line are <b>not available</b> on this message, and
+            the section says why rather than presenting a lock with no reason.
+          </p>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0;">
+        <div class="cat__head">
+          <svg class="ico ico--lg" style="color:var(--status-reopened);"><use href="#i-shield"/></svg>
+          <span class="cat__title">The one internal message, against the nine that are not</span>
+          <span class="cat__n">1 of 10</span>
+        </div>
+        <div style="padding:4px 16px 14px;">
+          <table class="ptable">
+            <thead><tr><th></th><th>ticket.reopened_internal</th><th>The customer messages</th></tr></thead>
+            <tbody>
+              <tr><td><b>Reader</b></td><td>the assignee, else whoever raised the ticket</td><td>a client contact, or the client's own address</td></tr>
+              <tr><td><b>Brand kit</b></td><td><b>not applied</b> — no logo, no marketing footer, no unsubscribe</td><td>inherited, and the footer, legal line and unsubscribe come from it</td></tr>
+              <tr><td><b>Voice</b></td><td>third person about the client: "David Chen replied to the closing email, so this ticket is back in the queue"</td><td>second person to the client: "If you have any questions, simply reply to this email"</td></tr>
+              <tr><td><b>The link</b></td><td><b>Open the ticket</b> — the answer belongs in the thread</td><td>the portal, or a reply that becomes a ticket comment</td></tr>
+              <tr><td><b>What it quotes</b></td><td>the client's own words, so the technician can decide without opening the ticket first</td><td>the technician's note, because the client has not read it yet</td></tr>
+              <tr><td><b>Attachment rules</b></td><td>none — an internal message carries no client document</td><td>the ticket's files, pasted images, or <code>invoice-{n}.pdf</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- The four treatments -->
+    <div class="card" style="padding:0; margin-top:14px;">
+      <div class="cat__head">
+        <span class="cat__title">Four treatments, decided by who reads it and why</span>
+        <span class="cat__n">not by what looks consistent</span>
+      </div>
+      <div style="padding:4px 16px 14px;">
+        <table class="ptable">
+          <thead><tr><th>Treatment</th><th>Messages</th><th>Why it is that and not the other</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>Designed</b><br /><span class="badge badge--customer">rich</span></td>
+              <td><code>ticket.activity</code> · <code>ticket.closure</code> · <code>ticket.follow_up</code> · <code>invoice.send</code> · <code>invoice.overdue</code></td>
+              <td>Read by a client who did not ask to be reading it, and who has to find the one thing that matters — the amount, the date, the reply button. The brand kit earns its place because this is the only mail the client gets from this business.</td>
+            </tr>
+            <tr>
+              <td><b>The composer's own words</b><br /><span class="badge badge--customer">rich</span></td>
+              <td><code>ticket.note</code></td>
+              <td>A person typed this. The template's part is the frame — the subject tag, the footer that names the ticket and the client — and it should stay the frame rather than grow into the message.</td>
+            </tr>
+            <tr>
+              <td><b>Plain by design</b><br /><span class="badge badge--internal">internal</span></td>
+              <td><code>ticket.reopened_internal</code></td>
+              <td>Read by a technician who has to act. A branded footer at the bottom of it is furniture in the way of the decision, and the link goes to the ticket because that is where the answer belongs.</td>
+            </tr>
+            <tr>
+              <td><b>Locked plain</b><br /><span class="badge badge--never">security</span></td>
+              <td><code>auth.mfa_code</code> · <code>portal.login_code</code> · <code>user.invite</code></td>
+              <td>Read once, in a hurry, possibly on a phone with one bar of signal. A code that has to be found is a code that gets lost. Only the sender and the footer may change — and on <code>user.invite</code> the credential line itself is a required block, because it is the reason the message was sent.</td>
+            </tr>
+            <tr>
+              <td><b>Nothing yet</b><br /><span class="badge badge--never">no caller</span></td>
+              <td><code>ticket.closure</code> (the dead sender) · <code>report.scheduled</code> · <code>quote.send</code> · <code>auth.password_changed</code></td>
+              <td>Listed and openable, with the section saying plainly that no code path reaches them — so nobody reads a well-formed preview and assumes a message went out.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- The locked editor, drawn as it opens -->
+    <div class="card" style="padding:0; margin-top:14px;">
+      <div class="cat__head">
+        <svg class="ico ico--lg" style="color:var(--alert-amber);"><use href="#i-lock"/></svg>
+        <span class="cat__title">What the editor looks like when the message is a security message</span>
+        <span class="cat__n">auth.mfa_code · opened</span>
+      </div>
+      <div class="editor-grid" style="margin-top:0; padding:0 14px 14px;">
+        <div class="pane card" style="box-shadow:none;">
+          <div class="pane__head"><span class="pane__t">Blocks</span><span class="pane__n">locked</span></div>
+          <div class="pane__body">
+            <span class="lock"><svg class="ico" style="width:11px;height:11px;"><use href="#i-lock"/></svg> body locked</span>
+            <button type="button" class="block block--locked" aria-pressed="false">
+              <span class="block__grip">🔒</span>
+              <span><span class="block__t">Heading — "Verification Code"</span><span class="block__d">fixed</span></span>
+            </button>
+            <button type="button" class="block block--locked" aria-pressed="false">
+              <span class="block__grip">🔒</span>
+              <span><span class="block__t">Paragraph — the expiry sentence</span><span class="block__d">fixed, "It expires in 10 minutes"</span></span>
+            </button>
+            <button type="button" class="block block--locked" aria-pressed="false">
+              <span class="block__grip">🔒</span>
+              <span><span class="block__t">Code panel — <code>{{Auth.Code}}</code></span><span class="block__d">fixed, 32px, letter-spacing 8px</span></span>
+            </button>
+            <button type="button" class="block" aria-pressed="false">
+              <span class="block__grip">⣿</span>
+              <span><span class="block__t">Footer</span><span class="block__d">editable — the instance's support line</span></span>
+            </button>
+            <p class="say" style="margin-top:10px;">
+              Every block above the footer is <b>read-only and listed</b> rather than hidden, so a person can see
+              the message they are not allowed to change. An empty editor would be a mystery; a locked one is a
+              decision.
+            </p>
+          </div>
+        </div>
+
+        <div class="card canvas" style="box-shadow:none;">
+          <div class="canvas__bar"><span class="pane__t">Canvas — auth.mfa_code</span><span class="chip chip--lock">body fixed</span></div>
+          <div class="canvas__stage">
+            <div class="mail mail--locked" style="width:400px;">
+              <div style="background:var(--brand-crimson); padding:16px 20px; text-align:center;">
+                <span style="font-size:17px; font-weight:700; letter-spacing:.5px; color:#fff;">C7NTAX</span>
+              </div>
+              <div class="mail__body" style="padding:22px 20px;">
+                <h2 class="mf-h1" style="font-size:17px;">Verification Code</h2>
+                <p class="mf-p mf-dim" style="font-size:12.5px;">Use this code to complete your sign-in. It expires in 10 minutes.</p>
+                <div style="background:var(--mail-panel); border:1px solid var(--mail-border); border-radius:8px; padding:16px; text-align:center;">
+                  <span style="font-size:30px; font-weight:700; letter-spacing:8px; color:var(--mail-accent); font-family:'SF Mono', monospace;">481902</span>
+                </div>
+                <p class="mf-small" style="margin-top:14px;">If you did not request this code, please ignore this email.</p>
+              </div>
+            </div>
+            <p class="say" style="margin-top:11px; text-align:center;">
+              Drawn at 400 px, not 520 — a security message is the one place the product should be smaller than it
+              could be.
+            </p>
+          </div>
+        </div>
+
+        <div class="card inspector" style="box-shadow:none;">
+          <div class="insp">
+            <div class="insp__t">What may change on this message</div>
+            <div class="sw sw--on"><span class="sw__track"><span class="sw__knob"></span></span>
+              <span><span class="sw__t">Sender</span><span class="sw__d">Today it is <code>SMTP_FROM</code>, defaulting to <code>noreply@cyber7group.com</code>. The only address change allowed, and it matters more here than anywhere: a code from an address nobody recognises is a code somebody reports.</span></span>
+            </div>
+            <div class="sw sw--on"><span class="sw__track"><span class="sw__knob"></span></span>
+              <span><span class="sw__t">Footer</span><span class="sw__d">Plain text, no logo, no marketing line, no unsubscribe — a transactional security message must not offer to unsubscribe from itself.</span></span>
+            </div>
+            <div class="sw sw--locked"><span class="sw__track"><span class="sw__knob"></span></span>
+              <span><span class="sw__t">Brand kit</span><span class="sw__d"><b>Not available.</b> Colours and type cannot be applied to this message, and the switch is drawn on and locked rather than hidden so the reason is visible: a brand kit is a design system for mail a client reads at leisure, and this is not that mail.</span></span>
+            </div>
+            <div class="sw sw--locked"><span class="sw__track"><span class="sw__knob"></span></span>
+              <span><span class="sw__t">Attachments and inline images</span><span class="sw__d"><b>Not available.</b> A message whose whole purpose is one short code should carry nothing that has to load, and every image is a load.</span></span>
+            </div>
+            <div class="sw sw--locked"><span class="sw__track"><span class="sw__knob"></span></span>
+              <span><span class="sw__t">Subject</span><span class="sw__d"><b>Fixed.</b> "C7NTAX — Your Verification Code" is what somebody looks for in a crowded inbox, and it is the phrase support tells them to search for.</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="band band--lock" style="margin-top:14px;">
+      <svg class="ico ico--lg" style="color:var(--alert-amber);"><use href="#i-lock"/></svg>
+      <span class="band__t">The design decision, stated once and enforced everywhere</span>
+      <span class="band__d">
+        Three of the ten messages are locked to a plain body. The section makes that a property of the message
+        rather than a setting somebody can switch, it is visible on the list row, in the editor's class chip, on the
+        locked block list and on the canvas plate — and it is the only place in the section where a control is
+        drawn locked instead of absent.
+      </span>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       IN THE CLASSIC INTERFACE
+
+       This repository keeps two designs of every screen, and they are not one screen with a class
+       toggled. The classic arrangement of the same section is a form, and it is described here rather
+       than drawn through the whole file, exactly as the Developer section's mockup does it.
+       ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" id="classic">
+    <div class="screen__label">In the classic interface</div>
+    <div class="card" style="margin-top:12px;">
+      <div class="grid2">
+        <div>
+          <h3 style="font-size:13px;">Administration → Email Studio, as four classic pages</h3>
+          <p class="say" style="margin-top:8px;">
+            One component, one set of handlers, two returns — the state, the API calls and the words are shared,
+            the arrangement is not. In the classic interface the section is four pages under
+            <b>Administration</b>, each built the way every other classic screen is built: labelled fields in a
+            grid, a table where the modern screen has cards, and a dialog with a heading and Save/Cancel for
+            anything that writes.
+          </p>
+          <div class="kv" style="margin-top:11px;"><span class="kv__k">Page 1 — Messages</span><span class="kv__v">A table, not a rail of groups: <b>Message</b>, <b>Key</b>, <b>Group</b>, <b>Trigger</b>, <b>To</b>, <b>State</b>, <b>Attachments</b> as seven labelled columns, sorted and paged. "Which have we changed?" is answered by sorting on State, where the modern screen answers it with a badge you can see.</span></div>
+          <div class="kv"><span class="kv__k">Page 2 — Template</span><span class="kv__v">A form: <b>Subject</b>, <b>From</b>, <b>Reply-to</b> as text fields in a grid; the blocks as an ordered list with an <b>Add block</b> select and up/down/remove buttons; the selected block's properties in a labelled grid — <b>Text</b>, <b>Font size</b>, <b>Colour</b>, <b>Align</b>, <b>Condition</b>. Save and Cancel at the foot.</span></div>
+          <div class="kv"><span class="kv__k">Page 3 — Content</span><span class="kv__v">The switches as a fieldset of checkboxes with a label each, in the same order as the modern panel — the one part of the section that reads almost identically in both designs, because it is a list of choices and a list of choices is a form.</span></div>
+          <div class="kv"><span class="kv__k">Page 4 — Preview &amp; history</span><span class="kv__v">Preview is a <b>Record</b> <code>&lt;select&gt;</code> and a <b>Preview</b> button opening a dialog with the rendered message and a <b>Width</b> select (Desktop / Mobile) where the modern screen has pills and two frames side by side. History is a table whose Action column opens a restore confirmation dialog.</span></div>
+        </div>
+        <div>
+          <h3 style="font-size:13px;">The template as a dialog, with a heading and Save/Cancel</h3>
+          <div style="margin-top:10px; padding:14px; border-radius:10px; background: var(--surface-light); border: 1px solid var(--surface-border);">
+            <div style="font-size:13px; font-weight:600; color:var(--text-primary);">Edit template — ticket.activity</div>
+            <p class="say" style="margin-top:5px;">Ticket update · 4 attachments possible · 2 clients have their own version.</p>
+            <div class="kv" style="margin-top:11px;"><span class="kv__k">Subject</span><span class="kv__v"><span class="kbd mono">[{{Ticket.Number}}] {{Activity.Label}} — {{Ticket.Title}}</span></span></div>
+            <div class="kv"><span class="kv__k">From</span><span class="kv__v"><code class="mono">noreply@cyber7group.com</code> <span class="mock-note">(the built-in default, <code>SMTP_FROM</code>)</span></span></div>
+            <div class="kv"><span class="kv__k">Reply-to</span><span class="kv__v">a text field, blank by default — a reply to this message becomes a ticket comment</span></div>
+            <div class="kv"><span class="kv__k">Blocks</span><span class="kv__v">an ordered list: Heading, Paragraph, Fact pairs, <i>Quote (only when there is a note)</i>, Button, Paragraph — with Add block / Move up / Move down / Remove</span></div>
+            <div class="kv"><span class="kv__k">Selected block</span><span class="kv__v">a labelled grid of Text, Font size, Colour, Align and <b>Condition</b> — a select, where the modern screen hangs the condition off the block as a rail</span></div>
+            <div class="kv"><span class="kv__k">Plain text</span><span class="kv__v">a labelled textarea showing the derived text, with a <b>Use the derived text</b> button that restores it</span></div>
+            <div class="kv"><span class="kv__k">Security messages</span><span class="kv__v">the dialog opens with <b>Subject</b> and <b>Footer</b> enabled and every other field <code>readonly</code>, under a caption rather than a separate screen: <i>a security message — the body is fixed, and only the sender and the footer may change</i></span></div>
+            <div class="kv"><span class="kv__k">State</span><span class="kv__v">a read-only field reading <code>default (as written in EmailService.ts)</code>, or <code>customised</code>, or <code>overridden for 2 clients</code></span></div>
+            <div style="display:flex; gap:8px; margin-top:14px;">
+              <button type="button" class="btn btn--primary">Save template</button>
+              <button type="button" class="btn btn--quiet">Cancel</button>
+            </div>
+          </div>
+          <p class="say" style="margin-top:10px;">
+            <b>What differs on purpose, and what the Help walkthrough therefore has to say.</b> The classic form keeps
+            every field on screen at once; the modern editor reveals the selected block's inspector beside the
+            block it belongs to, and hangs the conditional on the block as a rail rather than a value in a grid.
+            The classic preview is one width at a time behind a select; the modern preview shows both widths at
+            once, because the question being asked is "does it still read on a phone", and a select answers it one
+            click at a time. The classic locked message is a disabled fieldset; the modern one is a plate on the
+            canvas and a padlocked block list. The state, the calls and the sentences are the same in both.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mock-note mock-foot">
+    <b>Drawn from the modern interface only</b> (<code>useRedesign()</code> — the classic screens keep their forms,
+    grids and dialogs, and nothing above is a proposal for them). <b>10 messages across 5 groups</b> ·
+    8 live senders and 7 template functions in <code>EmailService.ts</code> · <b>2 written and never called</b>
+    (<code>sendInvoice</code>, <code>sendTicketAutoClose</code>) · 30 tags and 11 style properties in the
+    sanitiser · 8 configuration sections and none of them Email · 4 vocabulary keys with no sender at all.
+    Figures read from the working copy on 9 October 2026; where a figure could not be read it is absent rather
+    than illustrated. Reverting: delete this file.
+  </footer>
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    function setTheme(mode) {
+      root.setAttribute("data-theme", mode);
+      document.querySelectorAll("[data-theme-btn]").forEach(function (b) {
+        b.setAttribute("aria-pressed", String(b.getAttribute("data-theme-btn") === mode));
+      });
+    }
+    document.querySelectorAll("[data-theme-btn]").forEach(function (b) {
+      b.addEventListener("click", function () { setTheme(b.getAttribute("data-theme-btn")); });
+    });
+
+    var screens = document.querySelectorAll(".screen[data-screen]");
+    function showScreen(id) {
+      screens.forEach(function (s) { s.hidden = s.getAttribute("data-screen") !== id; });
+      document.querySelectorAll("[data-screen-btn]").forEach(function (b) {
+        var on = b.getAttribute("data-screen-btn") === id;
+        b.classList.toggle("pick__opt--on", on);
+        b.setAttribute("aria-pressed", String(on));
+      });
+      window.scrollTo({ top: 0 });
+    }
+    document.querySelectorAll("[data-screen-btn]").forEach(function (b) {
+      b.addEventListener("click", function () { showScreen(b.getAttribute("data-screen-btn")); });
+    });
+    document.querySelectorAll("[data-goto]").forEach(function (b) {
+      b.addEventListener("click", function () { showScreen(b.getAttribute("data-goto")); });
+    });
+
+    document.querySelectorAll(".why").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var wrap = btn.closest(".why-wrap");
+        var body = wrap && wrap.querySelector(".why-body");
+        if (!body) return;
+        var open = btn.getAttribute("aria-expanded") === "true";
+        btn.setAttribute("aria-expanded", String(!open));
+        body.hidden = open;
+      });
+    });
+  })();
+</script>
+</body>
+</html>

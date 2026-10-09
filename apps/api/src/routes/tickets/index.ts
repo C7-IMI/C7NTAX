@@ -9,12 +9,12 @@ import { routeParam } from "../../middleware/routeParams";
 import { onTicketStatusChange, extractPriority } from "./automations";
 import { draftArticleOnResolution } from "../../services/kbAutogen";
 import { generateTicketNumber } from "../../services/ticketNumber";
-import { EmailService } from "@C7NTAX/email";
 import { notifyTicketContact, notifyTicketNote, notifyTicketStatusChange } from "../../services/ticketNotifications";
 import { addTicketContact, listTicketContacts, removeTicketContact, resolveRecipients, ticketCcEmails, updateTicketContact, isEmailAddress, isValidEmail } from "../../services/ticketContacts";
 import { v4 as uuid } from "uuid";
 import { computeEntry, drawsFromBlock, blockHoursFor, settingsFrom, timeRulesEnabled } from "../../services/timeRules";
-import { sanitizeEmailHtml, htmlToText, extractInlineImages } from "../../services/emailHtml";
+import { sanitizeEmailHtml, htmlToText } from "../../services/emailHtml";
+import { sendEmailTemplate, ticketEmailContext } from "../../services/emailTemplateSend";
 import { logger } from "../../services/logger";
 import {
   MAX_TICKET_ATTACHMENT_BYTES,
@@ -27,8 +27,6 @@ import {
 
 export const ticketsRouter = Router();
 ticketsRouter.use(authenticate);
-
-const emailService = new EmailService();
 
 function canAccessTicket(req: AuthRequest, companyId: string | null): boolean {
   return req.user!.permissions.includes(Permission.TicketViewAll) || !req.user!.companyId || req.user!.companyId === companyId;
@@ -505,35 +503,25 @@ ticketsRouter.post("/:id/email", requirePermission(Permission.TicketEdit), async
     const messageHtml = richHtml
       ? sanitizeEmailHtml(richHtml)
       : `<p>${escapeHtml(plainBody).replace(/\r?\n/g, "<br>")}</p>`;
-    // Images pasted into the message travel as embedded parts rather than data URIs, which most
-    // mail clients refuse to render.
-    const inlined = extractInlineImages(messageHtml);
-    const messageText = plainBody || htmlToText(inlined.html);
+    const messageText = plainBody || htmlToText(messageHtml);
 
-    let sent;
-    try {
-      sent = await emailService.send({
-        to,
-        cc: cc.length ? cc : undefined,
-        bcc: bcc.length ? bcc : undefined,
-        subject: `[${ticket.ticketNumber}] ${subject}`,
-        html: `${inlined.html}<hr><p>Ticket: ${escapeHtml(ticket.ticketNumber)} — ${escapeHtml(ticket.title)}<br>Client: ${escapeHtml(ticket.company?.name || "")}</p>`,
-        text: `${messageText}\n\n---\nTicket: ${ticket.ticketNumber} — ${ticket.title}\nClient: ${ticket.company?.name || ""}`,
-        ...(files.length || inlined.images.length
-          ? {
-              attachments: [
-                ...inlined.images.map((img) => ({ filename: img.filename, content: img.buffer, contentType: img.contentType, cid: img.cid, contentDisposition: "inline" as const })),
-                ...files.map((f: PreparedAttachment) => ({ filename: f.filename, content: f.buffer, contentType: f.mimeType })),
-              ],
-            }
-          : {}),
-      });
-    } catch (sendError) {
+    // The typed message is the body; the template (`ticket.note`) owns the subject line and the footer
+    // under it — the `<hr>` and the two lines that were a string literal here. The send path pulls
+    // pasted images out into `cid:` parts, which most mail clients need in order to render any of them.
+    const outcome = await sendEmailTemplate({
+      key: "ticket.note",
+      to,
+      cc: cc.length ? cc : undefined,
+      bcc: bcc.length ? bcc : undefined,
+      context: ticketEmailContext(ticket, { composerHtml: messageHtml, composerSubject: subject }),
+      attachments: files.map((f: PreparedAttachment) => ({ filename: f.filename, content: f.buffer, contentType: f.mimeType })),
+      sentById: req.user!.userId,
+    });
+    if (!outcome.ok) {
       // Nothing is recorded when the mail cannot leave: no phantom "sent" entry, no orphan files.
-      logger.error("ticket.email", sendError instanceof Error ? sendError : new Error(String(sendError)));
+      logger.error("ticket.email", new Error(outcome.error ?? "The email could not be sent"));
       throw new AppError("The email could not be sent — check the SMTP configuration under Administration → System Settings", 502);
     }
-    if (!sent) throw new AppError("The email could not be sent", 502);
 
     // Sent mail is recorded in activity; the files that went with it also join the attachments tab.
     const header = [

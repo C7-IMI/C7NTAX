@@ -16,12 +16,10 @@
  * (route handlers, background workers) are never blocked or broken by SMTP.
  */
 import { prisma } from "../index";
-import { EmailService } from "@C7NTAX/email";
 import { isSettledTicketStatus, TicketStatus } from "@C7NTAX/shared";
 import { logger } from "./logger";
 import { ticketCcEmails, ticketNoteRecipients } from "./ticketContacts";
-
-const emailService = new EmailService();
+import { sendEmailTemplate, ticketEmailContext } from "./emailTemplateSend";
 
 export function ticketStatusLabel(status: string): string {
   return status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -84,15 +82,24 @@ export async function notifyTicketContact(ticketId: string | undefined, activity
     if (!to.length) return;
 
     const contactName = [ticket.contact?.firstName, ticket.contact?.lastName].filter(Boolean).join(" ").trim();
-    await emailService.sendTicketActivity(to, {
-      ticketNumber: ticket.ticketNumber,
-      ticketTitle: ticket.title,
-      clientName: ticket.company.name,
-      contactName: contactName || undefined,
-      eventLabel: activity.eventLabel,
-      details: activity.details,
+    // The words come from the Studio (`ticket.activity`); who receives it is decided here, because who
+    // reads a message is a fact about the ticket rather than a word in the template.
+    const outcome = await sendEmailTemplate({
+      key: "ticket.activity",
+      to,
       cc: copy.length ? copy : undefined,
+      context: ticketEmailContext(
+        { ...ticket, id: ticketId },
+        {
+          eventLabel: activity.eventLabel,
+          details: activity.details,
+          hasNote: activity.isNote,
+        },
+      ),
     });
+    if (!outcome.ok) {
+      logger.warn("tickets.notifyContact", "Failed to email ticket contact", { ticketId, error: outcome.error });
+    }
   } catch (err) {
     logger.warn("tickets.notifyContact", "Failed to email ticket contact", {
       ticketId,
@@ -194,15 +201,22 @@ export async function notifyTicketReopenedByClient(
 
     const contactName = [ticket.contact?.firstName, ticket.contact?.lastName].filter(Boolean).join(" ").trim();
     const excerpt = options.reply.replace(/\s+/g, " ").trim().slice(0, 1200) || "(no message body)";
-    const base = (process.env.WEB_PUBLIC_URL || process.env.APP_URL || "").replace(/\/$/, "");
-    await emailService.sendTicketReopened(recipient.email, {
-      ticketNumber: ticket.ticketNumber,
-      ticketTitle: ticket.title,
-      clientName: ticket.company?.name,
-      contactName: contactName || options.fromEmail,
-      replyExcerpt: excerpt,
-      ticketUrl: base ? `${base}/tickets/${ticketId}` : undefined,
+    const outcome = await sendEmailTemplate({
+      key: "ticket.reopened_internal",
+      to: recipient.email,
+      context: ticketEmailContext(
+        { ...ticket, id: ticketId },
+        {
+          details: excerpt,
+          // Who replied, or failing both, the client — the sentence is supplied whole because
+          // "The client replied to the closing email" is the sentence that has to survive.
+          reopenedBy: contactName || ticket.company?.name || "The client",
+        },
+      ),
     });
+    if (!outcome.ok) {
+      logger.warn("tickets.notifyReopened", "Failed to tell the ticket's owner it was reopened", { ticketId, error: outcome.error });
+    }
   } catch (err) {
     logger.warn("tickets.notifyReopened", "Failed to tell the ticket's owner it was reopened", {
       ticketId,

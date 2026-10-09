@@ -78,6 +78,7 @@ export const NAV_TREE: NavNode[] = [
       { id: "admin-system", to: "/admin/system", icon: Wrench, label: "System Settings", permission: Permission.SystemConfig },
       { id: "admin-logs", to: "/admin/logs", icon: FileText, label: "Audit Logs", permission: Permission.SystemConfig },
       { id: "admin-api", to: "/admin/api", icon: KeyRound, label: "API Access", permission: Permission.UserManage },
+      { id: "admin-email", to: "/admin/email", icon: Mail, label: "Email Studio", permission: Permission.EmailView },
       { id: "admin-security", to: "/admin/security", icon: ShieldAlert, label: "Sign-in Audit", permission: Permission.SecurityManage },
       { id: "admin-ai-actions", to: "/ai-actions", icon: Sparkles, label: "AI Actions", permission: Permission.SystemConfig },
       { id: "admin-changelog", to: "/admin/changelog", icon: Sparkles, label: "What's New" },
@@ -399,6 +400,9 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/mfa-setup": "Set up multi-factor authentication for your account.",
   "/activity": "Your own changes, and the pages you stayed on.",
   "/console": "Run commands against this instance, or via the c7ntax CLI.",
+  "/admin/email": "Every message this instance sends: the words, who receives it, and what happened to the last few.",
+  "/admin/email/brand": "What every message inherits — the logo, the colours, the footer and the address it is sent from.",
+  "/admin/email/log": "What was sent, to whom, which template version, and what happened to it.",
 
   /*
    * The Developer section. Each of these is written to say what the page can do to the instance,

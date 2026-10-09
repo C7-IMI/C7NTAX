@@ -13,8 +13,8 @@
  */
 import { useEffect, useRef, useState } from "react";
 import {
-  MM_PER_PX, contentBox, mmToPx, pageDimensions,
-  type LaidOutChart, type ReportTemplateDocument, type TemplateBand, type TemplateElement, type TemplateIssue,
+  MM_PER_PX, contentBox, inkStyle, mmToPx, pageDimensions,
+  type LaidOutChart, type PageSetup, type ReportTemplateDocument, type TemplateBand, type TemplateElement, type TemplateIssue,
 } from "@C7NTAX/shared";
 import { chartSvg } from "../../../lib/reportChartSvg";
 import type { Selection } from "./Inspector";
@@ -65,6 +65,10 @@ interface CanvasProps {
    */
   showGrid?: boolean;
   showBandGuides?: boolean;
+  /** The sheet the instance's presentation asks for, when it differs from the document's own setup. */
+  page?: PageSetup;
+  /** The instance's one accent, so the canvas draws the group rule the way the paper will. */
+  accent?: string;
 }
 
 /** The order bands are shown in: how they will print, top to bottom. */
@@ -88,14 +92,18 @@ export function designBandOrder(document: ReportTemplateDocument): TemplateBand[
   return ordered;
 }
 
-export function DesignerCanvas({ document, selection, zoom, issues, values, charts, onSelect, onDocument, onDropField, showGrid = true, showBandGuides = true }: CanvasProps) {
-  const dims = pageDimensions(document.page);
-  const content = contentBox(document.page);
+export function DesignerCanvas({ document, page, accent, selection, zoom, issues, values, charts, onSelect, onDocument, onDropField, showGrid = true, showBandGuides = true }: CanvasProps) {
+  // The sheet this design will print on. It is the document's own page setup unless the instance's
+  // presentation asks for another sheet (`paperFor`), in which case the canvas draws *that* one — the
+  // authoring surface and the printed page are the same page, which is the whole point of it.
+  const setup = page ?? document.page;
+  const dims = pageDimensions(setup);
+  const content = contentBox(setup);
   const pxPerMm = mmToPx(1) * zoom;
   const pageWidthPx = mmToPx(dims.width) * zoom;
   const contentWidthPx = mmToPx(content.width) * zoom;
-  const marginLeftPx = mmToPx(document.page.margins.left) * zoom;
-  const marginTopPx = mmToPx(document.page.margins.top) * zoom;
+  const marginLeftPx = mmToPx(setup.margins.left) * zoom;
+  const marginTopPx = mmToPx(setup.margins.top) * zoom;
 
   const drag = useRef<DragState | null>(null);
   const [hoverBandId, setHoverBandId] = useState<string | null>(null);
@@ -253,7 +261,13 @@ export function DesignerCanvas({ document, selection, zoom, issues, values, char
                     const isSelected = selection.kind === "element" && selection.elementId === element.id;
                     const problems = elementIssues(element.id);
                     const value = values.get(element.id);
-                    const style = element.style;
+                    // Drawn in the document's ink, not the stored ink: the floor on the type size and the
+                    // accent in place of the product's own cyan are applied here for the same reason they
+                    // are applied in the engine — the canvas is a picture of the page that will print.
+                    const style = inkStyle(element.style, {
+                      accent,
+                      groupRule: band.kind === "groupHeader" && element.type === "line",
+                    });
                     const text = element.type === "text" ? (value ?? element.text) : element.type === "image" ? "" : (value ?? "…");
                     return (
                       <div

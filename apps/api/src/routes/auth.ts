@@ -7,8 +7,9 @@ import { prisma } from "../index";
 import { authenticate, signToken, signMfaToken, JWT_SECRET, effectivePermissions, PERMISSION_SUBJECT_INCLUDE, type AuthRequest } from "../middleware/auth";
 import { ROLE_PERMISSIONS, SystemRole, Permission, validatePassword, LANDING_PAGES, resolveLandingPagePath } from "@C7NTAX/shared";
 import jwt from "jsonwebtoken";
-import { EmailService } from "@C7NTAX/email";
 import { rateLimiter, isLoopback } from "../middleware/rateLimiter";
+import { logger } from "../services/logger";
+import { codeEmailContext, sendEmailTemplate } from "../services/emailTemplateSend";
 import { isBypassAccount, isBypassLoginAttempt, logBypassSignIn } from "../services/testBypass";
 import { startSession, endSessionsForUser } from "../services/signIn";
 import { newestSessionId, recordSignIn } from "../services/signInAudit";
@@ -22,7 +23,6 @@ import {
 } from "../middleware/sessionAuth";
 
 export const authRouter = Router();
-const emailService = new EmailService();
 
 /**
  * SOC 2 hardening: enforce the failed-attempt lockout the Security tab already
@@ -395,7 +395,17 @@ authRouter.post("/send-mfa-email", credentialLimiter, async (req, res, next) => 
       data: { mfaEmailCode: code, mfaEmailCodeExpires: new Date(Date.now() + 15 * 60_000) },
     });
 
-    await emailService.sendMfaCode(user.email, code);
+    const outcome = await sendEmailTemplate({
+      key: "auth.mfa_code",
+      to: user.email,
+      context: codeEmailContext({ code }),
+    });
+    // A code nobody can read is worse than a refused sign-in: the caller is told not to look for it.
+    if (!outcome.ok) {
+      logger.warn("auth.mfaEmail", "Could not email the verification code", { userId: user.id, error: outcome.error });
+      res.status(502).json({ error: "The verification code could not be emailed — check the SMTP configuration or use another sign-in method" });
+      return;
+    }
 
     res.json({ sent: true, message: "MFA code sent to your email" });
   } catch (e) { next(e); }

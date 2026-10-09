@@ -12,6 +12,7 @@ import { ReportBody, exportCsv, exportExcel, exportPdf, labelFor, number, printR
 import { REPORT_BY_ID, REPORT_TYPE_OPTIONS, STANDARD_REPORTS } from "../components/reports/standardReports";
 import { ScheduleReportDialog } from "../components/reports/ScheduleReportDialog";
 import { layoutReport, type ReportTemplateDocument } from "@C7NTAX/shared";
+import { documentBrandOf, useBrandKit } from "../hooks/useBrandKit";
 import { measureTextMm } from "../lib/reportMeasure";
 import { exportTemplateCsv, exportTemplateExcel, exportTemplatePdf, printTemplateReport } from "../lib/reportOutput";
 import { LaidOutPageView } from "../components/reports/designer/PageRenderer";
@@ -93,8 +94,15 @@ function sectionsForRun(payload: Record<string, unknown>, report: SavedReport): 
 function TemplateReportView({ report, payload, onClose }: { report: SavedReport; payload: Record<string, unknown>; onClose: () => void }) {
   const navigate = useNavigate();
   const document = asTemplate(payload.document);
+  // Subscribed so the page is laid out again when `/api/brand` answers, rather than once with the
+  // shipped defaults and never again.
+  const brandKit = useBrandKit();
   const laid = useMemo(() => {
     if (!document) return null;
+    // The accent, the type floor, the sheet and the page furniture are the document's, resolved from the
+    // instance's brand exactly as the designer resolves them — so the saved report a person opens is the
+    // design they approved, and not a second interpretation of it.
+    const ink = documentBrandOf("report.designer");
     return layoutReport({
       document,
       rows: (payload.rows ?? []) as Array<Record<string, unknown>>,
@@ -104,8 +112,9 @@ function TemplateReportView({ report, payload, onClose }: { report: SavedReport;
       // The run resolves the sub-reports, so a saved report prints the same embedded reports the
       // designer previewed — from the same child rows, on the same pages.
       subreports: payload.subreports as Record<string, { document: unknown; rows: Array<Record<string, unknown>>; parameters: Record<string, unknown>; name?: string }> | undefined,
+      ink,
     });
-  }, [document, payload]);
+  }, [document, payload, brandKit]);
 
   if (!document || !laid) {
     return <div className="card text-sm text-red-400">This template&apos;s document could not be read.</div>;

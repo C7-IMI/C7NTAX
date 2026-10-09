@@ -9,12 +9,23 @@
  * The PDF is drawn by jsPDF in millimetres from the layout's own coordinates, with no HTML rendering
  * and no headless browser. That is also why the PDF's page breaks are the preview's page breaks: they
  * were decided once, by the engine.
+ *
+ * **The layout's millimetres are the content box's, not the paper's.** Every element is placed relative
+ * to the top-left of the printable area, so a renderer adds the page's own margins before drawing —
+ * which is why the printed sheet has a 12mm margin where the designer's canvas shows one, rather than
+ * bands in the corner of the paper. The print window and the PDF do it through `placedPoint` below, and
+ * the preview through `placedStyle` in `designer/PageRenderer.tsx` — one conversion each, from the same
+ * `laid.page.margins`, so the three cannot drift apart.
+ *
+ * Colours come from the layout's styles, which the engine has already resolved to the document's
+ * palette and accent (`inkStyle` in `reportLayout.ts`). The fallbacks here are the palette's own, so a
+ * page printed from a dark theme is still black ink on white paper.
  */
 import jsPDF from "jspdf";
 import {
-  labelFor,
-  type LaidOutBand, type LaidOutChart, type LaidOutElement, type LaidOutReport,
-  type ReportTemplateDocument, type TemplateElement,
+  DOCUMENT_PALETTE, labelFor,
+  type LaidOutBand, type LaidOutChart, type LaidOutElement, type LaidOutReport, type PageMargins,
+  type ReportTemplateDocument, type TemplateElement, type ValueFormat,
 } from "@C7NTAX/shared";
 import {
   reportFileBase, tablesToCsv, tablesToExcel, tablesToPrintWindow, type FlatTable,
@@ -43,6 +54,24 @@ export const BAND_BACKGROUNDS: Record<string, string> = {
 
 const isTransparent = (colour: string | null | undefined): boolean =>
   !colour || colour === "transparent" || colour === "none";
+
+/**
+ * The formats whose digits must all be the same width, so decimal points line up down a column.
+ *
+ * Exported because the preview draws the same figures as the print window and must set the same rule —
+ * one list, so a format added to the engine cannot be tabular in the PDF and ragged on the screen.
+ */
+export const TABULAR_FORMATS: ValueFormat[] = ["money", "number", "percent", "minutes", "hours"];
+
+/**
+ * A laid-out element as a point on the *paper*.
+ *
+ * The engine places everything from the content box's top-left, so the page's margins are added here —
+ * once, for every renderer — rather than being baked into a layout that a sub-report and a page footer
+ * would then inherit as a shift of their own.
+ */
+const placedPoint = (x: number, y: number, margins: PageMargins): [number, number] =>
+  [margins.left + x, margins.top + y];
 
 const hexToRgb = (hex: string): [number, number, number] => {
   const value = hex.replace("#", "").trim();
@@ -78,8 +107,14 @@ export function printTemplateReport(laid: LaidOutReport, meta: BandedOutputMeta)
 
   const pages = laid.pages.map(page => `
     <section class="page">
-      ${page.bands.map(band => bandHtml(band)).join("")}
+      ${page.bands.map(band => bandHtml(band, laid.page.margins)).join("")}
     </section>`).join("");
+
+  // The font stacks live in the stylesheet rather than in a `style` attribute, because a stack contains
+  // double quotes and an attribute is delimited by them: inlined, `font-family:"Helvetica Neue", …` ends
+  // the attribute and every declaration after it — the size, the weight, the colour — is thrown away.
+  const fontClasses = Object.entries(FONT_STACKS)
+    .map(([key, value]) => `.ff-${key}{font-family:${value.css}}`).join("\n  ");
 
   window_.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(meta.title)}</title>
 <style>
@@ -87,8 +122,9 @@ export function printTemplateReport(laid: LaidOutReport, meta: BandedOutputMeta)
   body{background:#e2e8f0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
   .page{position:relative;background:#fff;margin:16px auto;box-shadow:0 2px 8px rgba(15,23,42,.18);overflow:hidden;
         width:${laid.page.width}mm;height:${laid.page.height}mm}
-  .el{position:absolute;overflow:hidden}
+  .el{position:absolute;overflow:hidden;line-height:1.2}
   .ln{position:absolute}
+  ${fontClasses}
   @page{size:${laid.page.width}mm ${laid.page.height}mm;margin:0}
   @media print{body{background:#fff}.page{margin:0;box-shadow:none;page-break-after:always}}
 </style></head><body>${pages || "<p>This report produced no pages.</p>"}
@@ -98,22 +134,23 @@ export function printTemplateReport(laid: LaidOutReport, meta: BandedOutputMeta)
   window_.focus();
 }
 
-function bandHtml(band: LaidOutBand): string {
+function bandHtml(band: LaidOutBand, margins: PageMargins): string {
   return band.elements.map(element => {
     const style = element.payload.style;
     const border = style.border && !isTransparent(style.border.color) ? `${style.border.width}mm solid ${style.border.color}` : "none";
     const background = isTransparent(style.background) ? "transparent" : style.background;
-    const box = `left:${element.x}mm;top:${element.y}mm;width:${element.w}mm;height:${element.h}mm;border:${border};background:${background}`;
+    const [left, top] = placedPoint(element.x, element.y, margins);
+    const box = `left:${left}mm;top:${top}mm;width:${element.w}mm;height:${element.h}mm;border:${border};background:${background}`;
 
     if (element.payload.kind === "line") {
-      const colour = style.border?.color ?? "#94a3b8";
+      const colour = style.border?.color ?? DOCUMENT_PALETTE.rule;
       const width = style.border?.width ?? 0.3;
-      return `<div class="ln" style="left:${element.x}mm;top:${element.y}mm;width:${element.w}mm;height:${width}mm;background:${colour}"></div>`;
+      return `<div class="ln" style="left:${left}mm;top:${top}mm;width:${element.w}mm;height:${width}mm;background:${colour}"></div>`;
     }
     if (element.payload.kind === "box") return `<div class="el" style="${box}"></div>`;
     // The chart's SVG is placed in a wrapper at the element's own millimetres, exactly as on screen.
     if (element.payload.kind === "chart") {
-      return `<div class="el" style="left:${element.x}mm;top:${element.y}mm;width:${element.w}mm;height:${element.h}mm;border:none;background:transparent">${chartSvg(element.payload.chart, { origin: "box" })}</div>`;
+      return `<div class="el" style="left:${left}mm;top:${top}mm;width:${element.w}mm;height:${element.h}mm;border:none;background:transparent">${chartSvg(element.payload.chart, { origin: "box" })}</div>`;
     }
     if (element.payload.kind === "image") {
       return element.payload.src
@@ -122,9 +159,11 @@ function bandHtml(band: LaidOutBand): string {
     }
     const text = element.payload.lines.map(line =>
       `<span style="position:absolute;white-space:pre;left:${line.x - element.x}mm;top:${line.y - element.y}mm">${escapeHtml(line.text)}</span>`).join("");
-    return `<div class="el" style="${box};font-family:${FONT_STACKS[style.fontFamily].css};font-size:${style.fontSize}pt;
+    const figures = element.payload.format && TABULAR_FORMATS.includes(element.payload.format) ? "tabular-nums" : "normal";
+    return `<div class="el ff-${style.fontFamily}" style="${box};font-size:${style.fontSize}pt;
       font-weight:${style.bold ? 700 : 400};font-style:${style.italic ? "italic" : "normal"};
-      text-decoration:${style.underline ? "underline" : "none"};color:${style.color};line-height:1.2">${text}</div>`;
+      font-variant-numeric:${figures};
+      text-decoration:${style.underline ? "underline" : "none"};color:${style.color}">${text}</div>`;
   }).join("");
 }
 
@@ -138,24 +177,29 @@ const chartPolar = (cx: number, cy: number, r: number, angle: number): [number, 
  * Draws a chart with jsPDF's own primitives, reading the layout's millimetres. A pie's curved edge is
  * built from triangles between the centre and successive points on the arc, which is how a vector pie
  * is drawn without a path API — at forty-eight steps a slice is indistinguishable from a curve.
+ *
+ * The chart's geometry is content-box relative like everything else the engine places, so the page's
+ * margins are added to every coordinate here. The axis grey and the line series' teal are the chart's
+ * own palette, mirrored from `reportChartSvg.ts` so the screen and the paper draw one chart.
  */
-function drawChart(doc: jsPDF, chart: LaidOutChart): void {
+function drawChart(doc: jsPDF, chart: LaidOutChart, margins: PageMargins): void {
+  const [dx, dy] = placedPoint(0, 0, margins);
   const fill = (colour: string) => { const [r, g, b] = hexToRgb(colour); doc.setFillColor(r, g, b); };
   const stroke = (colour: string) => { const [r, g, b] = hexToRgb(colour); doc.setDrawColor(r, g, b); };
 
   for (const grid of chart.gridLines) {
     stroke(grid.colour);
     doc.setLineWidth(0.15);
-    doc.line(grid.x1, grid.y1, grid.x2, grid.y2);
+    doc.line(dx + grid.x1, dy + grid.y1, dx + grid.x2, dy + grid.y2);
   }
   for (const bar of chart.bars) {
     fill(bar.colour);
-    doc.rect(bar.x, bar.y, bar.w, bar.h, "F");
+    doc.rect(dx + bar.x, dy + bar.y, bar.w, bar.h, "F");
   }
   for (const axis of chart.axis) {
     stroke("#64748b");
     doc.setLineWidth(0.2);
-    doc.line(axis.x1, axis.y1, axis.x2, axis.y2);
+    doc.line(dx + axis.x1, dy + axis.y1, dx + axis.x2, dy + axis.y2);
   }
 
   if (chart.slices.length) {
@@ -167,15 +211,15 @@ function drawChart(doc: jsPDF, chart: LaidOutChart): void {
       for (let step = 0; step < steps; step++) {
         const from = slice.startAngle + (sweep * step) / steps;
         const to = slice.startAngle + (sweep * (step + 1)) / steps;
-        const [x1, y1] = chartPolar(cx, cy, r, from);
-        const [x2, y2] = chartPolar(cx, cy, r, to);
+        const [x1, y1] = chartPolar(dx + cx, dy + cy, r, from);
+        const [x2, y2] = chartPolar(dx + cx, dy + cy, r, to);
         if (innerR > 0) {
-          const [ix1, iy1] = chartPolar(cx, cy, innerR, from);
-          const [ix2, iy2] = chartPolar(cx, cy, innerR, to);
+          const [ix1, iy1] = chartPolar(dx + cx, dy + cy, innerR, from);
+          const [ix2, iy2] = chartPolar(dx + cx, dy + cy, innerR, to);
           doc.triangle(x1, y1, x2, y2, ix1, iy1, "F");
           doc.triangle(x2, y2, ix2, iy2, ix1, iy1, "F");
         } else {
-          doc.triangle(x1, y1, x2, y2, cx, cy, "F");
+          doc.triangle(x1, y1, x2, y2, dx + cx, dy + cy, "F");
         }
       }
     }
@@ -187,16 +231,16 @@ function drawChart(doc: jsPDF, chart: LaidOutChart): void {
     for (let index = 1; index < chart.points.length; index++) {
       const previous = chart.points[index - 1]!;
       const point = chart.points[index]!;
-      doc.line(previous.x, previous.y, point.x, point.y);
+      doc.line(dx + previous.x, dy + previous.y, dx + point.x, dy + point.y);
     }
   }
   for (const point of chart.points) {
     fill("#0f766e");
-    doc.circle(point.x, point.y, 0.6, "F");
+    doc.circle(dx + point.x, dy + point.y, 0.6, "F");
   }
   for (const swatch of chart.legendSwatches) {
     fill(swatch.colour);
-    doc.rect(swatch.x, swatch.y, swatch.w, swatch.h, "F");
+    doc.rect(dx + swatch.x, dy + swatch.y, swatch.w, swatch.h, "F");
   }
 
   for (const label of chart.labels) {
@@ -205,16 +249,18 @@ function drawChart(doc: jsPDF, chart: LaidOutChart): void {
     doc.setFontSize(label.fontSize);
     const [r, g, b] = hexToRgb(label.colour);
     doc.setTextColor(r, g, b);
-    if (label.text) doc.text(label.text, label.x, label.baselineY, { baseline: "alphabetic" });
+    if (label.text) doc.text(label.text, dx + label.x, dy + label.baselineY, { baseline: "alphabetic" });
   }
 }
 
 /**
- * The PDF, drawn from the layout's own coordinates. jsPDF is given the document's page size in
- * millimetres, so one drawing unit is one millimetre and a placed line needs no conversion at all.
+ * The PDF, drawn from the layout's own coordinates. jsPDF is given the layout's page size in
+ * millimetres — never a paper size of this module's own — so one drawing unit is one millimetre, the
+ * file is the sheet the designer showed, and a placed element needs no conversion but the page margin.
  */
 export function exportTemplatePdf(laid: LaidOutReport, meta: BandedOutputMeta): void {
   if (!laid.pages.length) return;
+  const margins = laid.page.margins;
   const landscape = laid.page.width > laid.page.height;
   const orientation = landscape ? "landscape" : "portrait";
   const doc = new jsPDF({ unit: "mm", format: [laid.page.width, laid.page.height], orientation });
@@ -224,13 +270,14 @@ export function exportTemplatePdf(laid: LaidOutReport, meta: BandedOutputMeta): 
     for (const band of page.bands) {
       for (const element of band.elements) {
         const style = element.payload.style;
+        const [x, y] = placedPoint(element.x, element.y, margins);
 
         if (element.payload.kind === "line") {
           const width = style.border?.width ?? 0.3;
-          const [r, g, b] = hexToRgb(style.border?.color ?? "#94a3b8");
+          const [r, g, b] = hexToRgb(style.border?.color ?? DOCUMENT_PALETTE.rule);
           doc.setDrawColor(r, g, b);
           doc.setLineWidth(width);
-          doc.line(element.x, element.y + width / 2, element.x + element.w, element.y + width / 2);
+          doc.line(x, y + width / 2, x + element.w, y + width / 2);
           continue;
         }
 
@@ -238,20 +285,20 @@ export function exportTemplatePdf(laid: LaidOutReport, meta: BandedOutputMeta): 
         // rectangles, lines, triangles and text — so no SVG rasterising step is needed and the printed
         // chart stays vector-crisp at any zoom.
         if (element.payload.kind === "chart") {
-          drawChart(doc, element.payload.chart);
+          drawChart(doc, element.payload.chart, margins);
           continue;
         }
 
         if (!isTransparent(style.background)) {
           const [r, g, b] = hexToRgb(style.background!);
           doc.setFillColor(r, g, b);
-          doc.rect(element.x, element.y, element.w, element.h, "F");
+          doc.rect(x, y, element.w, element.h, "F");
         }
         if (style.border && !isTransparent(style.border.color)) {
           const [r, g, b] = hexToRgb(style.border.color);
           doc.setDrawColor(r, g, b);
           doc.setLineWidth(style.border.width);
-          doc.rect(element.x, element.y, element.w, element.h, "S");
+          doc.rect(x, y, element.w, element.h, "S");
         }
 
         if (element.payload.kind !== "text") continue;
@@ -264,7 +311,8 @@ export function exportTemplatePdf(laid: LaidOutReport, meta: BandedOutputMeta): 
         doc.setTextColor(r, g, b);
         for (const line of element.payload.lines) {
           if (!line.text) continue;
-          doc.text(line.text, line.x, line.baselineY, { baseline: "alphabetic" });
+          const [lineX, lineY] = placedPoint(line.x, line.baselineY, margins);
+          doc.text(line.text, lineX, lineY, { baseline: "alphabetic" });
         }
       }
     }

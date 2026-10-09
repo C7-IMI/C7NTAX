@@ -22,6 +22,7 @@ import {
   type ReportFilters, type ReportOptionValues,
 } from "../components/reports/ReportViewer";
 import { useRedesign } from "../hooks/useNavigationStyle";
+import { EmailSendDialog } from "../components/email/EmailSendDialog";
 
 // Types
 interface Invoice { id: string; invoiceNumber: string; company: { name?: string; id?: string } | null; total: number; subtotal?: number; status: string; issueDate: string; dueDate: string; sentAt?: string; paidAt?: string; lineItems?: Array<{ description: string; quantity: number; unitPrice: number; total: number }>; payments?: Array<{ amount: number; method: string; processedAt: string; reference?: string }>; sourceTickets?: Array<{ id: string; ticketNumber: string }>; }
@@ -149,6 +150,8 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
   const [showBatch, setShowBatch] = useState(false);
   const [batchFlagged, setBatchFlagged] = useState(false);
   const [viewInvoice, setViewInvoice] = useState<Invoice | null>(null);
+  /** The invoice whose send sheet is open. See `handleSend`. */
+  const [sendInvoice, setSendInvoice] = useState<Invoice | null>(null);
   const [payForm, setPayForm] = useState({ invoiceId: "", amount: 0, method: "other", reference: "" });
   const [showPay, setShowPay] = useState(false);
   const [sort, setSort] = useState<SortState | null>(null);
@@ -206,9 +209,16 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
       toast.error(apiErrorMessage(err, "Could not generate the invoice"));
     } finally { setGenBusy(false); }
   };
-  const handleSend = async (id: string) => {
-    try { await api.post(`/billing/invoices/${id}/send`); toast.success("Sent"); fetchInvoices(); } catch { toast.error("Failed"); }
-  };
+  /**
+   * Sending an invoice opens the send sheet rather than flipping the status here.
+   *
+   * The old body was `POST /billing/invoices/:id/send` and a toast reading "Sent" — which is true of the
+   * status and not of the message: nothing in this repository calls `EmailService.sendInvoice`, so an
+   * invoice has never actually been emailed from this screen. The sheet is where the invoice PDF, the
+   * recipients and the exact message are shown before anything is written, and it says what is true when
+   * the instance has no send endpoint at all. `onSent` refetches so this list shows the new status.
+   */
+  const handleSend = (inv: Invoice) => setSendInvoice(inv);
   const handleInvoicePdf = async (inv: Invoice) => {
     // Fetched with the Authorization header (or the session cookie, which the browser adds
     // on its own) and opened from a blob: the token must never appear in a URL, where it
@@ -314,7 +324,9 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
     { label: "Open invoice", icon: ExternalLink, hint: "⏎", onSelect: () => setViewInvoice(inv) },
     { label: "Download PDF", icon: FileText, onSelect: () => handleInvoicePdf(inv) },
     "separator",
-    inv.status === "draft" && { label: "Send to client", icon: Send, onSelect: () => void handleSend(inv.id) },
+    // Email goes to the sheet, not to a status change. `paid` and `void` are left out: an invoice that is
+    // settled has nothing left to ask for.
+    !["paid", "void"].includes(inv.status) && { label: "Email to client…", icon: Send, onSelect: () => handleSend(inv) },
     ["sent", "partial", "overdue"].includes(inv.status) && { label: "Record payment…", icon: CreditCard, onSelect: () => openPay(inv) },
     { label: "Set to repeat…", icon: Repeat, onSelect: () => void makeRecurring(inv) },
     inv.sourceTickets && inv.sourceTickets.length > 0 && {
@@ -452,7 +464,7 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
               <td className="p-3 text-right">
                 <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
                   <button onClick={() => handleInvoicePdf(inv)} className="p-1.5 text-gray-400 hover:text-cyber-400" title="PDF"><FileText size={15} /></button>
-                  {inv.status === "draft" && <button onClick={() => handleSend(inv.id)} className="p-1.5 text-blue-400 hover:text-blue-300" title="Send"><Send size={15} /></button>}
+                  {!["paid", "void"].includes(inv.status) && <button onClick={() => handleSend(inv)} className="p-1.5 text-cyber-400 hover:text-cyber-300" title="Email to client"><Send size={15} /></button>}
                   {["sent","partial","overdue"].includes(inv.status) && <button onClick={() => openPay(inv)} className="p-1.5 text-green-400 hover:text-green-300" title="Pay"><CreditCard size={15} /></button>}
                 </div>
               </td>
@@ -565,6 +577,17 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
             <div className="flex gap-2"><button type="submit" className="btn-primary text-sm">Record</button><button type="button" onClick={() => setShowPay(false)} className="btn-secondary text-sm">Cancel</button></div>
           </form>
         </Modal>
+      )}
+
+      {/* The send sheet: the invoice's own Send control opens this. See `handleSend`.
+          `onSent` only refetches — the sheet keeps its own "after" state on screen, because what went
+          and what to do if it was wrong is the state the send exists to show. */}
+      {sendInvoice && (
+        <EmailSendDialog
+          context={{ kind: "invoice", invoice: sendInvoice }}
+          onClose={() => setSendInvoice(null)}
+          onSent={() => fetchInvoices()}
+        />
       )}
     </div>
   );

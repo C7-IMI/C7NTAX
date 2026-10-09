@@ -8,14 +8,13 @@ import {
 } from "@C7NTAX/shared";
 import bcrypt from "bcryptjs";
 import { randomInt } from "node:crypto";
-import { EmailService } from "@C7NTAX/email";
+import { sendEmailTemplate } from "../services/emailTemplateSend";
 import { AppError } from "../middleware/errorHandler";
 import { endSessionsForUser } from "../services/signIn";
 import { developerRoleIds } from "../services/developerAccounts";
 
 export const usersRouter = Router();
 usersRouter.use(authenticate);
-const emailService = new EmailService();
 
 /*
  * ── The Developer Admin rule ──────────────────────────────────────────────────────────────────────
@@ -96,19 +95,23 @@ async function sendWelcomeEmail(
   mustChangePassword: boolean
 ): Promise<void> {
   const origin = process.env.WEB_ORIGIN || process.env.CORS_ORIGIN || "http://localhost:3010";
-  await emailService.send({
+  // The words are the Studio's (`user.invite`). The sign-in link is the application's own address, as
+  // it is today, rather than a /sign-in path this message has no business inventing.
+  await sendEmailTemplate({
+    key: "user.invite",
     to: user.email,
-    subject: "C7NTAX — Your account is ready",
-    html: [
-      `<p>Hello ${user.firstName},</p>`,
-      `<p>An account has been created for you in C7NTAX.</p>`,
-      `<p><strong>Sign in:</strong> <a href="${origin}">${origin}</a><br/>`,
-      `<strong>Email:</strong> ${user.email}<br/>`,
-      `<strong>Temporary password:</strong> ${temporaryPassword}</p>`,
-      mustChangePassword
-        ? `<p>You will be asked to choose your own password the first time you sign in.</p>`
-        : `<p>Please keep this password somewhere safe.</p>`,
-    ].join("\n"),
+    context: {
+      fields: {
+        "contact.firstName": user.firstName,
+        "contact.email": user.email,
+        "instance.signInUrl": origin,
+        "message.credential": temporaryPassword,
+        // The instruction the message has to carry, supplied whole so it cannot be half-blanked.
+        "message.passwordNote": mustChangePassword
+          ? "You will be asked to choose your own password the first time you sign in."
+          : "Please keep this password somewhere safe.",
+      },
+    },
   });
 }
 

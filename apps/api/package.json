@@ -26,6 +26,7 @@
     "db:types-off": "tsx src/kumo-types-toggle.ts off",
     "db:types-on": "tsx src/kumo-types-toggle.ts on",
     "verify": "tsx src/verify-post-change.ts",
+    "probe:email": "tsx src/email-studio-probe.ts",
     "probes:sweep": "tsx clean-probe-residue.ts",
     "probes:sweep:apply": "tsx clean-probe-residue.ts --apply",
     "db:snapshot": "tsx src/seed-automation.ts",

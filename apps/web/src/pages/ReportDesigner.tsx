@@ -19,7 +19,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   AGGREGATE_SCOPES, BAND_BY_KIND, DOCUMENT_VERSION, contentBox, createElement, labelFor,
-  layoutReport, mmToPx, normaliseDocument, pageDimensions,
+  layoutReport, mmToPx, normaliseDocument, pageDimensions, paperFor,
   type LaidOutChart, type ReportTemplateDocument, type TemplateElement, type TemplateIssue,
 } from "@C7NTAX/shared";
 import api from "../api";
@@ -38,6 +38,7 @@ import { clearActiveExpressionTarget, isTypingTarget } from "../components/repor
 import { ScheduleReportDialog } from "../components/reports/ScheduleReportDialog";
 import type { DesignerCatalog, DesignerRun } from "../lib/designerTypes";
 import { useRedesign } from "../hooks/useNavigationStyle";
+import { documentBrandOf, useBrandKit } from "../hooks/useBrandKit";
 
 interface SavedReport {
   id: string; name: string; description: string | null; type: string;
@@ -98,6 +99,18 @@ export function ReportDesignerPage() {
    */
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [autosaving, setAutosaving] = useState(false);
+
+  /**
+   * The instance's brand, and the document settings that go with it.
+   *
+   * The layout is where the accent, the type floor, the sheet and the page furniture are decided, so the
+   * resolved presentation and the accent are handed to the engine here — once, for the canvas, the
+   * preview and every export, which is what makes them one document rather than three. `useBrandKit`
+   * returns the cached record, so the memo below is recomputed when `/api/brand` answers and not on
+   * every render.
+   */
+  const brandKit = useBrandKit();
+  const ink = useMemo(() => documentBrandOf("report.designer"), [brandKit]);
   const [draftAt, setDraftAt] = useState<Date | null>(null);
   const [showDraftPrompt, setShowDraftPrompt] = useState(false);
   const [restorable, setRestorable] = useState<{ savedAt: string; name: string } | null>(null);
@@ -233,8 +246,14 @@ export function ReportDesignerPage() {
       // child rows the saved report would run — and the exit condition of the phase is visible here:
       // the child flows into these pages, so the page count stays the parent's.
       subreports: run?.subreports,
+      ink,
     });
-  }, [document, run, catalog]);
+  }, [document, run, catalog, ink]);
+
+  /** The sheet this design prints on, so the canvas and the preview are drawn on the same paper. */
+  const paper = useMemo(() => (document ? paperFor(document, ink.presentation) : null), [document, ink]);
+  /** The ruler above the canvas is measured in the sheet's own millimetres, like the canvas itself. */
+  const paperWidth = paper ? pageDimensions(paper).width : 0;
 
   /** Element id → what it prints with the current data, so the canvas shows real content. */
   const values = useMemo(() => {
@@ -1023,7 +1042,7 @@ export function ReportDesignerPage() {
                  ruler is measured in the sheet's own millimetres at the current zoom, so it says what
                  the position of an element actually is rather than decorating the space above it. */
               <div className="inline-block align-top">
-                <div className="relative mb-1 h-4 select-none" style={{ width: mmToPx(pageDimensions(document.page).width) * zoom }}>
+                <div className="relative mb-1 h-4 select-none" style={{ width: mmToPx(paperWidth) * zoom }}>
                   <div
                     className="absolute inset-x-0 bottom-0 h-1.5"
                     style={{
@@ -1031,12 +1050,14 @@ export function ReportDesignerPage() {
                       backgroundSize: `${mmToPx(10) * zoom}px 100%`,
                     }}
                   />
-                  {Array.from({ length: Math.floor(pageDimensions(document.page).width / 50) }, (_, index) => (index + 1) * 50).map(mm => (
+                  {Array.from({ length: Math.floor(paperWidth / 50) }, (_, index) => (index + 1) * 50).map(mm => (
                     <span key={mm} className="absolute bottom-1.5 -translate-x-1/2 text-[9px] tabular-nums text-gray-500" style={{ left: mmToPx(mm) * zoom }}>{mm}</span>
                   ))}
                 </div>
                 <DesignerCanvas
                   document={document}
+                  page={paper ?? undefined}
+                  accent={ink.accent}
                   selection={selection}
                   zoom={zoom}
                   issues={issues}
@@ -1052,6 +1073,8 @@ export function ReportDesignerPage() {
             ) : (
               <DesignerCanvas
                 document={document}
+                page={paper ?? undefined}
+                accent={ink.accent}
                 selection={selection}
                 zoom={zoom}
                 issues={issues}

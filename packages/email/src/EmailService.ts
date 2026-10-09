@@ -41,6 +41,17 @@ export class EmailService {
     text?: string;
     cc?: string[];
     bcc?: string[];
+    /**
+     * The sender, when it is not the instance's `SMTP_FROM`.
+     *
+     * One address for every message is what this service did until the Email Studio's brand kit
+     * existed; a brand kit may name a sender identity, and a message that leaves from an address the
+     * configuration does not name is a message the configuration cannot explain. Blank means
+     * `SMTP_FROM`, which is what every caller that does not set one gets.
+     */
+    from?: string;
+    /** Where a reply goes, when it should not go to `from`. */
+    replyTo?: string;
     attachments?: {
       filename: string;
       content: Buffer | string;
@@ -51,13 +62,14 @@ export class EmailService {
     }[];
   }): Promise<{ messageId: string }> {
     const info = await this.transporter.sendMail({
-      from: this.defaultFrom,
+      from: options.from ?? this.defaultFrom,
       to: Array.isArray(options.to) ? options.to.join(", ") : options.to,
       cc: options.cc,
       bcc: options.bcc,
       subject: options.subject,
       html: options.html,
-      ...(options.text ? { text: options.text } : {}),
+      text: options.text,
+      replyTo: options.replyTo,
       attachments: options.attachments,
     });
     return { messageId: info.messageId };

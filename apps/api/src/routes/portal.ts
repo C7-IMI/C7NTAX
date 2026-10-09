@@ -18,7 +18,6 @@ import type { Request, Response, NextFunction } from "express";
 import { prisma } from "../index";
 import { AppError } from "../middleware/errorHandler";
 import { logger } from "../services/logger";
-import { EmailService } from "@C7NTAX/email";
 import { generateTicketNumber } from "../services/ticketNumber";
 import {
   clearPortalCookies,
@@ -38,9 +37,9 @@ import { resolvePortalPolicy, type PortalPolicy } from "../services/portalPolicy
 import { listPortalTickets, loadPortalTicket, portalTicketWhere, type PortalScope } from "../services/portalTickets";
 import { resolvePortalBoardId } from "../services/portalBoard";
 import { portalAddress } from "../services/portalAddress";
+import { codeEmailContext, sendEmailTemplate } from "../services/emailTemplateSend";
 
 export const portalRouter = Router();
-const emailService = new EmailService();
 
 /** The portal's own actor: tickets raised from the portal are not raised by a staff member. */
 const PORTAL_ACTOR_EMAIL = "portal@c7ntax.local";
@@ -141,16 +140,15 @@ portalRouter.post("/auth/request", async (req: Request, res: Response, next: Nex
           // The address a customer is told to go to is the deployment's own, unless it was given
           // one on the Customer Portal screen — the same answer the Portal card shows.
           const address = portalAddress();
-          const where = address.source === "none" ? "" : ` Sign in at ${address.url}.`;
           try {
-            await emailService.send({
+            const outcome = await sendEmailTemplate({
+              key: "portal.login_code",
               to: contact.email,
-              subject: "Your C7NTAX portal sign-in code",
-              text: `Your sign-in code is ${code}.${where} It expires in 10 minutes. If you did not ask for it, ignore this message.`,
-              html: `<p>Your sign-in code is <strong style="font-size:18px;letter-spacing:2px">${code}</strong>.</p>
-                     ${address.source === "none" ? "" : `<p>Sign in at <a href="${address.url}">${address.url}</a>.</p>`}
-                     <p>It expires in 10 minutes. If you did not ask for it, ignore this message.</p>`,
+              context: codeEmailContext({ code, portalUrl: address.source === "none" ? "" : address.url }),
             });
+            if (!outcome.ok) {
+              logger.warn("portal.code", "Could not email a portal sign-in code", { contactId: contact.id, error: outcome.error });
+            }
           } catch (err) {
             // The answer stays the same, but the operator needs to know mail did not leave.
             logger.warn("portal.code", "Could not email a portal sign-in code", {

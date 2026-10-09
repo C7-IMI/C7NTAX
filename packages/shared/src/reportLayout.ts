@@ -22,11 +22,13 @@
  * the browser measures with a canvas, and the probe measures with a deterministic table.
  */
 import {
-  BAND_BY_KIND, contentBox, normaliseDocument, pageDimensions, validateTemplate, errorsOf,
+  BAND_BY_KIND, DEFAULT_STYLE, contentBox, createBand, createElement, normaliseDocument, pageDimensions,
+  validateTemplate, errorsOf,
   type BandKind, type CatalogSource, type ChartElement, type ElementStyle, type ImageElement, type PageMargins,
-  type ShapeElement, type SubreportElement, type TemplateBand, type TemplateElement, type TemplateGroup,
-  type ReportTemplateDocument, type TemplateIssue,
+  type PageSetup, type ShapeElement, type SubreportElement, type TemplateBand, type TemplateElement,
+  type TemplateGroup, type ReportTemplateDocument, type TemplateIssue,
 } from "./reportTemplate";
+import { BRAND_COLOR_DEFAULTS, DOCUMENT_PALETTE, type DocumentPresentation } from "./brand";
 import {
   collectCalls, collectPaths, evaluateExpression, interpolateText, parseExpression, parseTextSegments,
   runningScopeKey, RUNNING_FUNCTIONS,
@@ -142,6 +144,12 @@ export interface LayoutRequest {
   templates?: Array<{ id: string; name: string; parameters?: Array<{ key: string; required?: boolean }> }>;
   /** The resolved sub-reports, keyed by the template id the elements point at. */
   subreports?: Record<string, SubreportResolution>;
+  /**
+   * The instance's document settings: the one accent a printed page may use, and the family's
+   * presentation — which sheet, and what the foot carries. Absent leaves the template as its author drew
+   * it, apart from the type floor, which is a rule of the document language rather than a setting.
+   */
+  ink?: DocumentInk | null;
 }
 
 const isBlank = (value: unknown): boolean => value === null || value === undefined || (typeof value === "string" && value.trim() === "");
@@ -532,6 +540,197 @@ function buildSection(args: {
   };
 }
 
+// ── The document's own rules ────────────────────────────────────────
+
+/**
+ * The floor under every size this engine draws, in points.
+ *
+ * A page is read at arm's length, photocopied, scanned into somebody's finance folder and filed, so the
+ * mockup's document language puts one floor under the type on it — and the banded engine takes that
+ * floor as well as the accent. Nothing is drawn smaller than this whatever a saved template says. It is
+ * applied to the document **before anything is measured**, so the wrap points the preview shows are the
+ * wrap points the PDF draws; a band's height is untouched, so no saved template moves a millimetre.
+ */
+export const DOCUMENT_TYPE_FLOOR_PT = 8.5;
+
+/**
+ * The weight the group rule is drawn at, in millimetres.
+ *
+ * The group boundary is the one line a reader navigates by, and a colour alone does not survive a
+ * greyscale print, a photocopy or a colour-blind reader. Carrying it in the stroke's weight as well as
+ * its colour is the rule the standard kit's masthead follows, applied to the one line that matters most
+ * on a banded page.
+ */
+export const DOCUMENT_GROUP_RULE_MM = 0.6;
+
+/**
+ * The two colours the product's *interface* put on a designed page, and which must not be printed.
+ *
+ * An author's colour is theirs and is preserved exactly. These are not an author's colours: cyan is the
+ * interface's accent — `BRAND_COLOR_DEFAULTS.accentColor`, which the brand contract says is deliberately
+ * never used on paper because it measures 2.1:1 against white — and `#22d3ee` is the tint of it that the
+ * report designer's own starter has always given its group rule. A saved template carrying one of them is
+ * therefore carrying the product's default, and the document's one accent is drawn in its place.
+ */
+const INTERFACE_INK_COLOURS = [BRAND_COLOR_DEFAULTS.accentColor.toLowerCase(), "#22d3ee"];
+
+const isInterfaceInk = (colour: string | null | undefined): boolean =>
+  !!colour && INTERFACE_INK_COLOURS.includes(colour.trim().toLowerCase());
+
+/**
+ * What the instance's document settings ask of a laid-out report.
+ *
+ * Neither field is required: with no ink the engine draws the template as its author left it, apart from
+ * the type floor, which is a rule of the document language rather than a setting.
+ */
+export interface DocumentInk {
+  /** The instance's one accent for paper — `DocumentBrand.accent`. */
+  accent?: string;
+  /** The family's resolved presentation: which sheet it prints on, and what its foot carries. */
+  presentation?: DocumentPresentation | null;
+}
+
+/**
+ * One stored style as the document will draw it.
+ *
+ * This is the whole of the banded engine's styling: the type floor, the palette in place of the
+ * interface's cyans, and the group rule's weight. Pure, and it returns the style it was given when
+ * nothing changes, so a renderer can compare by identity and a preview can memoise on it.
+ */
+export function inkStyle(
+  style: ElementStyle,
+  options: { accent?: string; groupRule?: boolean } = {},
+): ElementStyle {
+  const accent = options.accent || BRAND_COLOR_DEFAULTS.primaryColor;
+  const fontSize = Math.max(DOCUMENT_TYPE_FLOOR_PT, style.fontSize);
+  const color = isInterfaceInk(style.color) ? accent : style.color;
+  const background = isInterfaceInk(style.background) ? DOCUMENT_PALETTE.tint : style.background;
+  const border = style.border && !isInterfaceInk(style.border.color)
+    ? style.border
+    : style.border
+      ? {
+          color: accent,
+          width: options.groupRule && isInterfaceInk(style.border.color) ? DOCUMENT_GROUP_RULE_MM : style.border.width,
+        }
+      : style.border;
+  if (fontSize === style.fontSize && color === style.color && background === style.background && border === style.border) {
+    return style;
+  }
+  return { ...style, fontSize, color, background, border };
+}
+
+/**
+ * The sheet a document prints on.
+ *
+ * The family's presentation decides it, in millimetres, rather than any renderer holding a paper size of
+ * its own — that is what keeps the designer's canvas, its preview and the PDF the same page. The one
+ * exception is a **custom** sheet: an author who typed exact millimetres in Page Setup has asked for a
+ * sheet that is not a preset, and that is theirs.
+ */
+export function paperFor(
+  document: ReportTemplateDocument,
+  presentation?: DocumentPresentation | null,
+): PageSetup {
+  if (!presentation || document.page.size === "custom") return document.page;
+  return { ...document.page, size: presentation.pageSize, orientation: presentation.orientation };
+}
+
+/** The text that says what a page belongs to, when the design does not say it itself. */
+const footerWords = (presentation: DocumentPresentation): string =>
+  [presentation.footerNote, "{{Report.name}} · generated {{FORMATDATE(NOW(), 'yyyy-MM-dd')}}"]
+    .filter(Boolean).join(" · ");
+
+/** True when a band already says something of its own, so the product does not talk over it. */
+const bandHasWords = (band: TemplateBand): boolean =>
+  band.elements.some(element =>
+    (element.type === "text" && element.text.trim() !== "") || element.type === "field" || element.type === "aggregate");
+
+/** True when a band already numbers its pages in its own words or fields. */
+const bandNumbersPages = (band: TemplateBand): boolean =>
+  band.elements.some(element =>
+    (element.type === "text" && /Page\s*\.\s*(number|totalPages)/.test(element.text))
+    || (element.type === "field" && /Page\s*\.\s*(number|totalPages)/.test(element.expression)));
+
+/** The product's own foot: where the document came from, and which page of how many this is. */
+function furnitureElements(presentation: DocumentPresentation, width: number): TemplateElement[] {
+  const elements: TemplateElement[] = [];
+  if (presentation.showFooter) {
+    elements.push(createElement("text", {
+      x: 0, y: 1.5, w: Math.max(20, width - 40), h: 5, text: footerWords(presentation),
+      style: { ...DEFAULT_STYLE, fontSize: DOCUMENT_TYPE_FLOOR_PT, color: DOCUMENT_PALETTE.muted },
+    }));
+  }
+  if (presentation.showPageNumbers) {
+    elements.push(createElement("text", {
+      x: Math.max(20, width - 40), y: 1.5, w: 40, h: 5, text: "Page {{Page.number}} of {{Page.totalPages}}",
+      style: { ...DEFAULT_STYLE, fontSize: DOCUMENT_TYPE_FLOOR_PT, color: DOCUMENT_PALETTE.muted, align: "right" },
+    }));
+  }
+  return elements;
+}
+
+/**
+ * The page furniture a designed report does not have to place.
+ *
+ * `report.designer`'s presentation asks for a footer and for page numbers — both are true by default —
+ * and an author places their own `pageFooter` band when they want one, which the starter does. So the
+ * band is drawn exactly as it was placed, and only what is *absent* is added: the family's footer line
+ * when the band carries no words of its own, and the page numbers when it does not already number
+ * pages. A template with no footer band at all gets one, ruled off in the palette.
+ *
+ * Nothing is added above the author's bands. The letterhead of this family is `"none"` on purpose (see
+ * `documentBrand.ts`): a designed page's author placed its header by hand, and the product putting its
+ * own mark above it would be overruling them. The presentation is therefore honoured at the foot, and
+ * nowhere the author has already written.
+ */
+function withPageFurniture(document: ReportTemplateDocument, ink: DocumentInk, page: PageSetup): ReportTemplateDocument {
+  const presentation = ink.presentation;
+  if (!presentation) return document;
+  const width = contentBox(page).width;
+  const footer = document.bands.find(band => band.kind === "pageFooter");
+
+  if (!footer) {
+    if (!presentation.showFooter && !presentation.showPageNumbers) return document;
+    const band = createBand("pageFooter", {
+      elements: [
+        createElement("line", {
+          x: 0, y: 0, w: width, h: 0.4,
+          style: { ...DEFAULT_STYLE, border: { width: 0.3, color: DOCUMENT_PALETTE.rule } },
+        }),
+        ...furnitureElements(presentation, width),
+      ],
+    });
+    return { ...document, bands: [...document.bands, band] };
+  }
+
+  const additions: TemplateElement[] = [];
+  if (presentation.showFooter && !bandHasWords(footer)) additions.push(...furnitureElements({ ...presentation, showPageNumbers: false }, width));
+  if (presentation.showPageNumbers && !bandNumbersPages(footer)) additions.push(...furnitureElements({ ...presentation, showFooter: false }, width));
+  if (!additions.length) return document;
+  return {
+    ...document,
+    bands: document.bands.map(band => (band === footer ? { ...band, elements: [...band.elements, ...additions] } : band)),
+  };
+}
+
+/** Every element of a document drawn the way the document's ink says, before it is measured. */
+function inkedDocument(document: ReportTemplateDocument, ink: DocumentInk): ReportTemplateDocument {
+  const accent = ink.accent || BRAND_COLOR_DEFAULTS.primaryColor;
+  let changed = false;
+  const bands = document.bands.map(band => {
+    let bandChanged = false;
+    const elements = band.elements.map(element => {
+      const style = inkStyle(element.style, { accent, groupRule: band.kind === "groupHeader" && element.type === "line" });
+      if (style === element.style) return element;
+      bandChanged = true;
+      changed = true;
+      return { ...element, style } as TemplateElement;
+    });
+    return bandChanged ? { ...band, elements } : band;
+  });
+  return changed ? { ...document, bands } : document;
+}
+
 export function layoutReport(request: LayoutRequest): LaidOutReport {
   const document = normaliseDocument(request.document);
   const issues: TemplateIssue[] = validateTemplate(document, { catalog: request.catalog, templates: request.templates });
@@ -547,8 +746,14 @@ export function layoutReport(request: LayoutRequest): LaidOutReport {
     return { ...refusedReport(document, issues), parameters };
   }
 
-  const page = pageDimensions(document.page);
-  const { width: contentWidth, height: contentHeight } = contentBox(document.page);
+  // The paper, the ink and the foot are the document's, decided in one place before anything is
+  // measured: `paperFor` reads the family's presentation rather than a size of this engine's own, and
+  // `inkedDocument` applies the type floor and the accent before a single line is wrapped.
+  const ink: DocumentInk = request.ink ?? {};
+  const paper = paperFor(document, ink.presentation);
+  const printed = withPageFurniture(inkedDocument(document, ink), ink, paper);
+  const page = pageDimensions(paper);
+  const { width: contentWidth, height: contentHeight } = contentBox(paper);
 
   const pages: FlowPage[] = [];
   const sections = new Map<string, Section>();
@@ -562,7 +767,7 @@ export function layoutReport(request: LayoutRequest): LaidOutReport {
   };
   const currentPage = (): FlowPage => pages[pages.length - 1]!;
 
-  const rootSection = buildSection({ key: "root", isRoot: true, document, rows: request.rows, parameters, now: request.now });
+  const rootSection = buildSection({ key: "root", isRoot: true, document: printed, rows: request.rows, parameters, now: request.now });
   sections.set(rootSection.key, rootSection);
 
   // The footers of the owning report are anchored to the bottom of the page, so the flow gets the page
@@ -778,6 +983,9 @@ export function layoutReport(request: LayoutRequest): LaidOutReport {
 
     bandPage.bands.push({
       bandId: band.id, kind: band.kind, groupKey: band.groupKey, groupLevel: context.groupLevel,
+      // The group this band printed for, which is what `bandsToTables` files each row and total under —
+      // without it a spreadsheet of a grouped report has a "Group" column with nothing in it.
+      groupValue: context.groupValue,
       y: bandTop, height, elements: placed, rowIndex: context.rowIndex,
       section: section.isRoot ? undefined : section.key,
     });
@@ -905,7 +1113,9 @@ export function layoutReport(request: LayoutRequest): LaidOutReport {
       return;
     }
 
-    const childDocument = normaliseDocument(resolution.document);
+    // A sub-report is drawn in the document's ink too, but it gets no page furniture of its own: it is
+    // printed on the parent's pages, and the parent's foot is the one that numbers them.
+    const childDocument = inkedDocument(normaliseDocument(resolution.document), ink);
     const childIssues = validateTemplate(childDocument, { catalog: request.catalog, templates: request.templates });
     if (errorsOf(childIssues).length) {
       issues.push({

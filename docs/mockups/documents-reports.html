@@ -1,0 +1,2968 @@
+<!DOCTYPE html>
+<!--
+  MOCKUP ONLY — nothing in the application has been changed. No route, no component, no schema, no
+  guard, no Help section and no BuildNotes entry was touched for this drawing; the only artefact is
+  this file, and reverting it is deleting it. Not one line of the proposal below exists in the product
+  yet. The invoice and the ticket print sheet are deliberately NOT here: they are being redrawn in a
+  companion file, and the two files share the document language stated on screen one.
+
+  WHAT THIS IS. The printable documents and PDFs this product produces, reimagined, with the document
+  language written down first so the six screens after it are one system applied rather than six
+  layouts. The product owner asked for "the different printable reports and PDFs — modern and cutting
+  edge, while staying professional". The answer is not a new look; it is a **sheet of paper**. A
+  report is read stapled, photocopied, scanned at 150dpi into somebody's finance folder, and printed in
+  greyscale on the office printer. Every rule below is chosen for that reader.
+
+  THE FINDING. Five families of document leave this application through four different mechanisms, and
+  nothing holds them together:
+
+    1. Standard reports — 16 entries in `STANDARD_REPORTS`
+       (apps/web/src/components/reports/standardReports.ts), drawn by
+       `components/reports/reportKit.tsx`: `ReportBody` on screen, `documentToPrintWindow` +
+       `printReport` for the print window, `exportPdf` → `documentToPdf` (jsPDF + autoTable) for the
+       file, `exportExcel`/`exportCsv` for the spreadsheet.
+    2. Business reviews — weekly, monthly, quarterly (`weeklyReviewReport`, `monthlyReviewReport`,
+       `qbrReport` in apps/api/src/services/reportData.ts), composed from the same kit. Long
+       documents; the family where a cover and a running head matter most.
+    3. Custom / banded reports — their own engine: `lib/reportOutput.ts`
+       (`printTemplateReport`, `exportTemplatePdf`) over `layoutReport` in
+       packages/shared/src/reportLayout.ts, edited in `components/reports/designer/*`.
+    4. Invoice — `GET /billing/invoices/:id/pdf` (apps/api/src/routes/billing.ts:399), dark-themed
+       HTML. Being redrawn by the other agent.
+    5. Ticket sheet — `.ticket-print-only` (apps/web/src/pages/Tickets.tsx + index.css), a browser
+       print of a hidden section. Being redrawn by the other agent.
+
+  The four mechanisms do not merely look different. `documentToPdf` hardcodes
+  `{ orientation: "landscape", unit: "pt", format: "a4" }`, so every generated PDF is landscape A4
+  whatever the screen shows; `documentToPrintWindow` writes no `@page` size at all, so the browser
+  decides; `tablesToPdf` still exists as a second, landscape autoTable renderer that nothing calls
+  any more; the banded engine draws real vector text at millimetres and does not use the letterhead at
+  all — by design, because a template's author placed its header by hand. Screen six is that table.
+
+  WHAT IT PROPOSES. One document language (screen one) — paper in millimetres, a letterhead, a
+  masthead, hairlines instead of cards, points instead of pixels, a basis block, a running head and a
+  footer — applied to a real standard report (the Aging Report, screen two), to a real business review
+  pack (Q3 2026, screen three), to the banded engine's own machinery (screen four), and assembled into
+  the one thing the product has never had: a place a person decides what to produce (screen five).
+
+  WHAT IS REAL. Every figure in this file was read from the running instance on 9 October 2026:
+    * Aging Report — `GET /api/reports/data/billing-aging` (12,198.13 outstanding across 2 invoices,
+      3,518.13 not yet due, 8,680.00 in the 31–60 band, Globex Industries the largest debtor at 34
+      days), and the same endpoint's `basis`, `largest` and `notes` blocks verbatim.
+    * Business review — `GET /api/reports/data/quarterly-business-review` (Q3 2026: 96 tickets,
+      34.25 hours, $27,960.63 invoiced, $4,438.75 collected, 5 agreements at $330,000 annualised, 80
+      open tickets all over 30 days), its highlights and its watch items.
+    * Invoices — `GET /api/billing/invoices` (five real invoices, grouped by their own status).
+    * Banded report — `GET /api/reports/designer/starter?source=invoices&kind=groupedTotals`: A4
+      portrait, 12mm margins, 186mm content, the real band list, the real element geometry and the
+      real fonts.
+    * People and accounts — `GET /api/users` and `GET /api/auth/me`.
+  Where a figure could not be read it is absent and the absence is stated on the page it belongs to.
+  There is no lorem ipsum and no invented count.
+
+  TWO INTERFACES. Documents are a third surface (DESIGN.md §8): they are neither interface, they use
+  literal colours because there is no CSS where they are rendered, and they must not follow the user's
+  theme — which is why a page below is drawn as **paper** whichever theme this mockup's chrome is in.
+  The screens that *choose* a document are ordinary screens, and screen five is drawn twice for that
+  reason: a modern sheet with sentences beside the controls, and a classic dialog with labelled fields
+  and Save/Cancel.
+
+  The page is a drawing, not a prototype: the theme toggle, the paper zoom and the screen picker move,
+  and nothing else does.
+-->
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Printable reports and PDFs: one document language, five families</title>
+<style>
+  /* ══ The application's own tokens, copied from docs/mockups/developer-section.html ═══════════ */
+  :root {
+    --navy-50:#e8edf5; --navy-100:#c5d1e5; --navy-200:#9eb3d3; --navy-300:#7895c1; --navy-400:#5b7db3;
+    --navy-500:#3e64a5; --navy-600:#365796; --navy-700:#2b4783; --navy-800:#223771; --navy-900:#142454;
+    --navy-950:#0a1628;
+
+    --cyber-50:#e0f7fe; --cyber-100:#b3edfc; --cyber-200:#80e2fa; --cyber-300:#4dd6f8; --cyber-400:#26cbf6;
+    --cyber-500:#00c0f4; --cyber-600:#00aae0; --cyber-700:#0090c4; --cyber-800:#0077a9; --cyber-900:#00507d;
+
+    --brand-crimson:#c00000;
+
+    --surface:#0f1a2e; --surface-light:#162238; --surface-lighter:#1e2d48; --surface-border:#2a3a5c;
+
+    --alert-red:#ef4444; --alert-amber:#f59e0b; --alert-green:#22c55e;
+
+    --text-primary:#ffffff; --text-secondary:#d1d5db; --text-tertiary:#9ca3af;
+    --text-muted:#8b93a1; --text-muted-alt:#7c8598;
+
+    --card-shadow: 0 1px 2px rgb(0 0 0 / 0.35), 0 12px 32px -22px rgb(0 0 0 / 0.75);
+    --btn-primary-fg:#ffffff;
+
+    /* ── The document language. These are the *paper's* tokens and nothing above reaches them:
+       a page is white ink-on-paper whatever `data-theme` says, which is the point of §8 of
+       DESIGN.md and why `reportKit.tsx`'s literals are on the lint allow-list. The values are
+       `DOCUMENT_BRAND`'s own, and the companion file (`documents-customer-facing.html`) uses the
+       same names and the same numbers, because a report and an invoice are one document language. */
+    --paper:#ffffff;
+    --ink:#0f172a;          /* headings, figures, the strong rules */
+    --ink-body:#334155;     /* body text */
+    --ink-muted:#64748b;    /* meta lines, footers, notes — 4.8:1 on paper */
+    --paper-rule:#cbd5e1;   /* a 0.4pt rule that separates */
+    --paper-hair:#e2e8f0;   /* a 0.4pt rule that merely groups */
+    --accent:#c00000;       /* ONE accent: the brand's own crimson, already in DOCUMENT_BRAND */
+    --paper-grid:4.5mm;     /* the baseline grid every vertical measure is a multiple of */
+    --paper-margin:18mm;    /* the side margin, fixed in millimetres for every sheet size */
+    --paper-top:16mm; --paper-bottom:20mm;
+
+    --paper-shadow: 0 1px 2px rgb(0 0 0 / 0.20), 0 24px 48px -32px rgb(0 0 0 / 0.55);
+  }
+
+  html[data-theme="light"] {
+    --navy-950:#ffffff; --navy-900:#0d0d0d; --navy-800:#1a1a1a; --navy-700:#2b2b2b; --navy-600:#424242;
+    --navy-500:#5c5c5c; --navy-400:#808080; --navy-300:#b3b3b3; --navy-200:#d9d9d9; --navy-100:#ebebeb;
+    --navy-50:#f5f5f5;
+
+    --cyber-50:#f0f9ff; --cyber-100:#e0f2fe; --cyber-200:#bae6fd; --cyber-300:#075985; --cyber-400:#0369a1;
+    --cyber-500:#0ea5e9; --cyber-600:#0284c7; --cyber-700:#0369a1; --cyber-800:#075985; --cyber-900:#0c4a6e;
+
+    --surface:#ffffff; --surface-light:#f7f7f7; --surface-lighter:#f0f0f0; --surface-border:#b8b8b8;
+
+    --alert-red:#dc2626; --alert-amber:#d97706; --alert-green:#16a34a;
+
+    --text-primary:#1a1a1a; --text-secondary:#363636; --text-tertiary:#525252;
+    --text-muted:#595959; --text-muted-alt:#666666;
+
+    --card-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 10px 28px -22px rgb(0 0 0 / 0.3);
+  }
+
+  /* ══ Base ══════════════════════════════════════════════════════════════════════════════════ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    min-height: 100dvh; line-height: 1.6;
+    background: var(--navy-950); color: var(--text-secondary);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+  }
+  h1, h2, h3, h4 { font-weight: 600; color: var(--text-primary); line-height: 1.3; }
+  p { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  code, .mono, kbd { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  .num { font-variant-numeric: tabular-nums; }
+  :focus-visible { outline: 2px solid var(--cyber-400); outline-offset: 2px; }
+  .sprite { display: none; }
+  .ico { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8;
+         stroke-linecap: round; stroke-linejoin: round; }
+  .ico--lg { width: 18px; height: 18px; }
+
+  /* ══ Mockup scaffolding ════════════════════════════════════════════════════════════════════ */
+  .mock-frame { max-width: 1680px; margin: 0 auto; padding: 28px 24px 56px; }
+  .mock-tag {
+    display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 9999px;
+    font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--alert-red); background: color-mix(in srgb, var(--alert-red) 16%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--alert-red) 45%, transparent);
+  }
+  .chrome { position: fixed; top: 14px; right: 14px; z-index: 30; display: flex; gap: 10px;
+    align-items: center; }
+  .theme-toggle, .zoom {
+    display: inline-flex; gap: 2px; padding: 3px; border-radius: 9999px;
+    background: var(--surface); border: 1px solid var(--surface-border); box-shadow: var(--card-shadow);
+  }
+  .theme-toggle button, .zoom button {
+    font: inherit; font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+    background: transparent; border: 0; border-radius: 9999px; padding: 4px 11px; cursor: pointer;
+  }
+  .theme-toggle button[aria-pressed="true"], .zoom button[aria-pressed="true"] {
+    background: var(--cyber-600); color: var(--btn-primary-fg); }
+  .mock-note { font-size: 11px; color: var(--text-muted-alt); }
+
+  /* ══ The application's components, at their real values ════════════════════════════════════ */
+  .card { background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 12px; padding: 18px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; flex: none; white-space: nowrap;
+    border-radius: 10px; border: 1px solid var(--surface-border); background: var(--surface-lighter);
+    padding: 4px 10px; font-size: 12px; font-weight: 500; color: var(--text-secondary);
+  }
+  .chip--on { color: var(--cyber-300);
+    border-color: color-mix(in srgb, var(--cyber-500) 45%, transparent);
+    background-color: color-mix(in srgb, var(--cyber-600) 18%, transparent); }
+  .chip--good { color:#34d399; border-color: color-mix(in srgb,#34d399 40%, transparent);
+    background-color: color-mix(in srgb,#34d399 14%, transparent); }
+  .chip--warn { color:#fbbf24; border-color: color-mix(in srgb,#fbbf24 40%, transparent);
+    background-color: color-mix(in srgb,#fbbf24 14%, transparent); }
+  .chip--bad { color:#f87171; border-color: color-mix(in srgb,#f87171 42%, transparent);
+    background-color: color-mix(in srgb,#f87171 14%, transparent); }
+  html[data-theme="light"] .chip--good { color:#166534; border-color: color-mix(in srgb,#166534 40%, transparent);
+    background-color: color-mix(in srgb,#166534 12%, transparent); }
+  html[data-theme="light"] .chip--warn { color:#92400e; border-color: color-mix(in srgb,#92400e 40%, transparent);
+    background-color: color-mix(in srgb,#92400e 12%, transparent); }
+  html[data-theme="light"] .chip--bad { color:#b91c1c; border-color: color-mix(in srgb,#b91c1c 40%, transparent);
+    background-color: color-mix(in srgb,#b91c1c 12%, transparent); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; font-weight: 500;
+    border-radius: 10px; padding: 6px 12px; cursor: pointer; border: 1px solid transparent;
+  }
+  .btn--primary { background: var(--cyber-600); color: var(--btn-primary-fg); }
+  .btn--secondary { background: var(--surface-lighter); border-color: var(--surface-border); color: var(--text-primary); }
+  .btn--quiet { background: transparent; border-color: var(--surface-border); color: var(--text-secondary); }
+  .input-field {
+    width: 100%; background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 10px; padding: 7px 11px; font: inherit; font-size: 13px; color: var(--text-primary);
+  }
+  .seg { display: inline-flex; gap: 3px; padding: 3px; border-radius: 12px; background: var(--surface-lighter);
+    border: 1px solid var(--surface-border); }
+  .seg__opt { font: inherit; font-size: 12px; font-weight: 500; color: var(--text-secondary);
+    background: transparent; border: 1px solid transparent; border-radius: 10px; padding: 6px 11px;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .seg__opt--on { background: var(--cyber-600); color: var(--btn-primary-fg); font-weight: 600; }
+
+  .glyph { width: 24px; height: 24px; border-radius: 8px; flex: none;
+    display: inline-flex; align-items: center; justify-content: center; }
+  .glyph--cyber { background: color-mix(in srgb, var(--cyber-600) 20%, transparent); color: var(--cyber-400); }
+  .glyph--amber { background: color-mix(in srgb, var(--alert-amber) 15%, transparent); color: var(--alert-amber); }
+  .glyph--red { background: color-mix(in srgb, var(--alert-red) 15%, transparent); color: var(--alert-red); }
+  .glyph--green { background: color-mix(in srgb, var(--alert-green) 15%, transparent); color: var(--alert-green); }
+  .glyph--neutral { background: var(--surface-lighter); color: var(--text-tertiary); }
+
+  .band {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-radius: 12px;
+    border: 1px solid var(--surface-border); border-left: 2px solid var(--cyber-500);
+    background: var(--surface-lighter); padding: 11px 14px;
+  }
+  .band--warn { border-left-color: var(--alert-amber);
+    background: color-mix(in srgb, var(--alert-amber) 9%, transparent);
+    border-color: color-mix(in srgb, var(--alert-amber) 32%, transparent); }
+  .band--gate { border-left-color: var(--alert-green);
+    background: color-mix(in srgb, var(--alert-green) 7%, transparent);
+    border-color: color-mix(in srgb, var(--alert-green) 30%, transparent); }
+  .band__t { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+  .band__d { font-size: 11.5px; color: var(--text-muted); flex: 1 1 300px; min-width: 0; }
+  .band__right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+  .screen { margin-top: 30px; }
+  .screen[hidden] { display: none; }
+  .screen__label {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted);
+  }
+  .screen__label::after { content: ""; flex: 1; height: 1px; background: var(--surface-border); }
+  .screen__head { margin-top: 10px; }
+  .screen__head h2 { font-size: 16px; }
+  .screen__head p { margin-top: 4px; max-width: 118ch; font-size: 13px; color: var(--text-muted); }
+  .today {
+    margin-top: 10px; padding: 10px 13px; border-radius: 10px; font-size: 12px; line-height: 1.65;
+    color: var(--text-muted); background: color-mix(in srgb, var(--surface-lighter) 60%, transparent);
+    border: 1px dashed var(--surface-border); max-width: 150ch;
+  }
+  .today b { color: var(--text-tertiary); font-weight: 600; }
+
+  .pick { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+  .pick__opt {
+    flex: 1 1 232px; text-align: left; font: inherit; cursor: pointer;
+    background: var(--surface); border: 1px solid var(--surface-border); border-radius: 12px;
+    padding: 12px 14px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 3px;
+  }
+  .pick__opt:hover { border-color: color-mix(in srgb, var(--cyber-500) 40%, transparent); }
+  .pick__opt--on { background: color-mix(in srgb, var(--cyber-600) 14%, transparent);
+    border-color: color-mix(in srgb, var(--cyber-500) 55%, transparent); }
+  .pick__t { font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 7px; }
+  .pick__d { font-size: 11px; color: var(--text-muted); line-height: 1.45; text-wrap: pretty; }
+  .pick__n { font-size: 11px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+  .pick__opt--on .pick__n { color: var(--cyber-300); }
+
+  .ptable { width: 100%; border-collapse: collapse; }
+  .ptable th, .ptable td { text-align: left; padding: 8px 10px 8px 0; font-size: 12px;
+    border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 60%, transparent); vertical-align: top; }
+  .ptable th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted-alt);
+    font-weight: 600; border-bottom-color: var(--surface-border); }
+  .ptable td { color: var(--text-secondary); }
+  .ptable tr:last-child td { border-bottom: 0; }
+  .ptable .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+  .ptable .mono { color: var(--text-muted-alt); }
+  .ptable tfoot td { border-top: 1px solid var(--surface-border); border-bottom: 0; font-weight: 600;
+    color: var(--text-primary); }
+
+  .kv { display: flex; align-items: baseline; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+  .kv + .kv { margin-top: 5px; }
+  .kv__k { flex: none; width: 168px; color: var(--text-muted); font-size: 11.5px; }
+  .kv__v { color: var(--text-primary); }
+  .say { font-size: 11.5px; color: var(--text-muted); line-height: 1.6; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
+  @media (max-width: 1100px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: start; }
+  @media (max-width: 1200px) { .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 820px) { .grid3 { grid-template-columns: minmax(0, 1fr); } }
+  .stack > * + * { margin-top: 12px; }
+  .why {
+    display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 9999px;
+    cursor: pointer; font: inherit; font-size: 11px; line-height: 18px; font-weight: 500;
+    color: var(--text-muted); background: transparent; border: 1px dashed var(--surface-border);
+  }
+  .why:hover { color: var(--text-primary); border-color: var(--text-muted); }
+  .why[aria-expanded="true"] { color: var(--cyber-300); border-style: solid;
+    border-color: color-mix(in srgb, var(--cyber-500) 40%, transparent); }
+  .why-body[hidden] { display: none; }
+  .why-body { margin-top: 8px; padding: 10px 12px; border-radius: 10px;
+    background: var(--surface-light); border: 1px dashed var(--surface-border); }
+  .why-body p { font-size: 11.5px; color: var(--text-muted); line-height: 1.65; }
+  .why-body p + p { margin-top: 6px; }
+
+  /* The screen's own two-column anatomy: the drawing, and what the drawing is saying. */
+  .stage { display: grid; grid-template-columns: minmax(0, 1fr) 424px; gap: 18px; margin-top: 16px;
+    align-items: start; }
+  @media (max-width: 1400px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+  .stage--wide { grid-template-columns: minmax(0, 1fr) 372px; }
+  .sheets { display: flex; flex-direction: column; gap: 20px; }
+  .sheets--row { flex-direction: row; flex-wrap: wrap; gap: 20px; }
+
+  /* ══════════════════════════════════════════════════════════════════════════════════════════
+     THE DOCUMENT LANGUAGE — paper, drawn in millimetres at true size.
+
+     `--paper-zoom` scales the *frame*, not the sheet: at 100% a sheet measures 210mm, so 1mm on
+     this screen is 1mm of paper (96dpi: 210mm = 793.7 device-independent pixels). Nothing inside a
+     sheet is expressed in pixels. Screen five of this file is the only place a document is measured
+     any other way.
+     ══════════════════════════════════════════════════════════════════════════════════════════ */
+  .sheet-frame { zoom: var(--paper-zoom, 1); }
+  .sheet {
+    position: relative; background: var(--paper); color-scheme: light;
+    width: 210mm; height: 297mm;                       /* A4 portrait */
+    box-shadow: var(--paper-shadow);
+    color: var(--ink-body);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 9.5pt; line-height: var(--paper-grid);
+    font-variant-numeric: normal; overflow: hidden;
+  }
+  .sheet--letter { width: 215.9mm; height: 279.4mm; }
+  .sheet--a4l { width: 297mm; height: 210mm; font-size: 9pt; }
+  .sheet__cap { font-size: 11px; color: var(--text-muted-alt); margin-bottom: 7px;
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .sheet__cap b { color: var(--text-tertiary); }
+  .sheet__cap .sel { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; font-size: 10.5px; }
+
+  /* The content box: fixed millimetre margins, so the text column is 174mm on A4 and 179.9mm on
+     Letter — the margin is a measurement, the column is whatever is left. */
+  .doc { position: absolute; inset: var(--paper-top) var(--paper-margin) var(--paper-bottom);
+    display: flex; flex-direction: column; }
+  .doc__flow { flex: 1 1 auto; min-height: 0; }
+  .doc--centre { align-items: stretch; }
+
+  /* ── The letterhead — every family wears it ─────────────────────────────────────────────── */
+  .lh { display: grid; grid-template-columns: 11mm minmax(0, 1fr) auto; gap: 4mm; align-items: center; }
+  .lh__shield { width: 11mm; height: 11mm; display: block; }
+  .lh__word { font-size: 12pt; font-weight: 700; letter-spacing: .01em; color: var(--ink); line-height: 6mm; }
+  .lh__word b { color: var(--accent); }
+  .lh__who { text-align: right; font-size: 8.5pt; line-height: 4mm; color: var(--ink-muted); }
+  .lh__rule { height: .6pt; background: var(--ink); margin-top: 3mm; }
+  .dtitle { font-size: 15pt; font-weight: 600; letter-spacing: -.01em; color: var(--ink);
+    line-height: 7mm; margin-top: 5mm; }
+  .dmeta { font-size: 8.5pt; line-height: 4mm; color: var(--ink-muted); margin-top: 1mm; max-width: 150mm; }
+  .dmeta b { color: var(--ink-body); font-weight: 600; }
+
+  /* ── The masthead — 3–5 figures, tone carried by a rule, never by a slab ────────────────── */
+  .mast { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); margin-top: 6mm; }
+  .mast__i { padding: 2.5mm 0 0 4mm; border-top: .5pt solid var(--paper-hair); }
+  .mast__i:first-child { padding-left: 0; }
+  .mast__i + .mast__i { border-left: .5pt solid var(--paper-hair); }
+  .mast__i--alert { border-top: 1.4pt solid var(--accent); }
+  .mast__i--watch { border-top: .5pt solid var(--paper-hair); }
+  .mast__l { font-size: 8.5pt; line-height: 4mm; color: var(--ink-muted); min-height: 8mm;
+    text-transform: uppercase; letter-spacing: .07em; }
+  .mast__v { font-size: 20pt; font-weight: 600; line-height: 8mm; color: var(--ink);
+    font-variant-numeric: tabular-nums; letter-spacing: -.015em; margin-top: 1.5mm; }
+  .mast__v--accent { color: var(--accent); }
+  .mast__s { font-size: 8.5pt; line-height: 4mm; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+  .mast__note { font-size: 8.5pt; line-height: 4mm; color: var(--ink-muted); margin-top: 3mm; max-width: 160mm; }
+
+  /* ── Section headings: small caps over a hairline ───────────────────────────────────────── */
+  .sec { font-size: 9pt; font-weight: 700; color: var(--ink); text-transform: uppercase;
+    letter-spacing: .09em; line-height: 5mm; padding-bottom: 1.5mm;
+    border-bottom: .4pt solid var(--paper-rule); }
+  .sec + * { margin-top: 3mm; }
+  .sec--top { margin-top: 6mm; }
+  .sec__n { color: var(--accent); margin-right: 2mm; }
+  .sec__say { font-size: 9.5pt; line-height: var(--paper-grid); color: var(--ink-body); margin-top: 3mm;
+    max-width: 168mm; }
+
+  /* ── Tables: a header rule, figures right, a total rule instead of a fill ───────────────── */
+  table.pt { width: 100%; border-collapse: collapse; }
+  table.pt th {
+    font-size: 8.5pt; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--ink-muted); text-align: left; vertical-align: bottom;
+    padding: 0 2mm 1.5mm; border-bottom: .6pt solid var(--ink); line-height: 4mm;
+  }
+  table.pt td {
+    font-size: 9pt; color: var(--ink-body); vertical-align: top;
+    padding: 1.1mm 2mm; border-bottom: .4pt solid var(--paper-hair);
+    line-height: 4.2mm; height: 6.2mm;
+  }
+  table.pt tbody tr:last-child td { border-bottom: 0; }
+  table.pt .n { text-align: right; font-variant-numeric: tabular-nums; }
+  table.pt .id { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; font-size: 8.5pt; }
+  table.pt .lead { color: var(--ink); font-weight: 600; }
+  table.pt tr.total td { border-top: .6pt solid var(--ink); border-bottom: 0;
+    font-weight: 600; color: var(--ink); padding-top: 2mm; }
+  table.pt tr.sub td { border-top: .4pt solid var(--paper-rule); font-weight: 600; color: var(--ink); }
+  table.pt caption { caption-side: bottom; text-align: left; font-size: 8.5pt; line-height: 4mm;
+    color: var(--ink-muted); padding-top: 2mm; }
+  table.pt th.n { text-align: right; }
+  .tsay { font-size: 8.5pt; line-height: 4mm; color: var(--ink-muted); margin-top: 2mm; max-width: 168mm; }
+
+  /* ── Bars and charts: vector shapes, values written beside them, no legend ──────────────── */
+  .bars { margin-top: 1mm; }
+  .bar { display: grid; grid-template-columns: 46mm minmax(0, 1fr) 26mm; gap: 3mm; align-items: center;
+    padding: 1mm 0; }
+  .bar__l { font-size: 9pt; color: var(--ink-body); }
+  .bar__t { height: 2.6mm; background: var(--paper); border: .4pt solid var(--paper-rule);
+    border-left: 0; position: relative; }
+  .bar__f { display: block; height: 100%; background: var(--ink-body); }
+  .bar__f--accent { background: var(--accent); }
+  .bar__f--zero { background: var(--paper-hair); }
+  .bar__v { font-size: 9pt; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .bars__axis { display: grid; grid-template-columns: 46mm minmax(0, 1fr) 26mm; gap: 3mm;
+    font-size: 8.5pt; color: var(--ink-muted); border-top: .4pt solid var(--paper-hair); padding-top: 1.2mm; }
+  .bars__axis span:nth-child(2) { display: flex; justify-content: space-between; }
+
+  /* ── Facts and the basis block: where the figures came from, what was excluded ──────────── */
+  .facts { margin-top: 1mm; }
+  .fact { display: grid; grid-template-columns: 44mm minmax(0, 1fr); gap: 4mm; padding: 1.5mm 0;
+    border-bottom: .4pt solid var(--paper-hair); }
+  .fact:last-child { border-bottom: 0; }
+  .fact__k { font-size: 8.5pt; line-height: 4.2mm; color: var(--ink-muted); }
+  .fact__v { font-size: 9pt; line-height: 4.2mm; color: var(--ink-body); }
+  .basis { border-top: .6pt solid var(--ink); padding-top: 3mm; }
+  .basis__h { font-size: 9pt; font-weight: 700; color: var(--ink); text-transform: uppercase;
+    letter-spacing: .09em; line-height: 5mm; }
+  .basis__rows { margin-top: 2mm; }
+  .basis__row { display: grid; grid-template-columns: 42mm minmax(0, 1fr); gap: 4mm;
+    border-bottom: .4pt solid var(--paper-hair); padding: 1mm 0; }
+  .basis__row:last-child { border-bottom: 0; }
+  .basis__k { font-size: 8.5pt; line-height: 4.2mm; color: var(--ink-muted); }
+  .basis__v { font-size: 8.5pt; line-height: 4.2mm; color: var(--ink-body); }
+  .basis__v b { color: var(--ink); }
+  .basis__unknown { font-size: 8.5pt; line-height: 4.2mm; color: var(--ink-body); }
+  .basis__unknown b { color: var(--accent); }
+  .lst { list-style: none; }
+  .lst li { font-size: 8.5pt; line-height: 4.2mm; color: var(--ink-body); padding-left: 5mm;
+    position: relative; margin-top: 1mm; }
+  .lst li::before { content: "—"; position: absolute; left: 0; color: var(--ink-muted); }
+
+  /* ── The running head and the footer ────────────────────────────────────────────────────── */
+  .rhead { display: flex; align-items: baseline; gap: 4mm; padding-bottom: 2mm; margin-bottom: 6mm;
+    border-bottom: .4pt solid var(--paper-rule); font-size: 8.5pt; line-height: 4mm; color: var(--ink-muted); }
+  .rhead__t { color: var(--ink); font-weight: 600; }
+  .rhead__p { margin-left: auto; font-variant-numeric: tabular-nums; }
+  .rhead__c { color: var(--accent); font-weight: 600; }
+  .pfoot { flex: none; display: grid; grid-template-columns: auto 1fr auto; gap: 4mm;
+    align-items: baseline; border-top: .4pt solid var(--paper-hair); padding-top: 2mm;
+    font-size: 8.5pt; line-height: 4mm; color: var(--ink-muted); }
+  .pfoot__c { text-align: center; color: var(--ink-muted); }
+  .pfoot__p { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-muted); }
+
+  /* ── Annotation: markers live in the margin, never in the content, and never print ──────── */
+  .anno { position: absolute; width: 5.2mm; height: 5.2mm; border-radius: 50%;
+    background: var(--accent); color: #fff; font-size: 7.5pt; font-weight: 700; line-height: 5.2mm;
+    text-align: center; font-variant-numeric: tabular-nums; }
+  .anno--out { background: transparent; border: .6pt solid var(--accent); color: var(--accent); }
+  .notes { position: sticky; top: 18px; }
+  .note-item { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 9px; padding: 9px 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 55%, transparent); }
+  .note-item:last-child { border-bottom: 0; }
+  .note-item__n { width: 20px; height: 20px; border-radius: 9999px; background: var(--brand-crimson);
+    color: #fff; font-size: 11px; font-weight: 700; text-align: center; line-height: 20px; }
+  .note-item__t { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+  .note-item__d { font-size: 11.5px; color: var(--text-muted); line-height: 1.6; margin-top: 2px; }
+  .note-item__d b { color: var(--text-tertiary); font-weight: 600; }
+  .note-item__d code { font-size: 11px; color: var(--cyber-300); }
+  html[data-theme="light"] .note-item__d code { color: var(--cyber-700); }
+
+  /* ── The banded machinery: band edges a designer can see ────────────────────────────────── */
+  .bandbox { position: absolute; border: .5pt dashed var(--accent); }
+  .bandlab { position: absolute; font-size: 6.5pt; line-height: 3.6mm; color: var(--accent);
+    background: var(--paper); padding: 0 1mm; white-space: nowrap;
+    font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  .bandlab--r { left: 100%; margin-left: 1.5mm; }
+  .bandlab--l { right: 100%; margin-right: 1.5mm; }
+  .ruler { position: absolute; background: var(--accent); }
+  .ruler--v { width: .4pt; }
+  .ruler--h { height: .4pt; }
+  .mmtag { position: absolute; font-size: 6.5pt; color: var(--accent); line-height: 3.6mm;
+    background: var(--paper); padding: 0 1mm; font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+
+  /* ── The cover of a pack ───────────────────────────────────────────────────────────────── */
+  .cover { position: absolute; inset: var(--paper-top) var(--paper-margin) var(--paper-bottom);
+    display: flex; flex-direction: column; }
+  .cover__top { display: flex; align-items: center; gap: 4mm; }
+  .cover__mid { margin-top: auto; }
+  .cover__eyebrow { font-size: 9pt; text-transform: uppercase; letter-spacing: .16em; color: var(--ink-muted); }
+  .cover__t { font-size: 30pt; font-weight: 600; line-height: 13mm; letter-spacing: -.02em;
+    color: var(--ink); margin-top: 4mm; }
+  .cover__sub { font-size: 12pt; line-height: 6.5mm; color: var(--ink-body); margin-top: 4mm;
+    max-width: 140mm; }
+  .cover__rule { height: 1.4pt; background: var(--accent); width: 42mm; margin-top: 8mm; }
+  .cover__facts { margin-top: 10mm; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 8mm; }
+  .cover__fact { border-top: .5pt solid var(--paper-hair); padding-top: 2mm; margin-top: 3mm; }
+  .cover__fk { font-size: 8.5pt; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-muted); }
+  .cover__fv { font-size: 10pt; color: var(--ink); line-height: 5mm; margin-top: 1mm; }
+  .cover__foot { margin-top: 8mm; border-top: .6pt solid var(--ink); padding-top: 3mm;
+    font-size: 8.5pt; line-height: 4.2mm; color: var(--ink-muted); }
+
+  /* ── The contents page ─────────────────────────────────────────────────────────────────── */
+  .toc { margin-top: 2mm; }
+  .toc__row { display: grid; grid-template-columns: 8mm minmax(0, 1fr) auto; gap: 3mm;
+    align-items: baseline; padding: 2.4mm 0; border-bottom: .4pt solid var(--paper-hair); }
+  .toc__n { font-size: 9pt; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+  .toc__t { font-size: 10.5pt; color: var(--ink); }
+  .toc__d { font-size: 8.5pt; color: var(--ink-muted); margin-top: .6mm; }
+  .toc__p { font-size: 9pt; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .toc__row--group .toc__t { font-weight: 600; }
+
+  /* ── A "figure beside a sentence" strip, for the chooser's paper preview ───────────────── */
+  .figure { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .figure__shape { background: var(--paper); border: 1px solid var(--surface-border); }
+  .figure__a4p { width: 74px; height: 105px; }
+  .figure__a4l { width: 105px; height: 74px; }
+  .figure__ltr { width: 78px; height: 101px; }
+  .figure__a3 { width: 88px; height: 124px; }
+  .figure__a5 { width: 57px; height: 81px; }
+  .figure__legal { width: 78px; height: 128px; }
+
+  /* ── The banded engine's own page: bands placed at the template's millimetres ─────────────
+     These sizes and colours are the ENGINE's, not this file's paper tokens, because the drawing is
+     of the engine's output: 210×297mm, 12mm margins, 186mm content, four 46.5mm columns, band heights
+     12 / 7 / 9 / 6 / 8 / 8mm, 8.5pt detail, 8pt captions, and the cyan group-header rule at
+     #22d3ee that the `groupedTotals` starter actually ships. ─────────────────────────────────── */
+  .bb { position: absolute; left: 0; right: 0; }
+  .bb--ph { display: grid; grid-template-columns: 126mm 60mm; }
+  .bb--ch { display: grid; grid-template-columns: repeat(4, 46.5mm); border-bottom: .4mm solid #94a3b8; }
+  .bb--gh { display: grid; grid-template-columns: 111.6mm 74.4mm; border-bottom: .4mm solid #22d3ee; }
+  .bb--dt { display: grid; grid-template-columns: repeat(4, 46.5mm); }
+  .bb--gf { display: grid; grid-template-columns: 93mm 46.5mm 46.5mm; border-top: .4mm solid #cbd5e1; }
+  .bb--pf { display: grid; grid-template-columns: 146mm 40mm; border-top: .4mm solid #cbd5e1; }
+  .bb__name { font-size: 14pt; font-weight: 700; color: #111827; line-height: 5mm; padding-top: 2mm; }
+  .bb__stamp { font-size: 8pt; color: #64748b; line-height: 4mm; padding-top: 3mm; text-align: right; }
+  .bb--ch span { font-size: 8pt; font-weight: 700; color: #334155; line-height: 4mm;
+    display: flex; align-items: flex-end; }
+  .bb--ch .n, .bb--gf .n { justify-content: flex-end; text-align: right; }
+  .bb--gh .g { font-size: 10pt; font-weight: 700; color: #111827; line-height: 4.5mm; padding-top: 1mm; }
+  .bb--gh .c { font-size: 8pt; color: #64748b; line-height: 4mm; padding-top: 1.6mm; text-align: right; }
+  .bb--dt span { font-size: 8.5pt; color: #111827; line-height: 4.4mm; display: flex; align-items: center; }
+  .bb--dt .n { justify-content: flex-end; text-align: right; font-variant-numeric: tabular-nums; }
+  .bb--gf .k { font-size: 8pt; color: #64748b; line-height: 4mm; padding-top: 1.6mm; text-align: right; }
+  .bb--gf .t { font-size: 9pt; font-weight: 700; color: #111827; line-height: 4mm; padding-top: 1.6mm;
+    text-align: right; font-variant-numeric: tabular-nums; }
+  .bb--pf span { font-size: 7.5pt; color: #64748b; line-height: 3.6mm; padding-top: 1.2mm; }
+  .bb--pf .r { text-align: right; }
+  .bb .id { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  .bb .dim { color: #94a3b8; }
+
+  .annot-wrap { position: relative; padding-right: 74mm; }
+  .bandlab { position: absolute; font-size: 6.5pt; line-height: 3.6mm; color: var(--accent);
+    background: var(--paper); padding: 0 1mm; white-space: nowrap;
+    font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  .bandlab--r { left: 212mm; }
+  .bandbox { position: absolute; border: .4pt dashed var(--accent); pointer-events: none; }
+  .bandbox__tag { position: absolute; right: 0; top: 0; font-size: 5.6pt; line-height: 3.2mm;
+    color: var(--accent); background: var(--paper); padding: 0 .8mm;
+    font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+
+  /* ── The band diagram: heights in real millimetres, and it says it is a diagram ─────────── */
+  .bd { border: .4pt dashed var(--paper-rule); padding: 4mm; background: #fff; }
+  .bd__row { display: flex; align-items: stretch; gap: 3mm; border-bottom: .3pt solid var(--paper-hair);
+    padding: 1mm 0; }
+  .bd__row:last-child { border-bottom: 0; }
+  .bd__h { flex: none; width: 20mm; font-size: 8.5pt; color: var(--ink-muted);
+    font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; line-height: 4mm; }
+  .bd__b { flex: 1 1 auto; border: .4pt solid var(--paper-rule); background: #fff; padding: 0 2mm;
+    font-size: 8.5pt; line-height: 4mm; color: var(--ink-body); }
+  .bd__b--cast { border-color: var(--accent); border-width: 1pt; font-weight: 600; }
+  .bd__b--empty { border-style: dashed; color: var(--ink-muted); }
+  .bd__break { display: flex; align-items: center; gap: 3mm; margin: 3mm 0; }
+  .bd__break span { font-size: 8.5pt; font-weight: 600; color: var(--accent); white-space: nowrap; }
+  .bd__break i { flex: 1; border-top: 1pt dashed var(--accent); }
+  .bd__title { font-size: 9.5pt; font-weight: 700; color: var(--ink); }
+  .bd__say { font-size: 8.5pt; color: var(--ink-muted); line-height: 4.2mm; margin-top: 1mm; }
+
+  /* ══ Print ═════════════════════════════════════════════════════════════════════════════════
+     The mockup prints the *drawing*: the chrome goes, the sheets keep their own size and their own
+     millimetre geometry. `@page` can only name one size per document, so the sheets are printed at
+     their natural size with the browser's default paper — screen five is where paper size is a
+     choice, and this mockup does not pretend to make it here.
+     ══════════════════════════════════════════════════════════════════════════════════════════ */
+  @media print {
+    .chrome, .mock-frame > header, .pick, .notes, .stage-note, .screen__label, .screen__head,
+    .today, .why, .why-body { display: none !important; }
+    .anno, .bandbox, .bandlab, .mmtag, .ruler { display: none !important; }
+    body { background: #fff; }
+    .mock-frame { max-width: none; padding: 0; }
+    .sheet-frame { zoom: 1; }
+    .sheet { box-shadow: none; break-after: page; }
+    .sheets, .sheets--row { display: block; }
+  }
+</style>
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v4h4M9 12h6M9 16h6"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M4 10h16M10 10v9M15 10v9"/></symbol>
+  <symbol id="i-bars" viewBox="0 0 24 24"><path d="M5 19V11M10 19V5M15 19v-6M20 19v-9"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5A2 2 0 0 1 6 4h6v16H6a2 2 0 0 0-2 1.5zM20 5.5A2 2 0 0 0 18 4h-6v16h6a2 2 0 0 1 2 1.5z"/></symbol>
+  <symbol id="i-bands" viewBox="0 0 24 24"><path d="M4 5h16M4 9.5h16M4 14h16M4 18.5h16"/></symbol>
+  <symbol id="i-printer" viewBox="0 0 24 24"><path d="M7 9V4h10v5M7 18H5v-6h14v6h-2M8 15h8v5H8z"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.5 19.5 6v6c0 4.2-3 7-7.5 8.5C7.5 19 4.5 16.2 4.5 12V6Z"/></symbol>
+  <symbol id="i-split" viewBox="0 0 24 24"><path d="M12 4v16M4 6h5M4 12h5M4 18h5M15 6h5M15 12h5M15 18h5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4.5 21 20H3ZM12 10v4.5M12 17.2v.3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <!-- The shield, as vector. The real mark is /icon-192.png (shield + 7 on its black tile, cut in
+       brand/README.md) and this file may load no external asset, so the same geometry is redrawn:
+       the shield in ink, the 7 in brand crimson. The PNG stays the source of truth. -->
+  <symbol id="shield-mark" viewBox="0 0 48 48">
+    <path d="M24 2.6 42.4 8.7v13.9c0 10.4-7.3 18.3-18.4 22.1C12.9 40.9 5.6 33 5.6 22.6V8.7L24 2.6Z"
+          fill="#0f172a"/>
+    <path d="M24 5.7v36.6" stroke="#c00000" stroke-width="0"/>
+    <text x="24" y="31.4" text-anchor="middle" font-family="Inter, system-ui, sans-serif"
+          font-size="21" font-weight="700" fill="#c00000">7</text>
+  </symbol>
+</svg>
+
+<div class="chrome">
+  <div class="zoom" role="group" aria-label="Paper zoom">
+    <button type="button" data-zoom-btn="1" aria-pressed="true">1:1</button>
+    <button type="button" data-zoom-btn="0.75" aria-pressed="false">Fit</button>
+  </div>
+  <div class="theme-toggle" role="group" aria-label="Theme">
+    <button type="button" data-theme-btn="dark" aria-pressed="true">Dark</button>
+    <button type="button" data-theme-btn="light" aria-pressed="false">Light</button>
+  </div>
+</div>
+
+<div class="mock-frame">
+
+  <header class="stack">
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <span class="mock-tag">Mockup — nothing changed</span>
+      <span class="mock-note">Printable documents and PDFs · seven screens in one file · drawn in millimetres</span>
+    </div>
+    <h1 style="font-size:22px; letter-spacing:-.01em;">
+      Five families of document leave this product through four renderers. One sheet of paper should hold them.
+    </h1>
+    <p style="max-width:124ch; font-size:13.5px; color:var(--text-muted);">
+      The reports, the review packs and the banded designer's output are not three designs — they are
+      one document wearing three renderers, and today each renderer decides the page for itself. This
+      file writes the document language down once (<b>screen one</b>), then applies it: the real
+      <b>Aging Report</b> (two), a real <b>business review pack</b> (three), the <b>banded engine's</b>
+      own machinery with its bands made visible (four), the <b>chooser</b> nobody has built yet (five),
+      and the audit of what that changes (six).
+    </p>
+    <p class="mock-note" style="max-width:124ch;">
+      Every figure below was read from the running instance on 9 October 2026 — the API on
+      <code>:4000</code> and its database. Where a figure could not be read it is absent and the page
+      says so. The invoice PDF and the ticket sheet are the companion file's, not this one's.
+    </p>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       THE DOCUMENT LANGUAGE — the deliverable's first requirement, stated before it is drawn
+       ═════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="card" style="margin-top:20px; padding:0; overflow:hidden;">
+    <div style="padding:14px 18px 12px; border-bottom:1px solid var(--surface-border);
+                display:flex; gap:12px; align-items:baseline; flex-wrap:wrap;">
+      <h2 style="font-size:15px;">The document language — argued, then drawn</h2>
+      <span class="chip"><code>docs/mockups/documents-reports.html</code></span>
+      <span class="chip chip--on">agreed with the companion file</span>
+      <span class="chip">paper is not the interface</span>
+    </div>
+
+    <div class="band band--gate" style="margin:14px 18px 0; border-radius:10px;">
+      <span class="glyph glyph--green"><svg class="ico ico--lg"><use href="#i-shield"/></svg></span>
+      <div style="flex:1 1 420px; min-width:0;">
+        <div class="band__t">The document is not the interface. It is a third surface (DESIGN.md §8)</div>
+        <p class="band__d" style="margin-top:2px;">
+          A report is printed, stapled, photocopied, scanned into somebody's finance folder and read
+          in greyscale. So: the app's theme must not reach it (which is why the hex literals in
+          <code>reportKit.tsx</code>, <code>PageRenderer.tsx</code>, <code>.print-letterhead</code> and
+          <code>.ticket-print-only</code> are legitimate and listed in
+          <code>scripts/lint-design-tokens.mjs</code>); no border-radius, no drop shadow, no
+          card-inside-a-card; and every rule has to survive a 150dpi greyscale scan of a sheet that
+          was printed on a printer low on cyan.
+        </p>
+      </div>
+      <div class="band__right">
+        <span class="chip chip--good">greyscale-safe</span>
+        <span class="chip chip--good">photocopy-safe</span>
+        <span class="chip chip--good">legible stapled</span>
+      </div>
+    </div>
+
+    <div style="padding:14px 18px 18px;">
+      <table class="ptable">
+        <thead>
+          <tr><th style="width:186px;">The rule</th><th>What it means when a page is drawn</th>
+              <th style="width:34%;">Why this and not the other thing</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">Paper first</td>
+            <td>A4 and Letter; portrait for money and service documents, portrait <b>and</b>
+              landscape for reports. Every sheet is drawn at true paper fidelity on a millimetre
+              scale: A4 is <code>210mm × 297mm</code>, the side margin is <code>18mm</code> on every
+              sheet size, and nothing is positioned in pixels. The <b>1:1</b> control at the top
+              right of this file is that claim, testable.</td>
+            <td>Today's PDF is drawn in <code>pt</code> on an A4 landscape page it never asks about
+              (<code>documentToPdf</code>: <code>{ orientation: "landscape", unit: "pt", format: "a4" }</code>),
+              and the print window writes no <code>@page</code> size at all, so the browser decides
+              the paper. A pixel grid can't tell you whether a table fits — millimetres can.</td>
+          </tr>
+          <tr>
+            <td class="mono">One accent</td>
+            <td>Paper white, ink <code>#0f172a</code>, body <code>#334155</code>, muted
+              <code>#64748b</code>, rules at <code>#cbd5e1</code> / <code>#e2e8f0</code> and a 0.6pt
+              ink rule where a rule must declare something — and <b>one accent: brand crimson
+              <code>#c00000</code></b>, already <code>DOCUMENT_BRAND.crimson</code> and already the
+              colour of the wordmark's 7 on every document this product makes. The companion file
+              (<code>documents-customer-facing.html</code>, the invoice, the quote and the ticket
+              sheet) uses the same names and the same numbers, because a report and an invoice are one
+              language.</td>
+            <td><b>The one thing I am arguing with in the brief.</b> Today's letterhead rule and bar
+              fill use <code>DOCUMENT_BRAND.accent = #00c0f4</code>, which measures <b>2.1:1</b>
+              against white — under the <b>3:1</b> a non-text graphical object needs (DESIGN.md §7),
+              and the first thing a low-cyan printer or a photocopier drops. Crimson measures
+              <b>6.5:1</b> against paper and never vanishes in greyscale, and it makes the document
+              carry one accent instead of two. Tone is also carried by <b>weight</b> — an accent rule
+              is 1.4pt where a hairline is 0.5pt — so a mono reader gets the same signal from the
+              stroke as a colour reader gets from the hue.</td>
+          </tr>
+          <tr>
+            <td class="mono">The letterhead</td>
+            <td>The shield, the wordmark with its crimson 7, the document title, and a meta line:
+              <b>client · period · as of · generated at · who generated it</b>. A hairline beneath.</td>
+            <td><code>documentMetaLine</code> already assembles subtitle, period and generated-at.
+              It never says <b>who</b> — and "who made this number" is the first question asked of a
+              report that is being disputed. The shield is redrawn as vector here because this file
+              may load no external assets; <code>/icon-192.png</code> stays the source of truth.</td>
+          </tr>
+          <tr>
+            <td class="mono">The masthead</td>
+            <td>3–5 headline figures at the top of page one: 20pt tabular numerals, 8.5pt small-caps
+              labels, tone carried by a <b>1.4pt accent rule above the figure</b>, and a sentence
+              under the row saying what the figures are measured over.</td>
+            <td>A coloured slab is the interface's way of shouting; it is also the part of a document
+              that photocopies to a grey rectangle and takes the black text with it. A rule carries
+              the tone and costs no toner.</td>
+          </tr>
+          <tr>
+            <td class="mono">Rhythm and rules, not cards</td>
+            <td>A 4.5mm baseline grid; 16mm top and 20mm bottom margins; hairlines and space to
+              separate. A section heading is small caps over a hairline. Prose in one 174mm column;
+              tables on a measured grid.</td>
+            <td>The current printed documents are the screen's own <code>.card</code> grammar —
+              <code>rounded-xl</code>, tinted tiles, zebra striping. That is precisely why they read
+              as <b>a screen printed out</b>. Paper separates with a rule because that is what paper
+              has.</td>
+          </tr>
+          <tr>
+            <td class="mono">Type in points</td>
+            <td>One family (Inter, with the stack the config already names), JetBrains Mono for
+              identifiers and invoice numbers. Title 15pt, section 9pt small caps, table body 9pt,
+              headers 8.5pt, notes 8.5pt. <b>Nothing below 8.5pt.</b> Tabular numerals in every
+              figure column, every total and every masthead figure.</td>
+            <td>The kit's PDF goes to 6.8pt for a tile label and the print window to 9px — 6.8pt is
+              below what survives a fax-quality scan, and 9px is not a unit anybody specified. In
+              every figure column the digits must line up or a reader comparing two columns is
+              reading ragged type instead of a table.</td>
+          </tr>
+          <tr>
+            <td class="mono">Tables</td>
+            <td>A header rule; <b>no zebra striping</b>; figures right-aligned and tabular; a total
+              row emphasised <b>with a rule above it</b> rather than a fill; and a
+              <b>column-selection rule</b> — a table that fits the page beats one scaled to fit.</td>
+            <td><code>documentToPdf</code> sets <code>alternateRowStyles</code> to a grey, which on
+              paper is the rectangle you get when a scanner dithers. A total needs to be findable by
+              eye at a glance, and a rule above it is unambiguous at any contrast.</td>
+          </tr>
+          <tr>
+            <td class="mono">Charts and bars</td>
+            <td>Vector shapes with <b>the value written beside every bar</b>, axis ticks at the ends,
+              no legend, and the one bar that matters in the accent. Greyscale-safe by construction
+              because the number is always present.</td>
+            <td>The kit's bars are a rounded track with a coloured fill and the value at the right —
+              already close. The failure it avoids: a chart whose meaning is only decodable in
+              colour, printed onto a mono laser printer in a finance office.</td>
+          </tr>
+          <tr>
+            <td class="mono">Structure</td>
+            <td><b>Page 1</b> = letterhead + masthead + the headline table. <b>Continuation</b> = a
+              running head (document, period, page <i>n</i> of <i>m</i>) and a footer (instance,
+              generated at, the confidential line). <b>The document ends with the basis block.</b></td>
+            <td>This repository's rule is that a report says why a number is not known rather than
+              estimating it. The screens say it in prose; the print-out has to say it too, or the
+              promise stops at the edge of the browser window. Page <i>n</i> of <i>m</i> already
+              exists in the kit's footer — it is the running head that is missing.</td>
+          </tr>
+          <tr>
+            <td class="mono">Every page worth printing</td>
+            <td>No page that is three lines and a page number. A table that would leave a tenth of a
+              page empty gets its column selection widened or its rows allowed to reach the margin;
+              a section that would sit alone is pulled back to the previous page.</td>
+            <td>A two-page report where page two is a page number is a one-page report with a
+              complaint. The real instance has two open invoices, and screen two has to be honest
+              about that rather than fill the page.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- The screen picker. Seven screens, one file; the control is the section's own rail. -->
+  <nav class="pick" role="group" aria-label="Document screens">
+    <button type="button" class="pick__opt pick__opt--on" data-screen-btn="system" aria-pressed="true">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-grid"/></svg> The system
+        <span class="pick__n">one page, annotated</span></span>
+      <span class="pick__d">One sheet carrying every part of the language — letterhead, masthead,
+        table, chart, basis block, footer — with each part numbered and its rule stated.</span>
+    </button>
+    <button type="button" class="pick__opt" data-screen-btn="aging" aria-pressed="false">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-table"/></svg> Aging Report
+        <span class="pick__n">$12,198.13 · 2 invoices</span></span>
+      <span class="pick__d">The real standard report drawn complete: page 1, the continuation page,
+        and the landscape variant for the wide matrix.</span>
+    </button>
+    <button type="button" class="pick__opt" data-screen-btn="review" aria-pressed="false">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-book"/></svg> Review pack
+        <span class="pick__n">Q3 2026 · 7 sections</span></span>
+      <span class="pick__d">A business review as a pack a person hands over: cover, contents,
+        section openers, summary, and what a continuation page looks like.</span>
+    </button>
+    <button type="button" class="pick__opt" data-screen-btn="banded" aria-pressed="false">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-bands"/></svg> Banded report
+        <span class="pick__n">186mm · 5 bands</span></span>
+      <span class="pick__d">The banded engine's own machinery drawn properly, then again with the
+        band edges visible so a designer can see what <code>layoutReport</code> already does.</span>
+    </button>
+    <button type="button" class="pick__opt" data-screen-btn="chooser" aria-pressed="false">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-printer"/></svg> Output chooser
+        <span class="pick__n">both interfaces</span></span>
+      <span class="pick__d">The moment somebody decides what to produce: print, PDF, Excel, CSV —
+        and paper, orientation and whether the basis block travels.</span>
+    </button>
+    <button type="button" class="pick__opt" data-screen-btn="change" aria-pressed="false">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-split"/></svg> What changes
+        <span class="pick__n">4 renderers</span></span>
+      <span class="pick__d">The five families, the four renderers, what the shared language fixes,
+        and what this mockup deliberately does not touch.</span>
+    </button>
+    <button type="button" class="pick__opt" data-screen-btn="classic" aria-pressed="false">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-eye"/></svg> Classic interface
+        <span class="pick__n">the other design</span></span>
+      <span class="pick__d">The same screens as the classic interface builds them: forms, tables,
+        a dialog with a heading and Save/Cancel.</span>
+    </button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN ONE — THE SYSTEM, ON ONE PAGE
+
+       The specimen is the Aging Report's own page one, because the rest of this file is the system
+       applied and a specimen drawn from a different document would be a seventh layout. It
+       exaggerates in exactly one way and the page says so: a real report puts the basis block last,
+       and this sheet carries it here so that rule eleven has something to point at.
+       ═════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="system" hidden>
+    <div class="screen__label">Screen one — the document language, drawn and numbered</div>
+    <div class="screen__head">
+      <h2>One sheet, every part, each part's rule stated beside it</h2>
+      <p>
+        The numbering is the file's index: screens two, three and four are this same sheet applied to
+        a report, a pack and a banded template. The markers sit in the 18mm margin — never in the
+        content — and neither they nor any annotation print.
+      </p>
+    </div>
+
+    <div class="stage">
+      <div class="sheets">
+        <div class="sheet-frame">
+          <div class="sheet__cap">
+            <b>A4 portrait · specimen</b>
+            <span class="sel">210mm × 297mm · margins 18mm sides, 16mm top, 20mm bottom · content 174mm × 261mm</span>
+            <span class="mock-note">Click <b>1:1</b> so one millimetre is one millimetre.</span>
+          </div>
+          <div class="sheet">
+            <span class="anno" style="left:3.4mm; top:19mm;">1</span>
+            <span class="anno" style="left:3.4mm; top:37mm;">2</span>
+            <span class="anno" style="left:3.4mm; top:49mm;">3</span>
+            <span class="anno" style="left:3.4mm; top:64mm;">4</span>
+            <span class="anno" style="left:3.4mm; top:87mm;">5</span>
+            <span class="anno" style="left:3.4mm; top:104mm;">6</span>
+            <span class="anno" style="left:3.4mm; top:117mm;">7</span>
+            <span class="anno" style="left:3.4mm; top:131mm;">8</span>
+            <span class="anno" style="left:3.4mm; top:144mm;">9</span>
+            <span class="anno" style="left:3.4mm; top:170mm;">10</span>
+            <span class="anno" style="left:3.4mm; top:230mm;">11</span>
+            <span class="anno" style="left:3.4mm; top:275mm;">12</span>
+
+            <div class="doc">
+              <div class="doc__flow">
+                <!-- 1 — the letterhead -->
+                <div class="lh">
+                  <svg class="lh__shield" viewBox="0 0 48 48" aria-hidden="true"><use href="#shield-mark"/></svg>
+                  <span class="lh__word">C<b>7</b>NTAX</span>
+                  <span class="lh__who">Cyber 7 Group, LLC<br>Reporting</span>
+                </div>
+                <div class="lh__rule"></div>
+
+                <!-- 2 — title and the meta line -->
+                <div class="dtitle">Aging Report</div>
+                <p class="dmeta">
+                  <b>All clients</b> · All time, point in time · As of 9 October 2026 ·
+                  Generated 9 October 2026, 18:14 by <b>Stephen Simmons</b>
+                  (stephen.simmons@cyber7group.com)
+                </p>
+
+                <!-- 4 — the masthead -->
+                <div class="mast">
+                  <div class="mast__i mast__i--alert">
+                    <div class="mast__l">Total outstanding</div>
+                    <div class="mast__v mast__v--accent">$12,198.13</div>
+                    <div class="mast__s">2 open invoices · 2 clients</div>
+                  </div>
+                  <div class="mast__i mast__i--alert">
+                    <div class="mast__l">Overdue</div>
+                    <div class="mast__v mast__v--accent">$8,680.00</div>
+                    <div class="mast__s">71.2% of the total</div>
+                  </div>
+                  <div class="mast__i">
+                    <div class="mast__l">Not yet due</div>
+                    <div class="mast__v">$3,518.13</div>
+                    <div class="mast__s">28.8% of the total</div>
+                  </div>
+                  <div class="mast__i">
+                    <div class="mast__l">Average open invoice</div>
+                    <div class="mast__v">$6,099.06</div>
+                    <div class="mast__s">Ageing from each due date</div>
+                  </div>
+                </div>
+                <p class="mast__note">
+                  Measured from each invoice's own due date, as of 9 October 2026.
+                </p>
+
+                <!-- 6 — a section heading -->
+                <div class="sec sec--top"><span class="sec__n">1</span>Receivables by age band</div>
+                <table class="pt">
+                  <thead>
+                    <tr>
+                      <th>Age band</th>
+                      <th class="n">Invoices</th>
+                      <th class="n">Amount</th>
+                      <th class="n">Share of total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td class="lead">Not yet due</td><td class="n">1</td><td class="n">$3,518.13</td><td class="n">28.8%</td></tr>
+                    <tr><td>1–30 days</td><td class="n">0</td><td class="n">$0.00</td><td class="n">0.0%</td></tr>
+                    <tr><td class="lead">31–60 days</td><td class="n">1</td><td class="n">$8,680.00</td><td class="n">71.2%</td></tr>
+                    <tr><td>61–90 days</td><td class="n">0</td><td class="n">$0.00</td><td class="n">0.0%</td></tr>
+                    <tr><td>Over 90 days</td><td class="n">0</td><td class="n">$0.00</td><td class="n">0.0%</td></tr>
+                    <tr class="total"><td>Total outstanding</td><td class="n">2</td><td class="n">$12,198.13</td><td class="n">100.0%</td></tr>
+                  </tbody>
+                </table>
+
+                <!-- 10 — bars -->
+                <div class="sec sec--top"><span class="sec__n">2</span>Ageing profile</div>
+                <div class="bars">
+                  <div class="bar">
+                    <span class="bar__l">Not yet due</span>
+                    <span class="bar__t"><span class="bar__f" style="width:28.8%"></span></span>
+                    <span class="bar__v">$3,518.13</span>
+                  </div>
+                  <div class="bar">
+                    <span class="bar__l">1–30 days</span>
+                    <span class="bar__t"><span class="bar__f bar__f--zero" style="width:0"></span></span>
+                    <span class="bar__v">$0.00</span>
+                  </div>
+                  <div class="bar">
+                    <span class="bar__l">31–60 days</span>
+                    <span class="bar__t"><span class="bar__f bar__f--accent" style="width:71.2%"></span></span>
+                    <span class="bar__v">$8,680.00</span>
+                  </div>
+                  <div class="bar">
+                    <span class="bar__l">61–90 days</span>
+                    <span class="bar__t"><span class="bar__f bar__f--zero" style="width:0"></span></span>
+                    <span class="bar__v">$0.00</span>
+                  </div>
+                  <div class="bar">
+                    <span class="bar__l">Over 90 days</span>
+                    <span class="bar__t"><span class="bar__f bar__f--zero" style="width:0"></span></span>
+                    <span class="bar__v">$0.00</span>
+                  </div>
+                  <div class="bars__axis">
+                    <span>Share of the $12,198.13 outstanding</span>
+                    <span><span>0%</span><span>50%</span><span>100%</span></span>
+                    <span></span>
+                  </div>
+                </div>
+
+                <!-- 11 — the basis block -->
+                <div class="basis" style="margin-top:5mm;">
+                  <div class="basis__h">How this is measured, and what it cannot say</div>
+                  <div class="basis__rows">
+                    <div class="basis__row"><span class="basis__k">As of</span><span class="basis__v">9 October 2026</span></div>
+                    <div class="basis__row"><span class="basis__k">Measure</span><span class="basis__v">Days past the invoice's due date, as of today</span></div>
+                    <div class="basis__row"><span class="basis__k">Bucket rule</span><span class="basis__v">A bucket is min &lt; days ≤ max, so an invoice due today is current and one due exactly 30 days ago sits in the 1–30 band.</span></div>
+                    <div class="basis__row"><span class="basis__k">Counted as owed</span><span class="basis__v">sent, partial, overdue — drafts have not been issued and paid invoices owe nothing</span></div>
+                    <div class="basis__row">
+                      <span class="basis__k">What this cannot say</span>
+                      <span class="basis__unknown">
+                        Point in time, so the period filter is <b>not applied</b>. No
+                        <b>credit-terms field</b> exists, so late by agreement cannot be told from
+                        stopped paying. And the population is <b>two invoices</b>.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 12 — the footer -->
+              <div class="pfoot">
+                <span>localhost:3010 · 9 Oct 2026, 18:14 · S. Simmons</span>
+                <span class="pfoot__c">Confidential — Cyber 7 Group, LLC</span>
+                <span class="pfoot__p">Page 1 of 2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="max-width:none;">
+          <h3 style="font-size:13px;">The specimen says one thing that is not true of a real report</h3>
+          <p class="say" style="margin-top:7px; max-width:130ch;">
+            A real report puts the basis block <b>last</b>, on the last page — screen two draws it
+            there. It is placed high on this sheet for one reason only: rule eleven needs something to
+            point at. The other eleven markers point at exactly what a real page one carries.
+          </p>
+        </div>
+      </div>
+
+      <aside class="notes">
+        <div class="card" style="padding:0;">
+          <div style="padding:12px 16px; border-bottom:1px solid var(--surface-border);">
+            <h3 style="font-size:13px;">What each numbered part is, and why</h3>
+            <p class="say" style="margin-top:4px;">Twelve rules. The four that are new to this
+              product's paper are 2, the accent in 4, 11 and the running head on the next screen.</p>
+          </div>
+          <div style="padding:4px 16px 12px;">
+            <div class="note-item">
+              <span class="note-item__n">1</span>
+              <div><div class="note-item__t">The letterhead — the shield and the wordmark</div>
+                <p class="note-item__d">The same mark on all five families, from
+                  <code>documentBrand.ts</code>. The wordmark's 7 keeps its crimson, and that crimson
+                  is then the document's only accent rather than a second colour appearing here.</p></div>
+            </div>
+            <div class="note-item">
+              <span class="note-item__n">2</span>
+              <div><div class="note-item__t">The meta line, and the name that was missing</div>
+                <p class="note-item__d">Client · period · as-of · generated at · <b>who generated
+                  it</b>. <code>documentMetaLine</code> builds the first three today; the generator is
+                  new, because the first question asked of a disputed figure is who produced it.</p></div>
+            </div>
+            <div class="note-item">
+              <span class="note-item__n">3</span>
+              <div><div class="note-item__t">A hairline, not a coloured band</div>
+                <p class="note-item__d">0.6pt of ink where the letterhead ends. Today's letterhead rule
+                  is 2pt of cyan, which is the heaviest thing on the page and says nothing.</p></div>
+            </div>
+            <div class="note-item">
+              <span class="note-item__n">4</span>
+              <div><div class="note-item__t">The masthead, with tone in the rule</div>
+                <p class="note-item__d">20pt tabular figures, 8.5pt small-caps labels. The two that
+                  need attention take a <b>1.4pt crimson rule above them</b>; the others take the
+                  hairline. A colour-blind reader, a greyscale print and a photocopy all get the same
+                  signal because it is carried by the stroke's weight.</p></div>
+            </div>
+            <div class="note-item">
+              <span class="note-item__n">5</span>
+              <div><div class="note-item__t">One sentence saying what the figures are measured over</div>
+                <p class="note-item__d">Written from the endpoint's own <code>basis.measure</code> and
+                  <code>basis.openStatuses</code>, not composed by hand — so it cannot drift from the
+                  number it explains.</p></div>
+            </div>
+            <div class="note-item">
+              <span class="note-item__n">6</span>
+              <div><div class="note-item__t">Sections as small caps over a hairline</div>
+                <p class="note-item__d">9pt, letter-spaced, with the full-width hairline the section
+                  hangs from. Numbered, so a contents page in a pack can refer to them — screen three.</p></div>
+            </div>
+            <div class="note-item">
+              <span class="note-item__n">7</span>
+              <div><div class="note-item__t">A header rule instead of a filled header</div>
+                <p class="note-item__d">Today's <code>documentToPrintWindow</code> fills the header
+                  with near-black ink; the PDF does the same. A 0.6pt ink rule under the labels carries
+                  the same structure for a fraction of the toner and none of the risk of a dark
+                  rectangle photocopying into a black bar.</p></div>
+            </div>
+            <div class="note-item">
+              <span class="note-item__n">8</span>
+              <div><div class="note-item__t">Figures right-aligned, tabular, no zebra</div>
+                <p class="note-item__d">Every figure column is
+                  <code>font-variant-numeric: tabular-nums</code> and right-aligned, so the decimal
+                  points line up down the column and the eye can subtract two of them. The even-row
+                  tint is gone: <code>alternateRowStyles</code> on paper is dithering.</p></div>
+            </div>
+            <div class="note-item">
+              <span class="note-item__n">9</span>
+              <div><div class="note-item__t">The total, marked by a rule above it</div>
+                <p class="note-item__d">A total row is bold with a 0.5pt rule above and no fill. It is
+                  findable at a glance and it is legible in any contrast.</p></div>
+            </div>
+            <div class="note-item">
+              <span class="note-item__n">10</span>
+              <div><div class="note-item__t">Bars with the value written beside them</div>
+                <p class="note-item__d">Vector, hairline track, one bar in the accent: the one the
+                  sentence above names. A zero-length bar is drawn as an empty cell rather than
+                  omitted, so five bands always print as five bands and the reader can see that three
+                  of them are empty.</p></div>
+            </div>
+            <div class="note-item">
+              <span class="note-item__n">11</span>
+              <div><div class="note-item__t">The basis block — including what cannot be known</div>
+                <p class="note-item__d">The measured rule, the statuses counted, the currencies, and a
+                  row that names the three things this document <b>cannot</b> say: no period filter, no
+                  credit-terms field, and a population of two invoices. The repository's rule is that a
+                  report says why a number is not known rather than estimating it.</p></div>
+            </div>
+            <div class="note-item">
+              <span class="note-item__n">12</span>
+              <div><div class="note-item__t">The footer, on every sheet</div>
+                <p class="note-item__d">Instance · generated at by whom · the confidential line ·
+                  page <i>n</i> of <i>m</i>. A single sheet that came loose in a photocopier tray
+                  still says what it is and whose it is.</p></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN TWO — A STANDARD REPORT, DRAWN COMPLETE
+
+       The Aging Report, from `billing-aging` in standardReports.ts against
+       GET /api/reports/data/billing-aging on 9 October 2026. Every figure is the endpoint's.
+       Two sheets and a landscape variant, because the matrix is the one table in this report that
+       cannot fit a portrait column honestly — and the column-selection rule says the answer is to
+       print fewer columns here and all of them there, not to shrink the type.
+       ═════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="aging" hidden>
+    <div class="screen__label">Screen two — Aging Report · the good document, tuned</div>
+    <div class="screen__head">
+      <h2>Two sheets that are each worth printing, and a landscape variant with a real job</h2>
+      <p>
+        Read from the API at 18:14 on 9 October 2026: <b>2 open invoices, $12,198.13 outstanding,
+        $8,680.00 of it 31–60 days late on one Globex Industries invoice, $3,518.13 not yet due from
+        Umbrella Corp</b>. The report is honest about being two rows wide — the basis block says so in
+        as many words.
+      </p>
+    </div>
+
+    <div class="stage">
+      <div class="sheets sheets--row">
+        <!-- ── Page 1 ──────────────────────────────────────────────────────────────────────── -->
+        <div class="sheet-frame">
+          <div class="sheet__cap"><b>Aging Report · page 1 of 2</b>
+            <span class="sel">A4 portrait</span></div>
+          <div class="sheet">
+            <div class="doc">
+              <div class="doc__flow">
+                <div class="lh">
+                  <svg class="lh__shield" viewBox="0 0 48 48" aria-hidden="true"><use href="#shield-mark"/></svg>
+                  <span class="lh__word">C<b>7</b>NTAX</span>
+                  <span class="lh__who">Cyber 7 Group, LLC<br>Reporting</span>
+                </div>
+                <div class="lh__rule"></div>
+                <div class="dtitle">Aging Report</div>
+                <p class="dmeta">
+                  <b>All clients</b> · All time, point in time · As of 9 October 2026 ·
+                  Generated 9 October 2026, 18:14 by <b>Stephen Simmons</b>
+                  (stephen.simmons@cyber7group.com)
+                </p>
+
+                <div class="mast">
+                  <div class="mast__i mast__i--alert">
+                    <div class="mast__l">Total outstanding</div>
+                    <div class="mast__v mast__v--accent">$12,198.13</div>
+                    <div class="mast__s">2 open invoices · 2 clients</div>
+                  </div>
+                  <div class="mast__i mast__i--alert">
+                    <div class="mast__l">Overdue</div>
+                    <div class="mast__v mast__v--accent">$8,680.00</div>
+                    <div class="mast__s">71.2% of the total</div>
+                  </div>
+                  <div class="mast__i">
+                    <div class="mast__l">Not yet due</div>
+                    <div class="mast__v">$3,518.13</div>
+                    <div class="mast__s">28.8% of the total</div>
+                  </div>
+                  <div class="mast__i">
+                    <div class="mast__l">Average open invoice</div>
+                    <div class="mast__v">$6,099.06</div>
+                    <div class="mast__s">Ages from each due date</div>
+                  </div>
+                </div>
+                <p class="mast__note">
+                  Days past the invoice's own due date, as of 9 October 2026. Only invoices in a status
+                  of sent, partial or overdue are counted as owed.
+                </p>
+
+                <div class="sec sec--top"><span class="sec__n">1</span>Receivables by age band</div>
+                <table class="pt">
+                  <thead>
+                    <tr><th>Age band</th><th class="n">Invoices</th><th class="n">Amount</th><th class="n">Share of total</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td class="lead">Not yet due</td><td class="n">1</td><td class="n">$3,518.13</td><td class="n">28.8%</td></tr>
+                    <tr><td>1–30 days</td><td class="n">0</td><td class="n">$0.00</td><td class="n">0.0%</td></tr>
+                    <tr><td class="lead">31–60 days</td><td class="n">1</td><td class="n">$8,680.00</td><td class="n">71.2%</td></tr>
+                    <tr><td>61–90 days</td><td class="n">0</td><td class="n">$0.00</td><td class="n">0.0%</td></tr>
+                    <tr><td>Over 90 days</td><td class="n">0</td><td class="n">$0.00</td><td class="n">0.0%</td></tr>
+                    <tr class="total"><td>Total outstanding</td><td class="n">2</td><td class="n">$12,198.13</td><td class="n">100.0%</td></tr>
+                  </tbody>
+                </table>
+
+                <div class="sec sec--top"><span class="sec__n">2</span>Ageing profile</div>
+                <div class="bars">
+                  <div class="bar">
+                    <span class="bar__l">Not yet due</span>
+                    <span class="bar__t"><span class="bar__f" style="width:28.8%"></span></span>
+                    <span class="bar__v">$3,518.13</span>
+                  </div>
+                  <div class="bar">
+                    <span class="bar__l">1–30 days</span>
+                    <span class="bar__t"><span class="bar__f bar__f--zero" style="width:0"></span></span>
+                    <span class="bar__v">$0.00</span>
+                  </div>
+                  <div class="bar">
+                    <span class="bar__l">31–60 days</span>
+                    <span class="bar__t"><span class="bar__f bar__f--accent" style="width:71.2%"></span></span>
+                    <span class="bar__v">$8,680.00</span>
+                  </div>
+                  <div class="bar">
+                    <span class="bar__l">61–90 days</span>
+                    <span class="bar__t"><span class="bar__f bar__f--zero" style="width:0"></span></span>
+                    <span class="bar__v">$0.00</span>
+                  </div>
+                  <div class="bar">
+                    <span class="bar__l">Over 90 days</span>
+                    <span class="bar__t"><span class="bar__f bar__f--zero" style="width:0"></span></span>
+                    <span class="bar__v">$0.00</span>
+                  </div>
+                  <div class="bars__axis">
+                    <span>Share of the $12,198.13 outstanding</span>
+                    <span><span>0%</span><span>50%</span><span>100%</span></span>
+                    <span></span>
+                  </div>
+                </div>
+                <p class="tsay">
+                  One bar carries the accent — 31–60 days, where $8,680.00 of the $12,198.13 sits — and
+                  it is the band the next action is about. Every other bar is ink, and the value is
+                  written beside all five, so the chart needs no legend and survives greyscale.
+                </p>
+              </div>
+              <div class="pfoot">
+                <span>localhost:3010 · 9 Oct 2026, 18:14 · S. Simmons</span>
+                <span class="pfoot__c">Confidential — Cyber 7 Group, LLC</span>
+                <span class="pfoot__p">Page 1 of 2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Page 2 — the continuation ───────────────────────────────────────────────────── -->
+        <div class="sheet-frame">
+          <div class="sheet__cap"><b>Page 2 · the continuation page</b>
+            <span class="sel">running head + footer, no letterhead</span></div>
+          <div class="sheet">
+            <div class="doc">
+              <div class="doc__flow">
+                <div class="rhead">
+                  <span class="rhead__t">Aging Report</span>
+                  <span>All clients · all time, point in time · as of 9 October 2026</span>
+                  <span class="rhead__c">continued</span>
+                  <span class="rhead__p">Page 2 of 2</span>
+                </div>
+
+                <div class="sec"><span class="sec__n">3</span>By client</div>
+                <table class="pt">
+                  <thead>
+                    <tr>
+                      <th>Client</th><th class="n">Invoices</th><th class="n">Not yet due</th>
+                      <th class="n">31–60 days</th><th class="n">Outstanding</th><th class="n">Oldest overdue</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="lead">Globex Industries</td><td class="n">1</td><td class="n">$0.00</td>
+                      <td class="n">$8,680.00</td><td class="n">$8,680.00</td><td class="n">34 days</td>
+                    </tr>
+                    <tr>
+                      <td class="lead">Umbrella Corp</td><td class="n">1</td><td class="n">$3,518.13</td>
+                      <td class="n">$0.00</td><td class="n">$3,518.13</td><td class="n">Current</td>
+                    </tr>
+                    <tr class="total">
+                      <td>Two clients</td><td class="n">2</td><td class="n">$3,518.13</td>
+                      <td class="n">$8,680.00</td><td class="n">$12,198.13</td><td class="n">34 days</td>
+                    </tr>
+                  </tbody>
+                  <caption>
+                    <b>The column-selection rule, applied.</b> The endpoint returns nine columns for
+                    this matrix — 1–30, 61–90 and 90+ days among them. In a 174mm portrait column
+                    those nine columns set at 8.5pt and read as a wall, so portrait prints the six
+                    that carry money and the <b>landscape sheet carries all nine</b>. Compressing
+                    nine columns into the same 174mm would be a table scaled to fit, which is the
+                    thing the rule forbids.
+                  </caption>
+                </table>
+
+                <div class="sec sec--top"><span class="sec__n">4</span>Largest unpaid invoices</div>
+                <table class="pt">
+                  <thead>
+                    <tr>
+                      <th>Invoice</th><th>Client</th><th class="n">Amount</th><th>Issued</th>
+                      <th>Due</th><th class="n">Days overdue</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="id">INV-2026-002</td><td>Globex Industries</td>
+                      <td class="n">$8,680.00</td><td>7 Aug 2026</td><td>6 Sep 2026</td><td class="n">34</td>
+                    </tr>
+                    <tr>
+                      <td class="id">INV-2026-1014</td><td>Umbrella Corp</td>
+                      <td class="n">$3,518.13</td><td>26 Sep 2026</td><td>26 Oct 2026</td><td class="n">0</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <div class="sec sec--top"><span class="sec__n">5</span>How this is measured, and what it cannot say</div>
+                <div class="basis" style="margin-top:3mm;">
+                  <div class="basis__rows">
+                    <div class="basis__row"><span class="basis__k">As of</span><span class="basis__v">9 October 2026</span></div>
+                    <div class="basis__row"><span class="basis__k">Measure</span><span class="basis__v">Days past the invoice's due date, as of today</span></div>
+                    <div class="basis__row"><span class="basis__k">Bucket rule</span><span class="basis__v">A bucket is min &lt; days ≤ max, so an invoice due today is current and one due exactly 30 days ago sits in the 1–30 band.</span></div>
+                    <div class="basis__row"><span class="basis__k">Counted as owed</span><span class="basis__v">sent, partial, overdue</span></div>
+                    <div class="basis__row"><span class="basis__k">Currencies</span><span class="basis__v">USD — one currency, so no conversion was needed and none was attempted</span></div>
+                    <div class="basis__row">
+                      <span class="basis__k">What this cannot say</span>
+                      <span class="basis__unknown">
+                        Receivables ageing is a point-in-time figure, so the period filter is
+                        <b>not applied</b> and the total is everything open right now. The schema has
+                        <b>no credit-terms field</b>, so a client paying late by agreement is
+                        indistinguishable from one that has stopped paying. And the population is
+                        <b>two invoices</b>: this matrix describes one Globex invoice and one Umbrella
+                        invoice, and no distribution can be read from it. Nothing here is estimated to
+                        fill the gap.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="sec sec--top"><span class="sec__n">6</span>Read this before dunning</div>
+                <ul class="lst" style="margin-top:3mm;">
+                  <li>Receivables ageing is a point-in-time figure: the period filter is not applied,
+                    so the total is everything open right now.</li>
+                  <li>Only invoices in a status of sent, partial or overdue are counted as owed;
+                    drafts have not been issued and paid invoices owe nothing.</li>
+                </ul>
+              </div>
+              <div class="pfoot">
+                <span>localhost:3010 · 9 Oct 2026, 18:14 · S. Simmons</span>
+                <span class="pfoot__c">Confidential — Cyber 7 Group, LLC</span>
+                <span class="pfoot__p">Page 2 of 2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="notes">
+        <div class="card stack">
+          <h3 style="font-size:13px;">What changed on this report, and why</h3>
+          <p class="say">
+            <b>What it is today.</b> The same report drawn on screen as tinted rounded cards, then
+            printed by <code>documentToPrintWindow</code> into a document whose table headers are
+            <code>#0f172a</code> fills with white text and whose even rows are tinted, then saved as a
+            PDF that is <b>always A4 landscape in points</b> regardless of the screen it came from.
+            Three answers to one question.
+          </p>
+          <div class="kv"><span class="kv__k">Sheet</span><span class="kv__v">Two pages, A4 portrait, plus the landscape variant below</span></div>
+          <div class="kv"><span class="kv__k">Page 1 carries</span><span class="kv__v">Letterhead, masthead, the age bands, the profile</span></div>
+          <div class="kv"><span class="kv__k">Page 2 carries</span><span class="kv__v">§3 the client matrix, §4 largest invoices, §5 the basis, §6 the dunning note</span></div>
+          <div class="kv"><span class="kv__k">Running head</span><span class="kv__v">Document · period · <i>continued</i> · page <i>n</i> of <i>m</i></span></div>
+          <div class="kv"><span class="kv__k">Zebra stripes</span><span class="kv__v">Removed — <code>alternateRowStyles</code> is gone from the print path</span></div>
+          <div class="kv"><span class="kv__k">Figures</span><span class="kv__v">Tabular, right-aligned, 9pt — never below 8.5pt anywhere</span></div>
+          <div class="kv"><span class="kv__k">Empty bands</span><span class="kv__v">Printed as empty rows and empty bars, not omitted</span></div>
+          <div class="kv"><span class="kv__k">Unreadable figure</span><span class="kv__v">None was needed: every number on these two sheets came from the endpoint</span></div>
+          <div style="margin-top:12px;">
+            <button type="button" class="why" aria-expanded="false" aria-controls="why-aging">
+              <svg class="ico"><use href="#i-alert"/></svg> Is two pages right for two invoices?
+            </button>
+            <div class="why-body" id="why-aging" hidden>
+              <p>
+                Yes, and the reason is the page-2 rule rather than the arithmetic. Page two is not a
+                page number with a stray row on it: it is the chapter that answers "who owes it", the
+                ranked list of what is owed, the measurement rule and the note about how to read the
+                whole thing. That is a page somebody prints and keeps.
+              </p>
+              <p>
+                The honest alternative — one page that squeezes the matrix, the ranking and the basis
+                together — was rejected because the basis block would end up in 7pt type at the bottom
+                of a full sheet, and the basis block is the part of this document that must not be the
+                least legible thing on it.
+              </p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- ── The landscape variant ─────────────────────────────────────────────────────────────── -->
+    <div class="screen__label" style="margin-top:26px;">Screen two, continued — the landscape variant, for the nine-column matrix</div>
+    <div class="stage stage--wide">
+      <div class="sheets">
+        <div class="sheet-frame">
+          <div class="sheet__cap"><b>Aging Report · landscape</b>
+            <span class="sel">297mm × 210mm · content 261mm × 174mm · all nine band columns</span></div>
+          <div class="sheet sheet--a4l">
+            <div class="doc">
+              <div class="doc__flow">
+                <div class="lh">
+                  <svg class="lh__shield" viewBox="0 0 48 48" aria-hidden="true"><use href="#shield-mark"/></svg>
+                  <span class="lh__word">C<b>7</b>NTAX</span>
+                  <span class="lh__who">Cyber 7 Group, LLC · Reporting · Aging Report, landscape sheet</span>
+                </div>
+                <div class="lh__rule"></div>
+                <div class="dtitle" style="font-size:13pt; line-height:6mm; margin-top:5mm;">Aging Report — by client, every age band</div>
+                <p class="dmeta">
+                  <b>All clients</b> · All time, point in time · As of 9 October 2026 ·
+                  Generated 9 October 2026, 18:14 by <b>Stephen Simmons</b> (stephen.simmons@cyber7group.com)
+                </p>
+
+                <div class="mast" style="margin-top:5mm;">
+                  <div class="mast__i mast__i--alert">
+                    <div class="mast__l">Total outstanding</div>
+                    <div class="mast__v" style="font-size:17pt; line-height:7.5mm;">$12,198.13</div>
+                  </div>
+                  <div class="mast__i mast__i--alert">
+                    <div class="mast__l">Overdue</div>
+                    <div class="mast__v mast__v--accent" style="font-size:17pt; line-height:7.5mm;">$8,680.00</div>
+                  </div>
+                  <div class="mast__i">
+                    <div class="mast__l">Not yet due</div>
+                    <div class="mast__v" style="font-size:17pt; line-height:7.5mm;">$3,518.13</div>
+                  </div>
+                  <div class="mast__i">
+                    <div class="mast__l">Open invoices</div>
+                    <div class="mast__v" style="font-size:17pt; line-height:7.5mm;">2</div>
+                  </div>
+                  <div class="mast__i">
+                    <div class="mast__l">Clients owing</div>
+                    <div class="mast__v" style="font-size:17pt; line-height:7.5mm;">2</div>
+                  </div>
+                </div>
+
+                <div class="sec sec--top"><span class="sec__n">1</span>Every band, every client</div>
+                <table class="pt">
+                  <thead>
+                    <tr>
+                      <th>Client</th><th class="n">Inv.</th><th class="n">Not yet due</th>
+                      <th class="n">1–30 days</th><th class="n">31–60 days</th><th class="n">61–90 days</th>
+                      <th class="n">90+ days</th><th class="n">Overdue</th><th class="n">Outstanding</th>
+                      <th class="n">Oldest overdue</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="lead">Globex Industries</td><td class="n">1</td><td class="n">$0.00</td>
+                      <td class="n">$0.00</td><td class="n">$8,680.00</td><td class="n">$0.00</td>
+                      <td class="n">$0.00</td><td class="n">$8,680.00</td><td class="n">$8,680.00</td>
+                      <td class="n">34 days</td>
+                    </tr>
+                    <tr>
+                      <td class="lead">Umbrella Corp</td><td class="n">1</td><td class="n">$3,518.13</td>
+                      <td class="n">$0.00</td><td class="n">$0.00</td><td class="n">$0.00</td>
+                      <td class="n">$0.00</td><td class="n">$0.00</td><td class="n">$3,518.13</td>
+                      <td class="n">Current</td>
+                    </tr>
+                    <tr class="total">
+                      <td>Two clients</td><td class="n">2</td><td class="n">$3,518.13</td>
+                      <td class="n">$0.00</td><td class="n">$8,680.00</td><td class="n">$0.00</td>
+                      <td class="n">$0.00</td><td class="n">$8,680.00</td><td class="n">$12,198.13</td>
+                      <td class="n">34 days</td>
+                    </tr>
+                  </tbody>
+                  <caption>
+                    ten columns in 261mm — 26mm each — at the same 9pt as the portrait sheet. Nothing
+                    is scaled down to make it fit; the sheet is simply wider.
+                  </caption>
+                </table>
+
+                <div class="sec sec--top"><span class="sec__n">2</span>Largest unpaid invoices</div>
+                <table class="pt">
+                  <thead>
+                    <tr>
+                      <th>Invoice</th><th>Client</th><th>Status</th><th class="n">Amount</th>
+                      <th>Issued</th><th>Due</th><th class="n">Days overdue</th><th>Bucket</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="id">INV-2026-002</td><td>Globex Industries</td><td>overdue</td>
+                      <td class="n">$8,680.00</td><td>7 Aug 2026</td><td>6 Sep 2026</td>
+                      <td class="n">34</td><td>31–60 days</td>
+                    </tr>
+                    <tr>
+                      <td class="id">INV-2026-1014</td><td>Umbrella Corp</td><td>sent</td>
+                      <td class="n">$3,518.13</td><td>26 Sep 2026</td><td>26 Oct 2026</td>
+                      <td class="n">0</td><td>Not yet due</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="pfoot">
+                <span>localhost:3010 · 9 Oct 2026, 18:14 · S. Simmons</span>
+                <span class="pfoot__c">Confidential — Cyber 7 Group, LLC</span>
+                <span class="pfoot__p">Page 1 of 1</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="notes">
+        <div class="card stack">
+          <h3 style="font-size:13px;">When landscape is the right answer</h3>
+          <p class="say">
+            Not "when the table is too wide" — that is how a report ends up landscape for one table
+            and portrait for the rest, which is how a stapled pack ends up sideways. Landscape is for
+            a <b>document whose subject is a matrix</b>, and it is chosen before the run, not after.
+          </p>
+          <div class="kv"><span class="kv__k">Today</span><span class="kv__v">Every generated PDF is landscape A4 (<code>documentToPdf</code> hardcodes it) and no print path sets a page size at all, so the reader gets landscape-or-portrait by accident</span></div>
+          <div class="kv"><span class="kv__k">Proposed</span><span class="kv__v">Orientation is a property of the document, defaulted per family, and chosen in the chooser on screen five</span></div>
+          <div class="kv"><span class="kv__k">Column width here</span><span class="kv__v">26mm per column at 9pt — the same type size, 87mm more paper</span></div>
+          <div class="kv"><span class="kv__k">Preserved on both sheets</span><span class="kv__v">Same letterhead, same masthead, same basis block, same footer — only the sheet turns</span></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN THREE — A BUSINESS REVIEW AS A PACK
+
+       The Quarterly Business Review for Q3 2026, from
+       GET /api/reports/data/quarterly-business-review on 9 October 2026. This is the family where a
+       cover and a running head earn their keep: it is 8–12 sheets that leave the building in
+       somebody's hands, and until now it opened with a letterhead and a section heading like a screen
+       that happened to have been printed.
+       ═════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="review" hidden>
+    <div class="screen__label">Screen three — the review pack · cover, contents, opener, continuation</div>
+    <div class="screen__head">
+      <h2>A cover a person can hand over, and prose before every table</h2>
+      <p>
+        Real quarter: <b>96 tickets raised, 34.25 hours delivered, $27,960.63 invoiced, $4,438.75
+        collected, 5 agreements worth $330,000 annualised, 80 open tickets of which all 80 are over 30
+        days old</b>. Three highlights and six watch items are the endpoint's own sentences. The
+        pack's page numbers are the pack's own — this mockup draws pages 1–5, and the sections after
+        them are the same system continued.
+      </p>
+    </div>
+
+    <div class="stage">
+      <div class="sheets">
+
+        <!-- ── The cover ───────────────────────────────────────────────────────────────────── -->
+        <div class="sheet-frame">
+          <div class="sheet__cap"><b>Cover</b> <span class="sel">unnumbered · the sheet that is handed over</span></div>
+          <div class="sheet">
+            <div class="cover">
+              <div class="cover__top">
+                <svg class="lh__shield" viewBox="0 0 48 48" aria-hidden="true"><use href="#shield-mark"/></svg>
+                <span class="lh__word">C<b>7</b>NTAX</span>
+                <span class="lh__who" style="margin-left:auto;">Cyber 7 Group, LLC<br>Reporting</span>
+              </div>
+              <div class="lh__rule"></div>
+
+              <div class="cover__mid">
+                <div class="cover__eyebrow">Quarterly business review</div>
+                <div class="cover__t">Q3 2026</div>
+                <p class="cover__sub">
+                  The quarter's service, commercials, clients and risk — measured from this instance's
+                  own records, with the position at 30 September 2026 printed wherever a figure is a
+                  snapshot rather than a total.
+                </p>
+                <div class="cover__rule"></div>
+
+                <div class="cover__facts">
+                  <div class="cover__fact">
+                    <div class="cover__fk">Period covered</div>
+                    <div class="cover__fv">1 July – 30 September 2026<br>93 days, and the last finished quarter</div>
+                  </div>
+                  <div class="cover__fact">
+                    <div class="cover__fk">Compared with</div>
+                    <div class="cover__fv">Q2 2026, 1 April – 30 June 2026<br>like for like, the same 93-day window</div>
+                  </div>
+                  <div class="cover__fact">
+                    <div class="cover__fk">Prepared for</div>
+                    <div class="cover__fv">Cyber 7 Group, LLC<br>All clients, all boards</div>
+                  </div>
+                  <div class="cover__fact">
+                    <div class="cover__fk">Prepared by</div>
+                    <div class="cover__fv">Stephen Simmons · Super Admin<br>stephen.simmons@cyber7group.com</div>
+                  </div>
+                  <div class="cover__fact">
+                    <div class="cover__fk">Generated</div>
+                    <div class="cover__fv">9 October 2026, 18:14</div>
+                  </div>
+                  <div class="cover__fact">
+                    <div class="cover__fk">Instance</div>
+                    <div class="cover__fv">http://localhost:3010</div>
+                  </div>
+                </div>
+
+                <div class="cover__foot">
+                  Seven sections · contents overleaf · the basis for every figure is the last section of
+                  the pack, and it says what could not be known as well as what could.<br>
+                  Confidential — Cyber 7 Group, LLC.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── The contents ────────────────────────────────────────────────────────────────── -->
+        <div class="sheet-frame">
+          <div class="sheet__cap"><b>Contents</b> <span class="sel">page 1 · numbered from here</span></div>
+          <div class="sheet">
+            <div class="doc">
+              <div class="doc__flow">
+                <div class="rhead">
+                  <span class="rhead__t">Quarterly business review</span>
+                  <span>Q3 2026 · prepared for Cyber 7 Group, LLC</span>
+                  <span class="rhead__p">Page 1</span>
+                </div>
+                <div class="dtitle" style="margin-top:0;">Contents</div>
+                <p class="dmeta">
+                  Seven sections. Every one of them opens with a sentence saying what it answers, before
+                  it shows a table — a pack that starts with a table is a pack that has to be read twice.
+                </p>
+
+                <div class="toc" style="margin-top:8mm;">
+                  <div class="toc__row toc__row--group">
+                    <span class="toc__n">1</span>
+                    <div><div class="toc__t">Summary</div>
+                      <div class="toc__d">The quarter in four figures, three highlights and six watch items</div></div>
+                    <span class="toc__p">2</span>
+                  </div>
+                  <div class="toc__row toc__row--group">
+                    <span class="toc__n">2</span>
+                    <div><div class="toc__t">Service delivery</div>
+                      <div class="toc__d">What was raised, what was resolved, what the targets say, hours by work type</div></div>
+                    <span class="toc__p">3</span>
+                  </div>
+                  <div class="toc__row toc__row--group">
+                    <span class="toc__n">3</span>
+                    <div><div class="toc__t">Commercials</div>
+                      <div class="toc__d">Invoiced against collected by month, and revenue by client</div></div>
+                    <span class="toc__p">4</span>
+                  </div>
+                  <div class="toc__row toc__row--group">
+                    <span class="toc__n">4</span>
+                    <div><div class="toc__t">Clients and agreements</div>
+                      <div class="toc__d">The five agreements, what each has billed and delivered, and the margin that cannot be trusted</div></div>
+                    <span class="toc__p">5</span>
+                  </div>
+                  <div class="toc__row toc__row--group">
+                    <span class="toc__n">5</span>
+                    <div><div class="toc__t">Risk</div>
+                      <div class="toc__d">80 open tickets, the oldest 96 days, and $8,680.00 overdue on one invoice</div></div>
+                    <span class="toc__p">6</span>
+                  </div>
+                  <div class="toc__row toc__row--group">
+                    <span class="toc__n">6</span>
+                    <div><div class="toc__t">Estate and satisfaction</div>
+                      <div class="toc__d">10 managed assets, and the one survey response the quarter produced</div></div>
+                    <span class="toc__p">7</span>
+                  </div>
+                  <div class="toc__row toc__row--group">
+                    <span class="toc__n">7</span>
+                    <div><div class="toc__t">Basis</div>
+                      <div class="toc__d">Where each figure came from, and the four things this pack cannot say</div></div>
+                    <span class="toc__p">8</span>
+                  </div>
+                </div>
+
+                <div class="basis" style="margin-top:10mm;">
+                  <div class="basis__h">How to read this pack</div>
+                  <div class="basis__rows">
+                    <div class="basis__row">
+                      <span class="basis__k">Comparisons</span>
+                      <span class="basis__v">Each figure is set against the same-length window immediately
+                        before it. Where that window holds nothing, the pack says <b>“no comparable
+                        period”</b> rather than printing a percentage off a zero.</span>
+                    </div>
+                    <div class="basis__row">
+                      <span class="basis__k">Snapshots</span>
+                      <span class="basis__v">Receivables, backlog and the agreement position are
+                        <b>as at 30 September 2026</b>. A figure that is a snapshot says so on the page
+                        it appears on.</span>
+                    </div>
+                    <div class="basis__row">
+                      <span class="basis__k">The last section</span>
+                      <span class="basis__v">Every number in this pack is traceable to an endpoint named
+                        on page 8, together with what the data cannot answer.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="pfoot">
+                <span>localhost:3010 · 9 Oct 2026, 18:14 · S. Simmons</span>
+                <span class="pfoot__c">Confidential — Cyber 7 Group, LLC</span>
+                <span class="pfoot__p">Page 1</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── The summary ─────────────────────────────────────────────────────────────────── -->
+        <div class="sheet-frame">
+          <div class="sheet__cap"><b>§1 Summary</b> <span class="sel">page 2 · the page that gets read</span></div>
+          <div class="sheet">
+            <div class="doc">
+              <div class="doc__flow">
+                <div class="rhead">
+                  <span class="rhead__t">Quarterly business review · Q3 2026</span>
+                  <span><b style="color:var(--ink-body)">1 Summary</b></span>
+                  <span class="rhead__p">Page 2</span>
+                </div>
+
+                <div class="sec"><span class="sec__n">1</span>Q3 2026 against Q2 2026</div>
+                <div class="mast" style="margin-top:5mm;">
+                  <div class="mast__i">
+                    <div class="mast__l">Tickets raised</div>
+                    <div class="mast__v">96</div>
+                    <div class="mast__s">Q2 2026 raised none — no comparable period</div>
+                  </div>
+                  <div class="mast__i">
+                    <div class="mast__l">Hours delivered</div>
+                    <div class="mast__v">34.25</div>
+                    <div class="mast__s">33.75 billable · 0.50 non-billable</div>
+                  </div>
+                  <div class="mast__i mast__i--alert">
+                    <div class="mast__l">Invoiced</div>
+                    <div class="mast__v mast__v--accent">$27,960.63</div>
+                    <div class="mast__s">+638% on Q2 2026's $3,788.75</div>
+                  </div>
+                  <div class="mast__i mast__i--alert">
+                    <div class="mast__l">Collected</div>
+                    <div class="mast__v mast__v--accent">$4,438.75</div>
+                    <div class="mast__s">15.9% of what was invoiced</div>
+                  </div>
+                </div>
+                <p class="mast__note">
+                  The quarter's own window, 1 July – 30 September 2026, against 1 April – 30 June 2026.
+                  Two of the four have no percentage because the earlier window holds nothing: a
+                  percentage off a zero would be a number without a meaning.
+                </p>
+
+                <div class="sec sec--top"><span class="sec__n">1.1</span>Highlights</div>
+                <ul class="lst" style="margin-top:3mm;">
+                  <li>$27,960.63 invoiced and $4,438.75 collected (15.9% collection rate), up 638% on Q2 2026.</li>
+                  <li>44 time entries recorded — 33.75 billable and 0.5 non-billable hours.</li>
+                  <li>1 survey response with an NPS of 100 across 1 client.</li>
+                </ul>
+
+                <div class="sec sec--top"><span class="sec__n">1.2</span>Watch items</div>
+                <ul class="lst" style="margin-top:3mm;">
+                  <li>No tickets were logged in Q2 2026, so there is no volume comparison to make.</li>
+                  <li>Response targets: 91 tickets answered late, 5 past the response target with no reply recorded.</li>
+                  <li>Resolution targets: 96 tickets past the resolution target unresolved.</li>
+                  <li>$8,680 is overdue across 1 invoice.</li>
+                  <li>34.25 delivered hours have no internal cost rate, so agreement margins are overstated.</li>
+                  <li>The oldest open ticket is 96 days old.</li>
+                </ul>
+                <p class="tsay">
+                  The endpoint writes these; the pack does not compose them. Three of the six are about
+                  the same thing — targets the quarter did not meet — and the pack leaves them separate,
+                  because merging them would be the document editing the finding.
+                </p>
+              </div>
+              <div class="pfoot">
+                <span>localhost:3010 · 9 Oct 2026, 18:14 · S. Simmons</span>
+                <span class="pfoot__c">Confidential — Cyber 7 Group, LLC</span>
+                <span class="pfoot__p">Page 2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── A section opener ────────────────────────────────────────────────────────────── -->
+        <div class="sheet-frame">
+          <div class="sheet__cap"><b>§2 Service delivery</b> <span class="sel">page 3 · the opener: a sentence, then the figures</span></div>
+          <div class="sheet">
+            <div class="doc">
+              <div class="doc__flow">
+                <div class="rhead">
+                  <span class="rhead__t">Quarterly business review · Q3 2026</span>
+                  <span><b style="color:var(--ink-body)">2 Service delivery</b></span>
+                  <span class="rhead__p">Page 3</span>
+                </div>
+
+                <div class="sec"><span class="sec__n">2</span>Service delivery</div>
+                <p class="sec__say">
+                  What the quarter raised, what it resolved, and where the response and resolution
+                  targets landed — measured on the ticket's own timestamps, so a ticket with no reply
+                  recorded is counted as missed rather than as unresolved.
+                </p>
+
+                <div class="mast" style="margin-top:6mm;">
+                  <div class="mast__i">
+                    <div class="mast__l">Raised</div>
+                    <div class="mast__v">96</div>
+                    <div class="mast__s">Across 4 boards</div>
+                  </div>
+                  <div class="mast__i">
+                    <div class="mast__l">Resolved in the quarter</div>
+                    <div class="mast__v">1</div>
+                    <div class="mast__s">Sarah Jones</div>
+                  </div>
+                  <div class="mast__i mast__i--alert">
+                    <div class="mast__l">Backlog at 30 September</div>
+                    <div class="mast__v mast__v--accent">80</div>
+                    <div class="mast__s">Every one of them over 30 days old</div>
+                  </div>
+                  <div class="mast__i mast__i--alert">
+                    <div class="mast__l">Response compliance</div>
+                    <div class="mast__v mast__v--accent">0%</div>
+                    <div class="mast__s">Was 0% in Q2 2026, on no evaluated tickets</div>
+                  </div>
+                </div>
+
+                <div class="sec sec--top"><span class="sec__n">2.1</span>Targets met, late and missed</div>
+                <table class="pt">
+                  <thead>
+                    <tr><th>Target</th><th class="n">Met</th><th class="n">Answered late</th><th class="n">Missed</th><th class="n">Still inside target</th><th class="n">Evaluated</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td class="lead">First response</td><td class="n">0</td><td class="n">91</td><td class="n">5</td><td class="n">0</td><td class="n">96</td></tr>
+                    <tr><td class="lead">Resolution</td><td class="n">0</td><td class="n">0</td><td class="n">96</td><td class="n">0</td><td class="n">96</td></tr>
+                    <tr class="total"><td>Both targets, this quarter</td><td class="n">0</td><td class="n">91</td><td class="n">101</td><td class="n">0</td><td class="n">96</td></tr>
+                  </tbody>
+                  <caption>
+                    The total row adds the two targets' breaches, so it is larger than the number of
+                    tickets: a ticket can miss both. The caption says so rather than leaving the reader
+                    to find out.
+                  </caption>
+                </table>
+
+                <div class="sec sec--top"><span class="sec__n">2.2</span>Where the late answers are</div>
+                <table class="pt">
+                  <thead>
+                    <tr><th>Board</th><th class="n">Tickets</th><th class="n">Answered late</th><th class="n">Resolution missed</th><th class="n">Compliance</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td class="lead">MSP Service Desk</td><td class="n">25</td><td class="n">25</td><td class="n">25</td><td class="n">0%</td></tr>
+                    <tr><td class="lead">Infrastructure Desk</td><td class="n">25</td><td class="n">23</td><td class="n">25</td><td class="n">0%</td></tr>
+                    <tr><td class="lead">Intelligence Desk</td><td class="n">23</td><td class="n">22</td><td class="n">23</td><td class="n">0%</td></tr>
+                    <tr><td class="lead">NOC Alerts</td><td class="n">23</td><td class="n">21</td><td class="n">23</td><td class="n">0%</td></tr>
+                    <tr class="total"><td>Four boards</td><td class="n">96</td><td class="n">91</td><td class="n">96</td><td class="n">0%</td></tr>
+                  </tbody>
+                </table>
+                <p class="tsay">
+                  The next page carries hours by work type, delivery by technician and the trend.
+                  <span class="rhead__c">continued overleaf →</span>
+                </p>
+              </div>
+              <div class="pfoot">
+                <span>localhost:3010 · 9 Oct 2026, 18:14 · S. Simmons</span>
+                <span class="pfoot__c">Confidential — Cyber 7 Group, LLC</span>
+                <span class="pfoot__p">Page 3</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── A continuation page ─────────────────────────────────────────────────────────── -->
+        <div class="sheet-frame">
+          <div class="sheet__cap"><b>§4 Clients and agreements — continued</b>
+            <span class="sel">page 5 · the column header repeats, the caption says why</span></div>
+          <div class="sheet">
+            <div class="doc">
+              <div class="doc__flow">
+                <div class="rhead">
+                  <span class="rhead__t">Quarterly business review · Q3 2026</span>
+                  <span><b style="color:var(--ink-body)">4 Clients and agreements</b></span>
+                  <span class="rhead__c">continued</span>
+                  <span class="rhead__p">Page 5</span>
+                </div>
+
+                <div class="sec"><span class="sec__n">4.2</span>Agreements — continued</div>
+                <table class="pt">
+                  <thead>
+                    <tr>
+                      <th>Agreement</th><th>Client</th><th>Billing</th><th class="n">Annualised</th>
+                      <th class="n">Invoiced in Q3</th><th class="n">Hours delivered</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="lead">Acme Standard Plan</td><td>Acme Corporation</td>
+                      <td>$2,500 monthly</td><td class="n">$30,000.00</td><td class="n">$0.00</td><td class="n">8.25</td>
+                    </tr>
+                    <tr>
+                      <td class="lead">Globex Enterprise</td><td>Globex Industries</td>
+                      <td>$8,000 monthly</td><td class="n">$96,000.00</td><td class="n">$0.00</td><td class="n">6.00</td>
+                    </tr>
+                    <tr>
+                      <td class="lead">Initech Pro</td><td>Initech Solutions</td>
+                      <td>$3,500 monthly</td><td class="n">$42,000.00</td><td class="n">$0.00</td><td class="n">3.00</td>
+                    </tr>
+                    <tr>
+                      <td class="lead">Stark Platinum</td><td>Stark Enterprises</td>
+                      <td>$12,000 monthly</td><td class="n">$144,000.00</td><td class="n">$0.00</td><td class="n">7.00</td>
+                    </tr>
+                    <tr class="total">
+                      <td>Five agreements</td><td>four clients</td><td>—</td>
+                      <td class="n">$330,000.00</td><td class="n">$3,518.13</td><td class="n">34.25</td>
+                    </tr>
+                  </tbody>
+                  <caption>
+                    Continued from page 4, which carried Umbrella Silver — the agreement that billed
+                    this quarter ($4,500 quarterly, $18,000 annualised, 10 hours delivered). Every
+                    agreement prints in full on the page its group starts on: no agreement is split
+                    across a page break, which is the rule the banded engine calls
+                    <code>keepTogether</code>.
+                  </caption>
+                </table>
+
+                <div class="sec sec--top"><span class="sec__n">4.3</span>What the agreement margin does not mean</div>
+                <p class="sec__say">
+                  The endpoint reports a <b>100% agreement margin</b> and a margin of $3,518.13. It also
+                  reports that <b>34.25 delivered hours have no internal cost rate</b> — every hour
+                  delivered this quarter. A margin computed from a labour cost of zero is not a margin,
+                  so the pack prints the figure, the reason it is wrong, and refuses to restate it.
+                </p>
+                <div class="basis" style="margin-top:4mm;">
+                  <div class="basis__rows">
+                    <div class="basis__row"><span class="basis__k">Agreements</span><span class="basis__v">5, all active, none renewing inside 90 days</span></div>
+                    <div class="basis__row"><span class="basis__k">Annualised value</span><span class="basis__v">$330,000.00</span></div>
+                    <div class="basis__row"><span class="basis__k">Invoiced in Q3</span><span class="basis__v">$3,518.13 of the $27,960.63 the quarter invoiced — most of the rest was project and product billing outside any agreement</span></div>
+                    <div class="basis__row"><span class="basis__k">Labour cost recorded</span><span class="basis__v">$0.00 against 34.25 hours delivered</span></div>
+                    <div class="basis__row">
+                      <span class="basis__k">What this cannot say</span>
+                      <span class="basis__unknown">
+                        The margin figures on this page are <b>overstated and unusable</b> until every
+                        delivered hour has a cost rate. This is not a rounding difference and it is not
+                        estimated away: the number is printed as the system reports it, with the reason
+                        beside it.
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="pfoot">
+                <span>localhost:3010 · 9 Oct 2026, 18:14 · S. Simmons</span>
+                <span class="pfoot__c">Confidential — Cyber 7 Group, LLC</span>
+                <span class="pfoot__p">Page 5</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="notes">
+        <div class="card stack">
+          <h3 style="font-size:13px;">What a cover carries, and why</h3>
+          <p class="say">
+            Six facts and one sentence, in the order a person asks them: <b>what period</b>, <b>against
+            what</b>, <b>whose</b> review, <b>who prepared it</b>, <b>when</b>, <b>from which
+            instance</b>. Nothing else — no masthead figures, because a cover that opens with the
+            numbers has given away the summary; no contents, because the contents is a page people turn
+            to and a cover is a page people look at.
+          </p>
+          <p class="say">
+            And it names the preparer, which no document this product makes does today.
+          </p>
+        </div>
+
+        <div class="card stack" style="margin-top:12px;">
+          <h3 style="font-size:13px;">Why the pack is paginated rather than continuous</h3>
+          <p class="say">
+            <code>documentToPrintWindow</code> prints one continuous document and lets the browser
+            break it wherever it lands, and <code>documentToPdf</code> adds a page when the cursor
+            reaches a margin. Neither knows what a section is. So a review pack arrives with a table
+            split under its own heading and the browser's own page-1-of-9 in the corner.
+          </p>
+          <div class="kv"><span class="kv__k">A section starts</span><span class="kv__v">On its own page, with a sentence and then its figures</span></div>
+          <div class="kv"><span class="kv__k">A table breaks</span><span class="kv__v">Only between rows, never between a heading and its first row</span></div>
+          <div class="kv"><span class="kv__k">A group breaks</span><span class="kv__v">With its heading repeated and <i>continued</i> said in the running head</span></div>
+          <div class="kv"><span class="kv__k">A snapshot</span><span class="kv__v">Says "as at 30 September 2026" on the page it is on</span></div>
+          <div class="kv"><span class="kv__k">Page count</span><span class="kv__v">Counted across the pack, not per section</span></div>
+          <p class="say">
+            None of that is new machinery. <code>layoutReport</code> already does all four of those
+            things in millimetres for banded templates — screen four shows the bands. What the pack
+            needs is for the generated document to be laid out the same way, instead of being flowed
+            into whatever the browser decides.
+          </p>
+        </div>
+
+        <div class="card stack" style="margin-top:12px;">
+          <h3 style="font-size:13px;">The pages not drawn here</h3>
+          <p class="say">
+            §3 Commercials (invoiced against collected by month: $2,712.50 / $21,730.00 / $3,518.13,
+            with $4,438.75 collected in August only), §5 Risk (80 open tickets, average age 55.1 days,
+            oldest 96 days on <code>INT-03-2008</code>), §6 Estate and satisfaction (10 assets, 1
+            survey response, NPS 100) and §7 Basis are the same system applied — a section opener, a
+            masthead, a table with a total rule, and prose where a figure needs explaining.
+          </p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN FOUR — A CUSTOM BANDED REPORT AND ITS MACHINERY
+
+       The template is the designer's own `groupedTotals` starter for the invoices source
+       (`GET /api/reports/designer/starter?source=invoices&kind=groupedTotals`), whose default name is
+       "Invoices — Grouped list with totals": A4 portrait, 12mm margins, 186mm content, four 46.5mm
+       columns, bands at 12 / 7 / 9 / 6 / 8 / 8mm, 8.5pt detail, grouped by `Fields.status` ascending
+       with `keepTogether` on. The five rows are the instance's five real invoices.
+       ═════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="banded" hidden>
+    <div class="screen__label">Screen four — the banded engine · drawn as it prints, then with the bands visible</div>
+    <div class="screen__head">
+      <h2>Millimetre-accurate bands, and the four things this file is not going to change about them</h2>
+      <p>
+        The banded engine is the one renderer in this product that already behaves like a document: it
+        lays out in millimetres, it repeats what should repeat, it anchors the page footer to the
+        bottom, and its PDF is real vector text drawn from the layout's own coordinates. What it lacks
+        is the shared language — the same accent, the same floor on type size, and a group boundary that
+        survives a photocopier.
+      </p>
+    </div>
+
+    <div class="stage">
+      <div class="sheets">
+
+        <!-- ── A: the page as it prints ──────────────────────────────────────────────────────── -->
+        <div class="sheet-frame">
+          <div class="sheet__cap"><b>The page as the engine prints it</b>
+            <span class="sel">186mm content · five real invoices · one page</span></div>
+          <div class="sheet">
+            <div class="doc" style="inset:12mm;">
+              <div class="bb bb--ph" style="top:0; height:12mm;">
+                <span class="bb__name">Receivables by client</span>
+                <span class="bb__stamp">9 Oct 2026 18:14</span>
+              </div>
+              <div class="bb bb--ch" style="top:12mm; height:7mm;">
+                <span>Invoice Number</span><span>Currency</span><span>Due Date</span><span class="n">Subtotal</span>
+              </div>
+              <div class="bb bb--gh" style="top:19mm; height:9mm;">
+                <span class="g">draft</span><span class="c">1 row(s)</span>
+              </div>
+              <div class="bb bb--dt" style="top:28mm; height:6mm;">
+                <span class="id">INV-2026-004</span><span>USD</span><span>9 Sep 2026</span><span class="n">$12,000.00</span>
+              </div>
+              <div class="bb bb--gf" style="top:34mm; height:8mm;">
+                <span></span><span class="k">Group total</span><span class="t">$12,000.00</span>
+              </div>
+              <div class="bb bb--gh" style="top:42mm; height:9mm;">
+                <span class="g">overdue</span><span class="c">1 row(s)</span>
+              </div>
+              <div class="bb bb--dt" style="top:51mm; height:6mm;">
+                <span class="id">INV-2026-002</span><span>USD</span><span>6 Sep 2026</span><span class="n">$8,000.00</span>
+              </div>
+              <div class="bb bb--gf" style="top:57mm; height:8mm;">
+                <span></span><span class="k">Group total</span><span class="t">$8,000.00</span>
+              </div>
+              <div class="bb bb--gh" style="top:65mm; height:9mm;">
+                <span class="g">paid</span><span class="c">2 row(s)</span>
+              </div>
+              <div class="bb bb--dt" style="top:74mm; height:6mm;">
+                <span class="id">INV-2026-001</span><span>USD</span><span>2 Aug 2026</span><span class="n">$2,500.00</span>
+              </div>
+              <div class="bb bb--dt" style="top:80mm; height:6mm;">
+                <span class="id">INV-2026-003</span><span>USD</span><span>28 Jul 2026</span><span class="n">$3,500.00</span>
+              </div>
+              <div class="bb bb--gf" style="top:86mm; height:8mm;">
+                <span></span><span class="k">Group total</span><span class="t">$6,000.00</span>
+              </div>
+              <div class="bb bb--gh" style="top:94mm; height:9mm;">
+                <span class="g">sent</span><span class="c">1 row(s)</span>
+              </div>
+              <div class="bb bb--dt" style="top:103mm; height:6mm;">
+                <span class="id">INV-2026-1014</span><span>USD</span><span>26 Oct 2026</span><span class="n">$3,250.00</span>
+              </div>
+              <div class="bb bb--gf" style="top:109mm; height:8mm;">
+                <span></span><span class="k">Group total</span><span class="t">$3,250.00</span>
+              </div>
+              <div class="bb bb--pf" style="bottom:0; height:8mm;">
+                <span>Invoices · generated 2026-10-09</span>
+                <span class="r">Page 1 of 1</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── B: the same page with the band edges visible ──────────────────────────────────── -->
+        <div class="sheet-frame">
+          <div class="sheet__cap"><b>The same page, bands made visible</b>
+            <span class="sel">every box is a band; every label gives its kind, its top and its height</span></div>
+          <div class="annot-wrap">
+            <div class="sheet">
+              <div class="doc" style="inset:12mm;">
+                <div class="bb bb--ph" style="top:0; height:12mm;">
+                  <span class="bb__name">Receivables by client</span>
+                  <span class="bb__stamp">9 Oct 2026 18:14</span>
+                </div>
+                <div class="bb bb--ch" style="top:12mm; height:7mm;">
+                  <span>Invoice Number</span><span>Currency</span><span>Due Date</span><span class="n">Subtotal</span>
+                </div>
+                <div class="bb bb--gh" style="top:19mm; height:9mm;">
+                  <span class="g">draft</span><span class="c">1 row(s)</span>
+                </div>
+                <div class="bb bb--dt" style="top:28mm; height:6mm;">
+                  <span class="id">INV-2026-004</span><span>USD</span><span>9 Sep 2026</span><span class="n">$12,000.00</span>
+                </div>
+                <div class="bb bb--gf" style="top:34mm; height:8mm;">
+                  <span></span><span class="k">Group total</span><span class="t">$12,000.00</span>
+                </div>
+                <div class="bb bb--gh" style="top:42mm; height:9mm;">
+                  <span class="g">overdue</span><span class="c">1 row(s)</span>
+                </div>
+                <div class="bb bb--dt" style="top:51mm; height:6mm;">
+                  <span class="id">INV-2026-002</span><span>USD</span><span>6 Sep 2026</span><span class="n">$8,000.00</span>
+                </div>
+                <div class="bb bb--gf" style="top:57mm; height:8mm;">
+                  <span></span><span class="k">Group total</span><span class="t">$8,000.00</span>
+                </div>
+                <div class="bb bb--gh" style="top:65mm; height:9mm;">
+                  <span class="g">paid</span><span class="c">2 row(s)</span>
+                </div>
+                <div class="bb bb--dt" style="top:74mm; height:6mm;">
+                  <span class="id">INV-2026-001</span><span>USD</span><span>2 Aug 2026</span><span class="n">$2,500.00</span>
+                </div>
+                <div class="bb bb--dt" style="top:80mm; height:6mm;">
+                  <span class="id">INV-2026-003</span><span>USD</span><span>28 Jul 2026</span><span class="n">$3,500.00</span>
+                </div>
+                <div class="bb bb--gf" style="top:86mm; height:8mm;">
+                  <span></span><span class="k">Group total</span><span class="t">$6,000.00</span>
+                </div>
+                <div class="bb bb--gh" style="top:94mm; height:9mm;">
+                  <span class="g">sent</span><span class="c">1 row(s)</span>
+                </div>
+                <div class="bb bb--dt" style="top:103mm; height:6mm;">
+                  <span class="id">INV-2026-1014</span><span>USD</span><span>26 Oct 2026</span><span class="n">$3,250.00</span>
+                </div>
+                <div class="bb bb--gf" style="top:109mm; height:8mm;">
+                  <span></span><span class="k">Group total</span><span class="t">$3,250.00</span>
+                </div>
+                <div class="bb bb--pf" style="bottom:0; height:8mm;">
+                  <span>Invoices · generated 2026-10-09</span>
+                  <span class="r">Page 1 of 1</span>
+                </div>
+
+                <!-- The band edges -->
+                <div class="bandbox" style="left:0; right:0; top:0; height:12mm;"><span class="bandbox__tag">12mm</span></div>
+                <div class="bandbox" style="left:0; right:0; top:12mm; height:7mm;"><span class="bandbox__tag">7mm</span></div>
+                <div class="bandbox" style="left:0; right:0; top:19mm; height:9mm;"><span class="bandbox__tag">9mm</span></div>
+                <div class="bandbox" style="left:0; right:0; top:28mm; height:6mm;"><span class="bandbox__tag">6mm</span></div>
+                <div class="bandbox" style="left:0; right:0; top:34mm; height:8mm;"><span class="bandbox__tag">8mm</span></div>
+                <div class="bandbox" style="left:0; right:0; top:42mm; height:9mm;"><span class="bandbox__tag">9mm</span></div>
+                <div class="bandbox" style="left:0; right:0; top:51mm; height:6mm;"><span class="bandbox__tag">6mm</span></div>
+                <div class="bandbox" style="left:0; right:0; top:57mm; height:8mm;"><span class="bandbox__tag">8mm</span></div>
+                <div class="bandbox" style="left:0; right:0; top:65mm; height:9mm;"><span class="bandbox__tag">9mm</span></div>
+                <div class="bandbox" style="left:0; right:0; top:74mm; height:6mm;"><span class="bandbox__tag">6mm</span></div>
+                <div class="bandbox" style="left:0; right:0; top:80mm; height:6mm;"><span class="bandbox__tag">6mm</span></div>
+                <div class="bandbox" style="left:0; right:0; top:86mm; height:8mm;"><span class="bandbox__tag">8mm</span></div>
+                <div class="bandbox" style="left:0; right:0; top:94mm; height:9mm;"><span class="bandbox__tag">9mm</span></div>
+                <div class="bandbox" style="left:0; right:0; top:103mm; height:6mm;"><span class="bandbox__tag">6mm</span></div>
+                <div class="bandbox" style="left:0; right:0; top:109mm; height:8mm;"><span class="bandbox__tag">8mm</span></div>
+                <div class="bandbox" style="left:0; right:0; bottom:0; height:8mm;"><span class="bandbox__tag">8mm</span></div>
+                <!-- The content box and the paper it does not fill -->
+                <div class="bandbox" style="left:0; right:0; top:117mm; bottom:8mm; border-style: dotted;">
+                  <span class="bandbox__tag" style="top:1mm; right:2mm;">148mm of empty flow area — the engine leaves it empty rather than stretching a band</span>
+                </div>
+              </div>
+            </div>
+
+            <span class="bandlab bandlab--r" style="top:14mm;">reportTitle / pageHeader · top 0 · h 12mm · repeats</span>
+            <span class="bandlab bandlab--r" style="top:27mm;">columnHeader · top 12 · h 7mm · repeats</span>
+            <span class="bandlab bandlab--r" style="top:37mm;">groupHeader “draft” · top 19 · h 9mm</span>
+            <span class="bandlab bandlab--r" style="top:47mm;">detail · top 28 · h 6mm · one per row</span>
+            <span class="bandlab bandlab--r" style="top:56mm;">groupFooter · top 34 · h 8mm · SUM, scope group</span>
+            <span class="bandlab bandlab--r" style="top:70mm;">groupHeader ×3 more, in key order</span>
+            <span class="bandlab bandlab--r" style="top:90mm;">detail ×2 in “paid”</span>
+            <span class="bandlab bandlab--r" style="top:110mm;">groupFooter · the paid group’s own total</span>
+            <span class="bandlab bandlab--r" style="top:132mm;">the same five band kinds, again, per group</span>
+            <span class="bandlab bandlab--r" style="top:200mm;">the flow area the rows did not reach</span>
+            <span class="bandlab bandlab--r" style="top:286mm;">pageFooter · anchored 12mm from the paper edge</span>
+          </div>
+        </div>
+
+        <!-- ── C: the break ──────────────────────────────────────────────────────────────────── -->
+        <div class="sheets--row" style="display:flex; gap:20px; flex-wrap:wrap;">
+          <div class="sheet-frame">
+            <div class="sheet__cap"><b>Page 1 of 2</b>
+              <span class="sel">pageBreakBefore on the “sent” group header</span></div>
+            <div class="sheet">
+              <div class="doc" style="inset:12mm;">
+                <div class="bb bb--ph" style="top:0; height:12mm;">
+                  <span class="bb__name">Receivables by client</span><span class="bb__stamp">9 Oct 2026 18:14</span>
+                </div>
+                <div class="bb bb--ch" style="top:12mm; height:7mm;">
+                  <span>Invoice Number</span><span>Currency</span><span>Due Date</span><span class="n">Subtotal</span>
+                </div>
+                <div class="bb bb--gh" style="top:19mm; height:9mm;">
+                  <span class="g">draft</span><span class="c">1 row(s)</span>
+                </div>
+                <div class="bb bb--dt" style="top:28mm; height:6mm;">
+                  <span class="id">INV-2026-004</span><span>USD</span><span>9 Sep 2026</span><span class="n">$12,000.00</span>
+                </div>
+                <div class="bb bb--gf" style="top:34mm; height:8mm;">
+                  <span></span><span class="k">Group total</span><span class="t">$12,000.00</span>
+                </div>
+                <div class="bb bb--gh" style="top:42mm; height:9mm;">
+                  <span class="g">overdue</span><span class="c">1 row(s)</span>
+                </div>
+                <div class="bb bb--dt" style="top:51mm; height:6mm;">
+                  <span class="id">INV-2026-002</span><span>USD</span><span>6 Sep 2026</span><span class="n">$8,000.00</span>
+                </div>
+                <div class="bb bb--gf" style="top:57mm; height:8mm;">
+                  <span></span><span class="k">Group total</span><span class="t">$8,000.00</span>
+                </div>
+                <div class="bb bb--gh" style="top:65mm; height:9mm;">
+                  <span class="g">paid</span><span class="c">2 row(s)</span>
+                </div>
+                <div class="bb bb--dt" style="top:74mm; height:6mm;">
+                  <span class="id">INV-2026-001</span><span>USD</span><span>2 Aug 2026</span><span class="n">$2,500.00</span>
+                </div>
+                <div class="bb bb--dt" style="top:80mm; height:6mm;">
+                  <span class="id">INV-2026-003</span><span>USD</span><span>28 Jul 2026</span><span class="n">$3,500.00</span>
+                </div>
+                <div class="bb bb--gf" style="top:86mm; height:8mm;">
+                  <span></span><span class="k">Group total</span><span class="t">$6,000.00</span>
+                </div>
+                <div class="bb bb--pf" style="bottom:0; height:8mm;">
+                  <span>Invoices · generated 2026-10-09</span><span class="r">Page 1 of 2</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="sheet-frame">
+            <div class="sheet__cap"><b>Page 2 of 2</b>
+              <span class="sel">page header + column header re-emitted, no letterhead</span></div>
+            <div class="sheet">
+              <div class="doc" style="inset:12mm;">
+                <div class="bb bb--ph" style="top:0; height:12mm;">
+                  <span class="bb__name">Receivables by client</span><span class="bb__stamp">9 Oct 2026 18:14</span>
+                </div>
+                <div class="bb bb--ch" style="top:12mm; height:7mm;">
+                  <span>Invoice Number</span><span>Currency</span><span>Due Date</span><span class="n">Subtotal</span>
+                </div>
+                <div class="bb bb--gh" style="top:19mm; height:9mm;">
+                  <span class="g">sent</span><span class="c">1 row(s)</span>
+                </div>
+                <div class="bb bb--dt" style="top:28mm; height:6mm;">
+                  <span class="id">INV-2026-1014</span><span>USD</span><span>26 Oct 2026</span><span class="n">$3,250.00</span>
+                </div>
+                <div class="bb bb--gf" style="top:34mm; height:8mm;">
+                  <span></span><span class="k">Group total</span><span class="t">$3,250.00</span>
+                </div>
+                <div class="bb bb--pf" style="bottom:0; height:8mm;">
+                  <span>Invoices · generated 2026-10-09</span><span class="r">Page 2 of 2</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── D: the band diagram, including the repeat a break causes ─────────────────────── -->
+        <div class="sheet-frame">
+          <div class="sheet__cap"><b>The band stack, side by side with the break it causes</b>
+            <span class="sel">diagram, not a page — heights are the template's real millimetres</span></div>
+          <div class="bd">
+            <div class="bd__title">A group that fits on its own page (keepTogether on — the template as saved)</div>
+            <p class="bd__say">One page. Everything below happens once, in this order.</p>
+            <div style="margin-top:3mm;">
+              <div class="bd__row"><span class="bd__h">0–12</span><span class="bd__b">pageHeader — the report's name and the stamp · <b>repeats</b></span></div>
+              <div class="bd__row"><span class="bd__h">12–19</span><span class="bd__b">columnHeader — the four captions · <b>repeats</b></span></div>
+              <div class="bd__row"><span class="bd__h">19–28</span><span class="bd__b">groupHeader “draft” + <code>{{COUNT(…, 'group')}} row(s)</code></span></div>
+              <div class="bd__row"><span class="bd__h">28–34</span><span class="bd__b">detail — one band per row</span></div>
+              <div class="bd__row"><span class="bd__h">34–42</span><span class="bd__b bd__b--cast">groupFooter — <code>SUM(Fields.subtotal, 'group')</code> reads the group's own rows</span></div>
+              <div class="bd__row"><span class="bd__h">42–117</span><span class="bd__b">the same three band kinds, again, for “overdue”, “paid” and “sent”</span></div>
+              <div class="bd__row"><span class="bd__h">117–265</span><span class="bd__b bd__b--empty">flow area, empty — the engine does not stretch a band to fill a page</span></div>
+              <div class="bd__row"><span class="bd__h">265–273</span><span class="bd__b bd__b--cast">pageFooter — <b>anchored to the bottom of the content box</b>, not floated after the last row</span></div>
+            </div>
+
+            <div class="bd__break"><span>a page break in the middle of an open group</span><i></i></div>
+
+            <div class="bd__title">…and when the paper runs out inside a group</div>
+            <p class="bd__say">
+              <code>layoutReport</code> calls <code>repeatGroupHeaders</code> when a detail band does not
+              fit, so the page header, the column header <b>and the group it interrupted</b> are all
+              re-emitted — the group’s heading, its count and its running totals carry on untouched
+              because <code>accumulate</code> runs before the band reads them.
+            </p>
+            <div class="grid2" style="margin-top:3mm; gap:12px;">
+              <div>
+                <div class="bd__h" style="width:auto; font-weight:700; color:var(--ink);">Page 1</div>
+                <div class="bd__row"><span class="bd__h">0–12</span><span class="bd__b">pageHeader</span></div>
+                <div class="bd__row"><span class="bd__h">12–19</span><span class="bd__b">columnHeader</span></div>
+                <div class="bd__row"><span class="bd__h">…</span><span class="bd__b">groupHeader “paid” — 12 row(s)</span></div>
+                <div class="bd__row"><span class="bd__h">…</span><span class="bd__b">detail ×9 — the rows that fitted</span></div>
+                <div class="bd__row"><span class="bd__h">…</span><span class="bd__b bd__b--empty">no groupFooter: the group is not finished</span></div>
+              </div>
+              <div>
+                <div class="bd__h" style="width:auto; font-weight:700; color:var(--ink);">Page 2</div>
+                <div class="bd__row"><span class="bd__h">0–12</span><span class="bd__b">pageHeader — re-emitted</span></div>
+                <div class="bd__row"><span class="bd__h">12–19</span><span class="bd__b">columnHeader — re-emitted</span></div>
+                <div class="bd__row"><span class="bd__h">19–28</span><span class="bd__b bd__b--cast">groupHeader “paid” — <b>re-emitted after the break</b></span></div>
+                <div class="bd__row"><span class="bd__h">…</span><span class="bd__b">detail ×3 — the rows that did not fit</span></div>
+                <div class="bd__row"><span class="bd__h">…</span><span class="bd__b bd__b--cast">groupFooter — the <b>whole group’s</b> total, once, at the end</span></div>
+              </div>
+            </div>
+            <p class="bd__say" style="margin-top:3mm;">
+              † The page footer's box is <code>bottom: 0</code> inside the content box, so its edges are the
+              paper's 12mm margin — which is why an eight-row report and an eight-hundred-row report both
+              end with the footer on the same millimetre.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <aside class="notes">
+        <div class="card stack">
+          <h3 style="font-size:13px;">The band table, as the starter declares it</h3>
+          <table class="ptable" style="margin-top:6px;">
+            <thead><tr><th>Band</th><th class="n">Height</th><th>Repeats</th><th>A group</th></tr></thead>
+            <tbody>
+              <tr><td>pageHeader</td><td class="n">12mm</td><td>every page</td><td>no</td></tr>
+              <tr><td>columnHeader</td><td class="n">7mm</td><td>every page</td><td>no</td></tr>
+              <tr><td>groupHeader</td><td class="n">9mm</td><td>after a break in the group</td><td>yes</td></tr>
+              <tr><td>detail</td><td class="n">6mm</td><td>one per row</td><td>no</td></tr>
+              <tr><td>groupFooter</td><td class="n">8mm</td><td>once, at the group's end</td><td>yes</td></tr>
+              <tr><td>pageFooter</td><td class="n">8mm</td><td>every page, anchored</td><td>no</td></tr>
+            </tbody>
+          </table>
+          <p class="say">
+            The other three kinds the engine has and this template does not use:
+            <code>reportTitle</code>, <code>columnFooter</code>, <code>reportSummary</code>.
+            <code>BAND_KINDS</code> in <code>packages/shared/src/reportTemplate.ts</code> is the
+            authority; the designer's palette reads it.
+          </p>
+        </div>
+
+        <div class="card stack" style="margin-top:12px;">
+          <h3 style="font-size:13px;">Two real findings, and the one thing not to change</h3>
+          <p class="say">
+            <b>1. The group rule is cyan.</b> The starter's group-header line is
+            <code>{ width: 0.4, color: "#22d3ee" }</code> — the same cyan that measured 2.1:1 against
+            paper on screen one. It is the line that marks where a group ends, which is the single
+            boundary a reader navigates by, so it is the worst place in the product to put the one
+            colour a photocopier drops. <b>Crimson, 0.6mm.</b>
+          </p>
+          <p class="say">
+            <b>2. The page footer is 7.5pt.</b> Below the 8.5pt floor, in the line that carries the page
+            number and the generated date. <b>8.5pt</b>, and it costs 0mm of band height because the
+            band is 8mm tall with room.
+          </p>
+          <p class="say">
+            <b>What is not to change.</b> The millimetre layout, the band heights, the repeat rules, the
+            anchored footer and the jsPDF vector text are already right, and this file proposes no
+            change to any of them. A custom report is also <b>deliberately excluded</b> from the
+            letterhead — <code>documentBrand.ts</code> says why: putting the product's shield above bands
+            an author placed by hand would be overruling them. The designer already offers the mark and
+            the wordmark as <b>placeable images</b> (<code>brand-mark</code>, <code>brand-wordmark</code>
+            in the catalogue), so the author who wants a letterhead places one. That stays.
+          </p>
+          <p class="say">
+            And the band tints (<code>BAND_BACKGROUNDS</code> — pale cyan for a group header, pale teal
+            for its footer) stay on the canvas: they are an overlay in <code>PageRenderer.tsx</code>
+            drawn only when <code>showBandTint</code> is on, and the printed sheet is white because a
+            band carries no background of its own. Paper gets rules; the canvas gets tints.
+          </p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN FIVE — THE OUTPUT CHOOSER, IN BOTH INTERFACES
+
+       What exists today: a **Print** button and an **Export** button on the report toolbar. Export
+       opens a dialog with Format (PDF / Excel / CSV), the report's own filters, a preview of the rows
+       and a trailing "Export PDF" button. It has no paper size, no orientation and no way to say
+       whether the basis block travels. Print does not open a chooser at all — it prints immediately.
+       And the file that results is landscape A4 whatever was on screen, because `documentToPdf` says
+       so in its constructor and `documentToPrintWindow` names no size at all.
+       ═════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="chooser" hidden>
+    <div class="screen__label">Screen five — the moment somebody decides what to produce</div>
+    <div class="screen__head">
+      <h2>Four answers, two of which the product has never asked for</h2>
+      <p>
+        Print, PDF, Excel and CSV are one decision, not three buttons with a fourth on the toolbar. The
+        two answers a person actually needs on this panel are <b>paper</b> — size and orientation,
+        because a matrix that fits landscape does not fit portrait — and <b>whether the basis block
+        travels with the file</b>, because a spreadsheet and a PDF disagree about what "where these
+        figures came from" even means.
+      </p>
+    </div>
+
+    <div class="grid2" style="margin-top:16px;">
+      <!-- ── The modern arrangement ─────────────────────────────────────────────────────────── -->
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div style="padding:12px 16px; border-bottom:1px solid var(--surface-border);
+                    display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <span class="chip chip--on">Modern interface · a sheet</span>
+          <span class="mock-note">sentences beside the control that acts</span>
+        </div>
+        <div style="padding:16px;">
+          <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px;">
+            <div>
+              <h3 style="font-size:15px;">Produce the Aging Report</h3>
+              <p class="say" style="margin-top:3px;">
+                All clients · all time, point in time · as of 9 October 2026 · 2 open invoices,
+                $12,198.13 outstanding
+              </p>
+            </div>
+            <span class="chip">Close</span>
+          </div>
+
+          <div style="margin-top:16px;">
+            <div class="mock-note" style="font-weight:600; letter-spacing:.06em; text-transform:uppercase;">The four ways out</div>
+            <div style="display:grid; gap:8px; margin-top:8px;">
+              <div class="band" style="border-left-color:var(--alert-green); align-items:flex-start;">
+                <span class="glyph glyph--green"><svg class="ico ico--lg"><use href="#i-printer"/></svg></span>
+                <div style="flex:1 1 260px; min-width:0;">
+                  <div class="band__t">Print on paper now</div>
+                  <p class="band__d">Two sheets, A4 portrait, at the sizes this document is designed in.
+                    Nothing is scaled to fit the browser's default paper.</p>
+                </div>
+                <div class="band__right"><span class="chip chip--good">1:1</span></div>
+              </div>
+              <div class="band" style="border-left-color:var(--cyber-500); align-items:flex-start;">
+                <span class="glyph glyph--cyber"><svg class="ico ico--lg"><use href="#i-doc"/></svg></span>
+                <div style="flex:1 1 260px; min-width:0;">
+                  <div class="band__t">PDF — the same pages, as a file</div>
+                  <p class="band__d">Vector text, the pages you saw, with the basis block as page two.
+                    Today this file is <b>always landscape A4</b>; here it is the paper you choose.</p>
+                </div>
+                <div class="band__right"><span class="chip chip--on">chosen</span></div>
+              </div>
+              <div class="band" style="align-items:flex-start;">
+                <span class="glyph glyph--neutral"><svg class="ico ico--lg"><use href="#i-table"/></svg></span>
+                <div style="flex:1 1 260px; min-width:0;">
+                  <div class="band__t">Excel — one sheet per table, typed cells</div>
+                  <p class="band__d">The figures without the document: 3 tables, 9 rows.
+                    Figures arrive as numbers, not as the strings a PDF draws.</p>
+                </div>
+                <div class="band__right"><span class="chip">.xls</span></div>
+              </div>
+              <div class="band" style="align-items:flex-start;">
+                <span class="glyph glyph--neutral"><svg class="ico ico--lg"><use href="#i-split"/></svg></span>
+                <div style="flex:1 1 260px; min-width:0;">
+                  <div class="band__t">CSV — every table stacked in one file</div>
+                  <p class="band__d">For whatever reads it next. Column widths, rules and page numbers
+                    do not exist here, and the basis block is the topmost paragraph rather than a
+                    column of labels with no column.</p>
+                </div>
+                <div class="band__right"><span class="chip">.csv</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:18px;">
+            <div class="mock-note" style="font-weight:600; letter-spacing:.06em; text-transform:uppercase;">The two answers</div>
+
+            <div style="margin-top:10px; display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap;">
+              <div class="figure">
+                <div class="figure__shape figure__a4p"></div>
+                <div>
+                  <div style="font-size:12.5px; font-weight:600; color:var(--text-primary);">A4 · 210 × 297mm</div>
+                  <p class="say" style="max-width:44ch;">The margin is 18mm whatever the sheet, so a
+                    Letter page simply has 5.9mm more column.</p>
+                </div>
+              </div>
+              <div class="seg" style="margin-left:auto;">
+                <button type="button" class="seg__opt seg__opt--on">A4</button>
+                <button type="button" class="seg__opt">Letter</button>
+              </div>
+            </div>
+
+            <div style="margin-top:12px; display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap;">
+              <div class="figure">
+                <div class="figure__shape figure__a4p"></div>
+                <div class="figure__shape figure__a4l" style="margin-left:-28px;"></div>
+              </div>
+              <div style="flex:1 1 260px; min-width:0;">
+                <div style="font-size:12.5px; font-weight:600; color:var(--text-primary);">Portrait, or landscape for the matrix</div>
+                <p class="say">The endpoint returns nine band columns per client. Portrait prints the six
+                  that carry money; <b>landscape fits all nine at the same 9pt</b>. Neither scales the
+                  type down to make a table fit.</p>
+              </div>
+              <div class="seg">
+                <button type="button" class="seg__opt seg__opt--on">Portrait</button>
+                <button type="button" class="seg__opt">Landscape</button>
+              </div>
+            </div>
+
+            <div style="margin-top:12px; display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap;">
+              <span class="glyph glyph--amber"><svg class="ico ico--lg"><use href="#i-alert"/></svg></span>
+              <div style="flex:1 1 260px; min-width:0;">
+                <div style="font-size:12.5px; font-weight:600; color:var(--text-primary);">Send the basis block with the file</div>
+                <p class="say">The last sheet says where the figures came from, what was excluded and
+                  what cannot be known — including that this instance has <b>no credit-terms field</b>
+                  and only two open invoices. <b>Switch it off and the file is the figures alone</b>,
+                  which is a file whose reader will take the total as fact.</p>
+              </div>
+              <div class="seg">
+                <button type="button" class="seg__opt seg__opt--on">Yes</button>
+                <button type="button" class="seg__opt">No</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="listfoot" style="border-top:1px solid var(--surface-border); margin-top:18px;
+                                      padding-top:12px; display:flex; gap:10px; flex-wrap:wrap;
+                                      align-items:center; font-size:11.5px; color:var(--text-muted);">
+            <span><b style="color:var(--text-primary);">PDF</b> · 2 sheets · A4 portrait · basis block
+              included · 3 tables · 9 rows</span>
+            <span style="margin-left:auto; display:flex; gap:8px;">
+              <button type="button" class="btn btn--quiet">Cancel</button>
+              <button type="button" class="btn btn--primary">Export PDF</button>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── The classic arrangement ────────────────────────────────────────────────────────── -->
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div style="padding:12px 16px; border-bottom:1px solid var(--surface-border);
+                    display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <span class="chip">Classic interface · a dialog</span>
+          <span class="mock-note">labelled fields in a grid, heading, Save and Cancel</span>
+        </div>
+        <div style="padding:16px;">
+          <div style="max-width:560px; margin:0 auto; background:var(--surface-light); border:1px solid var(--surface-border);
+                      border-radius:12px; padding:16px;">
+            <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px;">
+              <h3 style="font-size:14px;">Export report</h3>
+              <span class="mock-note">Aging Report</span>
+            </div>
+
+            <div class="grid2" style="margin-top:14px; gap:12px;">
+              <div>
+                <label class="mock-note" style="display:block; margin-bottom:4px;">File format</label>
+                <select class="input-field">
+                  <option selected>PDF — print-ready</option>
+                  <option>Microsoft Excel (.xls)</option>
+                  <option>CSV — comma separated</option>
+                  <option>Print now, on paper</option>
+                </select>
+              </div>
+              <div>
+                <label class="mock-note" style="display:block; margin-bottom:4px;">Paper size</label>
+                <select class="input-field">
+                  <option selected>A4 — 210 × 297mm</option>
+                  <option>Letter — 215.9 × 279.4mm</option>
+                </select>
+              </div>
+              <div>
+                <label class="mock-note" style="display:block; margin-bottom:4px;">Orientation</label>
+                <select class="input-field">
+                  <option selected>Portrait</option>
+                  <option>Landscape — the nine-column matrix</option>
+                </select>
+              </div>
+              <div>
+                <label class="mock-note" style="display:block; margin-bottom:4px;">Basis block</label>
+                <select class="input-field">
+                  <option selected>Include — the last sheet</option>
+                  <option>Leave out</option>
+                </select>
+              </div>
+              <div>
+                <label class="mock-note" style="display:block; margin-bottom:4px;">Report by client</label>
+                <select class="input-field"><option selected>All clients</option></select>
+              </div>
+              <div>
+                <label class="mock-note" style="display:block; margin-bottom:4px;">Period</label>
+                <input class="input-field" value="All time — point in time" readonly>
+              </div>
+            </div>
+
+            <label style="display:flex; gap:8px; align-items:flex-start; margin-top:14px;">
+              <input type="checkbox" checked style="margin-top:3px;">
+              <span class="say" style="color:var(--text-secondary);">
+                Preview the file's contents before it is written<br>
+                <span class="mock-note">3 tables · 9 rows</span>
+              </span>
+            </label>
+
+            <div class="band band--warn" style="margin-top:14px; border-radius:10px; align-items:flex-start;">
+              <span class="glyph glyph--amber"><svg class="ico ico--lg"><use href="#i-alert"/></svg></span>
+              <p class="band__d">
+                <b>Leaving the basis block out removes the last sheet.</b> The remaining sheets still
+                print the age bands and the client matrix, but nothing on them says that this instance
+                has no credit-terms field or that the population is two invoices.
+              </p>
+            </div>
+
+            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px;">
+              <button type="button" class="btn btn--quiet">Cancel</button>
+              <button type="button" class="btn btn--primary">Export PDF</button>
+            </div>
+          </div>
+
+          <p class="say" style="margin-top:12px;">
+            <b>One component, one set of handlers, two returns.</b> The state, the API call and the words
+            are shared; the arrangement is not. The modern sheet puts a sentence beside each of the four
+            ways out and shows the paper as a shape; the classic dialog asks the same five questions as
+            labelled fields in a grid and keeps <b>Print now, on paper</b> as a fourth entry in the
+            format select rather than a toolbar button of its own.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage" style="grid-template-columns:minmax(0,1fr) 424px; margin-top:20px;">
+      <div class="card">
+        <h3 style="font-size:13px;">What the panel is allowed to promise, and what it must not</h3>
+        <table class="ptable" style="margin-top:8px;">
+          <thead><tr><th>The answer</th><th>What the panel says</th><th style="width:38%;">What it must not say</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="mono">Print</td>
+              <td>"Two sheets, A4 portrait, at the sizes this document is designed in."</td>
+              <td>Anything about the reader's printer. The sheets print at their own size; the printer's
+                "fit to page" is the printer's business, and the panel does not pretend to override it.</td>
+            </tr>
+            <tr>
+              <td class="mono">Paper and orientation</td>
+              <td>The size in millimetres, and the sentence that says what changes on the page because
+                of it.</td>
+              <td>"A4" as a word with no consequence. This panel's whole job is that a person choosing
+                landscape knows nine columns will print instead of six.</td>
+            </tr>
+            <tr>
+              <td class="mono">The basis block</td>
+              <td>What it contains, and that leaving it out leaves the reader with figures and no
+                provenance.</td>
+              <td>That the file is "incomplete" — it is not. It is a file without the note that says
+                what the figures cannot answer, and the panel says exactly that.</td>
+            </tr>
+            <tr>
+              <td class="mono">Excel and CSV</td>
+              <td>One sheet per table, typed cells; every table stacked; the basis block as the topmost
+                paragraph.</td>
+              <td>That a spreadsheet has pages, rules or a header. It is the figures, and the panel
+                counts them rather than describing a document that is not being made.</td>
+            </tr>
+            <tr>
+              <td class="mono">The counts</td>
+              <td>"3 tables · 9 rows" — read from the loader that prepares the file, not from the screen
+                it was opened on.</td>
+              <td>A page count nobody measured. The sheet count is stated where the paper is chosen; the
+                row count is stated where the file is chosen.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <aside class="notes">
+        <div class="card stack">
+          <h3 style="font-size:13px;">Where this chooser has to be reachable</h3>
+          <p class="say">
+            It replaces two controls, so it has to appear everywhere those two appear today — and the
+            list is the reason the shared language matters more than a new dialog:
+          </p>
+          <div class="kv"><span class="kv__k">Reporting → Standard</span><span class="kv__v"><code>ReportViewer</code>'s Print and Export buttons</span></div>
+          <div class="kv"><span class="kv__k">Billing → Reports</span><span class="kv__v">the same viewer, reached from the six cards</span></div>
+          <div class="kv"><span class="kv__k">The report designer</span><span class="kv__v"><code>printTemplateReport</code> / <code>exportTemplatePdf</code> — a hundredth page, still a sheet</span></div>
+          <div class="kv"><span class="kv__k">A scheduled report</span><span class="kv__v">the schedule's own format field, which is the same four answers without a person present</span></div>
+          <div class="kv"><span class="kv__k">A saved report</span><span class="kv__v">the same viewer again — which is the point of one chooser</span></div>
+          <p class="say">
+            A schedule is the interesting one: it has nobody to ask, so its paper, orientation and
+            basis-block answers are stored on the schedule row and defaulted from the report's family.
+            That is a change to the schedule, not to this panel, and it is the reason the panel exists
+            as one component rather than four dialogs.
+          </p>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       End of the drawn screens.
+       ═════════════════════════════════════════════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN SIX — WHAT CHANGES AND WHY, INCLUDING WHAT DOES NOT
+       ═════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="change" hidden>
+    <div class="screen__label">Screen six — the audit of this mockup</div>
+    <div class="screen__head">
+      <h2>Five families, four renderers, and the one sentence that explains all of it</h2>
+      <p>
+        The finding this file leads with is not that the documents look dated. It is that nobody owns
+        the page: each renderer decides a paper size, a type scale and a set of colours for itself, and
+        a document that leaves through two of them can be two different documents.
+      </p>
+    </div>
+
+    <div class="card" style="padding:0; overflow:hidden; margin-top:16px;">
+      <div style="padding:13px 16px; border-bottom:1px solid var(--surface-border);">
+        <h3 style="font-size:13px;">The five families and the four mechanisms under them</h3>
+      </div>
+      <div style="padding:0 16px 14px;">
+        <table class="ptable">
+          <thead>
+            <tr><th style="width:150px;">Family</th><th style="width:24%;">Renderer today</th>
+                <th>What the shared language fixes</th><th style="width:22%;">What stays exactly as it is</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Standard reports</b><br><span class="mock-note">16 in <code>STANDARD_REPORTS</code></span></td>
+              <td class="mono">reportKit.tsx<br>ReportBody · documentToPrintWindow · printReport ·
+                exportPdf → documentToPdf · exportExcel · exportCsv</td>
+              <td>The paper: A4 portrait unless the report is a matrix. The masthead. Hairlines instead
+                of dark header fills and zebra rows. 9pt on a 4.5mm grid instead of 8pt tiles and 6.8pt
+                labels. A footer that names the instance and the preparer. The basis block, always on
+                the last sheet.</td>
+              <td>The section model. A report is still a list of <code>kpis</code>, <code>bars</code>,
+                <code>facts</code>, <code>tables</code> and <code>notes</code>, and the screen still
+                draws the same list the file does — one source, four consumers.</td>
+            </tr>
+            <tr>
+              <td><b>Business reviews</b><br><span class="mock-note">weekly · monthly · quarterly</span></td>
+              <td class="mono">reportKit.tsx composed as a pack<br><code>weeklyReviewReport</code>,
+                <code>monthlyReviewReport</code>, <code>qbrReport</code> in reportData.ts</td>
+              <td>A cover, a contents, section openers with a sentence before the table, and section-aware
+                pagination instead of "add a page when the cursor reaches the margin". Pack-wide page
+                numbers.</td>
+              <td>One builder for all three cadences. A weekly review and a quarterly review remain the
+                same document over a different window, with the server supplying the window and the
+                comparison.</td>
+            </tr>
+            <tr>
+              <td><b>Custom / banded</b><br><span class="mock-note">author-designed pages</span></td>
+              <td class="mono">reportOutput.ts<br>printTemplateReport · exportTemplatePdf, over
+                <code>layoutReport</code> in reportLayout.ts</td>
+              <td>The accent, in one place: the group rule is <code>#22d3ee</code>, which measures 2.1:1
+                against paper, and the group boundary is the one line a reader navigates by. The 7.5pt
+                page footer, below the floor. Nothing else.</td>
+              <td><b>Everything about the geometry.</b> Millimetres, band heights, repeat rules, the
+                anchored footer, <code>keepTogether</code>, <code>pageBreakBefore</code>, the
+                <code>COUNT</code>/<code>SUM</code> scopes and jsPDF's vector text are already right,
+                and the letterhead is still not stamped on a custom report.</td>
+            </tr>
+            <tr>
+              <td><b>Invoice</b><br><span class="mock-note">money document</span></td>
+              <td class="mono">GET /billing/invoices/:id/pdf<br>billing.ts:399 — dark-themed HTML</td>
+              <td>Nothing here. The invoice must agree with this language on the letterhead, the type
+                scale and the accent, and that is the <b>companion file's</b> job, not this one's.</td>
+              <td>The invoice's own layout, its line-item table and its totals — and the fact that a
+                money document is portrait A4 or Letter and never landscape.</td>
+            </tr>
+            <tr>
+              <td><b>Ticket sheet</b><br><span class="mock-note">service document</span></td>
+              <td class="mono">.ticket-print-only<br>Tickets.tsx + index.css, browser print of a hidden
+                section</td>
+              <td>Nothing here — companion file. But note that it is the only document this product
+                prints where the page is the browser's: <code>body * { visibility: hidden }</code> and
+                one visible section.</td>
+              <td>Its serif type scale in points, and the letterhead it shares through
+                <code>PrintLetterhead.tsx</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid3" style="margin-top:16px;">
+      <div class="card stack">
+        <h3 style="font-size:13px;">What one language fixes, concretely</h3>
+        <div class="kv"><span class="kv__k">One paper default</span><span class="kv__v">Today: A4 landscape in points for every PDF, an unnamed page for every print, the template's own millimetres for every banded run, and the browser's default for a ticket. Proposed: a family default, chosen in one place.</span></div>
+        <div class="kv"><span class="kv__k">One accent</span><span class="kv__v">Cyan <code>#00c0f4</code> / <code>#22d3ee</code> in three renderers at 2.1:1, crimson in none. Proposed: crimson, at weight.</span></div>
+        <div class="kv"><span class="kv__k">One type floor</span><span class="kv__v">6.8pt tiles, 7.5pt footers, 9px print CSS. Proposed: 8.5pt, everywhere, measured in points rather than pixels.</span></div>
+        <div class="kv"><span class="kv__k">One letterhead</span><span class="kv__v">Three renderers draw it and none of them says who generated the document. Proposed: one meta line, four facts, and the preparer's name in it.</span></div>
+        <div class="kv"><span class="kv__k">One basis block</span><span class="kv__v">The endpoint already carries <code>basis</code>, <code>notes</code> and <code>dataQuality</code>. It is printed by prose that the file's reader never sees. Proposed: the last sheet, and a switch to remove it.</span></div>
+        <div class="kv"><span class="kv__k">One dead renderer</span><span class="kv__v"><code>tablesToPdf</code> — a landscape autoTable writer nothing calls any more. Proposed: delete it, because a second page layout that nobody uses is how the first one gets copied wrongly.</span></div>
+      </div>
+
+      <div class="card stack">
+        <h3 style="font-size:13px;">What this mockup does <i>not</i> propose</h3>
+        <div class="kv"><span class="kv__k">The banded geometry</span><span class="kv__v">Millimetres, band edges, <code>keepTogether</code>, <code>pageBreakBefore</code>, repeat rules, bottom-anchored footer: unchanged.</span></div>
+        <div class="kv"><span class="kv__k">jsPDF vector text</span><span class="kv__v">The banded PDF draws real text from the layout's own coordinates with no HTML rendering and no headless browser. Unchanged, and the reason its page breaks are the preview's page breaks.</span></div>
+        <div class="kv"><span class="kv__k">The letterhead exemption</span><span class="kv__v">A custom report is still not given the shield. The designer still offers the mark and the wordmark as placeable images.</span></div>
+        <div class="kv"><span class="kv__k">The band tints</span><span class="kv__v"><code>BAND_BACKGROUNDS</code> stays a designer-canvas overlay. Paper gets rules.</span></div>
+        <div class="kv"><span class="kv__k">The invoice and the ticket</span><span class="kv__v">The companion file's, drawn to the same language. This file draws neither.</span></div>
+        <div class="kv"><span class="kv__k">Every figure shown</span><span class="kv__v">Read from the instance on 9 October 2026. Nothing invented to fill a page; where a figure was missing the page says so.</span></div>
+      </div>
+
+      <div class="card stack">
+        <h3 style="font-size:13px;">If this is built, in order</h3>
+        <div class="kv"><span class="kv__k">1</span><span class="kv__v">The language as a module: paper sizes in millimetres, the margin, the grid, the type scale, the accent, and a basis-block component both renderers can draw. One file, not three.</span></div>
+        <div class="kv"><span class="kv__k">2</span><span class="kv__v">The generated document reads it: <code>documentToPdf</code> loses its hardcoded landscape, <code>documentToPrintWindow</code> gains an <code>@page</code> size, and the letterhead and running head come from the shared module.</span></div>
+        <div class="kv"><span class="kv__k">3</span><span class="kv__v">The pack: cover, contents, section openers and section-aware breaks on top of the same sections.</span></div>
+        <div class="kv"><span class="kv__k">4</span><span class="kv__v">The banded engine takes the accent and the type floor; the geometry is untouched, so no saved template moves a millimetre.</span></div>
+        <div class="kv"><span class="kv__k">5</span><span class="kv__v">The chooser, in both interfaces, replacing Print and Export. A schedule row gains the same four answers.</span></div>
+        <div class="kv"><span class="kv__k">6</span><span class="kv__v">The Help walkthrough and the configuration reference, because paper size and the basis block become things a person can set.</span></div>
+        <p class="say">
+          Each of those is a change to a renderer, and the renderers are separate enough that step 4
+          can ship without steps 1–3. That is the property the fragmentation accidentally bought, and
+          it is worth keeping.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       THE CLASSIC ARRANGEMENT — required, because this repository keeps two designs of every screen
+       and they are two designs rather than one screen with a class toggled. A document is a third
+       surface and is identical in both interfaces; the screens around it are not.
+       ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="classic" hidden>
+    <div class="screen__label">In the classic interface</div>
+
+    <div class="card" style="margin-top:12px;">
+      <div class="grid2" style="gap:20px;">
+        <div>
+          <h3 style="font-size:13px;">The document does not change. The controls around it do.</h3>
+          <p class="say" style="margin-top:8px;">
+            One component, one set of handlers, two returns. The state, the API call and the words are
+            shared; the arrangement is not. Nothing about the paper is different in the classic
+            interface — a report printed from the classic screen is the same sheet as one printed from
+            the modern screen, and that is deliberate: a document is a third surface, not a fourth
+            design (DESIGN.md §8).
+          </p>
+          <div class="kv" style="margin-top:12px;"><span class="kv__k">Report viewer</span><span class="kv__v">Classic keeps <b>two buttons</b> on the toolbar, Print and Export, and the chooser opens as a <b>dialog</b> with a heading, labelled fields in a grid and Save/Cancel. The modern screen replaces both with one <b>Produce</b> control that opens a sheet.</span></div>
+          <div class="kv"><span class="kv__k">Wording</span><span class="kv__v">Identical. "A4 — 210 × 297mm", "Portrait", "Landscape — the nine-column matrix", "Include — the last sheet". The classic field labels are the modern sentences' subjects.</span></div>
+          <div class="kv"><span class="kv__k">The fourth format</span><span class="kv__v">Classic lists <b>Print now, on paper</b> as the fourth entry in the format select, because a classic dialog is a form with one act at the bottom. Modern gives Print its own card, because pressing Print does not need a second press to confirm.</span></div>
+          <div class="kv"><span class="kv__k">Preview</span><span class="kv__v">Classic keeps the checkbox and the <code>ReportBody</code> preview inside the dialog, as the export dialog does today. Modern shows the counts in the sheet's footer and lets the paper thumbnails carry the idea of the page.</span></div>
+          <div class="kv"><span class="kv__k">Custom reports</span><span class="kv__v">Unchanged: the designer's own Print and PDF buttons stay where they are in both interfaces. The chooser is for a report the product generates, not for a page an author laid out by hand.</span></div>
+          <div class="kv"><span class="kv__k">Reachability</span><span class="kv__v">The same in both: Reporting → Standard, Billing → Reports, a saved report, and the schedule's format field. <code>useRedesign()</code> decides the arrangement, never the behaviour.</span></div>
+        </div>
+
+        <div>
+          <h3 style="font-size:13px;">The export dialog, classic, as it will read</h3>
+          <div style="margin-top:10px; padding:14px; border-radius:10px; background:var(--surface-light);
+                      border:1px solid var(--surface-border);">
+            <div style="font-size:13px; font-weight:600; color:var(--text-primary);">Export report</div>
+            <p class="say" style="margin-top:5px;">Aging Report · all clients · all time, point in time</p>
+
+            <div class="kv" style="margin-top:11px;"><span class="kv__k">File format</span><span class="kv__v">a select: PDF · Excel (.xls) · CSV · Print now, on paper</span></div>
+            <div class="kv"><span class="kv__k">Paper size</span><span class="kv__v">a select: <b>A4 — 210 × 297mm</b> · Letter — 215.9 × 279.4mm</span></div>
+            <div class="kv"><span class="kv__k">Orientation</span><span class="kv__v">a select: <b>Portrait</b> · Landscape — the nine-column matrix</span></div>
+            <div class="kv"><span class="kv__k">Basis block</span><span class="kv__v">a select: <b>Include — the last sheet</b> · Leave out</span></div>
+            <div class="kv"><span class="kv__k">Report by client</span><span class="kv__v">the report's own filter, above the fold as it is today</span></div>
+            <div class="kv"><span class="kv__k">Basis warning</span><span class="kv__v">a warning band appears inside the dialog when the answer is <i>Leave out</i>, saying what the reader will lose</span></div>
+            <div class="kv"><span class="kv__k">Preview</span><span class="kv__v">the checkbox and the row-counted preview the dialog already has</span></div>
+            <div style="display:flex; gap:8px; margin-top:14px;">
+              <button type="button" class="btn btn--primary">Export PDF</button>
+              <button type="button" class="btn btn--quiet">Cancel</button>
+            </div>
+          </div>
+          <p class="say" style="margin-top:10px;">
+            <b>What differs on purpose, and what the Help walkthrough therefore has to say.</b> The
+            classic dialog shows every question at once, including the filters, because a classic
+            screen is a form and a form that hides a field is a form that gets filled in twice. The
+            modern sheet asks the four questions that change the artefact and leaves the filters where
+            they were set, on the report above it. The classic preview is a table; the modern one is a
+            paper shape and a count. Both write the same file, and the basis-block sentence is the
+            same sentence in both — which is the part a user will read.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mock-note" style="margin-top:34px; padding-top:16px; border-top:1px solid var(--surface-border); max-width:132ch;">
+    Drawn in millimetres at true paper fidelity — A4 portrait <code>210 × 297mm</code> and landscape
+    <code>297 × 210mm</code>, 18mm side margins, 16mm top and 20mm bottom, a 4.5mm baseline grid.
+    Figures read from the running instance and the API on <code>:4000</code> on 9 October 2026:
+    <b>Aging Report</b> $12,198.13 outstanding across 2 invoices ($8,680.00 owed 31–60 days by Globex
+    Industries, $3,518.13 not yet due from Umbrella Corp) · <b>Q3 2026 review</b> 96 tickets, 34.25
+    hours, $27,960.63 invoiced, $4,438.75 collected, 5 agreements at $330,000 annualised, 80 open
+    tickets all over 30 days · <b>5 invoices</b> grouped by their own status, from
+    <code>GET /api/billing/invoices</code> · the banded template from
+    <code>GET /api/reports/designer/starter</code> (<code>groupedTotals</code>, invoices) at
+    12mm margins and 186mm content. The preparer named on every sheet is a real account
+    (<code>stephen.simmons@cyber7group.com</code>, Super Admin). No figure was invented; where one
+    could not be read, the page says so. Reverting: delete this file.
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+
+    function setTheme(mode) {
+      root.setAttribute("data-theme", mode);
+      document.querySelectorAll("[data-theme-btn]").forEach(function (b) {
+        b.setAttribute("aria-pressed", String(b.getAttribute("data-theme-btn") === mode));
+      });
+    }
+    document.querySelectorAll("[data-theme-btn]").forEach(function (b) {
+      b.addEventListener("click", function () { setTheme(b.getAttribute("data-theme-btn")); });
+    });
+
+    function setZoom(scale) {
+      document.documentElement.style.setProperty("--paper-zoom", scale);
+      document.querySelectorAll("[data-zoom-btn]").forEach(function (b) {
+        b.setAttribute("aria-pressed", String(b.getAttribute("data-zoom-btn") === scale));
+      });
+    }
+    document.querySelectorAll("[data-zoom-btn]").forEach(function (b) {
+      b.addEventListener("click", function () { setZoom(b.getAttribute("data-zoom-btn")); });
+    });
+
+    var screens = document.querySelectorAll(".screen[data-screen]");
+    function showScreen(id) {
+      screens.forEach(function (s) { s.hidden = s.getAttribute("data-screen") !== id; });
+      document.querySelectorAll("[data-screen-btn]").forEach(function (b) {
+        var on = b.getAttribute("data-screen-btn") === id;
+        b.classList.toggle("pick__opt--on", on);
+        b.setAttribute("aria-pressed", String(on));
+      });
+      window.scrollTo({ top: 0 });
+    }
+    document.querySelectorAll("[data-screen-btn]").forEach(function (b) {
+      b.addEventListener("click", function () { showScreen(b.getAttribute("data-screen-btn")); });
+    });
+    document.querySelectorAll("[data-goto]").forEach(function (b) {
+      b.addEventListener("click", function () { showScreen(b.getAttribute("data-goto")); });
+    });
+
+    document.querySelectorAll(".why").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var body = document.getElementById(b.getAttribute("aria-controls"));
+        var open = b.getAttribute("aria-expanded") === "true";
+        b.setAttribute("aria-expanded", String(!open));
+        if (body) body.hidden = open;
+      });
+    });
+
+    // Every screen starts hidden so the file never flashes six documents at once; the picker's first
+    // entry is the one it opens on.
+    showScreen("system");
+  })();
+</script>
+</body>
+</html>

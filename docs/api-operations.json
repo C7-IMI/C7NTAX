@@ -250,8 +250,20 @@
   "GET /api/billing/invoices": {
     "summary": "List invoices"
   },
+  "GET /api/billing/invoices/:id/pdf": {
+    "summary": "An invoice, drawn as a printable page",
+    "description": "The invoice as a **standalone HTML document** — not JSON — ready to print or save as a PDF: a white A4 or Letter sheet with 18 mm margins, the instance's letterhead from `brandForDocument(\"invoice\")`, an unambiguous date format, the money block, a pay block and a footer with page *n* of *m*. Deliberately self-contained: the CSS is inlined because the page is fetched on its own, and a document is not a screen, so it never follows the user's theme. The amount due is the balance the **payments** make it, so a part-paid invoice states what is outstanding rather than the gross total; when the recorded status and the recorded payments disagree, the payments win and the page says so. `taxRate` is read with the repo's convention — above 1 it is a percentage, at or below 1 a fraction — so an invoice recording 8.5 prints `Sales tax · 8.5% · US · IL` and not `Tax (850.0%)`. An invoice with no `InvoiceLineItem` rows states the agreement its amount came from instead of printing an empty table over a live subtotal. Requires billing:view and the client scope the caller already carries; a company-scoped account gets 403 for another client's invoice."
+  },
+  "GET /api/billing/clients/:companyId/statement": {
+    "summary": "What a client owes, aged, as a printable page",
+    "description": "A statement of account as a **standalone HTML document** — not JSON — on the same paper as the invoice: every invoice issued to the client and still open, listed with its age and its ageing band, and totalled by band (not yet due, 1–30, 31–60, 61–90, over 90). Each row's **balance** is its total less the payments recorded against it, which is the figure that cannot be wrong: the overdue-reminder email states `invoice.total` as the outstanding balance, so a part-paid invoice is chased for the wrong amount there. Pass `?invoice=<id>` to narrow the document to one invoice — the shape the reminder email attaches — while keeping the same figures and the same ageing. 404 when the invoice named is not this client's. Requires billing:view plus a scope that includes the client."
+  },
   "POST /api/billing/invoices/generate": {
     "summary": "Generate an invoice from unbilled time"
+  },
+  "GET /api/quotes/:id/pdf": {
+    "summary": "A quote, drawn as a proposal you can print",
+    "description": "The quote as a **standalone HTML document** — not JSON — on the same paper as the invoice and the statement. A quote is an offer, not a demand, so it is shaped differently on purpose: it states what is proposed before it shows a price, says the day the price stops being true, and ends with three ways to answer — accept, ask, or book — plus a signature line for acceptance. There is no expiry column on `Quote`, so a validity written in the quote's own `notes` (\"Valid for 30 days.\") is honoured and labelled as such, and thirty days from the day the quote was prepared is the fallback, labelled as a convention rather than a record. Whole-router gate: with the `billing.quotes` flag off the route answers 404 like the rest of this router. Requires billing:view and a scope that includes the quote's client." 
   },
   "POST /api/billing/invoices/:id/send": {
     "summary": "Send an invoice to the client"
@@ -555,5 +567,94 @@
       "id": "D1",
       "note": "Front Door Premium alone, with a Private Link origin. Agreed with the operator."
     }
+  },
+  "GET /api/email/messages": {
+    "summary": "Every message this instance can send, with what fires it and who reads it",
+    "description": "The trigger matrix: one entry per EmailMessageKey, with its group, its audience (customer or internal), its editing class, whether it is live, what fires it, the recipient rule the code enforces today, the files it may carry, the merge fields it may use, and the template currently in force. `counts.customised` is the question this screen exists to answer — which of these have we changed? — and `counts.neverSent` counts the senders nothing calls. The recipient rule is returned read-only and deliberately: who receives a message is a fact about the ticket, not a word in the template, so the person editing can see who will read what they are writing. Requires email:view. The two dead senders (`ticket.closure`, `invoice.send`) and the two reserved keys (`report.scheduled`, `quote.send`) appear here marked `live: false` rather than being hidden, because a well-formed email with no caller is exactly the thing that must not be mistaken for a delivered one."
+  },
+  "GET /api/email/templates/:key": {
+    "summary": "One message's template, its state, and the plain text derived from its blocks",
+    "description": "The template as the editor wants it: subject, blocks, the stored plain-text part (`text`, null when it is derived rather than written), and `derivedText` — the text the blocks produce, which is what is sent when nobody has edited the text part. `state` is `default` when the stored words are the ones the code ships, `customised` when they are not; a template that has never been edited reads as `default` with version 0 and no row behind it. `derivedText` is rendered against the sample records so the two parts can be compared side by side; a preview against a real record is POST /api/email/preview. Requires email:view."
+  },
+  "PUT /api/email/templates/:key": {
+    "summary": "Change what a message says, keeping the previous version",
+    "description": "Saves the subject, the blocks and (optionally) a hand-written plain-text part, and writes an `EmailTemplateVersion` row for the state being replaced, so the history panel and its reset have something to return to. The version is bumped on every save and every send records the version it used, so the delivery log can answer \"which words did the customer actually get\" after the template has moved on. Passing `text: null` means \"derive it from the blocks\", which is the default. Refused with 400 when the subject is empty, when a block is not one of the thirteen kinds in the shared vocabulary, or when the save would drop a token the message cannot be without — `auth.mfa_code`, `user.invite` and `portal.login_code` are the codes somebody is waiting for, and the API refuses a version of them that no longer carries it rather than storing an email that cannot do its job. Requires email:manage.",
+    "requestExample": {
+     "subject": "[{{ticket.number}}] Still waiting on you — {{ticket.title}}",
+     "blocks": [
+      {
+       "kind": "heading",
+       "level": 1,
+       "text": "Waiting on you"
+      },
+      {
+       "kind": "paragraph",
+       "html": "Ticket <strong>{{ticket.number}}</strong> — <em>{{ticket.title}}</em>"
+      },
+      {
+       "kind": "paragraph",
+       "html": "We are still waiting on your reply, and this ticket has been idle for {{message.idleFor}}."
+      },
+      {
+       "kind": "button",
+       "label": "Open the ticket",
+       "href": "{{ticket.url}}"
+      }
+     ],
+     "text": null,
+     "note": "warmer wording"
+    }
+  },
+  "GET /api/email/templates/:key/versions": {
+    "summary": "The saved versions of a message, newest first",
+    "description": "Up to 50 versions, each with its subject, blocks, plain-text part, when it was saved, who saved it and the note they gave. Version 0 is not in the list: it is the built-in default in the code, which is what \"reset to default\" returns to. Requires email:view."
+  },
+  "POST /api/email/templates/:key/reset": {
+    "summary": "Put a message back to the words the code ships",
+    "description": "Overwrites the stored template with the built-in default and records that as a new version, rather than deleting the row: the version history is what makes a reset safe to perform, and deleting the template would cascade it away. The message then reads as `state: default`. Requires email:manage."
+  },
+  "POST /api/email/preview": {
+    "summary": "Render a message against a real record, without sending or storing anything",
+    "description": "Body: `key`, an optional `subject`/`blocks`/`text` draft so an unsaved change can be seen, and a `target` of `{ kind: \"ticket\" | \"invoice\", id }` or `{ kind: \"sample\" }` to use the named records from the seed. Returns `subject`, `html`, `text` and `derivedText`: both parts come back deliberately, because the owner asked for a message that is still readable when a mail system strips the markup and the only way to be sure of that is to look at the text part. `warnings` names what a person approving the message should know first — a merge field the record cannot supply (it renders as a stated absence rather than as a blank that changes a sentence's meaning), a link that is in the HTML and not in an edited text part, or a condition the sender could not answer. This is the same renderer every live send and POST /api/email/templates/{key}/test use, so the preview is the message rather than a likeness of it. Requires email:view, and sends nothing.",
+    "requestExample": {
+     "key": "ticket.activity",
+     "target": {
+      "kind": "ticket",
+      "id": "3f1c9e2a-0d4b-4f6e-9a77-0c2b5e8d1a44"
+     }
+    }
+  },
+  "POST /api/email/templates/:key/test": {
+    "summary": "Send a real message to one address and log it",
+    "description": "Body: `to` (one address), an optional `target` of the same shape POST /api/email/preview takes, and optional `subject`/`blocks`/`text` so what is on screen can be sent before it is saved. The message is rendered, sent, and written to the delivery log with `test: true` so a test is never mistaken for a message a customer received. Answers 502 when the relay refused it, naming the reason — the send path itself never throws, but this is the one place where \"it did not go\" is something somebody is standing in front of and needs to read. Requires email:manage, because it sends mail to an address of the caller's choosing.",
+    "requestExample": {
+     "to": "you@yourcompany.com",
+     "target": {
+      "kind": "sample"
+     }
+    }
+  },
+  "GET /api/email/brand": {
+    "summary": "The brand kit every message is measured against",
+    "description": "The stored values, plus `effective` — what a message actually uses, defaults included — and `smtpFrom`, the address the API was started with, so a screen can show what an unset sender identity falls back to rather than an empty box that means something. One row for the instance, shared with the PDF letterhead rather than being a second brand for email. Requires email:view."
+  },
+  "PUT /api/email/brand": {
+    "summary": "Change the brand kit: colours, assets, footer, legal line and sender identity",
+    "description": "Colours must be hex values (`#c00000`), and the sender and reply-to addresses are validated. A blank `fromEmail` means \"whatever `SMTP_FROM` the API was started with\", which is what every message uses until somebody sets one. The banner and button colour come from `primaryColor`; the `signature` and `footer` blocks draw `companyName`, `productName`, `footerText` and `legalText`, so a change to the sign-off is one change rather than one per message. Requires email:manage.",
+    "requestExample": {
+     "productName": "C7NTAX",
+     "companyName": "Cyber 7 Group, LLC",
+     "primaryColor": "#c00000",
+     "accentColor": "#00c0f4",
+     "footerText": "Sent by C7NTAX on behalf of Cyber 7 Group, LLC.",
+     "legalText": "",
+     "fromName": "C7NTAX",
+     "fromEmail": "",
+     "replyTo": ""
+    }
+  },
+  "GET /api/email/log": {
+    "summary": "What left the building, what failed and why, and which version of the words was used",
+    "description": "Newest first, with `key` to filter to one message, `limit` (default 50, maximum 200) and `offset` for paging, plus `counts` for sent, failed and test. Every row carries the template key and the version that went out — so \"which words did the customer actually get\" is answerable after the template has moved on — the provider's own message id, the outcome, and the reason when it failed. Nothing in this product logged a send before this table existed. Requires email:view."
   }
 }

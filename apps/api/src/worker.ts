@@ -1,14 +1,11 @@
 import { prisma } from "./index";
 import { TicketStatus, InvoiceStatus } from "@C7NTAX/shared";
 import { notifyUser } from "./ws";
-import { EmailService } from "@C7NTAX/email";
 import { logger } from "./services/logger";
 import { notifyTicketClosure, notifyTicketStatusChange } from "./services/ticketNotifications";
-
-const emailService = new EmailService();
-
-/** Base URL used for portal links inside outbound email. */
-const WEB_ORIGIN = process.env.WEB_ORIGIN || "http://localhost:3010";
+// The links inside these messages are built by the send path from the same origin this file used to
+// hold (`webOrigin()` in `emailSampleRecords.ts`, which reads `WEB_ORIGIN` first).
+import { invoiceEmailContext, sendEmailTemplate, ticketEmailContext } from "./services/emailTemplateSend";
 
 /**
  * Background job runner for ticket and invoice automations.
@@ -77,13 +74,14 @@ async function processTicketFollowUps(): Promise<void> {
       if (hoursWaiting >= (ticket.followUpCount + 1) * 24) {
         const contactEmail = ticket.company?.email || ticket.company?.billingEmail;
         if (contactEmail) {
-          await emailService.sendTicketFollowUp(
-            contactEmail,
-            ticket.ticketNumber,
-            ticket.title,
-            Math.floor(hoursWaiting / 24),
-            `${WEB_ORIGIN}/tickets/${ticket.id}`,
-          );
+          // The words are the Studio's (`ticket.follow_up`); the recipient rule is not: the company's
+          // own address, never the contact's.
+          const outcome = await sendEmailTemplate({
+            key: "ticket.follow_up",
+            to: contactEmail,
+            context: ticketEmailContext({ ...ticket, id: ticket.id }, { idleDays: Math.floor(hoursWaiting / 24) }),
+          });
+          if (!outcome.ok) logger.warn("worker.ticketFollowUp", `Could not send the follow-up for ${ticket.ticketNumber}: ${outcome.error}`);
 
           // Notify assigned tech
           if (ticket.assignedToId) {
@@ -192,13 +190,12 @@ async function processInvoiceReminders(): Promise<void> {
 
       // Send reminder every 7 days when overdue
       if (daysOverdue > 0 && daysOverdue % 7 === 0 && invoice.company?.email) {
-        await emailService.sendOverdueReminder(
-          invoice.company.email,
-          invoice.invoiceNumber,
-          invoice.total,
-          daysOverdue,
-          `${WEB_ORIGIN}/billing?invoice=${invoice.id}`,
-        );
+        const outcome = await sendEmailTemplate({
+          key: "invoice.overdue",
+          to: invoice.company.email,
+          context: invoiceEmailContext({ ...invoice, id: invoice.id }, { overdueDays: daysOverdue }),
+        });
+        if (!outcome.ok) logger.warn("worker.invoiceReminder", `Could not send the reminder for ${invoice.invoiceNumber}: ${outcome.error}`);
       }
     }
   } catch (err) {

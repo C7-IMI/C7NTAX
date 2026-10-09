@@ -52,6 +52,8 @@ const STRUCTURAL_EXEMPT = {
     "Default values for the document's own style fields (the text colour a report uses), which are document properties a person edits, not interface chrome.",
   "apps/web/src/pages/ClientDetail.tsx":
     "A client's own portal accent colour, which the user sets and the product must not re-theme, plus the example of it in the help text beside the field.",
+  "apps/web/src/components/email/EmailSample.tsx":
+    "Draws the customer-facing email itself — a document that leaves the building, wearing the kit's own colours from lib/documentBrand.ts and the template's existing palette. An email must look the same to the client whatever theme the person who sent it prefers, exactly as a printed report must, so a token here would produce the wrong message.",
 };
 
 const HEX = /#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?\b/g;

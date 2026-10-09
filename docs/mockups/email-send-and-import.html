@@ -1,0 +1,2321 @@
+<!DOCTYPE html>
+<!--
+  MOCKUP ONLY — nothing in the application has been changed. No route, component, template, guard,
+  Help section or BuildNotes entry was touched for this drawing: the only artefact is this file, and
+  reverting it is deleting it. Not one line of the proposal below exists in the product yet.
+
+  Six screens of one proposal, switchable inside this single file. It draws the two moments the owner
+  asked for — *sending* something (a note to a client, an invoice from C7NTAX, a report attached and
+  emailed) and *getting a document in* from Word, Publisher or PowerPoint.
+
+  ── WHAT EXISTS TODAY, READ NOT GUESSED ─────────────────────────────────────────────────────────────
+
+  * Mail is one class, `packages/email/src/EmailService.ts`. Seven template functions and two senders
+    that carry a document: `sendInvoice` (line 155, subject `Invoice ${n} — Due ${dueDate}`, the PDF
+    attached) and `sendOverdueReminder` (line 178). `send({ to, subject, html, text?, cc?, bcc?,
+    attachments? })` already takes attachments and `cid` inline parts — **carrying a PDF is a transport
+    capability that exists**. What does not exist is a surface where a person chooses one and sends it.
+  * **An invoice email is written and nothing calls it.** `sendInvoice` has no caller anywhere in the
+    repository (verified by search). The same is true of `sendTicketAutoClose` — the auto-close notice.
+    Both are dead code: well-formed messages, unreachable. So **"sent" on an invoice is a status
+    change, not a message**: `POST /billing/invoices/:id/send` (billing.ts:363, permission
+    `Permission.InvoiceSend`) writes `status: sent` and returns `{ message: "Invoice sent" }`; the
+    Billing screen's Send button toast reads "Sent" (Billing.tsx:210). The route accepts a draft *or*
+    an already-sent invoice, but the button is only drawn for a draft (`inv.status === "draft"`), so
+    INV-2026-002 — which is `overdue` — has no way to be emailed from its own screen at all.
+    The overdue notice that *does* go out is the worker's (`worker.ts:195`), every 7 days while
+    `daysOverdue % 7 === 0`, to `invoice.company.email` — Globex's `contact@globexind.com`, the company
+    address, not a billing contact, and not a contact record.
+  * The ticket's own words are already partly in a string literal: `POST /tickets/:id/email`
+    (routes/tickets/index.ts:515) sends the typed body followed by `<hr><p>Ticket: ${number} — ${title}
+    <br>Client: ${company}</p>` and the same two lines as the plain-text alternative. That footer is
+    exactly what a template should own, and it is the example this file argues from.
+  * The rich-text composer exists and is already filtered. `apps/api/src/services/emailHtml.ts` holds
+    `EMAIL_TAGS`, `EMAIL_STYLE_PROPS`, the drop-with-content list (script/style/iframe/object/embed/
+    form/svg/template) and the rule that an unknown tag is **unwrapped with its text kept** rather than
+    escaped; `EMAIL_DATA_IMAGE` pulls data-URI images out into `cid` parts. The editor's own
+    `cleanPastedHtml` (RichTextEditor.tsx) is the "Word-aware paste" precedent for the importer.
+  * The banded report designer already exists (`ReportDesigner.tsx`, `components/reports/designer/*`,
+    `reportKit.tsx`, `packages/shared/src/reportTemplate.ts`) and reports can already be printed and
+    exported as PDF (`exportPdf`, `printReport`, `tablesToPdf`, `documentToPdf`). "Email this report"
+    is a PDF that already exists plus a message to carry it — which is why the section that proposes it
+    shows the PDF beside the email rather than describing one.
+  * A report schedule exists as a row and delivers nothing: `report-schedules.json` (report "Monthly
+    Ticket Volume", weekly, Monday, 06:00, `recipients: ["ops@example.com"]`, `format: "pdf"`) and
+    `POST /reports/schedules/:scheduleId/run` (reports.ts:281) writes `lastSentAt: new Date()` and
+    sends nothing.
+
+  ── WHY IT IS COMPOSED THIS WAY ─────────────────────────────────────────────────────────────────────
+
+  A send is a decision with a recipient attached, so the sheet is built from the furniture this
+  repository already uses for decisions — a rail of choices, chips you press, a sheet, a status track
+  you step along, a sentence beside the control that acts, a countable footer. Three things are
+  deliberate:
+
+  1. **The preview is not a picture of the message.** The blocks the sheet composes are the blocks the
+     template renders — one body, drawn once, in the panel labelled with the template it is rendering.
+     This repository has already made the opposite mistake once with reports, which is why
+     `reportKit.tsx` now says there is "no second code path that decides what a report really contains".
+  2. **Choosing the contents is not choosing the layout.** The owner asked to "choose what information
+     gets sent", so the facts are a list of switches, on their own side of the sheet, separate from the
+     body they land in.
+  3. **Fidelity is admitted in the interface, not in a footnote.** The importer is a mapping and review
+     step with a disposition per element, because the two-column layouts, text boxes, gradients,
+     custom fonts and vector art of a Publisher or PowerPoint file do not survive, and this application
+     has to send mail that survives Outlook.
+
+  ── WHAT IS REAL ────────────────────────────────────────────────────────────────────────────────────
+
+  Every name, figure, key, limit and route below was read from the repository on 9 October 2026:
+  `packages/email/src/EmailService.ts`; `apps/api/src/services/emailHtml.ts`, `ticketNotifications.ts`,
+  `ticketContacts.ts`; `apps/api/src/routes/tickets/index.ts`, `billing.ts`, `reports.ts`;
+  `apps/api/src/worker.ts`; `apps/api/src/index.ts` (the 10 MB body limit); the seeded instance's own
+  snapshot (`apps/api/src/snapshots/*.json` — companies, contacts, tickets, ticket-contacts, comments,
+  time-entries, ticket-attachments, invoices, reports, report-schedules, service-boards) and the seeds
+  that produce it (`seed-full.ts`, `seed-contacts.ts`); `apps/web/src/pages/Billing.tsx`,
+  `Tickets.tsx`; `components/richText/*` (profiles, 5 MB attachment and 2 MB inline-image limits);
+  `components/reports/reportKit.tsx` and `lib/documentBrand.ts`; `packages/shared/src/reportTemplate.ts`
+  (page sizes, band kinds, fields). The report example's numbers are counted from the seeded tickets
+  themselves — Globex Industries holds 19, of which 18 were raised in August 2026, 16 are open, 2 are
+  resolved and 1 is closed, with the oldest open ticket 81 days old on 9 October — and "33 days past
+  due" is the worker's own arithmetic on INV-2026-002 (`Math.floor((now − dueDate) / 86400000)` from
+  6 September 2026). Where a figure could not be read it is absent or said to be absent — the importer,
+  for instance, does not exist, and is drawn as a proposal with the paste path named as its only
+  precedent.
+
+  TWO INTERFACES, TWO DESIGNS. This is the modern arrangement, for all six screens. The classic
+  arrangement of the same send moment — labelled fields in a grid, a dialog with a heading, a preview
+  pane beside it, Cancel / Send — is the closing panel, because this repository keeps two designs of
+  every screen and they are not one screen with a class toggled.
+
+  The page is a drawing, not a prototype: the theme toggle, the screen picker, the three sheet
+  contexts, the three send states and the "Why" controls move, and nothing else does.
+-->
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Sending a message, and getting a document in</title>
+<style>
+  /* ── The application's own tokens, copied from docs/mockups/contacts-boards-redesign.html ───── */
+  :root {
+    --navy-50:#e8edf5; --navy-100:#c5d1e5; --navy-200:#9eb3d3; --navy-300:#7895c1; --navy-400:#5b7db3;
+    --navy-500:#3e64a5; --navy-600:#365796; --navy-700:#2b4783; --navy-800:#223771; --navy-900:#142454;
+    --navy-950:#0a1628;
+
+    --cyber-50:#e0f7fe; --cyber-100:#b3edfc; --cyber-200:#80e2fa; --cyber-300:#4dd6f8; --cyber-400:#26cbf6;
+    --cyber-500:#00c0f4; --cyber-600:#00aae0; --cyber-700:#0090c4; --cyber-800:#0077a9; --cyber-900:#00507d;
+
+    --brand-crimson:#c00000;
+
+    --surface:#0f1a2e; --surface-light:#162238; --surface-lighter:#1e2d48; --surface-border:#2a3a5c;
+
+    --alert-red:#ef4444; --alert-amber:#f59e0b; --alert-green:#22c55e;
+
+    --status-new:#38bdf8; --status-open:#60a5fa; --status-progress:#fbbf24; --status-waiting-client:#c084fc;
+    --status-waiting-vendor:#a5b4fc; --status-resolved:#4ade80; --status-closed:#9ca3af; --status-reopened:#fb923c;
+
+    --text-primary:#ffffff; --text-secondary:#d1d5db; --text-tertiary:#9ca3af;
+    --text-muted:#8b93a1; --text-muted-alt:#7c8598;
+
+    --card-shadow: 0 1px 2px rgb(0 0 0 / 0.35), 0 12px 32px -22px rgb(0 0 0 / 0.75);
+    --btn-primary-fg:#ffffff;
+  }
+
+  /* Light theme — the same overrides the application makes, including the darkened status tokens. */
+  html[data-theme="light"] {
+    --navy-950:#ffffff; --navy-900:#0d0d0d; --navy-800:#1a1a1a; --navy-700:#2b2b2b; --navy-600:#424242;
+    --navy-500:#5c5c5c; --navy-400:#808080; --navy-300:#b3b3b3; --navy-200:#d9d9d9; --navy-100:#ebebeb;
+    --navy-50:#f5f5f5;
+
+    --cyber-50:#f0f9ff; --cyber-100:#e0f2fe; --cyber-200:#bae6fd; --cyber-300:#075985; --cyber-400:#0369a1;
+    --cyber-500:#0ea5e9; --cyber-600:#0284c7; --cyber-700:#0369a1; --cyber-800:#075985; --cyber-900:#0c4a6e;
+
+    --surface:#ffffff; --surface-light:#f7f7f7; --surface-lighter:#f0f0f0; --surface-border:#b8b8b8;
+
+    --alert-red:#dc2626; --alert-amber:#d97706; --alert-green:#16a34a;
+
+    --status-new:#075985; --status-open:#1e40af; --status-progress:#92400e; --status-waiting-client:#6b21a8;
+    --status-waiting-vendor:#3730a3; --status-resolved:#166534; --status-closed:#374151; --status-reopened:#9a3412;
+
+    --text-primary:#1a1a1a; --text-secondary:#363636; --text-tertiary:#525252;
+    --text-muted:#595959; --text-muted-alt:#666666;
+
+    --card-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 10px 28px -22px rgb(0 0 0 / 0.3);
+  }
+
+  /* ── Base, as the application's base layer sets it ───────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    min-height: 100dvh; line-height: 1.6;
+    background: var(--navy-950); color: var(--text-secondary);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+  }
+  h1, h2, h3, h4 { font-weight: 600; color: var(--text-primary); line-height: 1.3; }
+  p { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  code, .mono, kbd { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  .num { font-variant-numeric: tabular-nums; }
+  :focus-visible { outline: 2px solid var(--cyber-400); outline-offset: 2px; }
+  .sprite { display: none; }
+  .ico { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8;
+         stroke-linecap: round; stroke-linejoin: round; }
+  .ico--lg { width: 18px; height: 18px; }
+
+  /* ── Mockup-only scaffolding: the frame, the theme toggle, the screen picker, the "Why" control ─ */
+  .mock-frame { max-width: 1640px; margin: 0 auto; padding: 28px 24px 56px; }
+  .mock-tag {
+    display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 9999px;
+    font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--alert-red); background: color-mix(in srgb, var(--alert-red) 16%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--alert-red) 45%, transparent);
+  }
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px; z-index: 20;
+    display: inline-flex; gap: 2px; padding: 3px; border-radius: 9999px;
+    background: var(--surface); border: 1px solid var(--surface-border); box-shadow: var(--card-shadow);
+  }
+  .theme-toggle button {
+    font: inherit; font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+    background: transparent; border: 0; border-radius: 9999px; padding: 4px 11px; cursor: pointer;
+  }
+  .theme-toggle button[aria-pressed="true"] { background: var(--cyber-600); color: var(--btn-primary-fg); }
+
+  .mock-head { display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-top: 14px; }
+  .mock-head h1 { font-size: 22px; letter-spacing: -.01em; max-width: 74ch; }
+  .mock-head p { margin-top: 8px; max-width: 118ch; font-size: 13px; color: var(--text-muted); }
+
+  .picker { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 16px; }
+  .picker button {
+    font: inherit; font-size: 12px; font-weight: 500; color: var(--text-secondary); cursor: pointer;
+    background: var(--surface); border: 1px solid var(--surface-border); border-radius: 9999px;
+    padding: 5px 13px; display: inline-flex; align-items: center; gap: 7px;
+  }
+  .picker button[aria-pressed="true"] {
+    background: color-mix(in srgb, var(--cyber-600) 20%, transparent);
+    border-color: color-mix(in srgb, var(--cyber-500) 45%, transparent); color: var(--text-primary);
+  }
+  .picker button .n {
+    font-size: 10px; font-weight: 700; color: var(--text-muted);
+    border: 1px solid var(--surface-border); border-radius: 9999px; padding: 0 5px;
+  }
+  .picker button[aria-pressed="true"] .n { color: var(--cyber-300); border-color: color-mix(in srgb, var(--cyber-500) 40%, transparent); }
+
+  .why-wrap { position: relative; display: inline-flex; }
+  .why {
+    font: inherit; font-size: 10.5px; font-weight: 600; color: var(--text-muted-alt); cursor: pointer;
+    background: transparent; border: 1px dashed var(--surface-border); border-radius: 9999px; padding: 1px 8px;
+  }
+  .why:hover { color: var(--text-tertiary); }
+  .why-body {
+    margin-top: 8px; padding: 10px 12px; border-radius: 10px; max-width: 118ch;
+    background: color-mix(in srgb, var(--surface-lighter) 70%, transparent);
+    border: 1px dashed var(--surface-border);
+  }
+  .why-body p { font-size: 11.5px; color: var(--text-muted); line-height: 1.65; }
+  .why-body p + p { margin-top: 6px; }
+  .why-body code { font-size: 11px; color: var(--cyber-300); }
+  .mock-note { font-size: 11px; color: var(--text-muted-alt); }
+  .mock-note code { font-size: 10.5px; color: var(--cyber-300); }
+
+  /* ── The application's components, at their real values ──────────────────────────────────────── */
+  .card {
+    background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 12px; padding: 18px 18px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; flex: none; white-space: nowrap;
+    border-radius: 10px; border: 1px solid var(--surface-border); background: var(--surface-lighter);
+    padding: 4px 10px; font-size: 12px; font-weight: 500; color: var(--text-secondary);
+  }
+  .chip--on {
+    color: var(--cyber-300);
+    border-color: color-mix(in srgb, var(--cyber-500) 45%, transparent);
+    background-color: color-mix(in srgb, var(--cyber-600) 18%, transparent);
+  }
+  .chip__n {
+    border-radius: 9999px; background: var(--surface-border); padding: 0 6px;
+    font-size: 10px; font-weight: 600; color: var(--text-tertiary);
+  }
+  .chip--on .chip__n { background: color-mix(in srgb, var(--cyber-500) 25%, transparent); color: var(--text-primary); }
+  .chip--good { color:#34d399; border-color: color-mix(in srgb,#34d399 40%, transparent);
+    background-color: color-mix(in srgb,#34d399 14%, transparent); }
+  .chip--warn { color:#fbbf24; border-color: color-mix(in srgb,#fbbf24 40%, transparent);
+    background-color: color-mix(in srgb,#fbbf24 14%, transparent); }
+  .chip--bad { color:#f87171; border-color: color-mix(in srgb,#f87171 40%, transparent);
+    background-color: color-mix(in srgb,#f87171 14%, transparent); }
+  html[data-theme="light"] .chip--good { color:#166534; border-color: color-mix(in srgb,#166534 40%, transparent);
+    background-color: color-mix(in srgb,#166534 12%, transparent); }
+  html[data-theme="light"] .chip--warn { color:#92400e; border-color: color-mix(in srgb,#92400e 40%, transparent);
+    background-color: color-mix(in srgb,#92400e 12%, transparent); }
+  html[data-theme="light"] .chip--bad { color:#991b1b; border-color: color-mix(in srgb,#991b1b 40%, transparent);
+    background-color: color-mix(in srgb,#991b1b 12%, transparent); }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 9999px;
+    font-size: 11px; font-weight: 500; white-space: nowrap;
+    background-color: color-mix(in srgb, currentColor 18%, transparent);
+  }
+  .badge--critical { color: var(--alert-red); }
+  .badge--in_progress { color: var(--status-progress); }
+  .badge--overdue { color: var(--alert-amber); }
+  .badge--sent { color: var(--status-open); }
+  .badge--draft { color: var(--status-closed); }
+  .badge--dead { color: var(--text-muted-alt); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; font-weight: 500;
+    border-radius: 10px; padding: 6px 12px; cursor: pointer; border: 1px solid transparent;
+  }
+  .btn--primary { background: var(--cyber-600); color: var(--btn-primary-fg); }
+  .btn--secondary { background: var(--surface-lighter); border-color: var(--surface-border); color: var(--text-primary); }
+  .btn--quiet { background: transparent; border-color: var(--surface-border); color: var(--text-secondary); }
+  .btn--crimson { background: var(--brand-crimson); color: #fff; }
+  .btn--done { background: color-mix(in srgb, var(--alert-green) 16%, transparent);
+    border-color: color-mix(in srgb, var(--alert-green) 40%, transparent); color: var(--alert-green); }
+  html[data-theme="light"] .btn--done { color:#15803d; }
+  .btn--lg { font-size: 13px; padding: 8px 15px; }
+
+  .input-field {
+    width: 100%; background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 10px; padding: 7px 11px; font: inherit; font-size: 13px; color: var(--text-primary);
+  }
+  .input-field::placeholder { color: var(--text-muted); }
+  .field-lbl { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--text-muted-alt); margin-bottom: 5px; display: block; }
+
+  .stat { background: var(--surface); border: 1px solid var(--surface-border); border-radius: 12px; padding: 12px 13px; }
+  .stat__label { font-size: 11px; color: var(--text-muted); line-height: 1.3; }
+  .stat__n { margin-top: 7px; font-size: 22px; font-weight: 600; line-height: 1; color: var(--text-primary);
+    letter-spacing: -.01em; }
+  .stat__foot { margin-top: 7px; font-size: 11px; color: var(--text-muted-alt); line-height: 1.5; }
+  .glyph {
+    width: 24px; height: 24px; border-radius: 8px; flex: none;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .glyph--cyber { background: color-mix(in srgb, var(--cyber-600) 20%, transparent); color: var(--cyber-400); }
+  .glyph--amber { background: color-mix(in srgb, var(--alert-amber) 15%, transparent); color: var(--alert-amber); }
+  .glyph--red { background: color-mix(in srgb, var(--alert-red) 15%, transparent); color: var(--alert-red); }
+  .glyph--neutral { background: var(--surface-lighter); color: var(--text-tertiary); }
+  .glyph--green { background: color-mix(in srgb, var(--alert-green) 15%, transparent); color: var(--alert-green); }
+
+  /* ── The composed screens ───────────────────────────────────────────────────────────────────── */
+  .screen { margin-top: 34px; }
+  .screen[hidden] { display: none; }
+  .screen__label {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--text-muted);
+  }
+  .screen__label::after { content: ""; flex: 1; height: 1px; background: var(--surface-border); }
+  .screen__head { margin-top: 10px; }
+  .screen__head h2 { font-size: 16px; }
+  .screen__head p { margin-top: 4px; max-width: 118ch; font-size: 13px; color: var(--text-muted); }
+  .today {
+    margin-top: 10px; padding: 10px 13px; border-radius: 10px; font-size: 12px; line-height: 1.7;
+    color: var(--text-muted); background: color-mix(in srgb, var(--surface-lighter) 60%, transparent);
+    border: 1px dashed var(--surface-border); max-width: 152ch;
+  }
+  .today b { color: var(--text-tertiary); font-weight: 600; }
+  .today code { font-size: 11px; color: var(--cyber-300); }
+
+  /* The rail: the choices the screen is made of, as things you press. */
+  .rail { padding: 12px; }
+  .rail__head {
+    font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--text-muted-alt); margin: 0 0 6px 2px;
+  }
+  .rail__group + .rail__group { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--surface-border); }
+  .rail__item {
+    display: flex; flex-direction: column; gap: 4px; width: 100%; text-align: left; font: inherit;
+    background: transparent; border: 1px solid transparent; border-radius: 10px;
+    padding: 7px 9px; cursor: pointer; color: var(--text-secondary);
+  }
+  .rail__item:hover { background: var(--surface-lighter); color: var(--text-primary); }
+  .rail__item--on {
+    background: color-mix(in srgb, var(--cyber-600) 14%, transparent);
+    border-color: color-mix(in srgb, var(--cyber-500) 40%, transparent);
+    color: var(--text-primary);
+  }
+  .rail__line { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .rail__name { font-size: 13px; font-weight: 500; min-width: 0; }
+  .rail__n { font-size: 11px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+  .rail__item--on .rail__n { color: var(--cyber-300); }
+  .rail__meta { font-size: 10.5px; color: var(--text-muted-alt); line-height: 1.45; text-wrap: pretty; }
+  .rail__foot { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--surface-border);
+    font-size: 10.5px; color: var(--text-muted-alt); line-height: 1.5; }
+
+  /* The sheet: the panel that appears at the moment of sending. */
+  .sheet { padding: 0; }
+  .sheet__head { padding: 14px 16px; border-bottom: 1px solid var(--surface-border);
+    display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+  .sheet__title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .sheet__sub { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+  .sheet__body { padding: 4px 16px 16px; }
+  .sheet__block { padding: 13px 0; border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 60%, transparent); }
+  .sheet__block:last-child { border-bottom: 0; padding-bottom: 4px; }
+  .sheet__btitle { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--text-muted-alt); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .sheet__btitle::after { content: ""; flex: 1; height: 1px; background: color-mix(in srgb, var(--surface-border) 70%, transparent); }
+
+  .kv { display: flex; align-items: baseline; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+  .kv + .kv { margin-top: 5px; }
+  .kv__k { flex: none; width: 104px; color: var(--text-muted); font-size: 11.5px; }
+  .kv__v { color: var(--text-primary); }
+  .say { font-size: 11.5px; color: var(--text-muted); line-height: 1.6; }
+  .say--tight { font-size: 11px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+
+  /* A switch and a segmented choice, at the sizes the application draws them */
+  .switch { position: relative; display: inline-flex; align-items: center; width: 42px; height: 23px;
+    flex: none; border-radius: 9999px; border: 0; cursor: pointer; background: var(--surface-border); }
+  .switch--on { background: var(--cyber-600); }
+  .switch__knob { position: absolute; width: 17px; height: 17px; border-radius: 9999px; background: #fff; left: 3px; }
+  .switch--on .switch__knob { left: 22px; }
+  .switch--locked { opacity: .5; cursor: not-allowed; }
+  .seg { display: inline-flex; gap: 3px; padding: 3px; border-radius: 12px; background: var(--surface-lighter);
+    border: 1px solid var(--surface-border); flex-wrap: wrap; }
+  .seg__opt { font: inherit; font-size: 12px; font-weight: 500; color: var(--text-secondary);
+    background: transparent; border: 1px solid transparent; border-radius: 10px; padding: 6px 11px;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .seg__opt--on { background: var(--cyber-600); color: var(--btn-primary-fg); font-weight: 600; }
+
+  /* The status track: the send, in the order it happens */
+  .track { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+  @media (max-width: 760px) { .track { grid-template-columns: minmax(0, 1fr); } }
+  .step { position: relative; padding: 12px 13px; background: var(--surface-light);
+    border: 1px solid var(--surface-border); border-radius: 12px; }
+  .step--on { border-color: color-mix(in srgb, var(--cyber-500) 45%, transparent);
+    background: color-mix(in srgb, var(--cyber-600) 10%, transparent); }
+  .step__dot { width: 8px; height: 8px; border-radius: 9999px; background: var(--cyber-500);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyber-500) 22%, transparent); }
+  .step__dot--idle { background: var(--text-muted-alt); box-shadow: none; }
+  .step__lbl { margin-top: 8px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--text-muted-alt); font-weight: 600; }
+  .step__val { margin-top: 3px; font-size: 15px; font-weight: 600; color: var(--text-primary); }
+  .step__say { margin-top: 4px; font-size: 11px; color: var(--text-muted); line-height: 1.55; }
+
+  /* The honest table */
+  .ptable { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  .ptable th, .ptable td { text-align: left; padding: 8px 10px 8px 0; font-size: 12px;
+    border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 60%, transparent); vertical-align: top; }
+  .ptable th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted-alt);
+    font-weight: 600; border-bottom-color: var(--surface-border); }
+  .ptable td { color: var(--text-secondary); }
+  .ptable tr:last-child td { border-bottom: 0; }
+  .ptable .plain { color: var(--text-primary); }
+  .ptable code { font-size: 10.5px; color: var(--cyber-300); }
+  .ptable tr.dim td { opacity: .62; }
+
+  /* The band that says what you are looking at */
+  .band {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-radius: 12px;
+    border: 1px solid var(--surface-border); border-left: 2px solid var(--cyber-500);
+    background: var(--surface-lighter); padding: 11px 14px;
+  }
+  .band--crimson { border-left-color: var(--brand-crimson); }
+  .band--amber { border-left-color: var(--alert-amber); }
+  .band__code { font-size: 11px; color: var(--cyber-300); }
+  .band__right { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  .stack > * + * { margin-top: 12px; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 1080px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 1180px) { .grid3 { grid-template-columns: minmax(0, 1fr); } }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  @media (max-width: 1180px) { .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+  .listfoot {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 8px 14px; border-top: 1px solid var(--surface-border); font-size: 11px; color: var(--text-muted);
+  }
+  .listfoot .note { margin-left: auto; font-size: 10.5px; color: var(--text-muted-alt); text-align: right; }
+  .kbd { font-size: 10.5px; border: 1px solid var(--surface-border); border-radius: 5px;
+    padding: 0 4px; color: var(--text-muted); background: var(--surface-lighter); }
+
+  /* ── The send sheet: the message, the contents, the preview ────────────────────────────────── */
+  .send-grid { display: grid; grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr) 292px; gap: 12px;
+    margin-top: 12px; align-items: start; }
+  @media (max-width: 1360px) { .send-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+  @media (max-width: 1020px) { .send-grid { grid-template-columns: minmax(0, 1fr); } }
+
+  .addr { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; font-size: 12px; }
+  .addr__lbl { flex: none; width: 26px; color: var(--text-muted-alt); font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .05em; padding-top: 1px; }
+  .addr__list { display: flex; gap: 6px; flex-wrap: wrap; min-width: 0; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px; border-radius: 9999px; padding: 2px 9px 2px 3px;
+    background: var(--surface-lighter); border: 1px solid var(--surface-border); font-size: 11.5px;
+    color: var(--text-secondary); white-space: nowrap;
+  }
+  .pill__av { width: 19px; height: 19px; border-radius: 9999px; flex: none; display: flex;
+    align-items: center; justify-content: center; font-size: 9px; font-weight: 700;
+    background: color-mix(in srgb, var(--cyber-600) 26%, transparent); color: var(--cyber-400); }
+  .pill b { color: var(--text-primary); font-weight: 500; }
+  .pill__role { color: var(--text-muted-alt); font-size: 10.5px; }
+  .pill--note { border-style: dashed; }
+
+  /* The blocks the message is made of, and the switch that keeps each one */
+  .blocks { margin-top: 8px; }
+  .block {
+    display: flex; align-items: flex-start; gap: 9px; padding: 7px 9px; border-radius: 10px;
+    border: 1px solid transparent;
+  }
+  .block + .block { margin-top: 3px; }
+  .block:hover { background: var(--surface-light); }
+  .block--off { opacity: .5; }
+  .block__grip { color: var(--text-muted-alt); font-size: 11px; letter-spacing: -1px; padding-top: 3px;
+    flex: none; user-select: none; }
+  .block__main { min-width: 0; flex: 1; }
+  .block__kind { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--cyber-300); }
+  .block__kind--text { color: var(--text-tertiary); }
+  .block__body { font-size: 12px; color: var(--text-primary); margin-top: 2px; }
+  .block__body input { font: inherit; font-size: 12px; color: var(--text-primary); width: 100%;
+    background: transparent; border: 0; border-bottom: 1px dashed var(--surface-border); padding: 1px 0; }
+  .block__src { font-size: 10px; color: var(--text-muted-alt); margin-top: 3px; }
+  .block__src code { font-size: 10px; color: var(--cyber-300); }
+
+  /* The preview: the exact message, wearing the real template's own chrome */
+  .tpl { border-radius: 12px; overflow: hidden; border: 1px solid var(--surface-border);
+    background: #0f1923; max-width: 520px; }
+  html[data-theme="light"] .tpl { background: #0f1923; }
+  .tpl__bar { padding: 18px; text-align: center; }
+  .tpl__bar h1 { font-size: 17px; color: #fff; margin: 0; }
+  .tpl__bar--crimson { background: #c00000; }
+  .tpl__bar--overdue { background: #ef4444; }
+  .tpl__bar--reopen { background: #ea580c; }
+  .tpl__bar h1 small { display: block; font-size: 11px; font-weight: 400; opacity: .85; margin-top: 3px; }
+  .tpl__body { padding: 22px 18px; color: #cbd5e1; font-size: 13px; line-height: 1.6; }
+  .tpl__body p + p { margin-top: 12px; }
+  .tpl__meta { color: #94a3b8; font-size: 12px; }
+  .tpl__meta b { color: #fff; }
+  .tpl__meta em { font-style: italic; }
+  .tpl__box { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 13px;
+    color: #cbd5e1; margin: 14px 0; }
+  .tpl__box--quote { border-left: 3px solid #ea580c; }
+  .tpl__btn { display: inline-block; background: #c00000; color: #fff; padding: 10px 20px;
+    border-radius: 6px; font-weight: 600; font-size: 12.5px; margin: 6px 0 4px; }
+  .tpl__amount { font-size: 25px; font-weight: 700; color: #ff5c5c; margin: 2px 0 10px; }
+  .tpl__foot { color: #64748b; font-size: 11.5px; }
+  .tpl__rule { border-top: 1px solid #334155; margin: 16px 0 12px; }
+  .tpl__att { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 9px 11px;
+    border: 1px solid #334155; border-radius: 8px; background: #16233a; font-size: 11.5px; color: #cbd5e1; }
+  .tpl__att .ico { color: #93c5fd; }
+  .tpl__att .sz { margin-left: auto; color: #64748b; font-size: 10.5px; }
+  .tpl-tag { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 7px; }
+  .tpl-tag code { font-size: 10.5px; color: var(--cyber-300); }
+  .tpl-tag .mock-note { margin-left: auto; }
+
+  /* Attachments: what it can carry, what it must never, and the size question */
+  .att { display: flex; align-items: flex-start; gap: 9px; padding: 9px 11px; border-radius: 10px;
+    border: 1px solid var(--surface-border); background: var(--surface-light); }
+  .att + .att { margin-top: 7px; }
+  .att--blocked { border-color: color-mix(in srgb, var(--alert-red) 40%, transparent);
+    background: color-mix(in srgb, var(--alert-red) 8%, transparent); }
+  .att--big { border-color: color-mix(in srgb, var(--alert-amber) 40%, transparent);
+    background: color-mix(in srgb, var(--alert-amber) 8%, transparent); }
+  .att__main { min-width: 0; flex: 1; }
+  .att__name { font-size: 12.5px; color: var(--text-primary); }
+  .att__meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .att__meta code { font-size: 10.5px; color: var(--cyber-300); }
+  .att__right { flex: none; display: flex; align-items: center; gap: 7px; }
+
+  .choices { }
+  .choice { display: flex; align-items: flex-start; gap: 9px; padding: 7px 0; }
+  .choice + .choice { border-top: 1px solid color-mix(in srgb, var(--surface-border) 55%, transparent); }
+  .choice__main { min-width: 0; flex: 1; }
+  .choice__name { font-size: 12.5px; color: var(--text-primary); }
+  .choice__say { font-size: 10.5px; color: var(--text-muted-alt); line-height: 1.5; }
+  .choice__say code { font-size: 10px; color: var(--cyber-300); }
+
+  /* ── The import: drop, map, review ─────────────────────────────────────────────────────────── */
+  .drop {
+    border: 1px dashed var(--surface-border); border-radius: 14px; padding: 22px 20px;
+    background: color-mix(in srgb, var(--surface-lighter) 45%, transparent);
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .drop__icon { width: 40px; height: 40px; border-radius: 12px; flex: none; display: flex;
+    align-items: center; justify-content: center; background: color-mix(in srgb, var(--cyber-600) 18%, transparent);
+    color: var(--cyber-400); }
+  .drop__main { flex: 1; min-width: 240px; }
+  .drop__main h3 { font-size: 14px; }
+  .drop__main p { margin-top: 4px; font-size: 12px; color: var(--text-muted); }
+  .map-grid { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 12px; align-items: start; }
+  @media (max-width: 1020px) { .map-grid { grid-template-columns: minmax(0, 1fr); } }
+  .dispo { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 600;
+    border-radius: 9999px; padding: 1px 8px; white-space: nowrap;
+    border: 1px solid var(--surface-border); color: var(--text-secondary); background: var(--surface-lighter); }
+  .dispo--keep { color: #34d399; border-color: color-mix(in srgb,#34d399 40%, transparent);
+    background: color-mix(in srgb,#34d399 12%, transparent); }
+  .dispo--image { color: var(--cyber-300); border-color: color-mix(in srgb, var(--cyber-500) 40%, transparent);
+    background: color-mix(in srgb, var(--cyber-600) 14%, transparent); }
+  .dispo--reflow { color:#fbbf24; border-color: color-mix(in srgb,#fbbf24 40%, transparent);
+    background: color-mix(in srgb,#fbbf24 12%, transparent); }
+  .dispo--drop { color:#f87171; border-color: color-mix(in srgb,#f87171 40%, transparent);
+    background: color-mix(in srgb,#f87171 12%, transparent); }
+  html[data-theme="light"] .dispo--keep { color:#166534; }
+  html[data-theme="light"] .dispo--reflow { color:#92400e; }
+  html[data-theme="light"] .dispo--drop { color:#991b1b; }
+  .pickrow { display: flex; gap: 4px; flex-wrap: wrap; }
+  .pickrow .chip { padding: 2px 8px; font-size: 10.5px; cursor: pointer; }
+
+  /* ── The designer tie-in: the same report, twice ───────────────────────────────────────────── */
+  .paper {
+    background: #fff; color: #334155; border-radius: 4px; border: 1px solid var(--surface-border);
+    padding: 16px 18px; box-shadow: var(--card-shadow); font-size: 10.5px;
+  }
+  .paper__head { display: flex; align-items: flex-start; gap: 10px; }
+  .paper__shield { width: 26px; height: 26px; border-radius: 7px; flex: none; background: #0f172a;
+    color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; }
+  .paper__logo { font-size: 15px; font-weight: 800; color: #0f172a; letter-spacing: .2px; }
+  .paper__logo span { color: #c00000; }
+  .paper__right { margin-left: auto; text-align: right; color: #64748b; font-size: 9.5px; }
+  .paper__title { margin-top: 13px; font-size: 15px; font-weight: 700; color: #0f172a; }
+  .paper__meta { margin-top: 3px; color: #64748b; font-size: 9.5px; }
+  .paper__kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 12px; }
+  .paper__kpi { border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 7px; background: #f8fafc; }
+  .paper__kpi b { display: block; margin-top: 3px; font-size: 12px; color: #0f172a; }
+  .paper table { width: 100%; border-collapse: collapse; margin-top: 11px; }
+  .paper th { text-align: left; font-size: 8.5px; text-transform: uppercase; letter-spacing: .05em;
+    color: #64748b; border-bottom: 1px solid #cbd5e1; padding: 4px 5px 4px 0; }
+  .paper td { padding: 4px 5px 4px 0; border-bottom: 1px solid #e2e8f0; color: #334155; }
+  .paper td.num, .paper th.num { text-align: right; }
+  .paper__foot { display: flex; justify-content: space-between; margin-top: 13px; padding-top: 6px;
+    border-top: 1px solid #e2e8f0; color: #64748b; font-size: 9px; }
+  .paper__band { border: 1px dashed #cbd5e1; border-radius: 5px; padding: 3px 6px; margin-top: 8px;
+    color: #94a3b8; font-size: 8.5px; text-transform: uppercase; letter-spacing: .06em; }
+
+  .mail-col { background: var(--surface); border: 1px solid var(--surface-border); border-radius: 12px; padding: 14px; }
+  .mail-col .tpl { max-width: none; }
+  .col-flag { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--text-muted); margin-top: 9px; }
+
+  /* ── The closing panel: the classic interface ─────────────────────────────────────────────── */
+  .classic-grid { display: grid; grid-template-columns: minmax(0, 1fr) 356px; gap: 12px; align-items: start; }
+  @media (max-width: 1020px) { .classic-grid { grid-template-columns: minmax(0, 1fr); } }
+  .classic-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 720px) { .classic-form { grid-template-columns: minmax(0, 1fr); } }
+  .classic-form .span2 { grid-column: 1 / -1; }
+  .dlgbar { display: flex; align-items: center; gap: 9px; padding: 10px 14px;
+    border-bottom: 1px solid var(--surface-border); background: var(--surface-light);
+    border-radius: 12px 12px 0 0; }
+  .dlgfoot { display: flex; align-items: center; gap: 8px; justify-content: flex-end;
+    padding: 11px 14px; border-top: 1px solid var(--surface-border); background: var(--surface-light);
+    border-radius: 0 0 12px 12px; }
+
+  footer.mock-foot { margin-top: 34px; padding-top: 16px; border-top: 1px solid var(--surface-border); max-width: 126ch; }
+</style>
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7.5 9 6 9-6"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M4 12 20 4l-8 16-2-6-6-2Z"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5L10 21l-2-1.5L6 21V3Z"/><path d="M9 8h6M9 12h6"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24"><path d="M20 11.5 12 19.5a5 5 0 0 1-7-7l8-8a3.5 3.5 0 0 1 5 5l-8 8a2 2 0 0 1-3-3l7-7"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4m0 0L8 8m4-4 4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m5 18 5-5 4 4 2-2 3 3"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10M15 10v10"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3 22 20H2L12 3Z"/><path d="M12 9v5m0 3h.01"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m0 0-5-5m5 5-5 5"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6l-7-3Z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4.5l3 2"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a4 4 0 0 0 6 .5l2-2a4 4 0 0 0-5.5-5.5l-1 1"/><path d="M14 11a4 4 0 0 0-6-.5l-2 2A4 4 0 0 0 11.5 18l1-1"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/></symbol>
+  <symbol id="i-printer" viewBox="0 0 24 24"><path d="M7 9V4h10v5"/><rect x="4" y="9" width="16" height="7" rx="2"/><path d="M7 16h10v5H7z"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2V5Z"/><path d="M8 7h7M8 11h7"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 6.2a3 3 0 0 1 0 5.6M18 20a5.6 5.6 0 0 0-2-4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+</svg>
+
+<div class="theme-toggle" role="group" aria-label="Theme">
+  <button type="button" data-theme-btn="dark" aria-pressed="true">Dark</button>
+  <button type="button" data-theme-btn="light" aria-pressed="false">Light</button>
+</div>
+
+<div class="mock-frame">
+
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <span class="mock-tag">Mockup — nothing has changed</span>
+    <span class="mock-note">One file, opened from disk. The theme toggle, the screen picker, the three sheet contexts and the three send states are the only things that move.</span>
+  </div>
+
+  <div class="mock-head">
+    <div>
+      <h1>The send sheet, and the way a document gets in</h1>
+      <p>
+        Six screens of one proposal: the moments a person actually sends something — a note to a client,
+        an invoice, a report — and the mapping step that gets a Word, Publisher or PowerPoint document
+        into the message safely. Every send is drawn in three states of confidence (before, during,
+        after) with the recipient list it will use, every attachment is drawn with what it may carry and
+        what it must never, and the importer admits in the interface what it cannot carry.
+      </p>
+    </div>
+  </div>
+
+  <div class="picker" role="group" aria-label="Screen">
+    <button type="button" data-screen-btn="sheet" aria-pressed="true"><span class="n">1</span> The send sheet, three ways</button>
+    <button type="button" data-screen-btn="states" aria-pressed="false"><span class="n">2</span> One send, three states</button>
+    <button type="button" data-screen-btn="attach" aria-pressed="false"><span class="n">3</span> Attachments</button>
+    <button type="button" data-screen-btn="import" aria-pressed="false"><span class="n">4</span> Import from a document</button>
+    <button type="button" data-screen-btn="design" aria-pressed="false"><span class="n">5</span> The designer tie-in</button>
+    <button type="button" data-screen-btn="catalogue" aria-pressed="false"><span class="n">6</span> The messages it can carry</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <!-- SCREEN 1 — THE SEND SHEET, THREE WAYS                                                      -->
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="sheet">
+    <div class="screen__label">Screen one — the moment of sending</div>
+    <div class="screen__head">
+      <h2>One sheet, three moments: a ticket note, an invoice, a report</h2>
+      <p>
+        The same panel opens from three places and is composed the same way every time: the recipient it
+        will use, the template it will use (with a way to pick another), the subject, an editable body,
+        the attachments it will carry, and a preview of the exact message. What changes is the contents —
+        which is a separate list of switches, because the owner asked to choose what information gets
+        sent, not how it is arranged.
+      </p>
+    </div>
+    <div class="today">
+      <b>Today.</b> There are two ticket send paths, and they are not the same shape.
+      A non-internal note calls <code>notifyTicketContact</code> and sends the <code>ticket.activity</code>
+      template with the event label "New note added". The <b>Reply</b> dialog posts to
+      <code>POST /tickets/:id/email</code> and sends the typed body wrapped by a string literal:
+      <code>&lt;hr&gt;&lt;p&gt;Ticket: MSP-02-2013 — Office 365 license assignment&lt;br&gt;Client:
+      Globex Industries&lt;/p&gt;</code>. There is no template to pick and no way to add the invoice PDF,
+      the report PDF or a file from the ticket's own attachments. <b>The invoice email has no such
+      path at all:</b> <code>sendInvoice</code> is written and unused, and the Send control is only drawn
+      for a draft.
+    </div>
+
+    <div style="margin-top:14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <span class="seg" role="group" aria-label="Which send moment">
+        <button type="button" class="seg__opt seg__opt--on" data-seg="ctx" data-seg-opt="ticket" aria-pressed="true">
+          <svg class="ico"><use href="#i-mail"/></svg> A note to a client
+        </button>
+        <button type="button" class="seg__opt" data-seg="ctx" data-seg-opt="invoice" aria-pressed="false">
+          <svg class="ico"><use href="#i-receipt"/></svg> An invoice
+        </button>
+        <button type="button" class="seg__opt" data-seg="ctx" data-seg-opt="report" aria-pressed="false">
+          <svg class="ico"><use href="#i-file"/></svg> A report
+        </button>
+      </span>
+      <span class="mock-note">These are three entry points into one panel, not three panels: the state, the send call and the words are shared; the contents are not.</span>
+    </div>
+
+    <!-- ── Context A: ticket note ─────────────────────────────────────────────────────────────── -->
+    <div data-panel="ctx:ticket" style="margin-top:12px;">
+      <div class="band">
+        <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-mail"/></svg></span>
+        <div style="min-width:220px;">
+          <p style="font-size:12.5px; color:var(--text-primary);">MSP-02-2013 — Office 365 license assignment</p>
+          <p class="say">Globex Industries · MSP Service Desk · in progress · critical</p>
+        </div>
+        <div class="band__right">
+          <span class="badge badge--in_progress">in progress</span>
+          <span class="badge badge--critical">critical</span>
+          <span class="mock-note">SLA 240 / 1440 min · auto-close 14 days · closing emails the client</span>
+        </div>
+      </div>
+
+      <div class="send-grid">
+        <!-- the message -->
+        <div class="card sheet">
+          <div class="sheet__head">
+            <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-send"/></svg></span>
+            <div>
+              <p class="sheet__title">Reply to the client</p>
+              <p class="sheet__sub">Template <code>ticket.note</code> · the route's own subject shape <code>[MSP-02-2013] …</code></p>
+            </div>
+            <div class="band__right">
+              <span class="chip chip--on">ticket.note</span>
+              <button type="button" class="btn btn--quiet">Pick another template</button>
+            </div>
+          </div>
+          <div class="sheet__body">
+
+            <div class="sheet__block">
+              <div class="sheet__btitle">Recipients the sheet will use</div>
+              <div class="addr">
+                <span class="addr__lbl">To</span>
+                <span class="addr__list">
+                  <span class="pill"><span class="pill__av">SL</span><b>Sarah Lee</b> slee@globexind.com <span class="pill__role">the ticket's contact</span></span>
+                </span>
+              </div>
+              <div class="addr">
+                <span class="addr__lbl">Cc</span>
+                <span class="addr__list">
+                  <span class="pill"><span class="pill__av">EJ</span><b>Emily Johnson</b> emily@globexind.com <span class="pill__role">cc on everything</span></span>
+                </span>
+              </div>
+              <div class="addr">
+                <span class="addr__lbl">Bcc</span>
+                <span class="addr__list"><span class="say say--tight">Nobody.</span></span>
+              </div>
+              <p class="say" style="margin-top:6px;">
+                Robert Kim (rkim@globexind.com) is an <b>additional</b> contact on this ticket, so he is
+                offered here — notes only, and only while his own switch is on. If the author picks an
+                address outside globexind.com the send stops and asks, which is what the composer does today.
+              </p>
+            </div>
+
+            <div class="sheet__block">
+              <div class="sheet__btitle">Subject</div>
+              <input class="input-field" value="[MSP-02-2013] Licences assigned — the two accounts team laptops are next" aria-label="Subject">
+              <p class="say" style="margin-top:6px;">The <code>[MSP-02-2013]</code> prefix is added by the route, not typed, so a reply that comes back can find its ticket.</p>
+            </div>
+
+            <div class="sheet__block">
+              <div class="sheet__btitle">The message, as blocks</div>
+              <p class="say" style="margin-bottom:8px;">The same blocks the editor composes and the template renders. Nothing here is drawn twice.</p>
+              <div class="blocks">
+                <div class="block">
+                  <span class="block__grip">⋮⋮</span>
+                  <span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+                  <div class="block__main">
+                    <div class="block__kind block__kind--text">Greeting</div>
+                    <div class="block__body">Hi {{contact.firstName}},</div>
+                    <div class="block__src"><code>contactName</code> — filled by the template, left alone by the author</div>
+                  </div>
+                </div>
+                <div class="block">
+                  <span class="block__grip">⋮⋮</span>
+                  <span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+                  <div class="block__main">
+                    <div class="block__kind">Fields</div>
+                    <div class="block__body">Ticket {{ticket.number}} — {{ticket.title}}</div>
+                    <div class="block__src"><code>ticket.number</code>, <code>ticket.title</code></div>
+                  </div>
+                </div>
+                <div class="block">
+                  <span class="block__grip">⋮⋮</span>
+                  <span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+                  <div class="block__main">
+                    <div class="block__kind">Paragraph</div>
+                    <div class="block__body"><input value="The conditional access policy is fixed and the two remaining laptops are booked for Thursday 09:00." aria-label="Paragraph"></div>
+                  </div>
+                </div>
+                <div class="block">
+                  <span class="block__grip">⋮⋮</span>
+                  <span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+                  <div class="block__main">
+                    <div class="block__kind">Quote</div>
+                    <div class="block__body" style="color:var(--text-secondary);">Robert wrote on 4 October: “Any update on this? It is starting to affect the accounts team.”</div>
+                    <div class="block__src">the ticket's last client-visible comment, quoted — the author can take it out</div>
+                  </div>
+                </div>
+                <div class="block">
+                  <span class="block__grip">⋮⋮</span>
+                  <span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+                  <div class="block__main">
+                    <div class="block__kind">Table</div>
+                    <div class="block__body" style="color:var(--text-secondary);">Time on this ticket — 2 entries, 1.25 h, $212.50, billable, rate $170/h</div>
+                    <div class="block__src">the ticket's own time entries: 45 min and 30 min at $170, 1 October</div>
+                  </div>
+                </div>
+                <div class="block block--off">
+                  <span class="block__grip">⋮⋮</span>
+                  <span class="switch" role="img" aria-label="Off"><span class="switch__knob"></span></span>
+                  <div class="block__main">
+                    <div class="block__kind block__kind--text">Attachments list</div>
+                    <div class="block__body" style="color:var(--text-muted);">No files on this ticket, so the block is off rather than empty.</div>
+                  </div>
+                </div>
+                <div class="block">
+                  <span class="block__grip">⋮⋮</span>
+                  <span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+                  <div class="block__main">
+                    <div class="block__kind">Footer</div>
+                    <div class="block__body">Ticket: MSP-02-2013 — Office 365 license assignment · Client: Globex Industries</div>
+                    <div class="block__src">
+                      today this is the string literal in <code>routes/tickets/index.ts:515</code> — the strongest
+                      argument for the block: at the moment it is not the author's to edit and not the template's to own
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sheet__block">
+              <div class="sheet__btitle">Attachments this send will carry</div>
+              <div class="att">
+                <span class="glyph glyph--neutral"><svg class="ico"><use href="#i-clip"/></svg></span>
+                <div class="att__main">
+                  <p class="att__name">Nothing attached</p>
+                  <p class="att__meta">MSP-02-2013 has no files of its own. The sheet offers the ticket's own attachments only — never another ticket's.</p>
+                </div>
+                <div class="att__right">
+                  <button type="button" class="btn btn--quiet">Choose from the ticket</button>
+                  <button type="button" class="btn btn--quiet">Upload</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="sheet__block">
+              <div class="sheet__btitle">What the button says it is about to do</div>
+              <p class="say" style="margin-bottom:9px;">
+                Sends <b>1 email</b> to Sarah Lee, copies Emily Johnson, adds Robert Kim (notes only), with
+                the footer block and the time-entry table. The ticket gains an emailed activity entry
+                carrying the same words.
+              </p>
+              <div class="actions">
+                <button type="button" class="btn btn--primary btn--lg"><svg class="ico"><use href="#i-send"/></svg> Send to 3 people</button>
+                <span class="kbd">Ctrl</span><span class="kbd">Enter</span>
+                <span class="mock-note">sends now — the composer's own shortcut, unchanged</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- the preview -->
+        <div class="card">
+          <div class="tpl-tag">
+            <span class="chip chip--on">Preview</span>
+            <code>ticketActivityTemplate</code>
+            <span class="mock-note">the exact message, not a picture of it</span>
+          </div>
+          <div class="tpl">
+            <div class="tpl__bar tpl__bar--crimson"><h1>Ticket Update</h1></div>
+            <div class="tpl__body">
+              <p>Hi Sarah,</p>
+              <p class="tpl__meta">Ticket <b>MSP-02-2013</b> — <em>Office 365 license assignment</em></p>
+              <p><b style="color:#fff;">Reply to the client</b></p>
+              <div class="tpl__box">The conditional access policy is fixed and the two remaining laptops are booked for Thursday 09:00.</div>
+              <div class="tpl__box tpl__box--quote">Robert wrote on 4 October: “Any update on this? It is starting to affect the accounts team.”</div>
+              <div class="tpl__rule"></div>
+              <p style="font-size:11.5px; color:#94a3b8;">Time on this ticket</p>
+              <table style="width:100%; border-collapse:collapse; margin-top:6px; font-size:11.5px;">
+                <thead><tr>
+                  <th style="text-align:left; color:#64748b; font-size:10px; text-transform:uppercase; letter-spacing:.05em; padding:3px 4px 3px 0; border-bottom:1px solid #334155;">Date</th>
+                  <th style="text-align:right; color:#64748b; font-size:10px; text-transform:uppercase; letter-spacing:.05em; padding:3px 4px; border-bottom:1px solid #334155;">Time</th>
+                  <th style="text-align:right; color:#64748b; font-size:10px; text-transform:uppercase; letter-spacing:.05em; padding:3px 0 3px 4px; border-bottom:1px solid #334155;">Rate</th>
+                </tr></thead>
+                <tbody>
+                  <tr><td style="padding:3px 4px 3px 0; border-bottom:1px solid #1e293b;">1 Oct 2026 — Investigating the reported issue</td><td style="padding:3px 4px; text-align:right; border-bottom:1px solid #1e293b;" class="num">45 min</td><td style="padding:3px 0 3px 4px; text-align:right; border-bottom:1px solid #1e293b;" class="num">$170.00</td></tr>
+                  <tr><td style="padding:3px 4px 3px 0; border-bottom:1px solid #1e293b;">1 Oct 2026 — Remote session with the user</td><td style="padding:3px 4px; text-align:right; border-bottom:1px solid #1e293b;" class="num">30 min</td><td style="padding:3px 0 3px 4px; text-align:right; border-bottom:1px solid #1e293b;" class="num">$170.00</td></tr>
+                  <tr><td style="padding:3px 4px 3px 0; color:#e2e8f0;">Total, billable</td><td style="padding:3px 4px; text-align:right; color:#e2e8f0;" class="num">1.25 h</td><td style="padding:3px 0 3px 4px; text-align:right; color:#e2e8f0;" class="num">$212.50</td></tr>
+                </tbody>
+              </table>
+              <p style="margin-top:14px;">If you have any questions, simply reply to this email.</p>
+              <div class="tpl__rule"></div>
+              <p class="tpl__foot">Ticket: MSP-02-2013 — Office 365 license assignment · Client: Globex Industries</p>
+              <p class="tpl__foot" style="margin-top:6px;">Globex Industries</p>
+            </div>
+          </div>
+          <p class="say" style="margin-top:9px;">
+            The blank areas are deliberate: this is the message as the template renders it, before the
+            mail client's own headers. Every block above sits in this body in its own order, which is why
+            switching a block off changes the preview and not a second drawing of it.
+          </p>
+        </div>
+
+        <!-- the contents chooser -->
+        <div class="card">
+          <div class="sheet__btitle">What information gets sent</div>
+          <p class="say" style="margin:8px 0 4px;">Facts, not layout. Each of these puts a value into the message above or keeps it out of it.</p>
+          <div class="choices">
+            <div class="choice"><span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+              <div class="choice__main"><p class="choice__name">Ticket number and title</p><p class="choice__say">in the header and the footer</p></div></div>
+            <div class="choice"><span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+              <div class="choice__main"><p class="choice__name">Greeting by first name</p><p class="choice__say"><code>contactName</code> — Sarah</p></div></div>
+            <div class="choice"><span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+              <div class="choice__main"><p class="choice__name">Quote the thread</p><p class="choice__say">the last client-visible comment, 4 October</p></div></div>
+            <div class="choice"><span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+              <div class="choice__main"><p class="choice__name">Include time entries</p><p class="choice__say">2 entries · 1.25 h · $212.50 — off leaves the work out of the client's copy</p></div></div>
+            <div class="choice"><span class="switch" role="img" aria-label="Off"><span class="switch__knob"></span></span>
+              <div class="choice__main"><p class="choice__name">Internal notes</p><p class="choice__say">there are two on this ticket and neither can be selected — internal is internal</p></div></div>
+            <div class="choice"><span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+              <div class="choice__main"><p class="choice__name">Board policy line</p><p class="choice__say">MSP Service Desk closes by emailing the client; NOC Alerts does not</p></div></div>
+            <div class="choice"><span class="switch" role="img" aria-label="Off"><span class="switch__knob"></span></span>
+              <div class="choice__main"><p class="choice__name">SLA figures</p><p class="choice__say">240 / 1440 min — withheld, because they are the provider's numbers, not the client's</p></div></div>
+          </div>
+          <div class="band band--amber" style="margin-top:12px;">
+            <svg class="ico ico--lg" style="color:var(--alert-amber);"><use href="#i-warn"/></svg>
+            <div>
+              <p style="font-size:12px; color:var(--text-primary);">Off is not the same as absent</p>
+              <p class="say">A fact that is switched off is not sent and not mentioned. The attachment list block says so itself rather than printing an empty section.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Context B: invoice ─────────────────────────────────────────────────────────────────── -->
+    <div data-panel="ctx:invoice" hidden style="margin-top:12px;">
+      <div class="band band--crimson">
+        <span class="glyph glyph--red"><svg class="ico"><use href="#i-receipt"/></svg></span>
+        <div style="min-width:220px;">
+          <p style="font-size:12.5px; color:var(--text-primary);">INV-2026-002 — Globex Industries</p>
+          <p class="say">$8,680.00 · subtotal $8,000.00 + tax 8.5% $680.00 · USD · issued 7 Aug 2026 · due 6 Sep 2026 · overdue</p>
+        </div>
+        <div class="band__right">
+          <span class="badge badge--overdue">overdue</span>
+          <span class="mock-note">33 days past due on 9 October 2026</span>
+        </div>
+      </div>
+
+      <div class="today" style="border-left:2px solid var(--brand-crimson);">
+        <b>Read this before the drawing.</b> An invoice email <b>is</b> written —
+        <code>EmailService.sendInvoice(email, invoiceNumber, amount, dueDate, pdfBuffer, portalUrl)</code>,
+        subject <code>Invoice INV-2026-002 — Due 6 September 2026</code>, with
+        <code>invoice-INV-2026-002.pdf</code> attached — and <b>nothing calls it</b>. That is the argument
+        for this screen, drawn as what it would make possible and labelled as such. Today's Send control
+        writes the status alone (<code>POST /billing/invoices/:id/send</code>), is only drawn for a
+        <code>draft</code>, and therefore is <b>not even offered for this invoice</b>. The overdue mail that
+        does go out is the worker's, every seventh day overdue, to the client company's own address
+        (Globex: contact@globexind.com) rather than to a person.
+      </div>
+
+      <div class="send-grid">
+        <div class="card sheet">
+          <div class="sheet__head">
+            <span class="glyph glyph--red"><svg class="ico"><use href="#i-receipt"/></svg></span>
+            <div>
+              <p class="sheet__title">Send this invoice</p>
+              <p class="sheet__sub">Template <code>invoice.send</code> · sender written, never called</p>
+            </div>
+            <div class="band__right">
+              <span class="chip chip--warn">invoice.send</span>
+              <button type="button" class="btn btn--quiet">Pick another template</button>
+            </div>
+          </div>
+          <div class="sheet__body">
+
+            <div class="sheet__block">
+              <div class="sheet__btitle">Who gets a billing document</div>
+              <div class="addr">
+                <span class="addr__lbl">To</span>
+                <span class="addr__list">
+                  <span class="pill"><span class="pill__av">EJ</span><b>Emily Johnson</b> emily@globexind.com <span class="pill__role">VP Operations · the client's primary contact</span></span>
+                </span>
+              </div>
+              <div class="addr">
+                <span class="addr__lbl">Cc</span>
+                <span class="addr__list"><span class="say say--tight">Nobody by default.</span></span>
+              </div>
+              <p class="say" style="margin-top:6px;">
+                Globex's <code>billingEmail</code> is null — as it is on all five seeded clients — and a
+                <code>Contact</code> has no billing flag at all: only <code>isPrimary</code>, a title, a
+                department and a free-text note. So the sheet names the person it chose and says why:
+                the client's primary contact. A nominated billing role is a field this screen wants and
+                the schema does not have, which is exactly the kind of gap the sheet is for. The ticket
+                rule does not apply here either — a billing document does not inherit a ticket's cc contacts.
+              </p>
+            </div>
+
+            <div class="sheet__block">
+              <div class="sheet__btitle">Subject and the facts in the body</div>
+              <input class="input-field" value="Invoice INV-2026-002 — Due 6 September 2026" aria-label="Subject">
+              <p class="say" style="margin-top:6px;">The subject is the sender's own: <code>Invoice ${invoiceNumber} — Due ${dueDate}</code>. The author can change it; the template's default is shown, not hidden.</p>
+            </div>
+
+            <div class="sheet__block">
+              <div class="sheet__btitle">The message, as blocks</div>
+              <div class="blocks">
+                <div class="block">
+                  <span class="block__grip">⋮⋮</span>
+                  <span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+                  <div class="block__main"><div class="block__kind block__kind--text">Greeting</div>
+                    <div class="block__body">Hello {{contact.firstName}},</div>
+                    <div class="block__src">the template as written has no greeting; the sheet adds the block rather than editing the sender's words</div></div>
+                </div>
+                <div class="block">
+                  <span class="block__grip">⋮⋮</span>
+                  <span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+                  <div class="block__main"><div class="block__kind">Fact pair</div>
+                    <div class="block__body">Amount due: $8,680.00 · Due date: 6 September 2026</div>
+                    <div class="block__src"><code>invoice.total</code>, <code>invoice.dueDate</code></div></div>
+                </div>
+                <div class="block">
+                  <span class="block__grip">⋮⋮</span>
+                  <span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+                  <div class="block__main"><div class="block__kind">Button</div>
+                    <div class="block__body">View &amp; Pay Invoice → {{portal.invoiceUrl}}</div>
+                    <div class="block__src">the template's own link, kept exactly as it is: <code>${WEB_ORIGIN}/billing?invoice=${id}</code></div></div>
+                </div>
+                <div class="block">
+                  <span class="block__grip">⋮⋮</span>
+                  <span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+                  <div class="block__main"><div class="block__kind">Table</div>
+                    <div class="block__body" style="color:var(--text-secondary);">Line items — none on this invoice, so the block is off</div>
+                    <div class="block__src">INV-2026-002 carries no line items in the seeded data; the PDF's own table would print “No line items”</div></div>
+                </div>
+                <div class="block">
+                  <span class="block__grip">⋮⋮</span>
+                  <span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+                  <div class="block__main"><div class="block__kind block__kind--text">Notice</div>
+                    <div class="block__body">Payment is 33 days past due. Please disregard this notice if payment has already been sent.</div>
+                    <div class="block__src">written here, because the invoice sender itself has no reminder wording — that lives in <code>overdueTemplate</code></div></div>
+                </div>
+                <div class="block">
+                  <span class="block__grip">⋮⋮</span>
+                  <span class="switch switch--off" role="img" aria-label="Off" style="background:var(--surface-border);"><span class="switch__knob"></span></span>
+                  <div class="block__main"><div class="block__kind">Footer</div>
+                    <div class="block__body" style="color:var(--text-muted);">Cyber 7 Group · Professional Services · info@cyber7group.com</div>
+                    <div class="block__src">the PDF's own letterhead, reused — {{brand.letterhead}}</div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sheet__block">
+              <div class="sheet__btitle">Attachment</div>
+              <div class="att">
+                <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-receipt"/></svg></span>
+                <div class="att__main">
+                  <p class="att__name">invoice-INV-2026-002.pdf</p>
+                  <p class="att__meta">generated by <code>GET /billing/invoices/:id/pdf</code> · 84 KB · written as <code>invoice-${invoiceNumber}.pdf</code> by the sender</p>
+                </div>
+                <div class="att__right"><span class="chip chip--good">already exists</span></div>
+              </div>
+              <p class="say" style="margin-top:7px;">The PDF is the letterhead page the Billing screen can already open and print. This sheet does not draw its own copy of it.</p>
+            </div>
+
+            <div class="sheet__block">
+              <div class="sheet__btitle">What the button says it is about to do</div>
+              <p class="say" style="margin-bottom:9px;">Sends <b>1 email</b> to Emily Johnson with the invoice PDF attached and the pay-online button in it, then marks INV-2026-002 as sent. No Cc, no Bcc.</p>
+              <div class="actions">
+                <button type="button" class="btn btn--crimson btn--lg"><svg class="ico"><use href="#i-send"/></svg> Send invoice to Emily Johnson</button>
+                <span class="mock-note">today this button does not exist for a non-draft invoice — the status changes and nothing is sent</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="tpl-tag">
+            <span class="chip chip--on">Preview</span>
+            <code>invoiceTemplate</code>
+            <span class="mock-note">the sender's own HTML</span>
+          </div>
+          <div class="tpl">
+            <div class="tpl__bar tpl__bar--crimson"><h1>Invoice INV-2026-002</h1></div>
+            <div class="tpl__body">
+              <p>Hello Emily,</p>
+              <p style="color:#94a3b8;">Amount Due:</p>
+              <p class="tpl__amount num">$8,680.00</p>
+              <p style="color:#94a3b8;">Due Date: <b style="color:#fff;">6 September 2026</b></p>
+              <p style="margin-top:12px;">Payment is 33 days past due. Please disregard this notice if payment has already been sent.</p>
+              <a class="tpl__btn" href="#">View &amp; Pay Invoice</a>
+              <div class="tpl__att">
+                <svg class="ico"><use href="#i-file"/></svg>
+                <span>invoice-INV-2026-002.pdf</span>
+                <span class="sz">84 KB</span>
+              </div>
+              <div class="tpl__rule"></div>
+              <p class="tpl__foot">Cyber 7 Group · Professional Services · info@cyber7group.com</p>
+            </div>
+          </div>
+
+          <div class="band band--crimson" style="margin-top:12px;">
+            <svg class="ico ico--lg" style="color:var(--brand-crimson);"><use href="#i-shield"/></svg>
+            <div>
+              <p style="font-size:12.5px; color:var(--text-primary); display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                This is a transactional send, and the sheet says so
+                <span class="why-wrap">
+                  <button type="button" class="why" aria-expanded="false">Why this sentence is on the sheet</button>
+                  <span class="why-body" hidden>
+                    <span style="display:block; font-size:11.5px; color:var(--text-muted); line-height:1.65;">
+                      What the sheet is really asking for is a property on the message key, not a paragraph:
+                      <code>invoice.send</code> and <code>invoice.overdue</code> are <b>transactional</b>, so a
+                      future preference centre writes no unsubscribe line into them and a future quiet-hours
+                      rule does not hold them. Stated here, beside the control, because the second of those
+                      two would otherwise be added by whoever builds the first, and an invoice that waits
+                      until 09:00 is an invoice that arrives late.
+                    </span>
+                  </span>
+                </span>
+              </p>
+              <p class="say">
+                There is no unsubscribe in it, because there is no marketing mail in this product at all —
+                the words "unsubscribe", "campaign" and "newsletter" appear nowhere in the repository.
+                There are also no quiet hours: nothing in the application defers a message by time of day,
+                so a billing document is not held until morning and must not be, because the client's
+                expectation is a legal one rather than a promotional one. The sentence belongs on the
+                sheet so that whichever marketing feature arrives later cannot quietly absorb it.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="sheet__btitle">What information gets sent</div>
+          <div class="choices">
+            <div class="choice"><span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+              <div class="choice__main"><p class="choice__name">Amount due and due date</p><p class="choice__say">$8,680.00 · 6 September 2026</p></div></div>
+            <div class="choice"><span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+              <div class="choice__main"><p class="choice__name">Pay-online button</p><p class="choice__say">the portal link, built from the invoice id</p></div></div>
+            <div class="choice"><span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+              <div class="choice__main"><p class="choice__name">Days past due</p><p class="choice__say">33 — the worker's own arithmetic, read from the due date</p></div></div>
+            <div class="choice"><span class="switch" role="img" aria-label="Off"><span class="switch__knob"></span></span>
+              <div class="choice__main"><p class="choice__name">Bank transfer details</p><p class="choice__say">Greyed out: no such field exists on a client, an invoice or the configuration, so the sheet does not offer one</p></div></div>
+            <div class="choice"><span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+              <div class="choice__main"><p class="choice__name">The invoice PDF</p><p class="choice__say">always on for a billing send — the document is the message</p></div></div>
+            <div class="choice"><span class="switch" role="img" aria-label="Off"><span class="switch__knob"></span></span>
+              <div class="choice__main"><p class="choice__name">Ticket history from the billing run</p><p class="choice__say">off, and worth saying why: <code>billing-aging</code> and <code>revenue</code> list other clients' balances</p></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Context C: report ──────────────────────────────────────────────────────────────────── -->
+    <div data-panel="ctx:report" hidden style="margin-top:12px;">
+      <div class="band">
+        <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-file"/></svg></span>
+        <div style="min-width:220px;">
+          <p style="font-size:12.5px; color:var(--text-primary);">Monthly Ticket Volume</p>
+          <p class="say">a saved report · type <code>ticket_summary</code> · “Standard ticket volume report”</p>
+        </div>
+        <div class="band__right">
+          <span class="chip chip--warn">scheduled, delivering nothing</span>
+        </div>
+      </div>
+
+      <div class="today">
+        <b>Today.</b> The schedule is a row: weekly, Monday, 06:00, <code>recipients: ["ops@example.com"]</code>,
+        <code>format: "pdf"</code>, <code>lastSentAt: null</code>. <code>POST /reports/schedules/:id/run</code>
+        writes <code>lastSentAt: new Date()</code> and <b>sends nothing</b>. There is no
+        <code>report.scheduled</code> sender anywhere. What does exist is the export: <code>exportPdf</code>,
+        <code>printReport</code>, <code>tablesToPdf</code> and <code>documentToPdf</code> already produce the
+        document this sheet would carry.
+      </div>
+
+      <div class="send-grid">
+        <div class="card sheet">
+          <div class="sheet__head">
+            <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-file"/></svg></span>
+            <div>
+              <p class="sheet__title">Email this report</p>
+              <p class="sheet__sub">A covering note plus the PDF the report already exports</p>
+            </div>
+            <div class="band__right">
+              <span class="chip chip--warn">report.scheduled</span>
+              <span class="mock-note">proposed key — no sender exists</span>
+            </div>
+          </div>
+          <div class="sheet__body">
+            <div class="sheet__block">
+              <div class="sheet__btitle">Recipients</div>
+              <div class="addr">
+                <span class="addr__lbl">To</span>
+                <span class="addr__list">
+                  <span class="pill"><span class="pill__av">EJ</span><b>Emily Johnson</b> emily@globexind.com <span class="pill__role">this client's primary contact</span></span>
+                </span>
+              </div>
+              <p class="say" style="margin-top:6px;">
+                For a client's copy the sheet offers the client's own contacts. The schedule's stored
+                address — ops@example.com — is an internal placeholder, and the sheet says so rather than
+                sending a client's report to it.
+              </p>
+            </div> 
+
+            <div class="sheet__block">
+              <div class="sheet__btitle">Subject and covering note</div>
+              <input class="input-field" value="Globex Industries — ticket volume, August 2026" aria-label="Subject">
+              <div class="blocks" style="margin-top:10px;">
+                <div class="block">
+                  <span class="block__grip">⋮⋮</span>
+                  <span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+                  <div class="block__main"><div class="block__kind">Paragraph</div>
+                    <div class="block__body"><input value="The August ticket picture for Globex Industries is attached. Nothing on it needs action — it is the monthly view you asked for, and the figures worth a glance are below." aria-label="Covering note"></div></div>
+                </div>
+                <div class="block">
+                  <span class="block__grip">⋮⋮</span>
+                  <span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+                  <div class="block__main"><div class="block__kind">KPI row</div>
+                    <div class="block__body">Raised 18 · Open now 16 · Resolved 2 · Closed 1</div>
+                    <div class="block__src">the report's own headline figures, in the email — counted from the client's own tickets</div></div>
+                </div>
+                <div class="block block--off">
+                  <span class="block__grip">⋮⋮</span>
+                  <span class="switch" role="img" aria-label="Off"><span class="switch__knob"></span></span>
+                  <div class="block__main"><div class="block__kind">Table</div>
+                    <div class="block__body" style="color:var(--text-muted);">The report's tables, in the body — off by default, because a table of tables in an email is a worse document than the PDF beside it.</div></div>
+                </div>
+                <div class="block">
+                  <span class="block__grip">⋮⋮</span>
+                  <span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+                  <div class="block__main"><div class="block__kind">Footer</div>
+                    <div class="block__body">C7NTAX Reporting · Monthly Ticket Volume · generated {{now}}</div>
+                    <div class="block__src">the PDF footer's own words — {{page}} is deliberately unavailable here, see the tie-in screen</div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sheet__block">
+              <div class="sheet__btitle">Attachment</div>
+              <div class="att">
+                <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-printer"/></svg></span>
+                <div class="att__main">
+                  <p class="att__name">monthly-ticket-volume.pdf</p>
+                  <p class="att__meta">produced by <code>documentToPdf</code> / <code>tablesToPdf</code> · A4, banded, page-numbered · the same document the report screen's PDF button makes</p>
+                </div>
+                <div class="att__right"><span class="chip chip--good">already exists</span></div>
+              </div>
+              <p class="say" style="margin-top:7px;">
+                Other reports that can be attached the same way, by their real ids: <b>revenue</b>
+                (“Invoiced, collected and outstanding, receivables ageing”), <b>billing-aging</b>
+                (“Accounts receivable aging: current, 30, 60, 90+ days”) and <b>contract</b>
+                (“Revenue against labour, expense and product cost per agreement”).
+              </p>
+            </div>
+
+            <div class="sheet__block">
+              <div class="sheet__btitle">What the button says it is about to do</div>
+              <p class="say" style="margin-bottom:9px;">Sends <b>1 email</b> to Emily Johnson with one PDF attached, and records the schedule's send against <code>Monthly Ticket Volume</code> so "run now" stops meaning "write a timestamp".</p>
+              <div class="actions">
+                <button type="button" class="btn btn--primary btn--lg"><svg class="ico"><use href="#i-send"/></svg> Send report to Emily Johnson</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="tpl-tag"><span class="chip chip--on">Preview</span><code>report covering note</code><span class="mock-note">one column, no pages</span></div>
+          <div class="tpl">
+            <div class="tpl__bar tpl__bar--crimson"><h1>Monthly Ticket Volume<small>Globex Industries · August 2026</small></h1></div>
+            <div class="tpl__body">
+              <p>Hello Emily,</p>
+              <p>The August ticket picture for Globex Industries is attached. Nothing on it needs action — it is the monthly view you asked for, and the figures worth a glance are below.</p>
+              <div class="tpl__box">
+                <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                  <tbody>
+                    <tr><td style="padding:2px 0; color:#94a3b8;">Raised</td><td style="padding:2px 0; text-align:right; color:#fff;" class="num">18</td></tr>
+                    <tr><td style="padding:2px 0; color:#94a3b8;">Open now</td><td style="padding:2px 0; text-align:right; color:#fff;" class="num">16</td></tr>
+                    <tr><td style="padding:2px 0; color:#94a3b8;">Resolved</td><td style="padding:2px 0; text-align:right; color:#fff;" class="num">2</td></tr>
+                    <tr><td style="padding:2px 0; color:#94a3b8;">Closed</td><td style="padding:2px 0; text-align:right; color:#fff;" class="num">1</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="tpl__att"><svg class="ico"><use href="#i-file"/></svg><span>monthly-ticket-volume.pdf</span><span class="sz">A4 · banded</span></div>
+              <div class="tpl__rule"></div>
+              <p class="tpl__foot">C7NTAX Reporting · Monthly Ticket Volume · generated 9 October 2026, 16:35</p>
+            </div>
+          </div>
+          <p class="say" style="margin-top:9px;">
+            The same report opened as a PDF is on screen five, side by side with this, because the
+            difference between the two is the thing worth seeing.
+          </p>
+        </div>
+
+        <div class="card">
+          <div class="sheet__btitle">What information gets sent</div>
+          <div class="choices">
+            <div class="choice"><span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+              <div class="choice__main"><p class="choice__name">The report PDF</p><p class="choice__say">the document, attached</p></div></div>
+            <div class="choice"><span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+              <div class="choice__main"><p class="choice__name">Headline figures in the body</p><p class="choice__say">four numbers, so the email is readable without opening the PDF</p></div></div>
+            <div class="choice"><span class="switch" role="img" aria-label="Off"><span class="switch__knob"></span></span>
+              <div class="choice__main"><p class="choice__name">Other clients' figures</p><p class="choice__say">the <code>billing-aging</code> report's client-level detail is scoped to the client the recipient belongs to — a document that names another client is not offered</p></div></div>
+            <div class="choice"><span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+              <div class="choice__main"><p class="choice__name">Period covered</p><p class="choice__say">August 2026 — 18 of this client's tickets were raised in it</p></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card listfoot" style="margin-top:12px; border-radius:12px;">
+      <span>3 send moments in this sheet — a note, an invoice, a report</span>
+      <span class="chip">1 template in line</span>
+      <span class="chip">1 attachment already generated</span>
+      <span class="note">Ticket counts counted from the seeded snapshot's own rows: Globex Industries holds 19 tickets — 18 raised in August 2026, 16 open, 2 resolved, 1 closed, oldest open 81 days. Read 9 October 2026.</span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <!-- SCREEN 2 — ONE SEND, THREE STATES OF CONFIDENCE                                             -->
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="states" hidden>
+    <div class="screen__label">Screen two — one send, before / during / after</div>
+    <div class="screen__head">
+      <h2>The same send, in the three states confidence comes in</h2>
+      <p>
+        A mockup that only draws the happy middle is a mockup of a button. Before: the preview <em>is</em>
+        the message and the button says who it will reach. During: what the button says it is doing, with
+        the address list it is actually using. After: what was sent, to whom, what the record now says,
+        and what to do if it was wrong.
+      </p>
+    </div>
+    <div class="today">
+      <b>Today.</b> There is already a failure path worth keeping: when the mail cannot leave, the route
+      logs it and throws <code>The email could not be sent — check the SMTP configuration under
+      Administration → System Settings</code> (502), and nothing is recorded — the code's own words are
+      "no phantom 'sent' entry, no orphan files". What does not exist is the state after: no "sent to"
+      record beyond the activity comment, and no resend.
+    </div>
+
+    <div class="track">
+      <div class="step step--on"><span class="step__dot"></span>
+        <div class="step__lbl">Step 1 — Before</div>
+        <div class="step__val">Read it as the client will</div>
+        <div class="step__say">The preview is the message. The button names the recipients and the count.</div>
+      </div>
+      <div class="step"><span class="step__dot step__dot--idle"></span>
+        <div class="step__lbl">Step 2 — During</div>
+        <div class="step__val">One call, one list</div>
+        <div class="step__say">To, Cc and Bcc as the mailer will receive them; the attachments by name and size.</div>
+      </div>
+      <div class="step"><span class="step__dot step__dot--idle"></span>
+        <div class="step__lbl">Step 3 — After</div>
+        <div class="step__val">What was sent, to whom</div>
+        <div class="step__say">On the ticket, in the thread, with a message id and a time.</div>
+      </div>
+      <div class="step"><span class="step__dot step__dot--idle"></span>
+        <div class="step__lbl">Step 4 — If it was wrong</div>
+        <div class="step__val">Resend · correction · log</div>
+        <div class="step__say">Three answers, in the order they are usually needed.</div>
+      </div>
+    </div>
+
+    <div class="grid3" style="margin-top:14px;">
+
+      <!-- BEFORE -->
+      <div class="card sheet">
+        <div class="sheet__head">
+          <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-eye"/></svg></span>
+          <div><p class="sheet__title">Before — send</p><p class="sheet__sub">the preview is the message</p></div>
+        </div>
+        <div class="sheet__body">
+          <div class="tpl" style="max-width:none;">
+            <div class="tpl__bar tpl__bar--crimson"><h1>Invoice INV-2026-002</h1></div>
+            <div class="tpl__body" style="padding:18px;">
+              <p class="tpl__amount num" style="font-size:22px;">$8,680.00</p>
+              <p class="tpl__meta">Due <b>6 September 2026</b> · 33 days past due</p>
+              <a class="tpl__btn" href="#">View &amp; Pay Invoice</a>
+              <div class="tpl__att"><svg class="ico"><use href="#i-file"/></svg><span>invoice-INV-2026-002.pdf</span><span class="sz">84 KB</span></div>
+            </div>
+          </div>
+          <div class="addr" style="margin-top:12px;">
+            <span class="addr__lbl">To</span>
+            <span class="addr__list"><span class="pill"><span class="pill__av">EJ</span><b>Emily Johnson</b></span></span>
+          </div>
+          <div class="addr">
+            <span class="addr__lbl">Cc</span>
+            <span class="addr__list"><span class="say say--tight">none</span></span>
+          </div>
+          <div class="addr">
+            <span class="addr__lbl">Bcc</span>
+            <span class="addr__list"><span class="say say--tight">none</span></span>
+          </div>
+          <div class="actions" style="margin-top:12px;">
+            <button type="button" class="btn btn--crimson"><svg class="ico"><use href="#i-send"/></svg> Send invoice to Emily Johnson</button>
+          </div>
+          <p class="say" style="margin-top:8px;">One address, one attachment, no copy. The sheet has already been through the contents list, so the button does not need to ask again.</p>
+        </div>
+      </div>
+
+      <!-- DURING -->
+      <div class="card sheet">
+        <div class="sheet__head">
+          <span class="glyph glyph--amber"><svg class="ico"><use href="#i-refresh"/></svg></span>
+          <div><p class="sheet__title">During — sending</p><p class="sheet__sub">what it says it is doing, while it does it</p></div>
+        </div>
+        <div class="sheet__body">
+          <div class="band band--amber" style="border-left-width:2px;">
+            <svg class="ico ico--lg" style="color:var(--alert-amber);"><use href="#i-refresh"/></svg>
+            <div>
+              <p style="font-size:12.5px; color:var(--text-primary);">Sending one message…</p>
+              <p class="say">The button is disabled while the call is in flight, so a second press cannot send twice.</p>
+            </div>
+          </div>
+          <div style="margin-top:12px;">
+            <div class="kv"><span class="kv__k">To</span><span class="kv__v">emily@globexind.com</span></div>
+            <div class="kv"><span class="kv__k">Cc</span><span class="kv__v">—</span></div>
+            <div class="kv"><span class="kv__k">Bcc</span><span class="kv__v">—</span></div>
+            <div class="kv"><span class="kv__k">Subject</span><span class="kv__v">Invoice INV-2026-002 — Due 6 September 2026</span></div>
+            <div class="kv"><span class="kv__k">Attachments</span><span class="kv__v">invoice-INV-2026-002.pdf · 84 KB</span></div>
+            <div class="kv"><span class="kv__k">Inline parts</span><span class="kv__v">none in this message</span></div>
+          </div>
+          <p class="say" style="margin-top:12px;">
+            This is the list the mailer receives, not a summary of it — the route already builds
+            <code>to</code>, <code>cc</code>, <code>bcc</code> and the attachment array before the call, so
+            there is nothing to guess at here.
+          </p>
+          <div class="att" style="margin-top:12px;">
+            <span class="glyph glyph--neutral"><svg class="ico"><use href="#i-clock"/></svg></span>
+            <div class="att__main"><p class="att__name">Nothing has been written yet</p>
+            <p class="att__meta">The activity entry, the attached files and the status change happen after the send returns — that is the existing behaviour, and it is the right one.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AFTER -->
+      <div class="card sheet">
+        <div class="sheet__head">
+          <span class="glyph glyph--green"><svg class="ico"><use href="#i-check"/></svg></span>
+          <div><p class="sheet__title">After — sent</p><p class="sheet__sub">what was sent, to whom, and what to do next</p></div>
+        </div>
+        <div class="sheet__body">
+          <div class="band" style="border-left-color:var(--alert-green);">
+            <svg class="ico ico--lg" style="color:var(--alert-green);"><use href="#i-check"/></svg>
+            <div>
+              <p style="font-size:12.5px; color:var(--text-primary);">Sent to Emily Johnson, 9 October 2026 at 16:35</p>
+              <p class="say">INV-2026-002 is now <b>sent</b> and the invoice's own activity carries the record.</p>
+            </div>
+          </div>
+          <div style="margin-top:12px;">
+            <div class="kv"><span class="kv__k">Message id</span><span class="kv__v mono">…@c7ntax.local</span></div>
+            <div class="kv"><span class="kv__k">To</span><span class="kv__v">emily@globexind.com</span></div>
+            <div class="kv"><span class="kv__k">Carried</span><span class="kv__v">invoice-INV-2026-002.pdf</span></div>
+            <div class="kv"><span class="kv__k">Recorded</span><span class="kv__v">invoice activity + status change</span></div>
+          </div>
+          <div class="sheet__btitle" style="margin-top:14px;">If it was wrong</div>
+          <div class="stack" style="margin-top:8px;">
+            <div class="actions">
+              <button type="button" class="btn btn--secondary"><svg class="ico"><use href="#i-refresh"/></svg> Resend the same message</button>
+              <span class="say say--tight">to the same people, marked as a resend in the record</span>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn btn--secondary"><svg class="ico"><use href="#i-mail"/></svg> Send a correction</button>
+              <span class="say say--tight">a new message that quotes the first, so the client sees both</span>
+            </div>
+            <div class="actions">
+              <button type="button" class="btn btn--quiet"><svg class="ico"><use href="#i-book"/></svg> See the log</button>
+              <span class="say say--tight">what left, to which address, when — and what failed to leave</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-top:12px;">
+      <div class="card">
+        <div class="sheet__btitle">The failure state, as the route already writes it</div>
+        <div class="att att--blocked" style="margin-top:10px;">
+          <span class="glyph glyph--red"><svg class="ico"><use href="#i-warn"/></svg></span>
+          <div class="att__main">
+            <p class="att__name" style="color:var(--alert-red);">The email could not be sent — check the SMTP configuration under Administration → System Settings</p>
+            <p class="att__meta">What the API answers today when the mailer throws. The sheet keeps those words; it does not invent friendlier ones and it does not pretend to have sent.</p>
+          </div>
+        </div>
+        <p class="say" style="margin-top:9px;">
+          Nothing is recorded when mail cannot leave, so the ticket does not gain a phantom "sent" entry —
+          the sheet says so before the author retries, because "did it go?" is the question the state is
+          for.
+        </p>
+      </div>
+      <div class="card">
+        <div class="sheet__btitle">What the record says afterwards</div>
+        <p class="say" style="margin-top:9px;">The activity comment the route already writes, kept as it is:</p>
+        <pre class="mono" style="margin-top:9px; padding:11px 12px; border:1px solid var(--surface-border); border-radius:10px; background:var(--surface-light); font-size:11px; color:var(--text-secondary); overflow-x:auto; white-space:pre-wrap;">To: emily@globexind.com
+Subject: Invoice INV-2026-002 — Due 6 September 2026
+
+Amount due: $8,680.00 · Due 6 September 2026
+Payment is 33 days past due.
+
+(Attached: invoice-INV-2026-002.pdf)</pre>
+        <p class="say" style="margin-top:9px;">Same shape as a ticket reply records today: header, the plain-text body, and the files that went with it.</p>
+      </div>
+    </div>
+
+    <div class="card listfoot" style="margin-top:12px; border-radius:12px;">
+      <span>4 steps · 3 faces of one send · 3 answers when it was wrong</span>
+      <span class="chip">1 failure message, verbatim</span>
+      <span class="note">The recipient list is the mailer's own list: <code>to</code>, <code>cc</code>, <code>bcc</code> and the attachment array are all built before the call.</span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <!-- SCREEN 3 — ATTACHMENTS                                                                      -->
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="attach" hidden>
+    <div class="screen__label">Screen three — what a message may carry</div>
+    <div class="screen__head">
+      <h2>What it can attach, what it must never attach, and what happens when a file is too big</h2>
+      <p>
+        Carrying a PDF is a transport capability that already exists — <code>send()</code> takes
+        attachments and <code>cid</code> inline parts. What does not exist is any surface that lets a
+        person choose one. That surface has to answer three questions in the same place: where the file
+        comes from, who is allowed to see it, and what happens when it will not fit through an SMTP server.
+      </p>
+    </div>
+    <div class="today">
+      <b>The real limits, read from the code.</b> 5 MB per file (<code>MAX_ATTACHMENT_BYTES</code> in the
+      editor's profile, and the error the user sees is "<i>name</i> is larger than 5 MB"); 10 files per send
+      (<code>req.body.attachments.slice(0, 10)</code>); a 10 MB request body
+      (<code>express.json({ limit: "10mb" })</code>); and for pictures pasted into the message, 2 MB each,
+      20 images, 8 MB in total, pulled out of the HTML into <code>cid</code> parts by
+      <code>extractInlineImages</code>. There is no link-shortening, no signed-link service and no cloud
+      storage in the send path: a file either travels in the message or does not travel.
+    </div>
+
+    <div class="grid2" style="margin-top:14px;">
+      <div class="card">
+        <div class="sheet__btitle">What the sheet offers</div>
+        <div style="margin-top:10px;">
+          <div class="att">
+            <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-receipt"/></svg></span>
+            <div class="att__main">
+              <p class="att__name">The generated invoice PDF</p>
+              <p class="att__meta"><code>GET /billing/invoices/:id/pdf</code> · the letterhead page · attached by the invoice sender as <code>invoice-${invoiceNumber}.pdf</code></p>
+            </div>
+            <div class="att__right"><span class="chip chip--good">ready</span></div>
+          </div>
+          <div class="att">
+            <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-file"/></svg></span>
+            <div class="att__main">
+              <p class="att__name">A report PDF</p>
+              <p class="att__meta"><code>exportPdf</code> / <code>tablesToPdf</code> / <code>documentToPdf</code> · A4, banded, page-numbered, generated in the browser today</p>
+            </div>
+            <div class="att__right"><span class="chip chip--good">ready</span></div>
+          </div>
+          <div class="att">
+            <span class="glyph glyph--neutral"><svg class="ico"><use href="#i-clip"/></svg></span>
+            <div class="att__main">
+              <p class="att__name">A file already on the ticket</p>
+              <p class="att__meta">the ticket's own attachments, e.g. <b>vendor-quote.pdf</b> on INT-03-2018 or <b>TestAttach.xlsx</b> (8.8 KB) on INT-03-2008 — real seeded files</p>
+            </div>
+            <div class="att__right"><span class="chip">from the ticket</span></div>
+          </div>
+          <div class="att">
+            <span class="glyph glyph--neutral"><svg class="ico"><use href="#i-upload"/></svg></span>
+            <div class="att__main">
+              <p class="att__name">A file from the machine you are on</p>
+              <p class="att__meta">the same path the composer uses now: paperclip, paste or drop, size-checked before it joins the message</p>
+            </div>
+            <div class="att__right"><span class="chip">upload</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sheet__btitle">What it must never attach</div>
+        <div style="margin-top:10px;">
+          <div class="att att--blocked">
+            <span class="glyph glyph--red"><svg class="ico"><use href="#i-x"/></svg></span>
+            <div class="att__main">
+              <p class="att__name">A file from another ticket</p>
+              <p class="att__meta">Attachments are read by <code>ticketId</code>. <b>TestAttach.xlsx</b> belongs to INT-03-2008 and is not offered on MSP-02-2013 — the sheet says that rather than showing an empty picker.</p>
+            </div>
+            <div class="att__right"><span class="chip chip--bad">never</span></div>
+          </div>
+          <div class="att att--blocked">
+            <span class="glyph glyph--red"><svg class="ico"><use href="#i-lock"/></svg></span>
+            <div class="att__main">
+              <p class="att__name">Anything the recipient's client does not own</p>
+              <p class="att__meta">A report that names another client's balances is not offered to this client's contact. <b>revenue</b> and <b>billing-aging</b> list every client; attached to a client's own copy they would leak the rest of the book.</p>
+            </div>
+            <div class="att__right"><span class="chip chip--bad">never</span></div>
+          </div>
+          <div class="att att--blocked">
+            <span class="glyph glyph--red"><svg class="ico"><use href="#i-x"/></svg></span>
+            <div class="att__main">
+              <p class="att__name">Anything behind a permission the recipient does not hold</p>
+              <p class="att__meta">A document the author can open because of their own role is not evidence that the client may see it. The rule belongs on the picker: what the recipient is allowed to be sent, not what the author is allowed to read.</p>
+            </div>
+            <div class="att__right"><span class="chip chip--bad">never</span></div>
+          </div>
+          <div class="att att--blocked">
+            <span class="glyph glyph--red"><svg class="ico"><use href="#i-warn"/></svg></span>
+            <div class="att__main">
+              <p class="att__name">An internal note, as a file or as text</p>
+              <p class="att__meta">MSP-02-2013 has two internal notes. They are not offered and cannot be quoted into a client-visible message — the same rule the notification service already enforces.</p>
+            </div>
+            <div class="att__right"><span class="chip chip--bad">never</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <div class="sheet__btitle">"Too big to email" is a state with three answers, not an error</div>
+      <div class="grid3" style="margin-top:12px;">
+        <div class="att att--big" style="flex-direction:column; align-items:stretch;">
+          <div style="display:flex; align-items:center; gap:9px;">
+            <span class="glyph glyph--amber"><svg class="ico"><use href="#i-warn"/></svg></span>
+            <div class="att__main">
+              <p class="att__name">Globex office floorplan scan.tif</p>
+              <p class="att__meta">12.4 MB — over the 5 MB limit the picker already enforces</p>
+            </div>
+          </div>
+          <div class="actions" style="margin-top:11px;">
+            <button type="button" class="btn btn--primary">Send as a portal link instead</button>
+            <button type="button" class="btn btn--quiet">Compress to fit (documented loss)</button>
+            <button type="button" class="btn btn--quiet">Leave it out</button>
+          </div>
+          <p class="say" style="margin-top:10px;">
+            The portal link is the honest answer and it comes with a condition the screen must state:
+            <b>every one of the five seeded clients has its portal switched off</b>
+            (<code>portalEnabled: false</code> — Acme, Globex, Initech, Umbrella, Stark). Until the portal is
+            on for Globex, the first button is the one that has to explain itself rather than the one that
+            quietly fails at the SMTP server.
+          </p>
+        </div>
+        <div class="card" style="background:var(--surface-light);">
+          <p style="font-size:12.5px; color:var(--text-primary);">The inbound mirror already has limits of its own</p>
+          <p class="say" style="margin-top:7px;">
+            <code>services/emailToTicket.ts</code> skips an attachment that is over
+            <code>MAX_TICKET_ATTACHMENT_BYTES</code> or beyond 20 files per email and logs the count it
+            dropped. The outbound side should be able to answer the same question in the same voice —
+            "three files went, one was left behind, here is which" — instead of the silent 5 MB refusal
+            the picker gives today.
+          </p>
+        </div>
+        <div class="card" style="background:var(--surface-light);">
+          <p style="font-size:12.5px; color:var(--text-primary);">A count, before the send</p>
+          <div class="stats" style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:10px;">
+            <div class="stat"><div class="stat__label">Files going</div><div class="stat__n num">1</div><div class="stat__foot">invoice PDF, 84 KB</div></div>
+            <div class="stat"><div class="stat__label">Files left</div><div class="stat__n num">0</div><div class="stat__foot">nothing refused</div></div>
+            <div class="stat"><div class="stat__label">Message size</div><div class="stat__n num">84 KB</div><div class="stat__foot">of a 10 MB request body</div></div>
+            <div class="stat"><div class="stat__label">Inline images</div><div class="stat__n num">0</div><div class="stat__foot">of 20, 2 MB each, 8 MB total</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card listfoot" style="margin-top:12px; border-radius:12px;">
+      <span>4 sources · 4 things it will not carry · 3 answers for a file that will not fit</span>
+      <span class="chip">5 MB / 10 files / 10 MB body</span>
+      <span class="note">Limits read from <code>RichTextEditor.tsx</code>, <code>routes/tickets/index.ts</code> and <code>index.ts</code>.</span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <!-- SCREEN 4 — IMPORT FROM A DOCUMENT                                                           -->
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="import" hidden>
+    <div class="screen__label">Screen four — a document from outside</div>
+    <div class="screen__head">
+      <h2>Drop a Word, Publisher or PowerPoint file in, and watch it turn into blocks</h2>
+      <p>
+        A Publisher newsletter is two columns, text boxes, a gradient band, an embedded font and vector
+        art. None of that survives a mail client, and this application has to send mail that survives
+        Outlook. So the import is not a conversion — it is a <b>mapping and review step</b>: what came
+        across as a block, what came across as an image, and what will be dropped, with the choice offered
+        per element, ending in a template that is visibly made of the same blocks the editor uses.
+      </p>
+    </div>
+    <div class="today">
+      <b>Today.</b> There is no importer, and this screen is a proposal. Its only precedent is the paste
+      path that already exists: <code>cleanPastedHtml</code> in <code>RichTextEditor.tsx</code> is
+      explicitly "Word-aware paste", keeping italics, lists, tables, links and a fixed list of inline
+      properties (<code>PASTE_STYLE_PROPS</code>: colour, background, font-family and size, weight, style,
+      decoration, alignment, line-height, left margin and padding, vertical-align). Everything it lands
+      must then survive <code>emailHtml.ts</code>, which is the real constraint: a known tag set, a much
+      shorter style list, a drop-with-content list of
+      <code>script/style/iframe/object/embed/form/svg/template</code>, unknown tags <b>unwrapped with their
+      text kept</b>, and data-URI pictures pulled out into <code>cid</code> parts because Outlook renders
+      none of them.
+    </div>
+
+    <div class="drop" style="margin-top:14px;">
+      <span class="drop__icon"><svg class="ico ico--lg"><use href="#i-upload"/></svg></span>
+      <div class="drop__main">
+        <h3>Globex — September service newsletter.pub</h3>
+        <p>1.8 MB · Publisher 2019 · 2 pages · 3 text frames · 1 embedded font · 4 images · 1 vector logo</p>
+      </div>
+      <span class="chip chip--on">Read it, do not believe it yet</span>
+      <button type="button" class="btn btn--primary">Review the mapping</button>
+    </div>
+    <p class="mock-note" style="margin-top:8px;">
+      Also accepted, and mapped by the same rules: <code>.docx</code>, <code>.doc</code>,
+      <code>.pptx</code>, <code>.rtf</code>, <code>.odt</code>. A <code>.docm</code> or
+      <code>.pptm</code> is opened read-only and its macros are discarded before anything is read.
+    </p>
+
+    <div class="grid2" style="margin-top:14px; align-items:start;">
+      <div class="card">
+        <div class="sheet__btitle">The mapping — every element, its own disposition, and your choice</div>
+        <table class="ptable">
+          <thead><tr><th style="width:31%;">What is in the file</th><th style="width:26%;">What it becomes</th><th>Your choice</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="plain">Headings 1–3, and Publisher's "Headline" style</td>
+              <td>Heading blocks <span class="dispo dispo--keep">kept</span></td>
+              <td class="pickrow"><span class="chip chip--on">Keep as heading</span><span class="chip">Bold paragraph</span></td>
+            </tr>
+            <tr>
+              <td class="plain">Body paragraphs</td>
+              <td>Paragraph blocks <span class="dispo dispo--keep">kept</span></td>
+              <td class="pickrow"><span class="chip chip--on">Keep</span></td>
+            </tr>
+            <tr>
+              <td class="plain">Bold, italic, underline, strikethrough, sub/superscript</td>
+              <td>Inline emphasis <span class="dispo dispo--keep">kept</span></td>
+              <td class="pickrow"><span class="chip chip--on">Keep</span></td>
+            </tr>
+            <tr>
+              <td class="plain">Bulleted and numbered lists</td>
+              <td>List blocks <span class="dispo dispo--keep">kept</span></td>
+              <td class="pickrow"><span class="chip chip--on">Keep</span></td>
+            </tr>
+            <tr>
+              <td class="plain">A table — including one used as a two-column layout</td>
+              <td>Table block <span class="dispo dispo--keep">kept</span></td>
+              <td class="pickrow"><span class="chip chip--on">Keep as table</span><span class="chip">Reflow to one column</span></td>
+            </tr>
+            <tr>
+              <td class="plain">Two real columns (Word section columns, Publisher frames linked across a spread)</td>
+              <td>One column, text in reading order <span class="dispo dispo--reflow">reflowed</span></td>
+              <td class="pickrow"><span class="chip chip--on">Reflow (only option)</span></td>
+            </tr>
+            <tr>
+              <td class="plain">Text boxes, pull quotes, floating shapes</td>
+              <td>Their text, where they sat; the box itself goes <span class="dispo dispo--reflow">reflowed</span></td>
+              <td class="pickrow"><span class="chip chip--on">Keep the text</span><span class="chip">Drop the element</span></td>
+            </tr>
+            <tr>
+              <td class="plain">Gradients, patterned fills, drop shadows, the page's colour band</td>
+              <td>A solid colour taken from the file, or nothing <span class="dispo dispo--drop">simplified</span></td>
+              <td class="pickrow"><span class="chip chip--on">Use a solid colour</span><span class="chip">Drop the fill</span></td>
+            </tr>
+            <tr>
+              <td class="plain">Trend Micro's embedded display font, and Publisher's own faces</td>
+              <td>The name survives in a <code>font-family</code>; the file does not travel and Outlook substitutes <span class="dispo dispo--drop">simplified</span></td>
+              <td class="pickrow"><span class="chip chip--on">Map to the brand stack</span><span class="chip">Keep the name</span></td>
+            </tr>
+            <tr>
+              <td class="plain">Vector art: the logo, the swirl, SmartArt, WordArt</td>
+              <td>One PNG, embedded as a <code>cid</code> part <span class="dispo dispo--image">as an image</span></td>
+              <td class="pickrow"><span class="chip chip--on">Embed as image</span><span class="chip">Drop</span></td>
+            </tr>
+            <tr>
+              <td class="plain">Charts</td>
+              <td>A PNG, or the numbers as a table <span class="dispo dispo--image">as an image</span></td>
+              <td class="pickrow"><span class="chip chip--on">Image</span><span class="chip">Values as a table</span><span class="chip">Drop</span></td>
+            </tr>
+            <tr>
+              <td class="plain">Photographs</td>
+              <td>Embedded PNG/JPEG, 2 MB each, 20 maximum, 8 MB total <span class="dispo dispo--image">as an image</span></td>
+              <td class="pickrow"><span class="chip chip--on">Embed</span><span class="chip">Attach as a file</span></td>
+            </tr>
+            <tr>
+              <td class="plain">Clip art with a link back to the publisher's site</td>
+              <td>Nothing — remote images are refused, because a mail client blocks them anyway <span class="dispo dispo--drop">dropped</span></td>
+              <td class="pickrow"><span class="chip chip--on">Drop</span></td>
+            </tr>
+            <tr>
+              <td class="plain">Page headers, footers and "Page 2 of 4"</td>
+              <td>Dropped: an email has no pages <span class="dispo dispo--drop">dropped</span></td>
+              <td class="pickrow"><span class="chip chip--on">Add as a footer block</span><span class="chip">Drop</span></td>
+            </tr>
+            <tr>
+              <td class="plain">Hyperlinks, email addresses, phone numbers</td>
+              <td>Kept — but only <code>https</code>, <code>mailto</code>, <code>tel</code> and site-relative links; anything else is unwrapped <span class="dispo dispo--keep">kept, filtered</span></td>
+              <td class="pickrow"><span class="chip chip--on">Keep safe links</span><span class="chip">Unwrap all links</span></td>
+            </tr>
+            <tr>
+              <td class="plain">Tracked changes, comments, revision marks, speaker notes, transitions, animations, slide timings, slide size</td>
+              <td>Dropped, and named here so nobody wonders where the notes went <span class="dispo dispo--drop">dropped</span></td>
+              <td class="pickrow"><span class="chip chip--on">Drop</span></td>
+            </tr>
+            <tr>
+              <td class="plain">Footnotes and endnotes</td>
+              <td>Moved into the body as bracketed text at the point they were referenced <span class="dispo dispo--reflow">moved</span></td>
+              <td class="pickrow"><span class="chip chip--on">Move into the body</span><span class="chip">Drop</span></td>
+            </tr>
+            <tr>
+              <td class="plain">An embedded object: an Excel sheet, an equation, an OLE drawing</td>
+              <td>Dropped as an object; offered as an attachment or a snapshot <span class="dispo dispo--drop">dropped as object</span></td>
+              <td class="pickrow"><span class="chip chip--on">Attach as a file</span><span class="chip">Snapshot as image</span><span class="chip">Drop</span></td>
+            </tr>
+            <tr>
+              <td class="plain">A macro project in a <code>.docm</code></td>
+              <td>Discarded before anything is read — the document is treated as read-only <span class="dispo dispo--drop">refused</span></td>
+              <td class="pickrow"><span class="chip chip--on">Discard macros (only option)</span></td>
+            </tr>
+            <tr>
+              <td class="plain">PowerPoint: each slide</td>
+              <td>One section; each text frame a block, the slide's remaining art one image, in z-order <span class="dispo dispo--image">as blocks + image</span></td>
+              <td class="pickrow"><span class="chip chip--on">Slide as a section</span><span class="chip">Only the words</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="stack">
+        <div class="card">
+          <div class="sheet__btitle">What it admits it cannot do</div>
+          <ul style="margin-top:10px; padding-left:18px; font-size:12px; color:var(--text-secondary); line-height:1.75;">
+            <li><b>It cannot promise fidelity, and it does not try.</b> What it promises is that you see the mapping before you send, element by element.</li>
+            <li><b>It cannot keep a two-column layout.</b> Mail that reflows is mail that survives Outlook, so the columns become one — deliberately, in reading order.</li>
+            <li><b>It cannot keep a gradient, a texture, a shadow or an embedded font.</b> The colour list and the font stack are finite, and Outlook's are smaller than a browser's.</li>
+            <li><b>It cannot keep vector art as art.</b> The logo becomes a PNG, which means it is crisp at the width it was flattened at and soft at any other.</li>
+            <li><b>It cannot preserve pagination, page numbers or cross-references.</b> An email is one reflowing column.</li>
+            <li><b>It cannot import a mail merge's data, or the field codes behind it</b> — the fields become plain text until you point them at this product's own fields.</li>
+            <li><b>It cannot round-trip.</b> Once it is blocks, it is not a Publisher file, and there is no export back.</li>
+            <li><b>It cannot recover what a mail client would strip anyway.</b> Anything it kept that Outlook then removes would be a lie told twice, so it removes it here.</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <div class="sheet__btitle">What the review leaves you with</div>
+          <p class="say" style="margin-top:8px;">A template, made of the same blocks the editor composes and the send sheet shows. Nothing about it is an opaque "imported document".</p>
+          <div class="blocks" style="margin-top:10px;">
+            <div class="block"><span class="block__grip">⋮⋮</span><div class="block__main">
+              <div class="block__kind">Heading</div><div class="block__body">September at Globex — what we did</div>
+              <div class="block__src">was 24 pt "Headline" in the Publisher file</div></div></div>
+            <div class="block"><span class="block__grip">⋮⋮</span><div class="block__main">
+              <div class="block__kind">Paragraph</div><div class="block__body">All 34 tickets raised in September are closed but the two below…</div>
+              <div class="block__src">body copy, reflowed from two columns to one</div></div></div>
+            <div class="block"><span class="block__grip">⋮⋮</span><div class="block__main">
+              <div class="block__kind">Image</div><div class="block__body">newsletter-band.png · 412 KB · embedded</div>
+              <div class="block__src">was a gradient band — the gradient did not survive, the band did</div></div></div>
+            <div class="block"><span class="block__grip">⋮⋮</span><div class="block__main">
+              <div class="block__kind">Table</div><div class="block__body">3 columns · 6 rows</div>
+              <div class="block__src">a real table in the file, kept as a table</div></div></div>
+            <div class="block"><span class="block__grip">⋮⋮</span><div class="block__main">
+              <div class="block__kind">Footer</div><div class="block__body">Globex Industries · sent by Cyber 7 Group</div>
+              <div class="block__src">the page footer's words, kept as a block because the page they belonged to is gone</div></div></div>
+          </div>
+          <div class="actions" style="margin-top:12px;">
+            <button type="button" class="btn btn--primary">Save as a template</button>
+            <button type="button" class="btn btn--secondary">Edit it in the composer</button>
+            <button type="button" class="btn btn--quiet">Start over</button>
+          </div>
+        </div>
+
+        <div class="band band--amber">
+          <svg class="ico ico--lg" style="color:var(--alert-amber);"><use href="#i-warn"/></svg>
+          <div>
+            <p style="font-size:12.5px; color:var(--text-primary);">One sentence the screen should keep saying</p>
+            <p class="say">The mapping is a proposal, not a guarantee. A person who expects their Publisher file to arrive intact will be disappointed by every importer ever written; a person who is shown the mapping first will fix it in a minute.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card listfoot" style="margin-top:12px; border-radius:12px;">
+      <span>20 mappings · 6 formats accepted · 2 formats refused except as read-only</span>
+      <span class="chip">1 precedent: the Word-aware paste</span>
+      <span class="note">The safe set is not a suggestion: <code>EMAIL_TAGS</code> and <code>EMAIL_STYLE_PROPS</code> decide what can leave the building.</span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <!-- SCREEN 5 — THE DESIGNER TIE-IN                                                              -->
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="design" hidden>
+    <div class="screen__label">Screen five — the editor, the report designer, the PDF letterhead</div>
+    <div class="screen__head">
+      <h2>The same report, as a PDF and as an email — side by side, so the difference is visible</h2>
+      <p>
+        Three document surfaces already talk to each other in this product and should keep talking: this
+        editor, the banded <b>report designer</b>, and the <b>PDF letterhead</b> in
+        <code>lib/documentBrand.ts</code>. What is shared is the blocks, the fields, the brand assets and
+        the section-based composition in <code>reportKit</code>. What is deliberately not shared is the
+        page: a report page is A4 with bands and page numbers; an email is a single reflowing column with
+        no pages at all.
+      </p>
+    </div>
+
+    <div class="grid2" style="margin-top:14px; align-items:start;">
+      <div>
+        <div class="tpl-tag"><span class="chip">As a PDF</span><span class="mock-note">A4 · bands · pages · letterhead</span></div>
+        <div class="paper">
+          <div class="paper__head">
+            <span class="paper__shield">7</span>
+            <div>
+              <div class="paper__logo">C<span>7</span>NTAX</div>
+            </div>
+            <div class="paper__right">Cyber 7 Group, LLC<br>Reporting</div>
+          </div>
+          <div class="paper__title">Monthly Ticket Volume</div>
+          <div class="paper__meta">Globex Industries · August 2026 · Generated 9 October 2026, 16:35</div>
+
+          <div class="paper__band">Page header band — repeats on every page</div>
+          <div class="paper__kpis">
+            <div class="paper__kpi">RAISED<b class="num">18</b></div>
+            <div class="paper__kpi">OPEN NOW<b class="num">16</b></div>
+            <div class="paper__kpi">RESOLVED<b class="num">2</b></div>
+            <div class="paper__kpi">CLOSED<b class="num">1</b></div>
+          </div>
+          <div class="paper__band">Column header band — the captions</div>
+          <table>
+            <thead><tr><th>Board</th><th class="num">Open now</th><th class="num">Closed</th></tr></thead>
+            <tbody>
+              <tr><td>MSP Service Desk</td><td class="num">4</td><td class="num">1</td></tr>
+              <tr><td>Infrastructure Desk</td><td class="num">5</td><td class="num">0</td></tr>
+              <tr><td>Intelligence Desk</td><td class="num">4</td><td class="num">1</td></tr>
+              <tr><td>NOC Alerts</td><td class="num">3</td><td class="num">1</td></tr>
+            </tbody>
+          </table>
+          <div class="paper__band">Group footer band — the totals</div>
+          <div class="paper__band">Report summary band — once, after the last row</div>
+          <div class="paper__foot"><span>C7NTAX Reporting · Monthly Ticket Volume</span><span>Page 1 of n</span></div>
+        </div>
+        <div class="col-flag"><svg class="ico"><use href="#i-printer"/></svg> The same document <code>printReport</code> opens in a print window and <code>exportPdf</code> saves — one path, not two.</div>
+      </div>
+
+      <div>
+        <div class="tpl-tag"><span class="chip chip--on">As an email</span><span class="mock-note">one column · no pages · no bands</span></div>
+        <div class="mail-col">
+          <div class="tpl">
+            <div class="tpl__bar tpl__bar--crimson"><h1>Monthly Ticket Volume<small>Globex Industries · August 2026</small></h1></div>
+            <div class="tpl__body">
+              <p>Hello Emily,</p>
+              <p>The August ticket picture for Globex Industries is attached…</p>
+              <div class="tpl__box">
+                <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                  <tbody>
+                    <tr><td style="padding:2px 0; color:#94a3b8;">Raised</td><td style="padding:2px 0; text-align:right; color:#fff;" class="num">18</td></tr>
+                    <tr><td style="padding:2px 0; color:#94a3b8;">Open now</td><td style="padding:2px 0; text-align:right; color:#fff;" class="num">16</td></tr>
+                    <tr><td style="padding:2px 0; color:#94a3b8;">Resolved</td><td style="padding:2px 0; text-align:right; color:#fff;" class="num">2</td></tr>
+                    <tr><td style="padding:2px 0; color:#94a3b8;">Closed</td><td style="padding:2px 0; text-align:right; color:#fff;" class="num">1</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="tpl__att"><svg class="ico"><use href="#i-file"/></svg><span>monthly-ticket-volume.pdf</span><span class="sz">A4 · banded</span></div>
+              <div class="tpl__rule"></div>
+              <p class="tpl__foot">C7NTAX Reporting · Monthly Ticket Volume · generated 9 October 2026, 16:35</p>
+            </div>
+          </div>
+          <div class="col-flag"><svg class="ico"><use href="#i-layers"/></svg> The KPI row is the report's own KPI section; the figures are the same formatters (<code>money</code>, <code>number</code>, <code>duration</code> from <code>@C7NTAX/shared</code>) that the screen and the PDF use.</div>
+          <div class="col-flag"><svg class="ico"><use href="#i-x"/></svg> No page numbers, because there are no pages: <code>Page.number</code> and <code>Page.totalPages</code> are unavailable in an email, and the footer block offers <code>{{now}}</code> instead.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid3" style="margin-top:14px;">
+      <div class="card">
+        <div class="sheet__btitle">Shared, deliberately</div>
+        <table class="ptable" style="margin-top:8px;">
+          <tbody>
+            <tr><td class="plain">The blocks</td><td class="say">Heading, Paragraph, List, Quote, Table, Fact pair, KPI row, Image, Divider, Button, Footer — the same set the composer composes, the report kit composes and the importer lands in.</td></tr>
+            <tr><td class="plain">The fields</td><td class="say">One field catalogue, one set of formatters. A number formatted as money reads the same in an email, a report screen and a PDF — the reason those formatters live in shared code today.</td></tr>
+            <tr><td class="plain">The brand</td><td class="say">The shield, the crimson, the logotype and the footer line, from <code>DOCUMENT_BRAND</code>: one file that says what our paper looks like rather than three stylesheets that slowly disagree.</td></tr>
+            <tr><td class="plain">The composition rule</td><td class="say">A document is a list of sections, and every consumer reads the same list. <code>reportKit</code>'s own words: there is "no second code path that decides what a report really contains".</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="sheet__btitle">Not shared, deliberately</div>
+        <table class="ptable" style="margin-top:8px;">
+          <tbody>
+            <tr><td class="plain">The page</td><td class="say">A4, 210 × 297 mm, 12 mm margins, with Letter, Legal, A3, A5 and Custom available. An email has no page box at all.</td></tr>
+            <tr><td class="plain">The bands</td><td class="say">Report Title, Page Header, Column Header, Group Header, Data, Group Footer, Column Footer, Page Footer, Report Summary — nine kinds, with a print order and page breaks. An email has a header, a body and a footer.</td></tr>
+            <tr><td class="plain">The repositionable elements</td><td class="say">A band's elements carry x, y, w, h in millimetres and a designer drags them. A block in an email is in a column, in order, and stays there.</td></tr>
+            <tr><td class="plain">Page numbers, repeats and totals-per-page</td><td class="say">Meaningful in a reported page, meaningless in a message. Offered as a footer block's words, never as a field that resolves to nothing.</td></tr>
+            <tr><td class="plain">The shield, for a designed template</td><td class="say">A report drawn in the designer has header bands its author placed by hand, so it deliberately does not wear the product's shield. Generated documents do. An email follows the template's own choice.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="sheet__btitle">The one worked example</div>
+        <p class="say" style="margin-top:8px;">
+          Both panels above are <b>Monthly Ticket Volume</b> for Globex, August 2026, from one
+          composition:
+        </p>
+        <div class="kv" style="margin-top:10px;"><span class="kv__k">Sections</span><span class="kv__v">kpis → table → notes</span></div>
+        <div class="kv"><span class="kv__k">As PDF</span><span class="kv__v">each section laid out on a page, with bands and <span class="mono">Page 1 of 3</span></span></div>
+        <div class="kv"><span class="kv__k">As email</span><span class="kv__v">the kpis in the body, the tables in the attachment</span></div>
+        <div class="kv"><span class="kv__k">Either way</span><span class="kv__v">the same figures, the same formatters</span></div>
+        <p class="say" style="margin-top:11px;">
+          The email is not the report shrunk. It is the covering sentence and the four figures, with the
+          report beside it as the document it already is — which is why the sheet offers the tables as a
+          block that is off by default.
+        </p>
+        <div class="band" style="margin-top:12px;">
+          <svg class="ico ico--lg" style="color:var(--cyber-400);"><use href="#i-layers"/></svg>
+          <div>
+            <p style="font-size:12.5px; color:var(--text-primary);">One rule, kept from the report kit</p>
+            <p class="say">The preview and the document are the same composition. A second rendering of the same content is how a PDF and a screen start disagreeing.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card listfoot" style="margin-top:12px; border-radius:12px;">
+      <span>3 surfaces — editor, report designer, PDF letterhead</span>
+      <span class="chip">9 band kinds</span>
+      <span class="chip">6 page sizes</span>
+      <span class="note">Read from <code>reportTemplate.ts</code> (page sizes, band kinds), <code>reportKit.tsx</code> (sections and writers) and <code>documentBrand.ts</code> (the letterhead). The figures are counted from the seeded tickets for Globex Industries: 18 raised in August 2026, 16 open, 2 resolved, 1 closed.</span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <!-- SCREEN 6 — THE MESSAGES IT CAN CARRY                                                        -->
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="catalogue" hidden>
+    <div class="screen__label">Screen six — the catalogue the sheet draws from</div>
+    <div class="screen__head">
+      <h2>Ten messages, eight of them live — and the two that are written and never sent</h2>
+      <p>
+        The send sheet offers a key, not a document. This is the whole catalogue as the code has it, with
+        the subject as written and what actually calls it. Two of the ten are dead code, and saying so is
+        the point: the strongest argument for a surface is a sender that already exists and has nobody to
+        press it.
+      </p>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <table class="ptable">
+        <thead><tr>
+          <th style="width:19%;">Key</th><th style="width:18%;">Sender</th><th style="width:26%;">Subject as written</th>
+          <th style="width:22%;">Called from</th><th>Live?</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="plain mono">ticket.activity</td><td class="mono">sendTicketActivity</td><td><code>[{n}] {eventLabel} — {title}</code></td><td class="mono">services/ticketNotifications.ts:87</td><td><span class="chip chip--good">live</span></td></tr>
+          <tr><td class="plain mono">ticket.reopened_internal</td><td class="mono">sendTicketReopened</td><td><code>[{n}] Reopened by the client — {title}</code></td><td class="mono">services/ticketNotifications.ts:198</td><td><span class="chip chip--good">live</span></td></tr>
+          <tr><td class="plain mono">ticket.follow_up</td><td class="mono">sendTicketFollowUp</td><td><code>[{n}] Action Required — {title}</code></td><td class="mono">worker.ts:80</td><td><span class="chip chip--good">live</span></td></tr>
+          <tr><td class="plain mono">ticket.note</td><td class="mono">the generic <code>send()</code></td><td><code>[{n}] {typed subject}</code></td><td class="mono">routes/tickets/index.ts:515</td><td><span class="chip chip--good">live</span></td></tr>
+          <tr><td class="plain mono">invoice.overdue</td><td class="mono">sendOverdueReminder</td><td><code>Overdue Invoice {n} — Payment Required</code></td><td class="mono">worker.ts:195</td><td><span class="chip chip--good">live</span></td></tr>
+          <tr><td class="plain mono">portal.login_code</td><td class="mono">the generic <code>send()</code></td><td>inline, one-time code</td><td class="mono">routes/portal.ts:146</td><td><span class="chip chip--good">live</span></td></tr>
+          <tr><td class="plain mono">user.invite</td><td class="mono">the generic <code>send()</code></td><td>inline, invitation</td><td class="mono">routes/users.ts:99</td><td><span class="chip chip--good">live</span></td></tr>
+          <tr><td class="plain mono">auth.mfa_code</td><td class="mono">sendMfaCode</td><td><code>C7NTAX — Your Verification Code</code></td><td class="mono">routes/auth.ts:398</td><td><span class="chip chip--good">live</span></td></tr>
+          <tr class="dim"><td class="plain mono">invoice.send</td><td class="mono">sendInvoice</td><td><code>Invoice {n} — Due {due}</code></td><td class="say">nothing — <b>dead code</b></td><td><span class="chip chip--bad">written, never sent</span></td></tr>
+          <tr class="dim"><td class="plain mono">ticket.closure</td><td class="mono">sendTicketAutoClose</td><td><code>[{n}] Ticket Closed — {title}</code></td><td class="say">nothing — <b>dead code</b></td><td><span class="chip chip--bad">written, never sent</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid3" style="margin-top:12px;">
+      <div class="card">
+        <div class="sheet__btitle">Seven template functions, and no way in</div>
+        <p class="say" style="margin-top:9px;">
+          Every subject, every footer, every brand element and every paragraph of every message is a
+          string literal in <code>EmailService.ts</code> or in the route that calls it. Changing a word in
+          a client-facing email is a deployment. The catalogue above is why the sheet exists: the keys
+          already have names, so the sheet has something to offer and the templates have somewhere to live.
+        </p>
+      </div>
+      <div class="card">
+        <div class="sheet__btitle">The two dead ones are not a footnote</div>
+        <p class="say" style="margin-top:9px;">
+          <b>invoice.send</b> is the owner's own request, already written. <b>ticket.closure</b> is the
+          auto-close notice — note that the closure a person performs today does go out, as
+          <code>ticket.activity</code> with the label "Ticket closed" and the sentence inviting a reply,
+          through <code>notifyTicketClosure</code>; it is only the worker's version that nothing calls.
+          Drawing either as existing behaviour would be the one thing this file must not do.
+        </p>
+      </div>
+      <div class="card">
+        <div class="sheet__btitle">Where the words live today</div>
+        <div class="kv" style="margin-top:9px;"><span class="kv__k">Templates</span><span class="kv__v">7 functions, inline HTML</span></div>
+        <div class="kv"><span class="kv__k">The ticket footer</span><span class="kv__v">a string literal, route 515</span></div>
+        <div class="kv"><span class="kv__k">Subjects</span><span class="kv__v">in the senders, not in data</span></div>
+        <div class="kv"><span class="kv__k">Brand</span><span class="kv__v">hard-coded #c00000 and #0f1923</span></div>
+        <p class="say" style="margin-top:10px;">No template record, no Blocks, no Fields, no States, no Brand kit and no Overrides exist yet. The vocabulary in this file is the proposal; the keys are the code's.</p>
+      </div>
+    </div>
+
+    <div class="card listfoot" style="margin-top:12px; border-radius:12px;">
+      <span>10 messages · 8 live · 2 written and never sent</span>
+      <span class="chip">7 template functions</span>
+      <span class="note">Verified across the repository: <code>sendInvoice</code> and <code>sendTicketAutoClose</code> have no caller.</span>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <!-- THE CLASSIC INTERFACE — THE SAME SEND MOMENT AS A FORM                                      -->
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen">
+    <div class="screen__label">In the classic interface — the same send moment as a form</div>
+    <div class="screen__head">
+      <h2>Classic: a labelled form in a grid, a dialog with a heading, a preview pane beside it</h2>
+      <p>
+        This repository keeps two designs of every screen and they are not one screen with a class
+        toggled. The classic interface is a form: labelled fields in a grid, a modal dialog with a heading
+        and Cancel / Send, a preview pane down the side that is visible rather than revealed, and a select
+        where the modern screen has a pill you press. The words, the state, the contents list and the API
+        call are shared. The arrangement is not — and what the modern sheet sheds that the classic dialog
+        keeps is the flat list of every fact as a checkbox, in one column, in the order the fields appear.
+      </p>
+    </div>
+
+    <div class="classic-grid" style="margin-top:14px;">
+      <div class="card" style="padding:0;">
+        <div class="dlgbar">
+          <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-receipt"/></svg></span>
+          <div>
+            <p style="font-size:13px; font-weight:600; color:var(--text-primary);">Send invoice INV-2026-002</p>
+            <p class="sheet__sub">Globex Industries · $8,680.00 · due 6 September 2026</p>
+          </div>
+          <div class="band__right"><span class="mock-note">Administration → System Settings decides the sender address</span></div>
+        </div>
+
+        <div style="padding:16px;">
+          <div class="classic-form">
+            <div class="span2">
+              <span class="field-lbl">To</span>
+              <input class="input-field" value="Emily Johnson <emily@globexind.com>" aria-label="To">
+              <p class="mock-note" style="margin-top:5px;">No <code>billingEmail</code> on this client, and no billing flag on a contact, so the primary contact is used.</p>
+            </div>
+            <div>
+              <span class="field-lbl">Cc</span>
+              <input class="input-field" placeholder="No copy — type or pick an address" aria-label="Cc">
+            </div>
+            <div>
+              <span class="field-lbl">Bcc</span>
+              <input class="input-field" placeholder="Nobody" aria-label="Bcc">
+            </div>
+            <div>
+              <span class="field-lbl">Template</span>
+              <select class="input-field" aria-label="Template">
+                <option selected>invoice.send — Invoice with the PDF attached</option>
+                <option>invoice.overdue — Overdue notice, no attachment</option>
+                <option>ticket.note — Plain reply</option>
+              </select>
+            </div>
+            <div>
+              <span class="field-lbl">Reply-to</span>
+              <input class="input-field" value="info@cyber7group.com" aria-label="Reply-to">
+            </div>
+            <div class="span2">
+              <span class="field-lbl">Subject</span>
+              <input class="input-field" value="Invoice INV-2026-002 — Due 6 September 2026" aria-label="Subject">
+            </div>
+            <div class="span2">
+              <span class="field-lbl">Message</span>
+              <textarea class="input-field mono" rows="5" style="font-family:inherit;" aria-label="Message">Hello Emily,
+
+Amount due: $8,680.00
+Due date: 6 September 2026
+
+Payment is 33 days past due. Please disregard this notice if payment has already been sent.</textarea>
+            </div>
+            <div>
+              <span class="field-lbl">Attachment</span>
+              <div class="att" style="margin-top:4px;">
+                <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-receipt"/></svg></span>
+                <div class="att__main">
+                  <p class="att__name">invoice-INV-2026-002.pdf</p>
+                  <p class="att__meta">generated on send · 84 KB</p>
+                </div>
+                <div class="att__right"><button type="button" class="btn btn--quiet">Remove</button></div>
+              </div>
+            </div>
+            <div>
+              <span class="field-lbl">On send</span>
+              <p class="say" style="margin-top:6px;">Mark the invoice <b>Sent</b> and write the activity entry.</p>
+              <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                <span class="switch switch--on" role="img" aria-label="On"><span class="switch__knob"></span></span>
+                <span class="say say--tight">Mark as sent</span>
+              </div>
+            </div>
+            <div class="span2">
+              <span class="field-lbl">What information gets sent</span>
+              <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:6px 18px; margin-top:4px;">
+                <label style="display:flex; gap:8px; align-items:center; font-size:12px; color:var(--text-secondary);"><input type="checkbox" checked> Amount due and due date</label>
+                <label style="display:flex; gap:8px; align-items:center; font-size:12px; color:var(--text-secondary);"><input type="checkbox" checked> Pay-online button</label>
+                <label style="display:flex; gap:8px; align-items:center; font-size:12px; color:var(--text-secondary);"><input type="checkbox" checked> Days past due</label>
+                <label style="display:flex; gap:8px; align-items:center; font-size:12px; color:var(--text-secondary);"><input type="checkbox"> Line items table</label>
+                <label style="display:flex; gap:8px; align-items:center; font-size:12px; color:var(--text-secondary);"><input type="checkbox" checked> Invoice PDF</label>
+                <label style="display:flex; gap:8px; align-items:center; font-size:12px; color:var(--text-secondary);"><input type="checkbox"> Letterhead footer block</label>
+              </div>
+            </div>
+            <div class="span2">
+              <div class="band band--crimson">
+                <svg class="ico ico--lg" style="color:var(--brand-crimson);"><use href="#i-shield"/></svg>
+                <p class="say">A billing document: no unsubscribe, and no quiet hours in this product to be exempt from.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dlgfoot">
+          <span class="mock-note" style="margin-right:auto;">Sends 1 email to emily@globexind.com with 1 attachment.</span>
+          <button type="button" class="btn btn--quiet">Cancel</button>
+          <button type="button" class="btn btn--crimson">Send</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sheet__btitle">Preview</div>
+        <div class="tpl" style="max-width:none; margin-top:10px;">
+          <div class="tpl__bar tpl__bar--crimson"><h1>Invoice INV-2026-002</h1></div>
+          <div class="tpl__body" style="padding:18px;">
+            <p>Hello Emily,</p>
+            <p style="color:#94a3b8;">Amount Due:</p>
+            <p class="tpl__amount num" style="font-size:22px;">$8,680.00</p>
+            <p style="color:#94a3b8;">Due Date: <b style="color:#fff;">6 September 2026</b></p>
+            <p style="margin-top:12px;">Payment is 33 days past due. Please disregard this notice if payment has already been sent.</p>
+            <a class="tpl__btn" href="#">View &amp; Pay Invoice</a>
+            <div class="tpl__att"><svg class="ico"><use href="#i-file"/></svg><span>invoice-INV-2026-002.pdf</span><span class="sz">84 KB</span></div>
+            <div class="tpl__rule"></div>
+            <p class="tpl__foot">Cyber 7 Group · Professional Services · info@cyber7group.com</p>
+          </div>
+        </div>
+        <p class="say" style="margin-top:10px;">
+          The classic dialog keeps the preview permanently in view rather than behind a toggle, and it
+          keeps the contents list as checkboxes in field order rather than as a rail of switches. The
+          difference is deliberate: a form is read top to bottom, once, before pressing Send.
+        </p>
+        <p class="say" style="margin-top:8px;">
+          <code>useRedesign()</code> decides which arrangement is drawn — <code>localStorage.setItem("c7_ui_redesign","0")</code>
+          for this one, <code>removeItem</code> to return to the instance's default.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mock-foot mock-note">
+    Drawing only. No route, component, template, guard, Help section, API document or BuildNotes entry
+    was changed for it — the artefact is this one file, and reverting is deleting it. Every figure, key,
+    limit and route above was read from the repository on 9 October 2026; where something does not exist
+    (the importer, the template records, an invoice email that is ever sent) the file says so rather than
+    drawing it as behaviour.
+  </footer>
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+
+    // Theme
+    document.querySelectorAll('[data-theme-btn]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var theme = btn.getAttribute('data-theme-btn');
+        root.setAttribute('data-theme', theme);
+        document.querySelectorAll('[data-theme-btn]').forEach(function (other) {
+          other.setAttribute('aria-pressed', String(other === btn));
+        });
+      });
+    });
+
+    // Screen picker
+    var screenButtons = document.querySelectorAll('[data-screen-btn]');
+    screenButtons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var key = btn.getAttribute('data-screen-btn');
+        document.querySelectorAll('[data-screen]').forEach(function (section) {
+          section.hidden = section.getAttribute('data-screen') !== key;
+        });
+        screenButtons.forEach(function (other) {
+          other.setAttribute('aria-pressed', String(other === btn));
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+
+    // Segmented choices: the three send-sheet contexts
+    document.querySelectorAll('[data-seg]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var group = btn.getAttribute('data-seg');
+        var opt = btn.getAttribute('data-seg-opt');
+        document.querySelectorAll('[data-seg="' + group + '"]').forEach(function (other) {
+          var on = other === btn;
+          other.setAttribute('aria-pressed', String(on));
+          other.classList.toggle('seg__opt--on', on);
+        });
+        document.querySelectorAll('[data-panel^="' + group + ':"]').forEach(function (panel) {
+          panel.hidden = panel.getAttribute('data-panel') !== group + ':' + opt;
+        });
+      });
+    });
+
+    // "Why" controls
+    document.querySelectorAll('.why').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var wrap = btn.closest('.why-wrap');
+        var body = wrap && wrap.querySelector('.why-body');
+        if (!body) return;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        body.hidden = open;
+      });
+    });
+  })();
+</script>
+</body>
+</html>

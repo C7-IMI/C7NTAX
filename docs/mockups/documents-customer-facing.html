@@ -1,0 +1,2299 @@
+<!DOCTYPE html>
+<!--
+  MOCKUP ONLY — nothing in the application has been changed. No route, component, schema column,
+  print rule, Help section, API document or BuildNotes entry was touched for this drawing: the only
+  artefact is this file, and reverting it is deleting it. Not one line of the proposal below exists in
+  the product yet.
+
+  Seven screens of one proposal, switchable inside this single file. It reimagines the documents that
+  LEAVE THE BUILDING — the ones a customer holds in their hand or opens on a phone: **the invoice, the
+  quote, and the ticket sheet**. The owner asked for the printable reports and PDFs to be reimagined:
+  "Use modern and cutting edge design principles, while staying professional… I like how you redesigned
+  them originally, but they still need more tuning."
+
+  ── WHAT EXISTS TODAY, READ NOT GUESSED ─────────────────────────────────────────────────────────────
+
+  * **The invoice is a dark screen printed to PDF.** `GET /billing/invoices/:id/pdf` (billing.ts:399)
+    returns HTML, and the stylesheet it returns opens with `body { … background:#0b1120; color:#e2e8f0; }`
+    and `.page { … background:#0f172a; border:1px solid #1e293b; border-radius:12px; padding:48px; }`.
+    **Fetched from the running API on 9 October 2026, INV-2026-002 renders with a background of
+    #0b1120** — a near-black sheet — and prints "No line items" above a subtotal of $8000.00, and prints
+    its tax line as **"Tax (850.0%)"**, because the route multiplies a rate the schema already stores as
+    a percentage: `Tax (${(invoice.taxRate * 100).toFixed(1)}%)` against `taxRate: 8.5`. The rate/percent
+    trap is the repo's own recorded one, and it reaches the customer on the one document a customer
+    keeps. Billing.tsx opens it in a popup (`window.open("", "_blank")` then a blob), the menu entry
+    that calls it is labelled **"Download PDF"** (Billing.tsx:315) while the fallback save names the file
+    `.html` (`link.download = `${inv.invoiceNumber}.html``), and there is no `GET /invoices/:id` route —
+    the list is the only source of an invoice.
+  * **The quote has no printable output at all.** `apps/api/src/routes/quotes.ts` is four handlers —
+    `GET /`, `POST /`, `PATCH /:id/status`, `POST /:id/convert` — and no PDF, no HTML and no print
+    route; `apps/web/src/pages/Quotes.tsx` contains no `print`, no `pdf` and no `window.open`
+    (searched). Quotes exist as records (the instance holds three: `QT-2026-2088` and `QT-2026-2087` for
+    Initech Solutions at $5,196.00, and `QT-SAMPLE-001` for Acme Corporation at $1,500.00) and the whole
+    router is gated by `configFlag("billing", "quotes")`. So the quote screen below is a **proposal**,
+    and it says so on its own face.
+  * **The ticket sheet is a hidden `<section>` and a browser print.** `apps/web/src/pages/Tickets.tsx`
+    around line 2629 renders `<section className="ticket-print-only" aria-hidden="true">` containing a
+    `PrintLetterhead`, the number, the title, the description, a seven-row `<dl>` (Status, Priority,
+    Board, Client, Contact, Assigned To, Due) and `<h3>Recent Activity</h3>` — **the first ten comments,
+    each labelled `comment.isEmail ? "Email" : comment.isInternal ? "Internal Note" : "Note"`, and
+    printed regardless of `isInternal`**. The rules in `apps/web/src/index.css` (`.ticket-print-only`,
+    `@page { margin: 16mm }`) hide everything else with `body * { visibility: hidden }` and then set the
+    sheet in **`font: 12pt/1.5 Georgia, serif`** — not the product's Inter. It carries the shield from
+    `components/PrintLetterhead.tsx` and nothing else: no time entries, no attachments, no resolution
+    field, no page number, no footer, and the same sheet is what the client is sent and what goes in the
+    file.
+  * **The overdue reminder is an email with no attachment.** `EmailService.sendOverdueReminder`
+    (EmailService.ts:190) sends the subject `Overdue Invoice ${invoiceNumber} — Payment Required` and the
+    `overdueTemplate` body — a red `#ef4444` header reading "Payment Overdue", then
+    "Outstanding Balance:" and the amount, "Invoice <n> is <d> days overdue.", and a **Pay Now** button —
+    with **no `attachments` argument at all**. `worker.ts:195` calls it every seven days while
+    `daysOverdue % 7 === 0`, to `invoice.company.email`, with the link built as
+    `${WEB_ORIGIN}/billing?invoice=${invoice.id}` — the **staff** Billing screen (`WEB_ORIGIN` defaults
+    to `http://localhost:3010`), because `/api/portal` has auth, branding, `me`, tickets and ticket
+    replies and **no invoices at all**. The email states `invoice.total` as the outstanding balance,
+    so a part-paid invoice would be chased for the wrong figure.
+  * **The shared brand is already one file.** `apps/web/src/lib/documentBrand.ts` holds the shield
+    (`/icon-192.png`), `company: "Cyber 7 Group, LLC"`, the ink/rule/tint ramp (`#0f172a`, `#334155`,
+    `#64748b`, `#cbd5e1`, `#e2e8f0`, `#f1f5f9`) and `crimson: "#c00000"`; `components/PrintLetterhead.tsx`
+    draws the shield, the wordmark with the crimson 7, and the who/where line. Both are reused here —
+    as literals, because DESIGN.md §8 says a document is a third surface and must not follow the theme.
+  * **The tax line has no jurisdiction to state.** `Invoice` has `taxRate`, `taxTotal` and `currency`
+    and **no jurisdiction column**; `services/reportData.ts` says exactly that and derives one from the
+    client's billing address — `[billingCountry || country, billingState || state].join(" · ")`, or
+    `"Not recorded"` — and its `dataQuality` block counts `invoicesMissingJurisdiction` because "a
+    missing jurisdiction is a question a reader asks". It also records the rate convention:
+    `ratePercent = rate > 1 ? rate : rate * 100`.
+
+  ── THE DOCUMENT LANGUAGE, AGREED WITH THE COMPANION REPORT FILE ────────────────────────────────────
+
+  The file that draws the **report** documents — standard reports, business-review packs, custom banded
+  reports — is the sibling of this one, and the two share this vocabulary deliberately:
+
+  1. **Paper first.** A4 (210 × 297 mm) and Letter (215.9 × 279.4 mm), portrait, drawn at **true paper
+     size in millimetres**, always in the **light** document palette whatever theme the interface is in:
+     paper is white, ink is `#0f172a`, one accent (`#c00000`). A dark invoice is the thing being fixed.
+  2. **The letterhead**: shield, wordmark, document title, and a meta line — client, document number,
+     issue date, due date, and who to reply to — over a 0.6pt ink rule.
+  3. **Rhythm and rules, not cards.** Hairlines (0.4pt) and space on a baseline grid, generous margins,
+     one measured grid for the money. **No border-radius, no drop shadow, no card-in-card** — interface
+     furniture is exactly what makes today's documents read as "a screen printed out".
+  4. **Type in points**, one family (Inter) plus a mono for the document number and account references,
+     **nothing below 8.5pt** so it survives a photocopy, **tabular numerals** in every money column.
+  5. **The money block** is the centre: quantity, unit price, amount; a subtotal; tax **with its rate and
+     its jurisdiction**; a total; and what has been paid.
+  6. **How to pay, and what happens next** — the part today's invoice does not have.
+  7. **Greyscale-safe**: every state (paid, part paid, overdue, draft) readable in black and white; the
+     accent carries meaning and is never the only carrier of it.
+  8. **A footer on every page**: page *n* of *m*, the instance and the company, the generated-at line,
+     and the terms line.
+
+  ── WHY IT IS COMPOSED THIS WAY ─────────────────────────────────────────────────────────────────────
+
+  1. **A document is not the interface.** Every sheet below is drawn as paper at its own size, with its
+     own type scale, and the mockup chrome is deliberately allowed to be dark while the paper stays
+     white. The one thing a designer must not carry across is the interface's habits: a card, a shadow,
+     a rounded corner, a coloured pill and a theme are all things paper cannot do.
+  2. **The client's copy and the file copy are one document.** The ticket sheet today is the same sheet
+     with the same ten comments for both audiences. This file draws the split — what the client receives
+     and what is withheld — as a property of the document rather than of the person printing it.
+  3. **The document must be complete on its own.** A reader who has to email to ask how to pay, or what
+     the tax rate was, has been sent an incomplete document. So the pay block, the tax rate with its
+     jurisdiction, and the page numbers are not decoration: they are the difference between a sheet and
+     a record.
+
+  ── WHAT IS REAL ────────────────────────────────────────────────────────────────────────────────────
+
+  Every name, figure and field name below was read from the repository or from the running API on
+  9 October 2026. The invoice is **INV-2026-002**, Globex Industries: subtotal **$8,000.00**, `taxRate`
+  **8.5**, `taxTotal` **$680.00**, total **$8,680.00**, USD, issued **7 August 2026**, due **6 September
+  2026**, status `overdue`. Its line comes from the client's own agreement — the seed's "Globex
+  Enterprise", `monthly`, `billingAmount: 8000`, taxRate `0.085` (seed-full.ts:120) — because the
+  invoice record itself carries **no `InvoiceLineItem` rows** and the live PDF prints "No line items".
+  The quote is **QT-2026-2088**, Initech Solutions: "Endpoint protection — 60 seats, annual"
+  (60 × $72.00 = $4,320.00) and "Onboarding and policy tuning" (1 × $480.00), subtotal **$4,800.00**,
+  `taxRate` 8.25, `taxTotal` **$396.00**, total **$5,196.00**, `notes: "Valid for 30 days."`. The ticket
+  is **INF-02-2017** "Terminal server session hangs", Globex Industries, contact **Sarah Lee**
+  (`slee@globexind.com`, +1-555-0203), board **Infrastructure Desk** (code `INF`, SLA response 120 min,
+  resolution 480 min, auto-close 14 days, `notifyCustomerOnClose: true`), assigned **Mike Wilson**,
+  raised by `source: "monitor"`, with the attachment **`onboarding-notes.md`** (`text/markdown`, 48 B)
+  and five comments of which **two are customer-visible**. Its time is the ticket's own: 30 min
+  (Sarah Jones, Remote · Technician) and 45 min (Mike Wilson, Remote · Engineer) at `rate: 170`,
+  `billable: true` — 75 minutes, $212.50. Jurisdictions are the report's own derivation: Globex is
+  `Chicago · IL · US` → **US · IL**; Initech is `Austin · TX · US` → **US · TX**. Days overdue is the
+  worker's own arithmetic on 6 September 2026 → **33 days**.
+
+  Where a document does not exist — the quote's printable output — or a value is not in the record — the
+  bank details for "how to pay", the jurisdiction column, an expiry date on a quote — the file says so
+  in place rather than drawing it as behaviour, and says what would have to be added for it to be true.
+
+  TWO INTERFACES, TWO DESIGNS. Every document is produced from both interfaces, so the panel that offers
+  them exists twice: the modern sheet (a rail of documents you press, a sentence beside the control that
+  acts, a countable footer) is drawn in screen one, and the **classic dialog** — labelled fields in a
+  grid, a table, a heading, Cancel / Save — closes the file, as this repository keeps two designs of
+  every screen and they are not one screen with a class toggled.
+
+  The page is a drawing, not a prototype: the theme toggle, the screen picker and the two "why" controls
+  move, and nothing else does.
+-->
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — The documents a customer is sent</title>
+<style>
+  /* ── The application's own tokens, copied from docs/mockups/email-send-and-import.html ───────── */
+  :root {
+    --navy-50:#e8edf5; --navy-100:#c5d1e5; --navy-200:#9eb3d3; --navy-300:#7895c1; --navy-400:#5b7db3;
+    --navy-500:#3e64a5; --navy-600:#365796; --navy-700:#2b4783; --navy-800:#223771; --navy-900:#142454;
+    --navy-950:#0a1628;
+
+    --cyber-50:#e0f7fe; --cyber-100:#b3edfc; --cyber-200:#80e2fa; --cyber-300:#4dd6f8; --cyber-400:#26cbf6;
+    --cyber-500:#00c0f4; --cyber-600:#00aae0; --cyber-700:#0090c4; --cyber-800:#0077a9; --cyber-900:#00507d;
+
+    --brand-crimson:#c00000;
+
+    --surface:#0f1a2e; --surface-light:#162238; --surface-lighter:#1e2d48; --surface-border:#2a3a5c;
+
+    --alert-red:#ef4444; --alert-amber:#f59e0b; --alert-green:#22c55e;
+
+    --status-new:#38bdf8; --status-open:#60a5fa; --status-progress:#fbbf24; --status-waiting-client:#c084fc;
+    --status-waiting-vendor:#a5b4fc; --status-resolved:#4ade80; --status-closed:#9ca3af; --status-reopened:#fb923c;
+
+    --text-primary:#ffffff; --text-secondary:#d1d5db; --text-tertiary:#9ca3af;
+    --text-muted:#8b93a1; --text-muted-alt:#7c8598;
+
+    --card-shadow: 0 1px 2px rgb(0 0 0 / 0.35), 0 12px 32px -22px rgb(0 0 0 / 0.75);
+    --btn-primary-fg:#ffffff;
+  }
+
+  /* Light theme — the same overrides the application makes, including the darkened status tokens. */
+  html[data-theme="light"] {
+    --navy-950:#ffffff; --navy-900:#0d0d0d; --navy-800:#1a1a1a; --navy-700:#2b2b2b; --navy-600:#424242;
+    --navy-500:#5c5c5c; --navy-400:#808080; --navy-300:#b3b3b3; --navy-200:#d9d9d9; --navy-100:#ebebeb;
+    --navy-50:#f5f5f5;
+
+    --cyber-50:#f0f9ff; --cyber-100:#e0f2fe; --cyber-200:#bae6fd; --cyber-300:#075985; --cyber-400:#0369a1;
+    --cyber-500:#0ea5e9; --cyber-600:#0284c7; --cyber-700:#0369a1; --cyber-800:#075985; --cyber-900:#0c4a6e;
+
+    --surface:#ffffff; --surface-light:#f7f7f7; --surface-lighter:#f0f0f0; --surface-border:#b8b8b8;
+
+    --alert-red:#dc2626; --alert-amber:#d97706; --alert-green:#16a34a;
+
+    --status-new:#075985; --status-open:#1e40af; --status-progress:#92400e; --status-waiting-client:#6b21a8;
+    --status-waiting-vendor:#3730a3; --status-resolved:#166534; --status-closed:#374151; --status-reopened:#9a3412;
+
+    --text-primary:#1a1a1a; --text-secondary:#363636; --text-tertiary:#525252;
+    --text-muted:#595959; --text-muted-alt:#666666;
+
+    --card-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 10px 28px -22px rgb(0 0 0 / 0.3);
+  }
+
+  /* ── Base, as the application's base layer sets it ───────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    min-height: 100dvh; line-height: 1.6;
+    background: var(--navy-950); color: var(--text-secondary);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+  }
+  h1, h2, h3, h4 { font-weight: 600; color: var(--text-primary); line-height: 1.3; }
+  p { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  code, .mono, kbd { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  .num { font-variant-numeric: tabular-nums; }
+  :focus-visible { outline: 2px solid var(--cyber-400); outline-offset: 2px; }
+  .sprite { display: none; }
+  .ico { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8;
+         stroke-linecap: round; stroke-linejoin: round; }
+  .ico--lg { width: 18px; height: 18px; }
+
+  /* ── Mockup-only scaffolding: the frame, the theme toggle, the screen picker, the "Why" control ─ */
+  .mock-frame { max-width: 1640px; margin: 0 auto; padding: 28px 24px 56px; }
+  .mock-tag {
+    display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 9999px;
+    font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--alert-red); background: color-mix(in srgb, var(--alert-red) 16%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--alert-red) 45%, transparent);
+  }
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px; z-index: 20;
+    display: inline-flex; gap: 2px; padding: 3px; border-radius: 9999px;
+    background: var(--surface); border: 1px solid var(--surface-border); box-shadow: var(--card-shadow);
+  }
+  .theme-toggle button {
+    font: inherit; font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+    background: transparent; border: 0; border-radius: 9999px; padding: 4px 11px; cursor: pointer;
+  }
+  .theme-toggle button[aria-pressed="true"] { background: var(--cyber-600); color: var(--btn-primary-fg); }
+
+  .mock-head { display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-top: 14px; }
+  .mock-head h1 { font-size: 22px; letter-spacing: -.01em; max-width: 74ch; }
+  .mock-head p { margin-top: 8px; max-width: 118ch; font-size: 13px; color: var(--text-muted); }
+
+  .picker { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 16px; }
+  .picker button {
+    font: inherit; font-size: 12px; font-weight: 500; color: var(--text-secondary); cursor: pointer;
+    background: var(--surface); border: 1px solid var(--surface-border); border-radius: 9999px;
+    padding: 5px 13px; display: inline-flex; align-items: center; gap: 7px;
+  }
+  .picker button[aria-pressed="true"] {
+    background: color-mix(in srgb, var(--cyber-600) 20%, transparent);
+    border-color: color-mix(in srgb, var(--cyber-500) 45%, transparent); color: var(--text-primary);
+  }
+  .picker button .n {
+    font-size: 10px; font-weight: 700; color: var(--text-muted);
+    border: 1px solid var(--surface-border); border-radius: 9999px; padding: 0 5px;
+  }
+  .picker button[aria-pressed="true"] .n { color: var(--cyber-300); border-color: color-mix(in srgb, var(--cyber-500) 40%, transparent); }
+
+  .why-wrap { position: relative; display: inline-flex; }
+  .why {
+    font: inherit; font-size: 10.5px; font-weight: 600; color: var(--text-muted-alt); cursor: pointer;
+    background: transparent; border: 1px dashed var(--surface-border); border-radius: 9999px; padding: 1px 8px;
+  }
+  .why:hover { color: var(--text-tertiary); }
+  .why-body {
+    margin-top: 8px; padding: 10px 12px; border-radius: 10px; max-width: 118ch;
+    background: color-mix(in srgb, var(--surface-lighter) 70%, transparent);
+    border: 1px dashed var(--surface-border);
+  }
+  .why-body p { font-size: 11.5px; color: var(--text-muted); line-height: 1.65; }
+  .why-body p + p { margin-top: 6px; }
+  .why-body code { font-size: 11px; color: var(--cyber-300); }
+  .mock-note { font-size: 11px; color: var(--text-muted-alt); }
+  .mock-note code { font-size: 10.5px; color: var(--cyber-300); }
+
+  /* ── The application's components, at their real values ──────────────────────────────────────── */
+  .card {
+    background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 12px; padding: 18px 18px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; flex: none; white-space: nowrap;
+    border-radius: 10px; border: 1px solid var(--surface-border); background: var(--surface-lighter);
+    padding: 4px 10px; font-size: 12px; font-weight: 500; color: var(--text-secondary);
+  }
+  .chip--on {
+    color: var(--cyber-300);
+    border-color: color-mix(in srgb, var(--cyber-500) 45%, transparent);
+    background-color: color-mix(in srgb, var(--cyber-600) 18%, transparent);
+  }
+  .chip__n {
+    border-radius: 9999px; background: var(--surface-border); padding: 0 6px;
+    font-size: 10px; font-weight: 600; color: var(--text-tertiary);
+  }
+  .chip--on .chip__n { background: color-mix(in srgb, var(--cyber-500) 25%, transparent); color: var(--text-primary); }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 9999px;
+    font-size: 11px; font-weight: 500; white-space: nowrap;
+    background-color: color-mix(in srgb, currentColor 18%, transparent);
+  }
+  .badge--overdue { color: var(--alert-red); }
+  .badge--in_progress { color: var(--status-progress); }
+  .badge--critical { color: var(--alert-red); }
+  .badge--sent { color: var(--status-open); }
+  .badge--draft { color: var(--text-tertiary); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; font-weight: 500;
+    border-radius: 10px; padding: 6px 12px; cursor: pointer; border: 1px solid transparent;
+  }
+  .btn--primary { background: var(--cyber-600); color: var(--btn-primary-fg); }
+  .btn--secondary { background: var(--surface-lighter); border-color: var(--surface-border); color: var(--text-primary); }
+  .btn--quiet { background: transparent; border-color: var(--surface-border); color: var(--text-secondary); }
+  .btn--crimson { background: var(--brand-crimson); color: #fff; }
+
+  .glyph {
+    width: 24px; height: 24px; border-radius: 8px; flex: none;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .glyph--cyber { background: color-mix(in srgb, var(--cyber-600) 20%, transparent); color: var(--cyber-400); }
+  .glyph--crimson { background: color-mix(in srgb, var(--brand-crimson) 20%, transparent); color: #ff8080; }
+  .glyph--amber { background: color-mix(in srgb, var(--alert-amber) 15%, transparent); color: var(--alert-amber); }
+  .glyph--red { background: color-mix(in srgb, var(--alert-red) 15%, transparent); color: var(--alert-red); }
+
+  .seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 12px; border: 1px solid var(--surface-border);
+         background: var(--surface); }
+  .seg__opt { font: inherit; font-size: 12px; font-weight: 500; color: var(--text-secondary);
+    background: transparent; border: 1px solid transparent; border-radius: 10px; padding: 6px 11px;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .seg__opt--on { background: var(--cyber-600); color: var(--btn-primary-fg); font-weight: 600; }
+
+  .band {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-radius: 12px;
+    border: 1px solid var(--surface-border); border-left: 2px solid var(--cyber-500);
+    background: var(--surface-lighter); padding: 11px 14px;
+  }
+  .band--crimson { border-left-color: var(--brand-crimson); }
+  .band--amber { border-left-color: var(--alert-amber); }
+  .band--red { border-left-color: var(--alert-red); }
+  .band__right { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  .stack > * + * { margin-top: 12px; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 1080px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 1180px) { .grid3 { grid-template-columns: minmax(0, 1fr); } }
+
+  .ptable { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  .ptable th, .ptable td { text-align: left; padding: 8px 10px 8px 0; font-size: 12px;
+    border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 60%, transparent); vertical-align: top; }
+  .ptable th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted-alt);
+    font-weight: 600; border-bottom-color: var(--surface-border); }
+  .ptable td { color: var(--text-secondary); }
+  .ptable tr:last-child td { border-bottom: 0; }
+  .ptable .plain { color: var(--text-primary); }
+  .ptable code { font-size: 10.5px; color: var(--cyber-300); }
+  .ptable tr.dim td { opacity: .7; }
+
+  .screen { margin-top: 34px; }
+  .screen[hidden] { display: none; }
+  .screen__label {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--text-muted);
+  }
+  .screen__label::after { content: ""; flex: 1; height: 1px; background: var(--surface-border); }
+  .screen__head { margin-top: 10px; }
+  .screen__head h2 { font-size: 16px; }
+  .screen__head p { margin-top: 4px; max-width: 118ch; font-size: 13px; color: var(--text-muted); }
+  .today {
+    margin-top: 10px; padding: 10px 13px; border-radius: 10px; font-size: 12px; line-height: 1.7;
+    color: var(--text-muted); background: color-mix(in srgb, var(--surface-lighter) 60%, transparent);
+    border: 1px dashed var(--surface-border); max-width: 152ch;
+  }
+  .today + .today { margin-top: 8px; }
+  .today b { color: var(--text-tertiary); font-weight: 600; }
+  .today code { font-size: 11px; color: var(--cyber-300); }
+  .today .em { color: var(--alert-red); font-weight: 600; }
+  .stacked > * + * { margin-top: 12px; }
+  .listfoot {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 8px 14px; border-top: 1px solid var(--surface-border); font-size: 11px; color: var(--text-muted);
+  }
+  .listfoot .note { margin-left: auto; font-size: 10.5px; color: var(--text-muted-alt); text-align: right; }
+  .kbd { font-size: 10.5px; border: 1px solid var(--surface-border); border-radius: 5px;
+    padding: 0 4px; color: var(--text-muted); background: var(--surface-lighter); }
+
+  .rail { display: flex; flex-direction: column; gap: 6px; }
+  .rail button {
+    font: inherit; text-align: left; cursor: pointer; border: 1px solid var(--surface-border);
+    background: var(--surface-lighter); color: var(--text-secondary); border-radius: 10px; padding: 9px 11px;
+    display: flex; align-items: flex-start; gap: 9px;
+  }
+  .rail button[aria-pressed="true"] { border-color: color-mix(in srgb, var(--cyber-500) 50%, transparent);
+    background: color-mix(in srgb, var(--cyber-600) 16%, transparent); color: var(--text-primary); }
+  .rail__t { display: block; font-size: 12.5px; font-weight: 600; color: inherit; }
+  .rail__s { display: block; font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .say { font-size: 11.5px; color: var(--text-muted); line-height: 1.6; }
+  .say--tight { font-size: 11px; }
+  .say b { color: var(--text-tertiary); }
+
+  /* ── The closing panel: the classic interface ─────────────────────────────────────────────── */
+  .classic-grid { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 12px; align-items: start; }
+  @media (max-width: 1080px) { .classic-grid { grid-template-columns: minmax(0, 1fr); } }
+  .classic-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 720px) { .classic-form { grid-template-columns: minmax(0, 1fr); } }
+  .classic-form .span2 { grid-column: 1 / -1; }
+  .field-lbl { display: block; font-size: 11px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 4px; }
+  .input-field {
+    width: 100%; font: inherit; font-size: 13px; color: var(--text-primary);
+    background: var(--navy-950); border: 1px solid var(--surface-border); border-radius: 10px; padding: 7px 10px;
+  }
+  html[data-theme="light"] .input-field { background: #fff; }
+  .dlgbar { display: flex; align-items: center; gap: 9px; padding: 10px 14px;
+    border-bottom: 1px solid var(--surface-border); background: var(--surface-light);
+    border-radius: 12px 12px 0 0; }
+  .dlgfoot { display: flex; align-items: center; gap: 8px; justify-content: flex-end;
+    padding: 11px 14px; border-top: 1px solid var(--surface-border); background: var(--surface-light);
+    border-radius: 0 0 12px 12px; }
+
+  footer.mock-foot { margin-top: 34px; padding-top: 16px; border-top: 1px solid var(--surface-border); max-width: 126ch; }
+
+  /* ═══════════════════════════════════════════════════════════════════════════════════════════════
+     THE DOCUMENT LANGUAGE  —  paper, at true size, in millimetres and points.
+     -----------------------------------------------------------------------------------------------
+     Everything under `.paper` is a DOCUMENT, not a screen. It is drawn at its real size in mm and
+     set in pt, so the file is a proof and not a picture of one. It is ALWAYS the light palette:
+     `data-theme` on <html> moves the mockup chrome and deliberately does not reach in here, and
+     every colour below is a literal for the reason DESIGN.md §2 and §8 give — a document is rendered
+     where CSS variables, the theme and the eight colour schemes do not exist.
+     The rules: hairline 0.4pt, strong rule 0.6pt, NO border-radius, NO box-shadow, no card-in-card,
+     nothing below 8.5pt, and tabular numerals in every money column.
+     The single exception to "no radius and no shadow" is `.paper` itself, which is given a desk
+     shadow so that it READS as a sheet lying on a surface in this drawing. That is the mockup's
+     framing, not the document's furniture.
+     ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+  .paper {
+    --paper:#ffffff; --ink:#0f172a; --body:#334155; --muted:#64748b;
+    --rule:#cbd5e1; --hair:#e2e8f0; --tint:#f1f5f9; --accent:#c00000;
+    width: 210mm; min-height: 297mm; flex: none;
+    background: var(--paper); color: var(--ink);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 9.5pt; line-height: 1.42;
+    padding: 13mm 15mm 10mm;
+    display: flex; flex-direction: column;
+    position: relative;
+    box-shadow: 0 1px 1px rgb(0 0 0 / .18), 0 18px 44px -26px rgb(0 0 0 / .55);
+  }
+  .paper--letter { width: 215.9mm; min-height: 279.4mm; }
+  .paper + .paper { margin-top: 10mm; }
+  .paper code, .paper .mono { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  .paper .tnum { font-variant-numeric: tabular-nums; }
+  /* The base layer colours every heading with the THEME's text token. Inside a document that is
+     always ink: a theme is a chrome thing and paper does not have one, so a heading that inherited
+     `--text-primary` would be white on a white sheet in the dark theme. */
+  .paper h1, .paper h2, .paper h3, .paper h4, .paper dt, .paper dd, .paper th, .paper td { color: var(--ink); }
+  .paper-hero { flex: 1 0 auto; }
+
+  /* Type scale, in points. Nothing below 8.5pt. */
+  .p-display { font-size: 25pt; font-weight: 700; letter-spacing: .015em; line-height: 1; text-transform: uppercase; }
+  .p-title   { font-size: 17pt; font-weight: 700; letter-spacing: -.005em; line-height: 1.1; }
+  .p-h2      { font-size: 10.5pt; font-weight: 700; letter-spacing: .075em; text-transform: uppercase; color: var(--ink); }
+  .p-body    { font-size: 9.5pt; }
+  .p-small   { font-size: 8.5pt; }
+  .p-label   { font-size: 8.5pt; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+  .p-money   { font-size: 9.5pt; font-variant-numeric: tabular-nums; }
+  .p-money-lg{ font-size: 13pt; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .p-money-xl{ font-size: 20pt; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .p-muted   { color: var(--muted); }
+  .p-accent  { color: var(--accent); }
+
+  /* Rules. A hairline is a hairline. */
+  .p-rule   { border-top: .6pt solid var(--ink); }
+  .p-hair   { border-top: .4pt solid var(--hair); }
+  .p-hair-top { border-top: .4pt solid var(--rule); }
+  .p-rule-block { border-top: .6pt solid var(--ink); padding-top: 2.4mm; }
+
+  /* The letterhead: shield, wordmark, title, meta line, rule. */
+  .lh { display: flex; align-items: flex-start; gap: 4.5mm; }
+  .lh__shield { width: 11mm; height: 11mm; flex: none; }
+  .lh__id { min-width: 0; }
+  .lh__mark { font-size: 16pt; font-weight: 700; letter-spacing: -.01em; line-height: 1.05; }
+  .lh__mark b { color: var(--accent); }
+  .lh__who { font-size: 8.5pt; color: var(--muted); line-height: 1.45; margin-top: .6mm; }
+  .lh__right { margin-left: auto; text-align: right; }
+  .lh__title { font-size: 20pt; }
+
+  .meta { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3mm 4mm; margin-top: 5mm; }
+  .meta dt { font-size: 8.5pt; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+  .meta dd { font-size: 9.5pt; margin: 0; }
+  .meta .ref { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; font-size: 9pt; }
+
+  /* The status mark: a word, a heavy edge and a hatch — legible in black and white. */
+  .pstatus {
+    display: inline-flex; align-items: center; gap: 1.8mm; border: .6pt solid var(--ink);
+    padding: .5mm 2mm; font-size: 8.5pt; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  }
+  .pstatus__mark { width: 2.6mm; height: 2.6mm; flex: none; border: .6pt solid currentColor; }
+  .pstatus--overdue { border-color: var(--accent); border-width: 1pt; color: var(--accent); }
+  .pstatus--overdue .pstatus__mark { background: repeating-linear-gradient(45deg, currentColor 0 .5pt, transparent .5pt 1.2pt); }
+  .pstatus--part { color: var(--ink); }
+  .pstatus--part .pstatus__mark { background: linear-gradient(90deg, currentColor 50%, transparent 50%); }
+  .pstatus--paid { color: var(--ink); }
+  .pstatus--paid .pstatus__mark { background: currentColor; }
+  .pstatus--draft { color: var(--muted); border-style: dashed; }
+  .pstatus--draft .pstatus__mark { border-style: dashed; }
+
+  /* The amount due — stated once, unambiguously. */
+  .due { display: flex; align-items: flex-end; gap: 6mm; border: .6pt solid var(--ink); padding: 3.4mm 4.5mm; margin-top: 5mm; }
+  .due__l { flex: 1; }
+  .due__label { font-size: 8.5pt; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+  .due__sub { font-size: 9pt; color: var(--body); margin-top: .8mm; }
+  .due__amount { text-align: right; }
+  .due--overdue { border-left-width: 2.6mm; border-left-color: var(--accent); }
+
+  /* The money grid: one measured grid, hairlines, tabular numerals. */
+  table.pgrid { width: 100%; border-collapse: collapse; margin-top: 5mm; }
+  .pgrid th {
+    text-align: left; font-size: 8.5pt; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--muted); padding: 0 0 1.8mm; border-bottom: .6pt solid var(--ink);
+  }
+  .pgrid td { font-size: 9.5pt; padding: 2.2mm 0; border-bottom: .4pt solid var(--hair); vertical-align: top;
+    font-variant-numeric: tabular-nums; }
+  .pgrid .num-col { text-align: right; white-space: nowrap; }
+  .pgrid td.desc { padding-right: 5mm; }
+  .pgrid td.desc .sub { display: block; font-size: 8.5pt; color: var(--muted); margin-top: .5mm; }
+  .pgrid tr.total-row td { border-bottom: 0; border-top: .6pt solid var(--ink); font-weight: 700; }
+
+  /* The totals block. */
+  .tot { margin-left: auto; width: 82mm; margin-top: 3mm; }
+  .tot__row { display: flex; justify-content: space-between; gap: 5mm; padding: 1.5mm 0; font-size: 9.5pt; }
+  .tot__row .k { color: var(--body); }
+  .tot__row .v { font-variant-numeric: tabular-nums; }
+  .tot__rule { border-top: .6pt solid var(--ink); margin-top: 1.4mm; padding-top: 2.2mm; }
+  .tot__grand { font-size: 13pt; font-weight: 700; }
+  .tot__grand .v { font-variant-numeric: tabular-nums; }
+  .tot__note { font-size: 8.5pt; color: var(--muted); text-align: right; margin-top: 1.4mm; }
+
+  /* How to pay, and what happens next. */
+  .pay { margin-top: 5.5mm; border-top: .6pt solid var(--ink); padding-top: 3mm;
+         display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 6mm; }
+  .pay h2 { font-size: 10.5pt; font-weight: 700; letter-spacing: .075em; text-transform: uppercase; }
+  .pay__ways { margin-top: 2.2mm; }
+  .pay__way { display: flex; gap: 2.5mm; padding: 1.8mm 0; border-top: .4pt solid var(--hair); }
+  .pay__way:first-child { border-top: 0; }
+  .pay__way dt { width: 24mm; flex: none; font-size: 8.5pt; font-weight: 600; letter-spacing: .05em;
+                 text-transform: uppercase; color: var(--muted); }
+  .pay__way dd { margin: 0; font-size: 9.5pt; }
+  .pay__way dd .refs { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; font-size: 9pt; display: block; margin-top: .5mm; }
+  .pay__next { border-left: .6pt solid var(--accent); padding-left: 3.5mm; }
+  .pay__portal { margin-top: 2.5mm; padding: 2.4mm 3mm; background: var(--tint); }
+  .pay__portal .u { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; font-size: 8.5pt; word-break: break-all; }
+  .pay__late { margin-top: 2.5mm; font-size: 8.5pt; color: var(--body); }
+
+  /* Section heading on a document. */
+  .p-sec { display: flex; align-items: baseline; gap: 3mm; margin-top: 5.5mm; }
+  .p-sec h2 { font-size: 10.5pt; font-weight: 700; letter-spacing: .075em; text-transform: uppercase; }
+  .p-sec .p-small { margin-left: auto; color: var(--muted); }
+
+  /* A note the document itself makes — a rule and a sentence, not a card. */
+  .p-note { border-left: 1.6mm solid var(--rule); padding: 1mm 0 1mm 3.5mm; margin-top: 3mm; }
+  .p-note--accent { border-left-color: var(--accent); }
+  .p-note p { font-size: 8.5pt; color: var(--body); }
+
+  /* The running head on page 2 and after. */
+  .runhead { display: flex; align-items: baseline; gap: 3mm; padding-bottom: 2mm; border-bottom: .4pt solid var(--rule); }
+  .runhead .r { margin-left: auto; font-size: 8.5pt; color: var(--muted); }
+
+  /* The timeline, used by the ticket sheet and the reminder statement. */
+  .tl { margin-top: 3mm; }
+  .tl__row { display: grid; grid-template-columns: 24mm 1fr; gap: 4mm; padding: 2.4mm 0; border-top: .4pt solid var(--hair); }
+  .tl__row:first-child { border-top: .4pt solid var(--rule); }
+  .tl__when { font-size: 8.5pt; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .tl__what { font-size: 9.5pt; }
+  .tl__what .k { font-size: 8.5pt; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .tl__what p { margin-top: .6mm; }
+  .tl__what .by { font-size: 8.5pt; color: var(--muted); margin-top: .8mm; }
+  .tl--internal { background: var(--tint); padding-left: 3mm; padding-right: 3mm; border-left: 1.6mm solid var(--muted); }
+  .tl--internal .tl__row:first-child { border-top: 0; }
+
+  /* The service record is the one document whose content lands a millimetre over an A4 page once it
+     carries a timeline, a time table, an attachment list and a position block. Rather than push one
+     block onto a near-empty page two, this one sheet runs a half-millimetre tighter: the section
+     rhythm and the timeline rows, and nothing else. It is a page-scoped adjustment, stated here so
+     the reader knows it was a decision and not a mistake. */
+  section[data-screen="ticket"] .paper .p-sec { margin-top: 3.5mm; }
+  section[data-screen="ticket"] .paper .tl__row { padding: 1.9mm 0; }
+  section[data-screen="ticket"] .paper .pgrid td { padding: 1.9mm 0; }
+
+  /* The footer on every page. */
+  .pfoot { margin-top: auto; padding-top: 2.6mm; border-top: .4pt solid var(--hair);
+           display: flex; gap: 4mm; align-items: flex-start; font-size: 8.5pt; color: var(--muted); }
+  .pfoot__l { flex: 1.3; }
+  .pfoot__c { flex: 1.4; }
+  .pfoot__r { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .pfoot .mono { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+
+  /* A signature line, for a proposal. */
+  .sig { display: flex; gap: 8mm; margin-top: 4mm; }
+  .sig__b { flex: 1; border-top: .6pt solid var(--ink); padding-top: 1.6mm; font-size: 8.5pt; color: var(--muted); }
+
+  /* ── Annotation furniture: the DRAWING's, never the document's ──────────────────────────────── */
+  .paper-wrap { position: relative; }
+  .pin {
+    position: absolute; left: 3mm; width: 5mm; height: 5mm; border-radius: 50%;
+    /* literal crimson: a pin is annotation furniture that sits OUTSIDE .paper, so it cannot inherit
+       the document's `--accent`; it wears the same value as the document's accent on purpose. */
+    background: #c00000; color: #fff; font-size: 8pt; font-weight: 700; font-family: Inter, sans-serif;
+    display: flex; align-items: center; justify-content: center; z-index: 3;
+    box-shadow: 0 1px 2px rgb(0 0 0 / .3);
+  }
+  .annos { counter-reset: none; }
+  .annos li { list-style: none; display: grid; grid-template-columns: 5.4mm 1fr; gap: 8px;
+    padding: 6px 0; border-top: 1px solid color-mix(in srgb, var(--surface-border) 55%, transparent); }
+  .annos li:first-child { border-top: 0; }
+  .annos .n {
+    width: 5.4mm; height: 5.4mm; border-radius: 50%; background: var(--brand-crimson); color: #fff;
+    font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  }
+  .annos .t { font-size: 12px; color: var(--text-secondary); line-height: 1.65; }
+  .annos .t b { color: var(--text-primary); }
+  .annos .t code { font-size: 10.5px; color: var(--cyber-300); }
+
+  /* The desk a sheet lies on, and the paper-size comparison. */
+  .desk { border-radius: 12px; padding: 26px 20px; display: flex; gap: 22px; flex-wrap: wrap; justify-content: center;
+    background: color-mix(in srgb, var(--navy-900) 55%, var(--surface)); border: 1px solid var(--surface-border); }
+  html[data-theme="light"] .desk { background: var(--surface-lighter); }
+  .desk--plain { background: transparent; border: 0; padding: 0; justify-content: flex-start; }
+  .sizecard { display: flex; flex-direction: column; gap: 8px; }
+  .sizebox { border: .4pt dashed var(--rule); background: #fff; box-shadow: 0 1px 1px rgb(0 0 0 / .15); }
+  .sizebox--a4 { width: 210mm; height: 26mm; }
+  .sizebox--letter { width: 215.9mm; height: 26mm; }
+
+  /* A phone, to prove the document survives 360px. */
+  .phone { width: 74mm; background: #fff; border: 1.2mm solid #1f2937; border-radius: 7mm; padding: 4mm 3.5mm;
+           box-shadow: 0 18px 40px -24px rgb(0 0 0 / .7); }
+  .phone__bar { font-size: 8.5pt; color: #64748b; display: flex; justify-content: space-between; margin-bottom: 2.5mm; }
+
+  .doc-scope-note { max-width: 152ch; }
+
+  /* The withhold table used by the ticket screen. */
+  .withhold { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  .withhold th, .withhold td { text-align: left; padding: 8px 10px 8px 0; font-size: 12px; vertical-align: top;
+    border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 60%, transparent); }
+  .withhold th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted-alt); }
+  .withhold .held { color: var(--alert-amber); }
+  .withhold .sent { color: var(--alert-green); }
+  .withhold code { font-size: 10.5px; color: var(--cyber-300); }
+
+  @media print { .paper { box-shadow: none; } }
+</style>
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6l-7-3Z"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-2-1.5-2 1.5-2-1.5L10 21l-2-1.5L6 21V3Z"/><path d="M9 8h6M9 12h6"/></symbol>
+  <symbol id="i-quote" viewBox="0 0 24 24"><path d="M8 7H4v6h4v4H4"/><path d="M20 7h-4v6h4v4h-4"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M15 4a5 5 0 0 0-6 6L4 15v5h5l5-5a5 5 0 0 0 6-6l-3 3-2-2 3-3-3-3Z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 10a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-diff" viewBox="0 0 24 24"><path d="M8 4v16M4 8h8M4 16h8"/><path d="M16 4v16M13 12h6"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"/><path d="M14 3v5h5"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24"><path d="M20 11.5 12 19.5a5 5 0 0 1-7-7l8-8a3.5 3.5 0 0 1 5 5l-8 8a2 2 0 0 1-3-3l7-7"/></symbol>
+  <symbol id="i-printer" viewBox="0 0 24 24"><path d="M7 9V4h10v5"/><rect x="4" y="9" width="16" height="7" rx="2"/><path d="M7 16h10v5H7z"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7.5 9 6 9-6"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="2.6"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3 22 20H2L12 3Z"/><path d="M12 9v5m0 3h.01"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4.5l3 2"/></symbol>
+  <symbol id="i-ruler" viewBox="0 0 24 24"><rect x="2" y="8" width="20" height="8" rx="1"/><path d="M7 8v3M11 8v4M15 8v3M19 8v4"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/></symbol>
+  <symbol id="i-type" viewBox="0 0 24 24"><path d="M4 6h16M9 6v13M15 6v6"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="9.5" r="1.3"/><circle cx="15" cy="9.5" r="1.3"/><circle cx="12" cy="15.5" r="1.3"/></symbol>
+</svg>
+
+<div class="theme-toggle" role="group" aria-label="Theme">
+  <button type="button" data-theme-btn="dark" aria-pressed="true">Dark</button>
+  <button type="button" data-theme-btn="light" aria-pressed="false">Light</button>
+</div>
+
+<div class="mock-frame">
+
+  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <span class="mock-tag">Mockup — nothing has changed</span>
+    <span class="mock-note">One file, opened from disk. The theme toggle, the screen picker and the two “why” controls are the only things that move. The theme moves the <b>chrome</b> and never the paper: a document is drawn as paper in every theme, which is the whole point.</span>
+  </div>
+
+  <div class="mock-head">
+    <div>
+      <h1>The documents that leave the building</h1>
+      <p>
+        Six documents a customer actually receives — an invoice, that invoice over two pages with a part
+        payment, a quote, a ticket sheet, and the overdue reminder with the statement it should carry —
+        drawn as paper at true A4 and Letter size, in millimetres and points, in a light palette that no
+        theme can reach. Then one panel that says what is wrong with the three documents that exist
+        today, and one that draws the panel which produces them in the classic interface.
+      </p>
+      <p>
+        <b>A document is not the interface.</b> Every sheet below is greyscale-safe, photocopy-safe, and
+        set so it survives being stapled, folded or opened on a phone.
+      </p>
+    </div>
+  </div>
+
+  <div class="picker" role="group" aria-label="Screen">
+    <button type="button" data-screen-btn="system" aria-pressed="true"><span class="n">1</span> The document system</button>
+    <button type="button" data-screen-btn="invoice1" aria-pressed="false"><span class="n">2</span> The invoice, page one</button>
+    <button type="button" data-screen-btn="invoice2" aria-pressed="false"><span class="n">3</span> Invoice, two pages, part paid</button>
+    <button type="button" data-screen-btn="quote" aria-pressed="false"><span class="n">4</span> The quote</button>
+    <button type="button" data-screen-btn="ticket" aria-pressed="false"><span class="n">5</span> The ticket sheet</button>
+    <button type="button" data-screen-btn="reminder" aria-pressed="false"><span class="n">6</span> The reminder and its statement</button>
+    <button type="button" data-screen-btn="changed" aria-pressed="false"><span class="n">7</span> What changed and why</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <!-- SCREEN 1 — THE DOCUMENT SYSTEM                                                             -->
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="system">
+    <div class="screen__label">Screen one — the system, annotated on one page</div>
+    <div class="screen__head">
+      <h2>The letterhead, the money grid, the totals, the pay block and the footer</h2>
+      <p>
+        Everything here is reused by the other five documents: there is one letterhead, one meta line,
+        one money grid, one totals block, one pay block, one footer and one set of status marks. What
+        follows the specimen is the vocabulary — the sizes, the type scale, the palette, and the four
+        states drawn in black and white.
+      </p>
+    </div>
+
+    <div class="today doc-scope-note">
+      <b>Today.</b> There is no system. The invoice is a dark HTML page (<code>background:#0b1120</code>)
+      with no letterhead shield, no footer, no page numbers and no way to pay. The ticket sheet is a
+      hidden <code>&lt;section&gt;</code> printed by the browser in Georgia. The quote has no printable
+      output at all. The reminder is an email with no paper. Four documents, four different ideas of what
+      a document is — which is why this screen exists before any of them.
+    </div>
+
+    <div style="margin-top:16px; display:grid; grid-template-columns: minmax(0,1fr) 360px; gap:20px; align-items:start;">
+      <!-- the annotated specimen -->
+      <div class="paper-wrap">
+        <span class="pin" style="top:18mm;">1</span>
+        <span class="pin" style="top:30mm;">2</span>
+        <span class="pin" style="top:41mm;">3</span>
+        <span class="pin" style="top:52mm;">4</span>
+        <span class="pin" style="top:66mm;">5</span>
+        <span class="pin" style="top:82mm;">6</span>
+        <span class="pin" style="top:118mm;">7</span>
+        <span class="pin" style="top:150mm;">8</span>
+        <span class="pin" style="top:196mm;">9</span>
+        <span class="pin" style="top:262mm;">10</span>
+
+        <div class="paper">
+          <!-- letterhead -->
+          <div class="lh">
+            <svg class="lh__shield" viewBox="0 0 48 48" role="img" aria-label="The C7NTAX shield">
+              <rect width="48" height="48" rx="10" fill="#0f172a"/>
+              <path d="M24 8 12 13v10c0 8 5.5 13.5 12 16 6.5-2.5 12-8 12-16V13L24 8Z" fill="#ffffff"/>
+              <path d="M18 18h12l-7 14" fill="none" stroke="#c00000" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div class="lh__id">
+              <div class="lh__mark">C<b>7</b>NTAX</div>
+              <div class="lh__who">Cyber 7 Group, LLC · Professional Services<br>info@cyber7group.com · +1-555-0100</div>
+            </div>
+            <div class="lh__right">
+              <div class="lh__title p-display">Invoice</div>
+              <div style="margin-top:2mm;">
+                <span class="pstatus pstatus--overdue"><span class="pstatus__mark"></span>Overdue</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- meta -->
+          <dl class="meta">
+            <div><dt>Client</dt><dd>Globex Industries<br><span class="p-small p-muted">Chicago, IL, US</span></dd></div>
+            <div><dt>Invoice</dt><dd class="ref">INV-2026-002</dd></div>
+            <div><dt>Issued</dt><dd>7 August 2026</dd></div>
+            <div><dt>Due</dt><dd>6 September 2026<br><span class="p-small p-accent">33 days overdue</span></dd></div>
+          </dl>
+          <div class="p-rule" style="margin-top:3.5mm;"></div>
+          <div class="p-small p-muted" style="margin-top:2mm;">
+            Accounts contact for this invoice: <b style="color:var(--ink);">Lisa Brown, Billing</b> ·
+            <span class="mono">lisa.brown@c7ntax.com</span> · quote <span class="mono">INV-2026-002</span> on any payment
+          </div>
+
+          <!-- amount due -->
+          <div class="due due--overdue">
+            <div class="due__l">
+              <div class="due__label">Amount due</div>
+              <div class="due__sub">Payable by <b style="color:var(--ink);">6 September 2026</b> · US dollars</div>
+            </div>
+            <div class="due__amount">
+              <div class="p-money-xl num">$8,680.00</div>
+              <div class="p-small p-muted" style="margin-top:.6mm;">USD</div>
+            </div>
+          </div>
+
+          <!-- money grid -->
+          <table class="pgrid">
+            <colgroup>
+              <col><col style="width:16mm;"><col style="width:26mm;"><col style="width:30mm;">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th class="num-col">Qty</th>
+                <th class="num-col">Unit price</th>
+                <th class="num-col">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="desc">
+                  Managed IT services — Globex Enterprise
+                  <span class="sub">Agreement “Globex Enterprise” · monthly · covered period 1–31 August 2026</span>
+                </td>
+                <td class="num-col">1</td>
+                <td class="num-col">$8,000.00</td>
+                <td class="num-col">$8,000.00</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="tot">
+            <div class="tot__row"><span class="k">Subtotal</span><span class="v">$8,000.00</span></div>
+            <div class="tot__row"><span class="k">Sales tax · 8.5% · US · IL</span><span class="v">$680.00</span></div>
+            <div class="tot__row tot__rule tot__grand"><span>Total</span><span class="v">$8,680.00</span></div>
+            <div class="tot__note">Tax jurisdiction derived from the client’s billing address; the schema has no jurisdiction column.</div>
+          </div>
+
+          <!-- pay -->
+          <div class="pay">
+            <div>
+              <h2>How to pay</h2>
+              <dl class="pay__ways">
+                <div class="pay__way"><dt>Bank transfer</dt><dd>ACH or wire, quoting the reference<span class="refs">Account ref INV-2026-002</span></dd></div>
+                <div class="pay__way"><dt>Cheque</dt><dd>Payable to Cyber 7 Group, LLC</dd></div>
+                <div class="pay__way"><dt>Card</dt><dd>Online, from the link below</dd></div>
+              </dl>
+            </div>
+            <div class="pay__next">
+              <h2>What happens next</h2>
+              <p class="p-body" style="margin-top:2mm;">If payment is not received by the due date the balance is overdue,
+                and a reminder is sent every seven days until it is settled.</p>
+              <div class="pay__portal">
+                <div class="p-label">Pay or query this invoice</div>
+                <div class="u p-small" style="margin-top:1mm;">localhost:3010/billing?invoice=b9aa356a</div>
+              </div>
+              <p class="pay__late">Please quote <span class="mono">INV-2026-002</span> with any payment, and email the
+                accounts contact above if anything here looks wrong.</p>
+            </div>
+          </div>
+
+          <!-- footer -->
+          <div class="pfoot">
+            <div class="pfoot__l"><span class="mono">C7NTAX</span> · instance <span class="mono">localhost:3010</span></div>
+            <div class="pfoot__c">Cyber 7 Group, LLC · Payment terms: net 30 (the due date above).<br>Generated 9 October 2026, 17:04.</div>
+            <div class="pfoot__r">Page 1 of 1</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- the annotation list -->
+      <div class="card">
+        <div class="p-h2" style="font-size:11px; color:var(--text-primary);">What each pin is</div>
+        <ul class="annos" style="margin-top:10px;">
+          <li><span class="n">1</span><span class="t"><b>The shield.</b> <code>/icon-192.png</code>, the app icon’s own artwork, from <code>lib/documentBrand.ts</code>. Drawn here as inline SVG because the file carries no external assets.</span></li>
+          <li><span class="n">2</span><span class="t"><b>The wordmark.</b> <code>C7NTAX</code>, the 7 in brand crimson <code>#c00000</code> — the one colour that is never a scheme’s.</span></li>
+          <li><span class="n">3</span><span class="t"><b>The title, and the status as a word.</b> A mark a photocopier can carry: heavy edge, hatch, <i>OVERDUE</i>. Never colour alone.</span></li>
+          <li><span class="n">4</span><span class="t"><b>The meta line.</b> Client, document number (mono), issued, due — and the account contact, so a reader knows who to reply to.</span></li>
+          <li><span class="n">5</span><span class="t"><b>A 0.6pt ink rule.</b> The strongest line on the page. Every other line is a 0.4pt hairline.</span></li>
+          <li><span class="n">6</span><span class="t"><b>The amount due, stated once.</b> One figure, one place, with the date it is payable. The totals block ends at Total, so it is never said twice.</span></li>
+          <li><span class="n">7</span><span class="t"><b>The money grid.</b> Measured columns in mm, tabular numerals, hairlines between rows, the unit price and the amount in their own right-hand columns.</span></li>
+          <li><span class="n">8</span><span class="t"><b>The totals, with the tax rate and its jurisdiction.</b> <code>Sales tax · 8.5% · US · IL</code> — an amount alone is a question the reader has to ask.</span></li>
+          <li><span class="n">9</span><span class="t"><b>How to pay, and what happens next.</b> The ways to pay, the portal, and one sentence saying what a late payment means. This is the block today’s invoice does not have.</span></li>
+          <li><span class="n">10</span><span class="t"><b>The footer.</b> Page <i>n</i> of <i>m</i>, the instance and the company, the generated-at line, and the terms line.</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="margin-top:26px;" class="grid3">
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:9px;">
+          <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-ruler"/></svg></span>
+          <div><p style="font-size:13px; color:var(--text-primary); font-weight:600;">Sizes, at their real size</p>
+          <p class="say">Drawn in <code>mm</code>, so this is a proof.</p></div>
+        </div>
+        <div class="stack" style="margin-top:12px;">
+          <div class="sizecard"><p class="say say--tight"><b>A4</b> — 210 × 297 mm</p><div class="sizebox sizebox--a4"></div></div>
+          <div class="sizecard"><p class="say say--tight"><b>Letter</b> — 215.9 × 279.4 mm</p><div class="sizebox sizebox--letter"></div></div>
+        </div>
+        <p class="say" style="margin-top:10px;">Both are portrait, the same margins (15 mm sides), the same 0.6pt rules and the same footer. Letter is 5.9 mm wider and 17.6 mm shorter; nothing reflows but the amount of room the money grid gets.</p>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:9px;">
+          <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-type"/></svg></span>
+          <div><p style="font-size:13px; color:var(--text-primary); font-weight:600;">Type, in points</p>
+          <p class="say">One family, one mono, nothing below 8.5pt.</p></div>
+        </div>
+        <table class="ptable" style="margin-top:10px;">
+          <thead><tr><th>Use</th><th>Size</th></tr></thead>
+          <tbody>
+            <tr><td class="plain">Document title</td><td>25pt / 700</td></tr>
+            <tr><td class="plain">Client name, headings</td><td>17pt / 700</td></tr>
+            <tr><td class="plain">Amount due</td><td>20pt / 700 tabular</td></tr>
+            <tr><td class="plain">Total</td><td>13pt / 700 tabular</td></tr>
+            <tr><td class="plain">Body, money columns</td><td>9.5pt tabular</td></tr>
+            <tr><td class="plain">Labels, footers, the smallest type</td><td>8.5pt</td></tr>
+            <tr><td class="plain">Numbers, refs, document number</td><td>JetBrains Mono</td></tr>
+          </tbody>
+        </table>
+        <p class="say" style="margin-top:10px;">Inter is what the product sets its interface in; the mono is what it sets an identifier in. A document that uses a third face (today’s ticket sheet uses <b>Georgia</b>) is a document from a different product.</p>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:9px;">
+          <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-palette"/></svg></span>
+          <div><p style="font-size:13px; color:var(--text-primary); font-weight:600;">The palette</p>
+          <p class="say">Literals, on purpose: <code>DESIGN.md</code> §8.</p></div>
+        </div>
+        <table class="ptable" style="margin-top:10px;">
+          <thead><tr><th>Role</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td class="plain">Paper</td><td><span class="mono">#ffffff</span></td></tr>
+            <tr><td class="plain">Ink — titles, totals, rules</td><td><span class="mono">#0f172a</span></td></tr>
+            <tr><td class="plain">Body</td><td><span class="mono">#334155</span></td></tr>
+            <tr><td class="plain">Muted — labels, footers</td><td><span class="mono">#64748b</span></td></tr>
+            <tr><td class="plain">Strong rule / hairline</td><td><span class="mono">#cbd5e1</span> / <span class="mono">#e2e8f0</span></td></tr>
+            <tr><td class="plain">Tint — a portal box, an internal block</td><td><span class="mono">#f1f5f9</span></td></tr>
+            <tr><td class="plain">Accent — the 7, the overdue edge</td><td><span class="mono">#c00000</span></td></tr>
+          </tbody>
+        </table>
+        <p class="say" style="margin-top:10px;">These are the values <code>documentBrand.ts</code> already holds. None of them moves with <code>data-theme</code>, the colour scheme or the density — because paper has no theme.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;" class="grid2">
+      <div class="card">
+        <p style="font-size:13px; color:var(--text-primary); font-weight:600;">Every state, in black and white</p>
+        <p class="say" style="margin-top:4px;">Take the colour away and the state still reads, because the word and the mark carry it.</p>
+        <div style="margin-top:14px; background:#fff; padding:12px 14px; border:1px solid var(--surface-border); display:flex; gap:14px; flex-wrap:wrap;">
+          <span class="pstatus pstatus--overdue"><span class="pstatus__mark"></span>Overdue</span>
+          <span class="pstatus pstatus--part"><span class="pstatus__mark"></span>Part paid</span>
+          <span class="pstatus pstatus--paid"><span class="pstatus__mark"></span>Paid in full</span>
+          <span class="pstatus pstatus--draft"><span class="pstatus__mark"></span>Draft</span>
+          <span class="pstatus"><span class="pstatus__mark"></span>Accepted</span>
+        </div>
+        <ul class="annos" style="margin-top:12px;">
+          <li><span class="n">a</span><span class="t"><b>Overdue</b> — a 1pt crimson border, a heavier left edge on the amount-due box, and a diagonal hatch. The hatch is the carrier; the crimson is the emphasis.</span></li>
+          <li><span class="n">b</span><span class="t"><b>Part paid</b> — a square filled on its left half. The document then states a <i>balance</i>, not a total, as the amount due.</span></li>
+          <li><span class="n">c</span><span class="t"><b>Paid in full</b> — a solid mark and the word. No green is needed, and none is used.</span></li>
+          <li><span class="n">d</span><span class="t"><b>Draft</b> — a dashed border, which survives a fax as well as it survives a photocopier. A draft never leaves the building, so it is the one state a client should never see.</span></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <p style="font-size:13px; color:var(--text-primary); font-weight:600;">The same invoice on a phone</p>
+        <p class="say" style="margin-top:4px;">A customer opens the link on a phone. The amount, the date and the ways to pay are what must survive 74 mm.</p>
+        <div style="margin-top:14px; display:flex; justify-content:center;">
+          <div class="phone">
+            <div class="phone__bar"><span>C7NTAX</span><span>INV-2026-002</span></div>
+            <div style="display:flex; align-items:flex-start; gap:3mm;">
+              <svg style="width:8mm;height:8mm;" viewBox="0 0 48 48" role="img" aria-label="The C7NTAX shield">
+                <rect width="48" height="48" rx="10" fill="#0f172a"/>
+                <path d="M24 8 12 13v10c0 8 5.5 13.5 12 16 6.5-2.5 12-8 12-16V13L24 8Z" fill="#ffffff"/>
+                <path d="M18 18h12l-7 14" fill="none" stroke="#c00000" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <div>
+                <div style="font-size:11pt; font-weight:700; color:#0f172a; letter-spacing:.015em; text-transform:uppercase;">Invoice</div>
+                <div style="font-size:8.5pt; color:#64748b; font-family:'JetBrains Mono',monospace;">INV-2026-002</div>
+              </div>
+            </div>
+            <div style="margin-top:3mm; border-top:.6pt solid #0f172a;"></div>
+            <div style="display:flex; align-items:flex-end; gap:4mm; margin-top:3mm; border:.6pt solid #0f172a; border-left-width:2.4mm; border-left-color:#c00000; padding:2.6mm 3mm;">
+              <div style="flex:1;">
+                <div style="font-size:8.5pt; font-weight:600; letter-spacing:.09em; text-transform:uppercase; color:#64748b;">Amount due</div>
+                <div style="font-size:8.5pt; color:#334155; margin-top:.6mm;">Due 6 Sep 2026</div>
+              </div>
+              <div style="font-size:15pt; font-weight:700; color:#0f172a; font-variant-numeric:tabular-nums;">$8,680.00</div>
+            </div>
+            <div style="margin-top:3mm; font-size:8.5pt; color:#334155;">
+              Pay by bank transfer quoting <span style="font-family:'JetBrains Mono',monospace;">INV-2026-002</span>, by cheque, or online.
+            </div>
+            <div style="margin-top:3mm; background:#f1f5f9; padding:2.4mm 3mm;">
+              <div style="font-size:8.5pt; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:#64748b;">Pay or query</div>
+              <div style="font-size:8.5pt; color:#0f172a; word-break:break-all; font-family:'JetBrains Mono',monospace; margin-top:1mm;">localhost:3010/billing?invoice=b9aa356a</div>
+            </div>
+            <div style="margin-top:3mm; border-top:.4pt solid #e2e8f0; padding-top:2mm; font-size:8.5pt; color:#64748b;">
+              Overdue — a reminder is sent every seven days.
+            </div>
+          </div>
+        </div>
+        <p class="say" style="margin-top:12px;">The phone layout is the same document, reflowed: the letterhead collapses to shield and number, the meta line becomes one line, and the money grid turns into a definition list. The 8.5pt floor holds, which is why it is 8.5pt and not 7.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <!-- SCREEN 2 — THE INVOICE, PAGE ONE                                                           -->
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="invoice1" hidden>
+    <div class="screen__label">Screen two — the invoice, complete and real</div>
+    <div class="screen__head">
+      <h2>INV-2026-002 · Globex Industries · $8,000.00 + 8.5% = $8,680.00 · overdue</h2>
+      <p>
+        The real invoice, drawn complete: the letterhead, the amount due stated once, the line items, the
+        tax with its rate and its jurisdiction, and the how-to-pay block. Everything on it is either the
+        record or is said to be absent.
+      </p>
+    </div>
+
+    <div class="today">
+      <b>Today, verbatim.</b> <code>GET /api/billing/invoices/b9aa356a-…/pdf</code> returns
+      <code>&lt;body style="background:#0b1120; color:#e2e8f0"&gt;</code> with a
+      <code>.page { background:#0f172a; border-radius:12px; padding:48px }</code> inside it. Fetched from
+      the running API this morning, that page’s line-item body is
+      <code>&lt;td colspan="4"&gt;No line items&lt;/td&gt;</code> above <code>Subtotal $8000.00</code>,
+      and its tax row is <span class="em">Tax (850.0%)</span> — because the route writes
+      <code>Tax (${(invoice.taxRate * 100).toFixed(1)}%)</code> against <code>taxRate: 8.5</code>. Its
+      dates are <code>8/7/2026</code> and <code>9/6/2026</code>. It has no page number, no terms, no
+      shield, and no sentence telling anyone how to pay.
+    </div>
+    <div class="today">
+      <b>Two things about the data, not the design.</b> The seeded <code>INV-2026-002</code> carries a
+      subtotal of $8,000.00 and <b>no <code>InvoiceLineItem</code> rows at all</b> — which is why the live
+      PDF prints “No line items” over a real figure — so the line below is the client’s own agreement,
+      <code>billingAmount: 8000</code>, <code>monthly</code>, which is the $8,000 the invoice was
+      raised from. And there are <b>no <code>Payment</code> rows against it</b>, so this page shows no
+      payments section: a document that invented one would be lying.
+    </div>
+
+    <div style="margin-top:16px;" class="desk desk--plain">
+      <div class="paper">
+        <div class="lh">
+          <svg class="lh__shield" viewBox="0 0 48 48" role="img" aria-label="The C7NTAX shield">
+            <rect width="48" height="48" rx="10" fill="#0f172a"/>
+            <path d="M24 8 12 13v10c0 8 5.5 13.5 12 16 6.5-2.5 12-8 12-16V13L24 8Z" fill="#ffffff"/>
+            <path d="M18 18h12l-7 14" fill="none" stroke="#c00000" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="lh__id">
+            <div class="lh__mark">C<b>7</b>NTAX</div>
+            <div class="lh__who">Cyber 7 Group, LLC · Professional Services<br>info@cyber7group.com · +1-555-0100</div>
+          </div>
+          <div class="lh__right">
+            <div class="lh__title p-display">Invoice</div>
+            <div style="margin-top:2mm;"><span class="pstatus pstatus--overdue"><span class="pstatus__mark"></span>Overdue</span></div>
+          </div>
+        </div>
+
+        <dl class="meta">
+          <div><dt>Client</dt><dd>Globex Industries<br><span class="p-small p-muted">Chicago, IL, US · Client account 1002</span></dd></div>
+          <div><dt>Invoice</dt><dd class="ref">INV-2026-002</dd></div>
+          <div><dt>Issued</dt><dd>7 August 2026</dd></div>
+          <div><dt>Due</dt><dd>6 September 2026<br><span class="p-small p-accent">33 days overdue</span></dd></div>
+        </dl>
+        <div class="p-rule" style="margin-top:3.5mm;"></div>
+
+        <div class="due due--overdue">
+          <div class="due__l">
+            <div class="due__label">Amount due</div>
+            <div class="due__sub">Payable by <b style="color:var(--ink);">6 September 2026</b> · US dollars</div>
+          </div>
+          <div class="due__amount">
+            <div class="p-money-xl num">$8,680.00</div>
+            <div class="p-small p-muted" style="margin-top:.6mm;">USD</div>
+          </div>
+        </div>
+
+        <table class="pgrid">
+          <colgroup><col><col style="width:16mm;"><col style="width:26mm;"><col style="width:30mm;"></colgroup>
+          <thead>
+            <tr><th>Description</th><th class="num-col">Qty</th><th class="num-col">Unit price</th><th class="num-col">Amount</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="desc">
+                Managed IT services — Globex Enterprise
+                <span class="sub">Agreement “Globex Enterprise” · monthly · covered period 1–31 August 2026</span>
+              </td>
+              <td class="num-col">1</td>
+              <td class="num-col">$8,000.00</td>
+              <td class="num-col">$8,000.00</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="p-small p-muted" style="margin-top:2.4mm;">One charge for the period. Work covered by the agreement is
+          listed on the continuation page and is not charged again.</p>
+
+        <div class="tot">
+          <div class="tot__row"><span class="k">Subtotal</span><span class="v">$8,000.00</span></div>
+          <div class="tot__row"><span class="k">Sales tax · 8.5% · US · IL</span><span class="v">$680.00</span></div>
+          <div class="tot__row tot__rule tot__grand"><span>Total</span><span class="v">$8,680.00</span></div>
+          <div class="tot__note">The tax rate is the invoice’s own <span class="mono">taxRate</span> (8.5); the jurisdiction is derived from the client’s billing address, because the schema has no jurisdiction column.</div>
+        </div>
+
+        <div class="pay">
+          <div>
+            <h2>How to pay</h2>
+            <dl class="pay__ways">
+              <div class="pay__way"><dt>Bank transfer</dt><dd>ACH or wire, quoting the reference<span class="refs">Account ref INV-2026-002</span></dd></div>
+              <div class="pay__way"><dt>Cheque</dt><dd>Payable to Cyber 7 Group, LLC, posted to the address above</dd></div>
+              <div class="pay__way"><dt>Card</dt><dd>Online, from the link opposite</dd></div>
+            </dl>
+            <p class="p-note p-small p-note--accent" style="margin-top:2.4mm;">
+              The account number and sort code are <b>not in the product</b>: <code>Invoice</code> has nowhere to
+              keep payment instructions and <code>Payment.method</code> lists only the method, so this block
+              is a proposal fed by an instance-level setting.
+            </p>
+          </div>
+          <div class="pay__next">
+            <h2>What happens next</h2>
+            <p class="p-body" style="margin-top:2mm;">This invoice was due on 6 September 2026. A reminder is sent
+              every seven days while the balance is unpaid.</p>
+            <div class="pay__portal">
+              <div class="p-label">Pay or query this invoice</div>
+              <div class="u p-small" style="margin-top:1mm;">localhost:3010/billing?invoice=b9aa356a-680a-41af-a477-ad4585f8a21e</div>
+            </div>
+            <p class="pay__late">Quote <span class="mono">INV-2026-002</span> with any payment. If anything here is
+              wrong, email <span class="mono">lisa.brown@c7ntax.com</span> and we will correct it.</p>
+          </div>
+        </div>
+
+        <div class="pfoot">
+          <div class="pfoot__l"><span class="mono">C7NTAX</span> · instance <span class="mono">localhost:3010</span></div>
+          <div class="pfoot__c">Cyber 7 Group, LLC · Payment terms: net 30 (the due date above).<br>Generated 9 October 2026, 17:04.</div>
+          <div class="pfoot__r">Page 1 of 1</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="today" style="max-width:152ch;">
+      <b>Why the amount due is stated once.</b> The totals block ends at <i>Total</i>, and the box above it
+      is the only place the sum owed appears. When something has been paid the box becomes
+      <i>Balance due</i> and the totals block gains one line —
+      <i>Less payments applied</i> — so the reader never has to work out which of two totals is the one to
+      pay. Screen three is that case.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <!-- SCREEN 3 — INVOICE, TWO PAGES, PART PAID                                                   -->
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="invoice2" hidden>
+    <div class="screen__label">Screen three — where an invoice design usually breaks</div>
+    <div class="screen__head">
+      <h2>The same invoice, two pages, with a part payment</h2>
+      <p>
+        Page one keeps the summary and the action — the amount, the date, the ways to pay — and page two
+        carries the detail: the schedule of what the charge covers, the tax, and the payments applied.
+        Nothing important is ever only on page two, and page two always says what it is a continuation of.
+      </p>
+    </div>
+
+    <div class="today">
+      <b>What is real here, and what is the case being drawn.</b> The figures are INV-2026-002’s:
+      <code>$8,000.00</code>, <code>8.5%</code>, <code>$680.00</code>, <code>$8,680.00</code>. The covered
+      work is the ticket’s own time: <code>MSP-02-2013</code> holds <b>two</b> billable entries —
+      <b>45 min</b> (“Investigating the reported issue”, Mike Wilson, <code>Remote · Engineer</code>) and
+      <b>30 min</b> (“Remote session with the user”, Sarah Jones, <code>Remote · Technician</code>), both at
+      <code>rate: 170</code> — 75 minutes, $212.50, and under the agreement it is
+      <b>not charged again</b>. The payment row is the case the design must survive: <b>the record has no
+      <code>Payment</code> rows against this invoice</b>, so the part payment below is drawn and labelled
+      as the case being designed for, not as history.
+    </div>
+
+    <div style="margin-top:16px;" class="desk desk--plain">
+      <!-- PAGE ONE -->
+      <div class="paper">
+        <div class="lh">
+          <svg class="lh__shield" viewBox="0 0 48 48" role="img" aria-label="The C7NTAX shield">
+            <rect width="48" height="48" rx="10" fill="#0f172a"/>
+            <path d="M24 8 12 13v10c0 8 5.5 13.5 12 16 6.5-2.5 12-8 12-16V13L24 8Z" fill="#ffffff"/>
+            <path d="M18 18h12l-7 14" fill="none" stroke="#c00000" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="lh__id">
+            <div class="lh__mark">C<b>7</b>NTAX</div>
+            <div class="lh__who">Cyber 7 Group, LLC · Professional Services<br>info@cyber7group.com · +1-555-0100</div>
+          </div>
+          <div class="lh__right">
+            <div class="lh__title p-display">Invoice</div>
+            <div style="margin-top:2mm;"><span class="pstatus pstatus--part"><span class="pstatus__mark"></span>Part paid</span></div>
+          </div>
+        </div>
+
+        <dl class="meta">
+          <div><dt>Client</dt><dd>Globex Industries<br><span class="p-small p-muted">Chicago, IL, US</span></dd></div>
+          <div><dt>Invoice</dt><dd class="ref">INV-2026-002</dd></div>
+          <div><dt>Issued</dt><dd>7 August 2026</dd></div>
+          <div><dt>Due</dt><dd>6 September 2026<br><span class="p-small p-muted">2 of 2 pages</span></dd></div>
+        </dl>
+        <div class="p-rule" style="margin-top:3.5mm;"></div>
+        <div class="p-small p-muted" style="margin-top:2mm;">
+          Accounts contact: <b style="color:var(--ink);">Lisa Brown, Billing</b> · <span class="mono">lisa.brown@c7ntax.com</span>
+        </div>
+
+        <div class="due due--overdue" style="margin-top:4mm;">
+          <div class="due__l">
+            <div class="due__label">Balance due</div>
+            <div class="due__sub">$8,680.00 total, less $4,000.00 received on 18 September 2026</div>
+          </div>
+          <div class="due__amount">
+            <div class="p-money-xl num">$4,680.00</div>
+            <div class="p-small p-muted" style="margin-top:.6mm;">USD</div>
+          </div>
+        </div>
+
+        <div class="p-sec"><h2>The charge</h2><span class="p-small">Itemised on page 2 of 2</span></div>
+        <table class="pgrid">
+          <colgroup><col><col style="width:16mm;"><col style="width:26mm;"><col style="width:30mm;"></colgroup>
+          <thead>
+            <tr><th>Summary</th><th class="num-col">Qty</th><th class="num-col">Unit price</th><th class="num-col">Amount</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="desc">Managed IT services — Globex Enterprise<span class="sub">Covered period 1–31 August 2026 · agreement rate</span></td>
+              <td class="num-col">1</td>
+              <td class="num-col">$8,000.00</td>
+              <td class="num-col">$8,000.00</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="tot">
+          <div class="tot__row"><span class="k">Subtotal</span><span class="v">$8,000.00</span></div>
+          <div class="tot__row"><span class="k">Sales tax · 8.5% · US · IL</span><span class="v">$680.00</span></div>
+          <div class="tot__row tot__rule"><span>Total</span><span class="v">$8,680.00</span></div>
+          <div class="tot__row"><span class="k">Less payments applied</span><span class="v">−$4,000.00</span></div>
+          <div class="tot__row tot__rule tot__grand"><span>Balance due</span><span class="v">$4,680.00</span></div>
+        </div>
+
+        <div class="pay">
+          <div>
+            <h2>How to pay the balance</h2>
+            <dl class="pay__ways">
+              <div class="pay__way"><dt>Bank transfer</dt><dd>ACH or wire, quoting the reference<span class="refs">Account ref INV-2026-002</span></dd></div>
+              <div class="pay__way"><dt>Cheque</dt><dd>Payable to Cyber 7 Group, LLC</dd></div>
+              <div class="pay__way"><dt>Card</dt><dd>Online, from the link opposite</dd></div>
+            </dl>
+            <p class="p-note p-small" style="margin-top:2.4mm;"><b>Already paid?</b> Payments take up to two
+              business days to appear here. The reference on your transfer is what lets us find it.</p>
+          </div>
+          <div class="pay__next">
+            <h2>What happens next</h2>
+            <p class="p-body" style="margin-top:2mm;">The $4,680.00 above is payable by 6 September 2026, and the
+              invoice is already past that date. A reminder goes out every seven days while a balance remains.</p>
+            <div class="pay__portal">
+              <div class="p-label">Pay or query this invoice</div>
+              <div class="u p-small" style="margin-top:1mm;">localhost:3010/billing?invoice=b9aa356a</div>
+            </div>
+            <p class="pay__late">Payments applied are listed on page 2, with the date, the method and the reference.</p>
+          </div>
+        </div>
+
+        <div class="pfoot">
+          <div class="pfoot__l"><span class="mono">C7NTAX</span> · instance <span class="mono">localhost:3010</span></div>
+          <div class="pfoot__c">Cyber 7 Group, LLC · Payment terms: net 30.<br>Generated 9 October 2026, 17:04.</div>
+          <div class="pfoot__r">Page 1 of 2</div>
+        </div>
+      </div>
+
+      <!-- PAGE TWO -->
+      <div class="paper">
+        <div class="runhead">
+          <span class="p-small"><b style="color:var(--ink);">INV-2026-002</b> · Globex Industries · Invoice, continued</span>
+          <span class="r">Page 2 of 2</span>
+        </div>
+
+        <div class="p-sec" style="margin-top:5mm;"><h2>Schedule of charges</h2><span class="p-small">continued</span></div>
+        <table class="pgrid" style="margin-top:3mm;">
+          <colgroup><col><col style="width:16mm;"><col style="width:26mm;"><col style="width:30mm;"></colgroup>
+          <thead>
+            <tr><th>Description</th><th class="num-col">Qty</th><th class="num-col">Unit price</th><th class="num-col">Amount</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="desc">
+                Managed IT services — Globex Enterprise
+                <span class="sub">Agreement “Globex Enterprise” · monthly · covered period 1–31 August 2026</span>
+              </td>
+              <td class="num-col">1</td>
+              <td class="num-col">$8,000.00</td>
+              <td class="num-col">$8,000.00</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="p-sec"><h2>Work covered by the agreement</h2><span class="p-small">not charged again</span></div>
+        <table class="pgrid" style="margin-top:3mm;">
+          <colgroup><col><col style="width:20mm;"><col style="width:22mm;"><col style="width:30mm;"></colgroup>
+          <thead>
+            <tr><th>Ticket</th><th class="num-col">Date</th><th class="num-col">Time</th><th class="num-col">Value covered</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="desc">MSP-02-2013 — Office 365 license assignment<span class="sub">Investigating the reported issue · Mike Wilson, Remote · Engineer</span></td>
+              <td class="num-col">1 Oct 2026</td>
+              <td class="num-col">45 min</td>
+              <td class="num-col">$127.50</td>
+            </tr>
+            <tr>
+              <td class="desc">MSP-02-2013 — Office 365 license assignment<span class="sub">Remote session with the user · Sarah Jones, Remote · Technician</span></td>
+              <td class="num-col">1 Oct 2026</td>
+              <td class="num-col">30 min</td>
+              <td class="num-col">$85.00</td>
+            </tr>
+            <tr class="total-row">
+              <td>Covered this period</td>
+              <td class="num-col"></td>
+              <td class="num-col">1 h 15 m</td>
+              <td class="num-col">$212.50</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="p-small p-muted" style="margin-top:2.4mm;">Both entries are <code>billable: true</code> at
+          <code>rate: 170</code> and both are inside the monthly agreement, so their value is shown for
+          substantiation and is added to nothing. The client sees what the fee bought.</p>
+
+        <div class="p-sec"><h2>Tax</h2></div>
+        <dl class="meta" style="margin-top:3mm; grid-template-columns: repeat(3, minmax(0,1fr));">
+          <div><dt>Jurisdiction</dt><dd>US · IL<span class="p-small p-muted" style="display:block;">Derived from the client’s billing address</span></dd></div>
+          <div><dt>Rate</dt><dd>8.5%<span class="p-small p-muted" style="display:block;">The invoice’s own <span class="mono">taxRate</span></span></dd></div>
+          <div><dt>Tax on this invoice</dt><dd class="tnum">$680.00<span class="p-small p-muted" style="display:block;">8.5% of $8,000.00</span></dd></div>
+        </dl>
+        <div class="p-note p-small" style="margin-top:3mm;">
+          <b>The jurisdiction is not a column.</b> <code>Invoice</code> stores a rate and an amount and nothing
+          about where the tax belongs, which is why <code>billingTaxSummaryReport</code> counts
+          <code>invoicesMissingJurisdiction</code> and why this line is derived rather than stated. A
+          proposed <code>taxJurisdiction</code> field is what would make the line a record instead of a
+          deduction.
+        </div>
+
+        <div class="p-sec"><h2>Payments applied</h2><span class="p-small">the record has none today — this is the case</span></div>
+        <table class="pgrid" style="margin-top:3mm;">
+          <colgroup><col style="width:28mm;"><col style="width:30mm;"><col><col style="width:30mm;"></colgroup>
+          <thead>
+            <tr><th>Date</th><th>Method</th><th>Reference</th><th class="num-col">Amount</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="tnum">18 Sep 2026</td>
+              <td>ach</td>
+              <td class="mono" style="font-size:9pt;">ACH-20260918-4471</td>
+              <td class="num-col">$4,000.00</td>
+            </tr>
+            <tr class="total-row">
+              <td colspan="3">Total received</td>
+              <td class="num-col">$4,000.00</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="p-small p-muted" style="margin-top:2.4mm;">A payment’s fields are
+          <code>amount</code>, <code>method</code> (<code>credit_card</code>, <code>ach</code>,
+          <code>check</code>, <code>wire</code>, <code>flexpoint</code>, <code>other</code>),
+          <code>reference</code> and <code>processedAt</code>. The reference is the field a customer quotes
+          on the phone, which is why it has its own column and its own mono face.</p>
+
+        <div class="tot" style="margin-top:5mm;">
+          <div class="tot__row"><span class="k">Subtotal</span><span class="v">$8,000.00</span></div>
+          <div class="tot__row"><span class="k">Tax · 8.5% · US · IL</span><span class="v">$680.00</span></div>
+          <div class="tot__row tot__rule"><span>Total</span><span class="v">$8,680.00</span></div>
+          <div class="tot__row"><span class="k">Less payments applied</span><span class="v">−$4,000.00</span></div>
+          <div class="tot__row tot__rule tot__grand"><span>Balance due</span><span class="v">$4,680.00</span></div>
+        </div>
+
+        <div class="pfoot">
+          <div class="pfoot__l"><span class="mono">C7NTAX</span> · instance <span class="mono">localhost:3010</span></div>
+          <div class="pfoot__c">Cyber 7 Group, LLC · Payment terms: net 30.<br>Generated 9 October 2026, 17:04.</div>
+          <div class="pfoot__r">Page 2 of 2</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="today" style="max-width:152ch;">
+      <b>The four rules a continuation page needs.</b> (1) It carries a <b>running head</b> with the number
+      and the client, and the words “continued”. (2) It repeats the <b>column headings</b> — a table that
+      continues across a page break without its headings is unreadable. (3) The footer says
+      <b>page 2 of 2</b>, so a missing page is obvious. (4) Nothing that the reader must <i>do</i> lives
+      only here; the balance is restated because it is the exception that proves the rule.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <!-- SCREEN 4 — THE QUOTE                                                                       -->
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="quote" hidden>
+    <div class="screen__label">Screen four — a proposal, not a demand</div>
+    <div class="screen__head">
+      <h2>QT-2026-2088 · Initech Solutions · $4,800.00 + 8.25% = $5,196.00</h2>
+      <p>
+        A quote answers different questions from an invoice: what is being proposed, what it costs, what
+        happens if they say yes, and how long the price holds. It is drawn here as a <b>proposal</b>,
+        because that is what it is — see the note below.
+      </p>
+    </div>
+
+    <div class="today">
+      <b>There is no quote document today.</b> <code>apps/api/src/routes/quotes.ts</code> holds four
+      handlers — <code>GET /</code>, <code>POST /</code>, <code>PATCH /:id/status</code> and
+      <code>POST /:id/convert</code> — and <b>no PDF, no HTML and no print route</b>;
+      <code>apps/web/src/pages/Quotes.tsx</code> contains no <code>print</code>, no <code>pdf</code> and
+      no <code>window.open</code>. The whole router is gated by
+      <code>configFlag("billing", "quotes")</code>, so on an instance with that flag off it is not merely
+      unprintable, it is a 404. <span class="em">The sheet below is a proposal and does not exist.</span>
+      Everything on it, however, does: the record is real.
+    </div>
+    <div class="today">
+      <b>What the record really carries.</b> <code>QT-2026-2088</code>, Initech Solutions, status
+      <code>sent</code>, line items “Endpoint protection — 60 seats, annual” (60 × $72.00 = $4,320.00) and
+      “Onboarding and policy tuning” (1 × $480.00), <code>subtotal 4800</code>,
+      <code>taxRate 8.25</code>, <code>taxTotal 396</code>, <code>total 5196</code>, and
+      <code>notes: "Valid for 30 days."</code> — which is where the “price holds until” line comes from,
+      because <b>a quote has no expiry column</b>. It also has <b>no options</b>: <code>QuoteLineItem</code>
+      has <code>sortOrder</code> and nothing that groups lines into a good/better/best, so the options
+      block below is proposed and says so.
+    </div>
+
+    <div style="margin-top:16px;" class="desk desk--plain">
+      <div class="paper">
+        <div class="lh">
+          <svg class="lh__shield" viewBox="0 0 48 48" role="img" aria-label="The C7NTAX shield">
+            <rect width="48" height="48" rx="10" fill="#0f172a"/>
+            <path d="M24 8 12 13v10c0 8 5.5 13.5 12 16 6.5-2.5 12-8 12-16V13L24 8Z" fill="#ffffff"/>
+            <path d="M18 18h12l-7 14" fill="none" stroke="#c00000" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="lh__id">
+            <div class="lh__mark">C<b>7</b>NTAX</div>
+            <div class="lh__who">Cyber 7 Group, LLC · Professional Services<br>info@cyber7group.com · +1-555-0100</div>
+          </div>
+          <div class="lh__right">
+            <div class="lh__title p-display">Quotation</div>
+            <div style="margin-top:2mm;"><span class="pstatus" style="color:var(--muted); border-style:dashed;"><span class="pstatus__mark" style="border-style:dashed;"></span>Not a bill</span></div>
+          </div>
+        </div>
+
+        <dl class="meta">
+          <div><dt>Prepared for</dt><dd>Initech Solutions<br><span class="p-small p-muted">Austin, TX, US</span></dd></div>
+          <div><dt>Quote</dt><dd class="ref">QT-2026-2088</dd></div>
+          <div><dt>Prepared</dt><dd>6 October 2026</dd></div>
+          <div><dt>Price holds until</dt><dd>5 November 2026<br><span class="p-small p-muted">30 days, from the quote’s own note</span></dd></div>
+        </dl>
+        <div class="p-rule" style="margin-top:3.5mm;"></div>
+        <div class="p-small p-muted" style="margin-top:2mm;">
+          Attention <b style="color:var(--ink);">Jessica Davis, CTO</b> · <span class="mono">jdavis@initech.io</span> ·
+          prepared by <b style="color:var(--ink);">Mike Wilson</b> · <span class="mono">mike.wilson@c7ntax.com</span>
+        </div>
+
+        <div class="p-sec" style="margin-top:6mm;"><h2>Endpoint protection renewal</h2></div>
+        <p class="p-body" style="margin-top:2.5mm; max-width:150mm;">
+          Sixty seats of endpoint protection for twelve months, including the migration from your current
+          console and the policy tuning that goes with it. Nothing here starts until you accept it.
+        </p>
+
+        <div class="p-sec"><h2>What is proposed</h2><span class="p-small">Itemised</span></div>
+        <table class="pgrid" style="margin-top:3mm;">
+          <colgroup><col><col style="width:16mm;"><col style="width:26mm;"><col style="width:30mm;"></colgroup>
+          <thead>
+            <tr><th>Description</th><th class="num-col">Qty</th><th class="num-col">Unit price</th><th class="num-col">Amount</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="desc">Endpoint protection — 60 seats, annual<span class="sub">Twelve months from acceptance · per seat</span></td>
+              <td class="num-col">60</td>
+              <td class="num-col">$72.00</td>
+              <td class="num-col">$4,320.00</td>
+            </tr>
+            <tr>
+              <td class="desc">Onboarding and policy tuning<span class="sub">Console migration and policy baseline · one-off</span></td>
+              <td class="num-col">1</td>
+              <td class="num-col">$480.00</td>
+              <td class="num-col">$480.00</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="tot">
+          <div class="tot__row"><span class="k">Subtotal</span><span class="v">$4,800.00</span></div>
+          <div class="tot__row"><span class="k">Sales tax · 8.25% · US · TX</span><span class="v">$396.00</span></div>
+          <div class="tot__row tot__rule tot__grand"><span>Total if accepted</span><span class="v">$5,196.00</span></div>
+          <div class="tot__note">This is a quotation, not an invoice. No charge arises until a quote is accepted and converted.</div>
+        </div>
+
+        <div class="pfoot">
+          <div class="pfoot__l"><span class="mono">C7NTAX</span> · instance <span class="mono">localhost:3010</span></div>
+          <div class="pfoot__c">Cyber 7 Group, LLC · Quotation — not an invoice. Confidential; prepared for the client named above.<br>Generated 9 October 2026, 17:04.</div>
+          <div class="pfoot__r">Page 1 of 2</div>
+        </div>
+      </div>
+
+      <div class="paper">
+        <div class="runhead">
+          <span class="p-small"><b style="color:var(--ink);">QT-2026-2088</b> · Initech Solutions · Quotation, continued</span>
+          <span class="r">Page 2 of 2</span>
+        </div>
+
+        <div class="p-sec" style="margin-top:5mm;"><h2>Your options</h2><span class="p-small">proposed — a quote has no option groups today</span></div>
+        <table class="pgrid" style="margin-top:3mm;">
+          <colgroup><col style="width:34mm;"><col><col style="width:30mm;"></colgroup>
+          <thead><tr><th>Option</th><th>What it covers</th><th class="num-col">Total</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>Renew as quoted</b></td>
+              <td class="desc">60 seats, annual, including migration and policy tuning.<span class="sub">Recommended — the renewal you have today, priced for the year.</span></td>
+              <td class="num-col">$5,196.00</td>
+            </tr>
+            <tr>
+              <td>Renew, migration later</td>
+              <td class="desc">60 seats, annual, no onboarding block.<span class="sub">Move to the new console in a later quarter.</span></td>
+              <td class="num-col">$4,680.00</td>
+            </tr>
+            <tr>
+              <td>Reduce to 45 seats</td>
+              <td class="desc">45 seats, annual, including onboarding.<span class="sub">If the contractor seats are coming out of scope.</span></td>
+              <td class="num-col">$4,005.00</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="p-sec"><h2>What happens if you say yes</h2></div>
+        <dl class="meta" style="margin-top:3mm; grid-template-columns: repeat(3, minmax(0,1fr));">
+          <div><dt>1 · Accept</dt><dd>Reply, or accept from the link below<span class="p-small p-muted" style="display:block;">Your CTO can accept on the client’s behalf.</span></dd></div>
+          <div><dt>2 · We confirm</dt><dd>A service order and a start date<span class="p-small p-muted" style="display:block;">Within one working day.</span></dd></div>
+          <div><dt>3 · Billing</dt><dd>An invoice when the work starts<span class="p-small p-muted" style="display:block;">Net 30, as always.</span></dd></div>
+        </dl>
+
+        <div class="p-sec"><h2>Accept, ask, or book</h2></div>
+        <div class="pay" style="margin-top:3mm; border-top-width:.4pt; border-top-color:var(--rule);">
+          <div>
+            <dl class="pay__ways">
+              <div class="pay__way"><dt>Accept</dt><dd>Accept QT-2026-2088 online<span class="refs">Quote ref QT-2026-2088</span></dd></div>
+              <div class="pay__way"><dt>Ask a question</dt><dd class="mono" style="font-size:9pt;">mike.wilson@c7ntax.com</dd></div>
+              <div class="pay__way"><dt>Book the work</dt><dd>+1-555-0100, quoting the quote number</dd></div>
+            </dl>
+          </div>
+          <div class="pay__next">
+            <h2>Then what</h2>
+            <p class="p-body" style="margin-top:2mm;">The price above holds until <b>5 November 2026</b>. After that
+              we will re-quote, because seat pricing is set annually.</p>
+            <div class="pay__portal">
+              <div class="p-label">Accept, or ask a question</div>
+              <div class="u p-small" style="margin-top:1mm;">localhost:3010/billing?quote=7f03f7ac</div>
+            </div>
+            <p class="pay__late">Nothing is charged until you accept. If the answer is no, tell us and we will
+              leave it there.</p>
+          </div>
+        </div>
+
+        <div class="sig">
+          <div class="sig__b">Accepted for Initech Solutions — name, position, date</div>
+          <div class="sig__b">Cyber 7 Group, LLC — date</div>
+        </div>
+
+        <div class="pfoot">
+          <div class="pfoot__l"><span class="mono">C7NTAX</span> · instance <span class="mono">localhost:3010</span></div>
+          <div class="pfoot__c">Cyber 7 Group, LLC · Quotation — not an invoice. Confidential; prepared for the client named above.<br>Generated 9 October 2026, 17:04.</div>
+          <div class="pfoot__r">Page 2 of 2</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="today" style="max-width:152ch;">
+      <b>Why a quote is a different shape from an invoice.</b> An invoice is a demand with a date on it: an
+      amount, a due date, a way to pay. A quote is an <i>offer</i>, so it leads with what is proposed in
+      words before it shows a price, states the day the price stops being true, offers more than one option
+      so the reader has a choice rather than a decision, and ends with three ways to answer — accept, ask,
+      or book — instead of one. The one thing it shares with the invoice is the money grid, because that is
+      where a reader looks for the number.
+    </div>
+
+    <div class="today" style="max-width:152ch;">
+      <b>The fields a quote would need to grow.</b> <code>Quote</code> carries <code>quoteNumber</code>,
+      <code>companyId</code>, <code>contactId</code>, <code>title</code>, <code>status</code>,
+      <code>subtotal</code>, <code>taxRate</code>, <code>taxTotal</code>, <code>total</code>,
+      <code>notes</code>, <code>createdById</code>, <code>createdAt</code>, <code>updatedAt</code> and
+      <code>lineItems</code>. It has <b>no expiry</b> and <b>no option grouping</b>; it is the
+      <code>notes</code> field that says “Valid for 30 days”, which a document should not have to parse.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <!-- SCREEN 5 — THE TICKET SHEET                                                                -->
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="ticket" hidden>
+    <div class="screen__label">Screen five — the service record, written for the client</div>
+    <div class="screen__head">
+      <h2>INF-02-2017 · Terminal server session hangs · Globex Industries</h2>
+      <p>
+        The sheet the client is sent, and the file copy of it. It is designed to be read by the client
+        first — what was reported, what was done, who did it, when, the time recorded, the attachments
+        and the current position — and to work as the file copy second.
+      </p>
+    </div>
+
+    <div class="today">
+      <b>Today, verbatim.</b> <code>Tickets.tsx</code> around line 2629 renders
+      <code>&lt;section className="ticket-print-only" aria-hidden="true"&gt;</code>, and
+      <code>index.css</code> reveals it under <code>@media print</code> by hiding everything else. It
+      prints a <code>PrintLetterhead</code>, the number, the title, the description, a seven-row
+      <code>&lt;dl&gt;</code> (Status, Priority, Board, Client, Contact, Assigned To, Due) and
+      <code>&lt;h3&gt;Recent Activity&lt;/h3&gt;</code> with <b>the first ten comments</b>, each labelled
+      <code>comment.isEmail ? "Email" : comment.isInternal ? "Internal Note" : "Note"</code>. It sets the
+      sheet in <code>font: 12pt/1.5 Georgia, serif</code> and page margins with
+      <code>@page { margin: 16mm }</code>.
+    </div>
+    <div class="today">
+      <b>The finding: there is one sheet for both audiences.</b> <span class="em">The print sheet prints
+      internal notes to the client.</span> <code>isInternal</code> is on the comment and the sheet reads
+      it — and then prints the note anyway, with the words “Internal Note” above it. On this ticket, three
+      of the five comments are internal: a status change, a priority change and a working note. All three
+      would go to the client today. There is also <b>no time recorded, no attachment, no resolution field
+      and no page number</b> on the sheet, and the sheet is what both the client and the file receive.
+    </div>
+
+    <div class="grid2" style="margin-top:16px;">
+      <div class="card" style="grid-column:1 / -1;">
+        <p style="font-size:13px; color:var(--text-primary); font-weight:600;">What reaches the client’s copy, and what never does</p>
+        <p class="say" style="margin-top:4px;">Five comments on this ticket. Two are visible to the client; three are internal and the client’s copy does not carry them at all — not blanked, not redacted, simply not on the sheet.</p>
+        <table class="withhold">
+          <thead><tr><th style="width:34mm;">Reaches the client</th><th>Comment</th><th style="width:26mm;">Flags</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="sent">Yes — a note</td>
+              <td>“Picked this up and reproduced it on the test tenant. Investigating the policy that applies to the affected users.”</td>
+              <td><code>isInternal: false</code></td>
+            </tr>
+            <tr>
+              <td class="sent">Yes — a note</td>
+              <td>“Thanks — one of our people hit this again this morning. Same error message as before.”</td>
+              <td><code>isInternal: false</code></td>
+            </tr>
+            <tr>
+              <td class="held">No — internal</td>
+              <td>“Internal note: Root cause found: an outdated conditional access policy was still scoped to the old group. Applying the fix now.”</td>
+              <td><code>isInternal: true</code></td>
+            </tr>
+            <tr>
+              <td class="held">No — internal</td>
+              <td>“Priority: Medium → High”</td>
+              <td><code>isInternal: true</code></td>
+            </tr>
+            <tr>
+              <td class="held">No — internal</td>
+              <td>“Status: New → In Progress”</td>
+              <td><code>isInternal: true</code></td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="say" style="margin-top:10px;"><b>The rule, stated once and applied everywhere:</b> a
+          comment with <code>isInternal: true</code> is never printed on the client’s copy. The client’s
+          copy is not the file copy with things taken out; it is built from the visible comments only, so
+          there is nothing to redact and nothing to leak. A <code>TicketAttachment</code> raised against an
+          internal comment by the same rule does not travel — <code>TicketAttachment</code> hangs off both
+          a ticket and a comment (<code>commentId</code>).</p>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;" class="desk desk--plain">
+      <div class="paper">
+        <div class="lh">
+          <svg class="lh__shield" viewBox="0 0 48 48" role="img" aria-label="The C7NTAX shield">
+            <rect width="48" height="48" rx="10" fill="#0f172a"/>
+            <path d="M24 8 12 13v10c0 8 5.5 13.5 12 16 6.5-2.5 12-8 12-16V13L24 8Z" fill="#ffffff"/>
+            <path d="M18 18h12l-7 14" fill="none" stroke="#c00000" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="lh__id">
+            <div class="lh__mark">C<b>7</b>NTAX</div>
+            <div class="lh__who">Cyber 7 Group, LLC · Professional Services<br>info@cyber7group.com · +1-555-0100</div>
+          </div>
+          <div class="lh__right">
+            <div class="lh__title p-display">Service record</div>
+            <div style="margin-top:2mm;"><span class="pstatus" style="color:var(--muted);"><span class="pstatus__mark" style="background:currentColor;"></span>In progress</span></div>
+          </div>
+        </div>
+
+        <dl class="meta">
+          <div><dt>Client</dt><dd>Globex Industries<br><span class="p-small p-muted">Chicago, IL, US</span></dd></div>
+          <div><dt>Ticket</dt><dd class="ref">INF-02-2017</dd></div>
+          <div><dt>Raised</dt><dd>19 August 2026<br><span class="p-small p-muted">by monitoring</span></dd></div>
+          <div><dt>Board</dt><dd>Infrastructure Desk<br><span class="p-small p-muted">SLA 120 min / 480 min</span></dd></div>
+        </dl>
+        <div class="p-rule" style="margin-top:3.5mm;"></div>
+        <div class="p-small p-muted" style="margin-top:2mm;">
+          Your contact: <b style="color:var(--ink);">Sarah Lee</b> · <span class="mono">slee@globexind.com</span>
+          · +1-555-0203 · We will write to you at that address about this ticket.
+        </div>
+
+        <div class="p-title" style="margin-top:6mm; max-width:160mm;">Terminal server session hangs</div>
+        <div class="p-sec" style="margin-top:5mm;"><h2>What was reported</h2></div>
+        <p class="p-body" style="margin-top:2.5mm; max-width:158mm;">
+          Raised by our own monitoring on 19 August 2026: sessions on the terminal server hang and a user
+          has to reconnect. Sarah Lee confirmed on 6 October that one of the team hit the same problem
+          again that morning.
+        </p>
+
+        <div class="p-sec"><h2>What was done</h2><span class="p-small">the client’s copy — visible entries only</span></div>
+        <div class="tl">
+          <div class="tl__row">
+            <div class="tl__when">6 October 2026</div>
+            <div class="tl__what"><span class="k">Note</span><p>Picked this up and reproduced it on the test tenant. Investigating the policy that applies to the affected users.</p>
+              <div class="by">Recorded in the ticket by <b style="color:var(--ink);">Admin User</b></div></div>
+          </div>
+          <div class="tl__row">
+            <div class="tl__when">6 October 2026</div>
+            <div class="tl__what"><span class="k">Note from you</span><p>Thanks — one of our people hit this again this morning. Same error message as before.</p>
+              <div class="by">Globex Industries · Sarah Lee</div></div>
+          </div>
+        </div>
+
+        <div class="p-sec"><h2>Time recorded</h2><span class="p-small">covered by the agreement — not charged</span></div>
+        <table class="pgrid" style="margin-top:3mm;">
+          <colgroup><col style="width:22mm;"><col><col style="width:26mm;"><col style="width:22mm;"></colgroup>
+          <thead><tr><th>Date</th><th>Work</th><th>Engineer</th><th class="num-col">Time</th></tr></thead>
+          <tbody>
+            <tr><td class="tnum">1 Oct 2026</td><td class="desc">Investigating the reported issue<span class="sub">Remote · Engineer · billable</span></td><td>Mike Wilson</td><td class="num-col">45 min</td></tr>
+            <tr><td class="tnum">1 Oct 2026</td><td class="desc">Remote session with the user<span class="sub">Remote · Technician · billable</span></td><td>Sarah Jones</td><td class="num-col">30 min</td></tr>
+            <tr class="total-row"><td colspan="3">Total recorded</td><td class="num-col">1 h 15 m</td></tr>
+          </tbody>
+        </table>
+        <p class="p-small p-muted" style="margin-top:2.2mm;">Both entries are <code>billable: true</code> at
+          <code>rate: 170</code> — $212.50 of work, covered by the monthly agreement and so not charged here.</p>
+
+        <div class="p-sec"><h2>Attachments</h2><span class="p-small">filed with this ticket</span></div>
+        <p class="p-body" style="margin-top:2.2mm;">
+          <span class="mono" style="font-size:9pt;">onboarding-notes.md</span> · text/markdown · 48 B · added 6 October 2026
+        </p>
+
+        <div class="p-sec"><h2>Current position</h2></div>
+        <div class="due" style="border-left-width:2.6mm; border-left-color:var(--ink);">
+          <div class="due__l">
+            <div class="due__label">Where this ticket stands</div>
+            <div class="due__sub">Open — <b style="color:var(--ink);">in progress</b>, priority critical. We are working on it, and we will tell you when it changes.</div>
+          </div>
+          <div class="due__amount">
+            <div class="p-small p-muted">Opened</div>
+            <div style="font-size:11pt; font-weight:700;">19 Aug 2026</div>
+          </div>
+        </div>
+
+        <div class="pfoot">
+          <div class="pfoot__l"><span class="mono">C7NTAX</span> · instance <span class="mono">localhost:3010</span></div>
+          <div class="pfoot__c">Cyber 7 Group, LLC · Service record for the client named above. Reply to this ticket and your message joins the record.<br>Generated 9 October 2026, 17:04.</div>
+          <div class="pfoot__r">Page 1 of 1</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="today" style="max-width:152ch;">
+      <b>The file copy is the same sheet.</b> That is deliberate: the file copy is the client’s copy,
+      plus nothing. A separate internal sheet is how the two drift, and how a client receives a document
+      assembled for someone else. What the file copy adds is one line — <code>internal notes: 3 withheld</code>
+      in the footer — which tells an auditor that the copy on file is the visible one and that there were
+      entries not on it, without printing them.
+    </div>
+    <div class="today" style="max-width:152ch;">
+      <b>Notes that belong to this page, not to the sheet.</b> Three explanations that were drafted onto
+      the document are shown here instead, because a document should not explain itself: (1) the timeline
+      is the <b>editorial decision</b> — the sheet shows only what the client saw, so the three internal
+      entries are simply absent; (2) an <b>attachment</b> is a <code>TicketAttachment</code> with
+      <code>filename</code>, <code>mimeType</code>, <code>size</code> and <code>storagePath</code>, hung
+      off a ticket or a comment (<code>commentId</code>) — and one on an <code>isInternal</code> comment
+      does not travel to the client’s copy; (3) there is <b>no resolution yet</b>, because
+      <code>resolvedAt</code> is null and <code>status</code> is <code>in_progress</code>, so the sheet
+      states the position rather than a conclusion it does not have — and when the ticket closes this
+      block becomes the resolution, with the client’s own confirmation quoted above it.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <!-- SCREEN 6 — THE REMINDER AND ITS STATEMENT                                                  -->
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="reminder" hidden>
+    <div class="screen__label">Screen six — the follow-up document, and the email it travels with</div>
+    <div class="screen__head">
+      <h2>The overdue reminder, as a statement the customer can keep</h2>
+      <p>
+        The worker already sends this email. It carries no attachment, so the customer receives a message
+        and nothing to file. The proposal is a one-page statement that the email attaches — and, more
+        importantly, that says exactly what the email says, in the same numbers.
+      </p>
+    </div>
+
+    <div class="today">
+      <b>Today, verbatim.</b> <code>worker.ts:195</code> calls
+      <code>emailService.sendOverdueReminder(invoice.company.email, invoice.invoiceNumber, invoice.total, daysOverdue, `${WEB_ORIGIN}/billing?invoice=${invoice.id}`)</code>
+      every seven days while <code>daysOverdue % 7 === 0</code>. In
+      <code>packages/email/src/EmailService.ts:190</code> that method sends subject
+      <code>Overdue Invoice ${invoiceNumber} — Payment Required</code> and the
+      <code>overdueTemplate</code> body — a red <code>#ef4444</code> header reading “Payment Overdue”,
+      then “Outstanding Balance:” and <code>$${amount.toFixed(2)}</code>, then
+      <code>Invoice ${num} is ${daysOd} days overdue</code>, and a “Pay Now” button — with
+      <b>no <code>attachments</code> at all</b>.
+    </div>
+    <div class="today">
+      <b>Three things the email gets wrong, and the statement fixes.</b> (1) It is sent to
+      <code>invoice.company.email</code> — Globex’s <code>contact@globexind.com</code>, a company address,
+      not a billing contact. (2) Its “Pay Now” link is
+      <code>localhost:3010/billing?invoice=…</code> — the <b>staff</b> Billing screen, because
+      <code>/api/portal</code> has auth, branding, <code>me</code>, tickets and ticket replies and
+      <span class="em">not one invoice route</span>. (3) It states <code>invoice.total</code> as the
+      outstanding balance, so a part-paid invoice would be chased for the wrong figure — which is why the
+      statement’s balance is the one the payments make it.
+    </div>
+
+    <div class="grid2" style="margin-top:16px;">
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:9px;">
+          <span class="glyph glyph--red"><svg class="ico"><use href="#i-mail"/></svg></span>
+          <div><p style="font-size:13px; color:var(--text-primary); font-weight:600;">The email, as it is sent</p>
+          <p class="say"><code>sendOverdueReminder</code> · to <span class="mono">contact@globexind.com</span></p></div>
+        </div>
+        <div style="margin-top:12px; border-radius:12px; overflow:hidden; border:1px solid var(--surface-border); max-width:520px; background:#0f1923;">
+          <div style="background:#ef4444; padding:18px; text-align:center;">
+            <div style="font-size:17px; font-weight:700; color:#fff;">Payment Overdue</div>
+          </div>
+          <div style="padding:22px 18px; color:#cbd5e1; font-size:13px; line-height:1.6; background:#0f1923;">
+            <p style="color:#cbd5e1;">Outstanding Balance:</p>
+            <p style="font-size:25px; font-weight:700; color:#ef4444; margin:6px 0 12px; font-variant-numeric:tabular-nums;">$8680.00</p>
+            <p style="color:#94a3b8;">Invoice INV-2026-002 is <b style="color:#ef4444;">33 days overdue</b>.</p>
+            <div style="margin-top:14px;"><span style="display:inline-block; background:#c00000; color:#fff; padding:10px 20px; border-radius:6px; font-weight:600; font-size:12.5px;">Pay Now</span></div>
+            <div style="border-top:1px solid #334155; margin:16px 0 12px;"></div>
+            <p style="color:#64748b; font-size:11.5px;">Cyber 7 Group · Professional Services · info@cyber7group.com</p>
+          </div>
+        </div>
+        <p class="say" style="margin-top:10px;">Notice the figure: <code>$8680.00</code>, no thousands separator,
+          from <code>amount.toFixed(2)</code>. And notice what is missing: <b>no attachment</b>, no due date,
+          no way to pay that a customer can use, and no sense of which invoice this is beyond the number.</p>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:9px;">
+          <span class="glyph glyph--amber"><svg class="ico"><use href="#i-warn"/></svg></span>
+          <div><p style="font-size:13px; color:var(--text-primary); font-weight:600;">What the email and the statement must agree on</p>
+          <p class="say">Four facts, one source each.</p></div>
+        </div>
+        <table class="ptable" style="margin-top:10px;">
+          <thead><tr><th>Fact</th><th>Source, once</th></tr></thead>
+          <tbody>
+            <tr><td class="plain">The amount</td><td>the same balance the statement shows</td></tr>
+            <tr><td class="plain">The invoice number</td><td><code>invoice.invoiceNumber</code></td></tr>
+            <tr><td class="plain">The due date</td><td><code>invoice.dueDate</code></td></tr>
+            <tr><td class="plain">Days overdue</td><td>the worker’s own arithmetic — 33</td></tr>
+            <tr><td class="plain">Where to pay</td><td>one link, and it must be a customer’s link</td></tr>
+          </tbody>
+        </table>
+        <p class="say" style="margin-top:10px;">The statement is generated from the invoice the same way the
+          email is, so the two cannot disagree. Today they can: the email says <code>invoice.total</code>
+          and the invoice page shows a balance.</p>
+        <div class="p-note p-small" style="border-left-color:var(--alert-amber); margin-top:12px;">
+          <p style="color:var(--text-muted);">Attaching the statement is the transport change:
+            <code>sendOverdueReminder</code> takes no <code>attachments</code> argument today, while
+            <code>sendInvoice</code> already does — <code>attachments: [{ filename, content, contentType }]</code>
+            — so the capability exists in the mailer and is not used here.</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;" class="desk desk--plain">
+      <div class="paper">
+        <div class="lh">
+          <svg class="lh__shield" viewBox="0 0 48 48" role="img" aria-label="The C7NTAX shield">
+            <rect width="48" height="48" rx="10" fill="#0f172a"/>
+            <path d="M24 8 12 13v10c0 8 5.5 13.5 12 16 6.5-2.5 12-8 12-16V13L24 8Z" fill="#ffffff"/>
+            <path d="M18 18h12l-7 14" fill="none" stroke="#c00000" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <div class="lh__id">
+            <div class="lh__mark">C<b>7</b>NTAX</div>
+            <div class="lh__who">Cyber 7 Group, LLC · Professional Services<br>info@cyber7group.com · +1-555-0100</div>
+          </div>
+          <div class="lh__right">
+            <div class="lh__title p-display">Statement</div>
+            <div style="margin-top:2mm;"><span class="pstatus pstatus--overdue"><span class="pstatus__mark"></span>Overdue</span></div>
+          </div>
+        </div>
+
+        <dl class="meta">
+          <div><dt>Client</dt><dd>Globex Industries<br><span class="p-small p-muted">Chicago, IL, US</span></dd></div>
+          <div><dt>Invoice</dt><dd class="ref">INV-2026-002</dd></div>
+          <div><dt>Issued</dt><dd>7 August 2026</dd></div>
+          <div><dt>Due</dt><dd>6 September 2026<br><span class="p-small p-accent">33 days overdue</span></dd></div>
+        </dl>
+        <div class="p-rule" style="margin-top:3.5mm;"></div>
+        <div class="p-small p-muted" style="margin-top:2mm;">
+          Accounts contact: <b style="color:var(--ink);">Lisa Brown, Billing</b> · <span class="mono">lisa.brown@c7ntax.com</span>
+        </div>
+
+        <div class="due due--overdue">
+          <div class="due__l">
+            <div class="due__label">Outstanding balance</div>
+            <div class="due__sub">Payable immediately · invoice due <b style="color:var(--ink);">6 September 2026</b></div>
+          </div>
+          <div class="due__amount">
+            <div class="p-money-xl num">$8,680.00</div>
+            <div class="p-small p-accent" style="margin-top:.6mm;">33 days overdue</div>
+          </div>
+        </div>
+
+        <div class="p-sec"><h2>This invoice</h2><span class="p-small">reminder statement</span></div>
+        <table class="pgrid" style="margin-top:3mm;">
+          <colgroup><col><col style="width:30mm;"><col style="width:30mm;"></colgroup>
+          <thead><tr><th>Charge</th><th class="num-col">Period</th><th class="num-col">Amount</th></tr></thead>
+          <tbody>
+            <tr><td class="desc">Managed IT services — Globex Enterprise</td><td class="num-col">1–31 Aug 2026</td><td class="num-col">$8,000.00</td></tr>
+            <tr><td class="desc">Sales tax · 8.5% · US · IL</td><td class="num-col"></td><td class="num-col">$680.00</td></tr>
+            <tr><td class="desc">Total invoiced</td><td class="num-col"></td><td class="num-col">$8,680.00</td></tr>
+            <tr><td class="desc">Payments received</td><td class="num-col"></td><td class="num-col">$0.00</td></tr>
+            <tr class="total-row"><td colspan="2">Balance outstanding</td><td class="num-col">$8,680.00</td></tr>
+          </tbody>
+        </table>
+
+        <div class="p-sec"><h2>How to pay</h2></div>
+        <div class="pay" style="margin-top:3mm; border-top-width:.4pt; border-top-color:var(--rule);">
+          <div>
+            <dl class="pay__ways">
+              <div class="pay__way"><dt>Bank transfer</dt><dd>ACH or wire, quoting the reference<span class="refs">Account ref INV-2026-002</span></dd></div>
+              <div class="pay__way"><dt>Cheque</dt><dd>Payable to Cyber 7 Group, LLC</dd></div>
+              <div class="pay__way"><dt>Card</dt><dd>Online, from the link opposite</dd></div>
+            </dl>
+          </div>
+          <div class="pay__next">
+            <h2>Pay or query</h2>
+            <div class="pay__portal">
+              <div class="p-label">Pay this invoice</div>
+              <div class="u p-small" style="margin-top:1mm;">localhost:3010/billing?invoice=b9aa356a</div>
+            </div>
+            <p class="pay__late">If payment has already been sent, please ignore this statement — and thank you.</p>
+          </div>
+        </div>
+
+        <div class="p-sec"><h2>Reminders sent</h2><span class="p-small">the worker’s own cadence — every 7 days</span></div>
+        <table class="pgrid" style="margin-top:3mm;">
+          <colgroup><col style="width:34mm;"><col><col style="width:34mm;"></colgroup>
+          <thead><tr><th>Sent</th><th>Notice</th><th class="num-col">Days overdue</th></tr></thead>
+          <tbody>
+            <tr><td class="tnum">13 Sep 2026</td><td>Email reminder 1</td><td class="num-col">7</td></tr>
+            <tr><td class="tnum">20 Sep 2026</td><td>Email reminder 2</td><td class="num-col">14</td></tr>
+            <tr><td class="tnum">27 Sep 2026</td><td>Email reminder 3</td><td class="num-col">21</td></tr>
+            <tr><td class="tnum">4 Oct 2026</td><td>Email reminder 4 — this statement</td><td class="num-col">28</td></tr>
+          </tbody>
+        </table>
+        <p class="p-small p-muted" style="margin-top:2.4mm;">Four reminders in 33 days, because
+          <code>daysOverdue % 7 === 0</code> — the code’s cadence, not a policy. A statement that shows the
+          chase is one a reader can act on without wondering whether it is the first they have missed.</p>
+
+        <div class="pfoot">
+          <div class="pfoot__l"><span class="mono">C7NTAX</span> · instance <span class="mono">localhost:3010</span></div>
+          <div class="pfoot__c">Cyber 7 Group, LLC · Reminder statement for the invoice above. Confidential; prepared for the client named above.<br>Generated 9 October 2026, 17:04.</div>
+          <div class="pfoot__r">Page 1 of 1</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="today" style="max-width:152ch;">
+      <b>Why it is a statement and not a second invoice.</b> A reminder that repeats an invoice, with an
+      invoice’s title and an invoice’s total, invites a customer to pay twice or to file it twice. This one
+      is a <i>statement of what is outstanding</i>: it says “Statement”, it carries the same number, it
+      shows the reminder history, and it ends with the same figure the email states and the same link.
+      The words “ignore this if payment has already been sent” are on it precisely because a reminder
+      crosses a payment in the post.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <!-- SCREEN 7 — WHAT CHANGED AND WHY                                                            -->
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="changed" hidden>
+    <div class="screen__label">Screen seven — the honest table</div>
+    <div class="screen__head">
+      <h2>Three documents that exist, and what is wrong with each</h2>
+      <p>
+        No claim here is a guess: each row says what the code does today, and quotes it.
+      </p>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <table class="ptable">
+        <thead>
+          <tr><th style="width:52mm;">Document</th><th>Today, as it really is</th><th style="width:62mm;">What the shared language fixes</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="plain"><b>The invoice</b><br><span class="mock-note">billing.ts:399</span></td>
+            <td>
+              A <b>dark</b> HTML page: <code>body { background:#0b1120; color:#e2e8f0 }</code> and
+              <code>.page { background:#0f172a; border-radius:12px }</code> — an interface card, printed.
+              Its tax line reads <b>“Tax (850.0%)”</b> because the route multiplies an already-percentage
+              <code>taxRate</code> by 100. It prints “No line items” over a real $8,000.00 subtotal. Dates
+              are <code>8/7/2026</code>. No shield, no page number, no terms, no footer, and no sentence
+              about how to pay. The menu entry says “Download PDF” and the fallback saves <code>.html</code>.
+            </td>
+            <td>
+              Paper that is white in every theme; a rate that reads <i>8.5% · US · IL</i>; the agreement’s
+              line in the money grid; unambiguous dates; a letterhead, a footer with page <i>n</i> of
+              <i>m</i>, and a pay block with the portal link and the late sentence.
+            </td>
+          </tr>
+          <tr>
+            <td class="plain"><b>The ticket sheet</b><br><span class="mock-note">Tickets.tsx:2629 · index.css</span></td>
+            <td>
+              A hidden <code>&lt;section className="ticket-print-only" aria-hidden="true"&gt;</code>
+              revealed by <code>@media print</code>, set in <b>Georgia 12pt</b> rather than Inter, with
+              <code>@page { margin: 16mm }</code>. It prints <b>the first ten comments regardless of
+              <code>isInternal</code></b> — so internal notes reach the client, labelled “Internal Note”.
+              No time recorded, no attachments, no resolution field, no page number, and one sheet for both
+              the client and the file.
+            </td>
+            <td>
+              One sheet for the client and the file; <b>internal entries never printed</b>; the timeline of
+              what was done; the time recorded with its rate; the attachments; the current position, which
+              becomes the resolution when there is one; and the same letterhead, grid and footer as the
+              invoice.
+            </td>
+          </tr>
+          <tr>
+            <td class="plain"><b>The quote</b><br><span class="mock-note">routes/quotes.ts</span></td>
+            <td>
+              <span class="em">No printable output at all.</span> Four handlers, no PDF, no HTML, no print;
+              <code>Quotes.tsx</code> has no <code>print</code>, no <code>pdf</code> and no
+              <code>window.open</code>; the router is gated by <code>configFlag("billing", "quotes")</code>.
+              A quote is a record you can create, send and convert — and cannot hand to anybody.
+            </td>
+            <td>
+              A proposal rather than a demand: what is proposed, the options, the day the price stops
+              holding, acceptance, and a signature block — on the same paper as the invoice, because the
+              same client reads both.
+            </td>
+          </tr>
+          <tr>
+            <td class="plain"><b>The reminder</b><br><span class="mock-note">EmailService.ts:190 · worker.ts:195</span></td>
+            <td>
+              An email with the red “Payment Overdue” header and a “Pay Now” button —
+              <b>and no attachment</b>. It goes to <code>invoice.company.email</code>, its link is the
+              <b>staff</b> Billing screen (<code>${WEB_ORIGIN}/billing?invoice=…</code>) because
+              <code>/api/portal</code> has no invoices, and it states <code>invoice.total</code> as the
+              outstanding balance, which a part payment would make wrong.
+            </td>
+            <td>
+              A statement that attaches to that same email, stating the balance the payments actually
+              leave, the due date, the ways to pay, the reminder history, and the same figure the email
+              states — one source, so the two cannot disagree.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grid3" style="margin-top:16px;">
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:9px;">
+          <span class="glyph glyph--crimson"><svg class="ico"><use href="#i-layers"/></svg></span>
+          <div><p style="font-size:13px; color:var(--text-primary); font-weight:600;">One document language, four documents</p></div>
+        </div>
+        <p class="say" style="margin-top:8px;">The invoice, the quote, the ticket sheet and the statement
+          share one letterhead, one meta line, one money grid, one totals block, one pay block, one footer
+          and one set of status marks. A client who reads two of them is reading one product.</p>
+      </div>
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:9px;">
+          <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-eye"/></svg></span>
+          <div><p style="font-size:13px; color:var(--text-primary); font-weight:600;">The audience decides the content</p></div>
+        </div>
+        <p class="say" style="margin-top:8px;">The ticket sheet is built from the visible comments; the file
+          copy is the client copy plus a count. The invoice states its amount once. The quote offers a
+          choice. The document says what it is and who it is for, on its own face.</p>
+      </div>
+      <div class="card">
+        <div style="display:flex; align-items:center; gap:9px;">
+          <span class="glyph glyph--amber"><svg class="ico"><use href="#i-warn"/></svg></span>
+          <div><p style="font-size:13px; color:var(--text-primary); font-weight:600;">Where a value is missing, it is said</p></div>
+        </div>
+        <p class="say" style="margin-top:8px;">No bank details, no jurisdiction column, no quote expiry, no
+          client-facing payment page. Each is drawn with the field it would need named beside it, rather
+          than filled in with something invented.</p>
+      </div>
+    </div>
+
+    <div class="today" style="max-width:152ch; margin-top:16px;">
+      <b>And the two smallest fixes with the largest effect.</b> The tax line: <code>ratePercent</code> in
+      <code>reportData.ts</code> already knows that a value above 1 is a percentage and one at or below 1 is
+      a fraction — the report is right and the customer’s invoice is wrong, from the same column. And the
+      date: <code>8/7/2026</code> is the seventh of August in Chicago and the eighth of July in London, on a
+      document that crosses both.
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <!-- THE CLOSING PANEL — THE SAME PANEL, IN BOTH INTERFACES                                     -->
+  <!-- ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen">
+    <div class="screen__label">Closing — the panel that offers these documents, in the classic interface</div>
+    <div class="screen__head">
+      <h2>One panel, two designs — and the classic one is not the modern one with different classes</h2>
+      <p>
+        Every document above is produced from both interfaces, so the panel that produces them exists
+        twice. The modern arrangement is a sheet with a rail you press and a sentence beside the control
+        that acts; the classic arrangement is a dialog on a form — labelled fields in a grid, a table, a
+        heading, Cancel and Save.
+      </p>
+    </div>
+
+    <div class="classic-grid" style="margin-top:16px;">
+      <!-- MODERN -->
+      <div class="card">
+        <div class="band band--crimson" style="margin-bottom:14px;">
+          <span class="glyph glyph--crimson"><svg class="ico"><use href="#i-printer"/></svg></span>
+          <div style="min-width:220px;">
+            <p style="font-size:12.5px; color:var(--text-primary);">Modern interface — the sheet</p>
+            <p class="say">A rail you press, a sentence beside the control, a countable footer.</p>
+          </div>
+          <div class="band__right"><span class="chip chip--on">4 documents<span class="chip__n">4</span></span></div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 260px minmax(0,1fr); gap:14px; align-items:start;">
+          <div class="rail">
+            <button type="button" aria-pressed="true">
+              <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-receipt"/></svg></span>
+              <span><span class="rail__t">Invoice</span><span class="rail__s">INV-2026-002 · Globex Industries</span></span>
+            </button>
+            <button type="button" aria-pressed="false">
+              <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-quote"/></svg></span>
+              <span><span class="rail__t">Quotation</span><span class="rail__s">QT-2026-2088 · Initech Solutions</span></span>
+            </button>
+            <button type="button" aria-pressed="false">
+              <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-wrench"/></svg></span>
+              <span><span class="rail__t">Service record</span><span class="rail__s">INF-02-2017 · Globex Industries</span></span>
+            </button>
+            <button type="button" aria-pressed="false">
+              <span class="glyph glyph--amber"><svg class="ico"><use href="#i-bell"/></svg></span>
+              <span><span class="rail__t">Reminder statement</span><span class="rail__s">INV-2026-002 · overdue 33 days</span></span>
+            </button>
+          </div>
+
+          <div>
+            <div class="band">
+              <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-file"/></svg></span>
+              <div style="min-width:200px;">
+                <p style="font-size:12.5px; color:var(--text-primary);">Invoice INV-2026-002</p>
+                <p class="say">Globex Industries · $8,680.00 · overdue by 33 days</p>
+              </div>
+              <div class="band__right"><span class="badge badge--overdue">overdue</span></div>
+            </div>
+            <p class="say" style="margin-top:10px;">Two pages, because the schedule of charges and the work
+              covered by the agreement run past the first. The client copy and the file copy are the same
+              document.</p>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:14px;">
+              <button type="button" class="btn btn--primary"><svg class="ico"><use href="#i-printer"/></svg> Print or save</button>
+              <button type="button" class="btn btn--secondary"><svg class="ico"><use href="#i-mail"/></svg> Email to the client</button>
+              <button type="button" class="btn btn--quiet"><svg class="ico"><use href="#i-eye"/></svg> Preview</button>
+            </div>
+            <p class="say" style="margin-top:10px;">The client contact this will use is
+              <b>contact@globexind.com</b> — the company address — because Globex has no billing contact
+              recorded. Email opens the send sheet with the document attached.</p>
+          </div>
+        </div>
+
+        <div class="listfoot" style="border-top:1px solid var(--surface-border); margin-top:14px; padding-left:0; padding-right:0;">
+          <span>4 documents</span><span>·</span><span>6 pages</span><span>·</span><span>2 clients</span>
+          <span class="note">Printed from the instance <code>localhost:3010</code></span>
+        </div>
+      </div>
+
+      <!-- CLASSIC -->
+      <div class="card" style="padding:0;">
+        <div class="dlgbar">
+          <span class="glyph glyph--cyber"><svg class="ico"><use href="#i-printer"/></svg></span>
+          <div><p style="font-size:13px; color:var(--text-primary); font-weight:600;">Print or save a document</p>
+          <p class="say">Classic interface — a form, read top to bottom, once.</p></div>
+        </div>
+        <div style="padding:14px;">
+          <div class="classic-form">
+            <div class="span2">
+              <label class="field-lbl" for="cd-doc">Document</label>
+              <select class="input-field" id="cd-doc">
+                <option>Invoice INV-2026-002 — Globex Industries</option>
+                <option>Quotation QT-2026-2088 — Initech Solutions</option>
+                <option>Service record INF-02-2017 — Globex Industries</option>
+                <option>Reminder statement — INV-2026-002</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-lbl" for="cd-client">Client</label>
+              <select class="input-field" id="cd-client"><option>Globex Industries</option><option>Initech Solutions</option></select>
+            </div>
+            <div>
+              <label class="field-lbl" for="cd-num">Document number</label>
+              <select class="input-field" id="cd-num"><option>INV-2026-002</option><option>INV-2026-001</option><option>INV-2026-003</option><option>INV-2026-004</option></select>
+            </div>
+            <div>
+              <label class="field-lbl" for="cd-size">Paper size</label>
+              <select class="input-field" id="cd-size"><option>A4 — 210 × 297 mm</option><option>Letter — 215.9 × 279.4 mm</option></select>
+            </div>
+            <div>
+              <label class="field-lbl" for="cd-copy">Copy</label>
+              <select class="input-field" id="cd-copy"><option>Client copy and file copy (identical)</option><option>File copy only — adds the withheld-entry count</option></select>
+            </div>
+            <div class="span2">
+              <span class="field-lbl">Include</span>
+              <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:6px 18px; margin-top:2px;">
+                <label style="display:flex; gap:8px; align-items:center; font-size:12px; color:var(--text-secondary);"><input type="checkbox" checked> Letterhead and footer</label>
+                <label style="display:flex; gap:8px; align-items:center; font-size:12px; color:var(--text-secondary);"><input type="checkbox" checked> Tax rate and jurisdiction</label>
+                <label style="display:flex; gap:8px; align-items:center; font-size:12px; color:var(--text-secondary);"><input type="checkbox" checked> How to pay</label>
+                <label style="display:flex; gap:8px; align-items:center; font-size:12px; color:var(--text-secondary);"><input type="checkbox" checked> Payments applied</label>
+                <label style="display:flex; gap:8px; align-items:center; font-size:12px; color:var(--text-secondary);"><input type="checkbox" checked> Work covered by the agreement</label>
+                <label style="display:flex; gap:8px; align-items:center; font-size:12px; color:var(--text-secondary);"><input type="checkbox"> Internal notes</label>
+              </div>
+              <p class="say" style="margin-top:6px;">Internal notes is drawn and permanently disabled: a
+                permission a caller does not have is a control that is not drawn, and a client copy that
+                could carry an internal note is not a client copy.</p>
+            </div>
+          </div>
+
+          <table class="ptable" style="margin-top:14px;">
+            <thead><tr><th>Documents the filter matches</th><th>Client</th><th>Pages</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td class="plain">INV-2026-002</td><td>Globex Industries</td><td>2</td><td><span class="badge badge--overdue">overdue</span></td></tr>
+              <tr><td class="plain">INV-2026-001</td><td>Acme Corporation</td><td>1</td><td><span class="badge" style="color:var(--status-resolved);">paid</span></td></tr>
+              <tr><td class="plain">INV-2026-003</td><td>Initech Solutions</td><td>1</td><td><span class="badge" style="color:var(--status-resolved);">paid</span></td></tr>
+              <tr><td class="plain">INV-2026-004</td><td>Stark Enterprises</td><td>1</td><td><span class="badge badge--draft">draft</span></td></tr>
+            </tbody>
+          </table>
+          <p class="say" style="margin-top:8px;"><code>4 documents · 5 pages · 1 client</code>, from
+            <code>listfoot</code> in the modern arrangement and this table in the classic one.</p>
+        </div>
+        <div class="dlgfoot">
+          <span class="mock-note" style="margin-right:auto;">Prints from the instance <code>localhost:3010</code>.</span>
+          <button type="button" class="btn btn--quiet">Cancel</button>
+          <button type="button" class="btn btn--primary">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <p style="font-size:13px; color:var(--text-primary); font-weight:600;">Why the two arrangements differ</p>
+      <p class="say" style="margin-top:6px;">
+        <b>Modern</b> answers “which document, and what will it do” in one press: the rail carries the
+        document, the band carries its facts, the sentence beside the button says who the email will go to,
+        and the footer counts what resulted. <b>Classic</b> answers the same question as a form, because
+        the classic interface is a form: the document is a labelled <code>select</code>, the copy and the
+        paper size are fields you set before you act, the matches are a table with a heading, and the
+        action is <i>Save</i>, not <i>Print or save</i> — a form is read once, top to bottom, and then
+        submitted.
+      </p>
+      <p class="say" style="margin-top:6px;">
+        What they share is the state, the documents and the words — never the layout.
+        <code>useRedesign()</code> decides which is drawn:
+        <code>localStorage.setItem("c7_ui_redesign","0")</code> for the classic dialog,
+        <code>removeItem</code> to return to the instance's default.
+      </p>
+    </div>
+  </section>
+
+  <footer class="mock-foot mock-note">
+    Drawing only. No route, component, schema column, print rule, Help section, API document or
+    BuildNotes entry was changed for it — the artefact is this one file, and reverting is deleting it.
+    Every figure, name, field name and route above was read from the repository or from the running API
+    on 9 October 2026, including the live invoice PDF that prints <b>Tax (850.0%)</b> and
+    <b>No line items</b>. Where a document does not exist — the quote’s printable output — or a value is
+    not in the record — the bank details, the tax jurisdiction column, a quote’s expiry — the file says
+    so rather than drawing it as behaviour.
+  </footer>
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+
+    // Theme — moves the mockup chrome only. The paper is drawn in its own literals and never follows it.
+    document.querySelectorAll('[data-theme-btn]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var theme = btn.getAttribute('data-theme-btn');
+        root.setAttribute('data-theme', theme);
+        document.querySelectorAll('[data-theme-btn]').forEach(function (other) {
+          other.setAttribute('aria-pressed', String(other === btn));
+        });
+      });
+    });
+
+    // Screen picker
+    var screenButtons = document.querySelectorAll('[data-screen-btn]');
+    screenButtons.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var key = btn.getAttribute('data-screen-btn');
+        document.querySelectorAll('[data-screen]').forEach(function (section) {
+          section.hidden = section.getAttribute('data-screen') !== key;
+        });
+        screenButtons.forEach(function (other) {
+          other.setAttribute('aria-pressed', String(other === btn));
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+
+    // "Why" controls
+    document.querySelectorAll('.why').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var wrap = btn.closest('.why-wrap');
+        var body = wrap && wrap.querySelector('.why-body');
+        if (!body) return;
+        var open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', String(!open));
+        body.hidden = open;
+      });
+    });
+  })();
+</script>
+</body>
+</html>

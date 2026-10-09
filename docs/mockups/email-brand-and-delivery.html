@@ -1,0 +1,2339 @@
+<!DOCTYPE html>
+<!--
+  MOCKUP ONLY — nothing in the application has been changed. No route, no component, no guard, no
+  Help section and no BuildNotes entry was touched for this drawing; the only artefact is this file,
+  and reverting it is deleting it. Not one line of the proposal below exists in the product yet.
+
+  Seven screens of one proposed section, switchable inside this single file. The companion mockups
+  cover the other two halves of the same feature — `email-studio.html` (the template list, the editor,
+  the preview) and `email-send-and-import.html` (the send sheet, the contents chooser, the importer) —
+  and this file deliberately draws none of those. It answers the questions the editor cannot:
+
+    WHERE IT SENT FROM · WHEN IT IS ALLOWED TO GO · WHO MAY RECEIVE IT · WHAT HAPPENED TO THE LAST FEW
+
+  1. THE BRAND KIT — the logo in two weights plus the text wordmark a mail client must fall back to,
+     the colour set, the type scale, the footer, the legal line, the unsubscribe rule, and the
+     statement that matters most: this is ONE kit shared with the PDFs, not an email brand beside a
+     document brand. Shown applied to a real message in the same screen, because a brand kit nobody
+     can see applied is a form.
+
+  2. SENDING IDENTITY — which address each message leaves from, why a ticket notification replies
+     *into the ticket* rather than to a person, the domains, and the three things about SPF, DKIM and
+     DMARC a person setting this up must not get wrong. It is honest about the boundary: the
+     application records what you configure (`GET /api/system/deployment` reports the relay it was
+     started with) and it can read the DNS records you paste in — it cannot sign mail for a domain it
+     has not been allowed to, and it cannot prove a record you have not pasted.
+
+  3. THE TRIGGER MATRIX — one row per message: when it fires, who receives it, whether the customer
+     sees it, whether it can be turned off, and which template it uses. This is the screen that
+     answers "what is this system actually sending out", and the one the owner reads first.
+
+  4. QUIET HOURS, BATCHING AND THE DIGEST — a ticket that changes six times in an hour must not send
+     six emails. A window, a threshold, a digest, and what happens to a message that arrives during
+     the window — with the messages that are deliberately NOT batched named on the screen.
+
+  5. WHO MAY BE EMAILED — the recipient rules exactly as they are enforced today, plus opt-out and
+     bounce/complaint handling, each with the line saying where it is applied.
+
+  6. PER-CLIENT OVERRIDES — one client on its own footer, its own from-name, its own quiet hours; how
+     the override is created, what it inherits, how it is reverted, and how many clients are
+     overridden right now.
+
+  7. THE DELIVERY LOG — the last sends, the template version, the outcome, a four-line reason for
+     anything that did not go, and resend. Without it, "we changed the template" has no evidence.
+
+  WHAT IS REAL, AND WHAT THIS IS BUILT ON. Every figure, key and name was read from this repository
+  and the running instance on 9 October 2026:
+
+    · `packages/email/src/EmailService.ts` — the whole email system. Seven template functions
+      (`mfaTemplate`, `followUpTemplate`, `autoCloseTemplate`, `invoiceTemplate`, `overdueTemplate`,
+      `ticketActivityTemplate`, `ticketReopenedTemplate`), every one a string literal, beside a comment
+      that reads "inline HTML, production should use MJML". A single `defaultFrom` from `SMTP_FROM` is
+      used for every send; `send()` takes no reply-to. There is no template store, no brand store and
+      no record of a send.
+    · The live catalogue is EIGHT messages, and TWO senders are written and never called —
+      `sendInvoice` and `sendTicketAutoClose` have no caller anywhere in the repository. The owner
+      asked to be able to send an invoice from C7NTAX; that email has been sitting in the code the
+      whole time with no path to it. `POST /api/billing/invoices/:id/send` sets `status = Sent` and
+      sends nothing. So an invoice's "sent" today is a status change, not a message — which is why the
+      matrix marks both of those keys as *written, never sent* rather than as absent, and why the
+      closure row says plainly that the closure notice that DOES go out rides on `ticket.activity`.
+    · The composer already owns a footer it should not: `apps/api/src/routes/tickets/index.ts:515`
+      appends `<hr>` and a fixed paragraph — `Ticket: <number> — <title><br>Client: <name>` — to every
+      note sent from the ticket screen. Words a client reads, owned by a string literal.
+    · Recipients already have rules (`apps/api/src/services/ticketNotifications.ts`,
+      `apps/api/src/services/ticketContacts.ts`): primary contact on everything customer-visible, `cc`
+      on all of it, an `additional` contact only for notes and only while that link's own
+      `notifyOnNote` is true. The brief for this file said that switch lives under Configuration →
+      Client Apps & Notifications; reading the registry it does not — the section has two fields
+      (`outlookAddin`, `push`) and the switch is `TicketContact.notifyOnNote`, set on the ticket. The
+      screen says so rather than drawing a control at an address where there is nothing.
+    · The PDFs already have a letterhead: `apps/web/src/lib/documentBrand.ts` (the constants, the
+      shield `/icon-192.png`, `Cyber 7 Group, LLC`, crimson `#c00000`, accent `#00c0f4`) and
+      `apps/web/src/components/PrintLetterhead.tsx` (the wordmark drawn as `C<b>7</b>NTAX`, the
+      document meta line). A brand kit is one set of assets for both — this file says so and shows it.
+    · Configuration has EIGHT sections (`packages/shared/src/appConfiguration.ts`), each with `id`,
+      `label`, `summary`, `icon`, `readPermission`, `writePermission`, `governs` and a field list. The
+      section this file proposes — `email`, "Email & Delivery" — is written in that same shape below,
+      beside the section it is deliberately NOT: `integrations`, "C7NC & Email", which holds the
+      INBOUND connectors and the relay switch.
+    · The instance, read from the running API: 5 clients (Acme Corporation, Globex Industries, Initech
+      Solutions, Stark Enterprises, Umbrella Corp), 4 boards (Infrastructure Desk, Intelligence Desk,
+      MSP Service Desk, NOC Alerts), 17 users, 6 roles, 104 tickets, 2 reports with 1 schedule,
+      2 email connectors (both IMAP, both switched off), 2 locales. Mail is "configured" — and the
+      host is `localhost:587`, with no credentials — which is exactly the honest case this screen has
+      to draw.
+
+  TWO INTERFACES, TWO DESIGNS. This is the modern arrangement: a rail, chips you press, a status
+  track, sentences beside the control that acts, a countable footer. The classic arrangement of the
+  same screen — the matrix as a table with a Save, the brand kit as labelled fields in a grid — is
+  described in the closing panel, because this repository keeps two designs of every screen and they
+  are two designs rather than one screen with a class toggled.
+
+  The page is a drawing, not a prototype: the theme toggle, the screen picker and the two rails — the
+  matrix filter and the brand-kit asset filter — move, and nothing else does. Buttons such as Save and
+  Resend are drawn, not wired.
+-->
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup — Email brand and delivery: what every message inherits, and what happened to the last few</title>
+<style>
+  /* ── The application's own tokens, copied from docs/mockups/contacts-boards-redesign.html ──── */
+  :root {
+    --navy-50:#e8edf5; --navy-100:#c5d1e5; --navy-200:#9eb3d3; --navy-300:#7895c1; --navy-400:#5b7db3;
+    --navy-500:#3e64a5; --navy-600:#365796; --navy-700:#2b4783; --navy-800:#223771; --navy-900:#142454;
+    --navy-950:#0a1628;
+
+    --cyber-50:#e0f7fe; --cyber-100:#b3edfc; --cyber-200:#80e2fa; --cyber-300:#4dd6f8; --cyber-400:#26cbf6;
+    --cyber-500:#00c0f4; --cyber-600:#00aae0; --cyber-700:#0090c4; --cyber-800:#0077a9; --cyber-900:#00507d;
+
+    --brand-crimson:#c00000;
+
+    --surface:#0f1a2e; --surface-light:#162238; --surface-lighter:#1e2d48; --surface-border:#2a3a5c;
+
+    --alert-red:#ef4444; --alert-amber:#f59e0b; --alert-green:#22c55e;
+
+    --status-new:#38bdf8; --status-open:#60a5fa; --status-progress:#fbbf24; --status-waiting-client:#c084fc;
+    --status-waiting-vendor:#a5b4fc; --status-resolved:#4ade80; --status-closed:#9ca3af; --status-reopened:#fb923c;
+
+    --text-primary:#ffffff; --text-secondary:#d1d5db; --text-tertiary:#9ca3af;
+    --text-muted:#8b93a1; --text-muted-alt:#7c8598;
+
+    --card-shadow: 0 1px 2px rgb(0 0 0 / 0.35), 0 12px 32px -22px rgb(0 0 0 / 0.75);
+    --btn-primary-fg:#ffffff;
+  }
+
+  html[data-theme="light"] {
+    --navy-950:#ffffff; --navy-900:#0d0d0d; --navy-800:#1a1a1a; --navy-700:#2b2b2b; --navy-600:#424242;
+    --navy-500:#5c5c5c; --navy-400:#808080; --navy-300:#b3b3b3; --navy-200:#d9d9d9; --navy-100:#ebebeb;
+    --navy-50:#f5f5f5;
+
+    --cyber-50:#f0f9ff; --cyber-100:#e0f2fe; --cyber-200:#bae6fd; --cyber-300:#075985; --cyber-400:#0369a1;
+    --cyber-500:#0ea5e9; --cyber-600:#0284c7; --cyber-700:#0369a1; --cyber-800:#075985; --cyber-900:#0c4a6e;
+
+    --surface:#ffffff; --surface-light:#f7f7f7; --surface-lighter:#f0f0f0; --surface-border:#b8b8b8;
+
+    --alert-red:#dc2626; --alert-amber:#d97706; --alert-green:#16a34a;
+
+    --status-new:#075985; --status-open:#1e40af; --status-progress:#92400e; --status-waiting-client:#6b21a8;
+    --status-waiting-vendor:#3730a3; --status-resolved:#166534; --status-closed:#374151; --status-reopened:#9a3412;
+
+    --text-primary:#1a1a1a; --text-secondary:#363636; --text-tertiary:#525252;
+    --text-muted:#595959; --text-muted-alt:#666666;
+
+    --card-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 10px 28px -22px rgb(0 0 0 / 0.3);
+  }
+
+  /* ── Base ─────────────────────────────────────────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    min-height: 100dvh; line-height: 1.6;
+    background: var(--navy-950); color: var(--text-secondary);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+  }
+  h1, h2, h3, h4 { font-weight: 600; color: var(--text-primary); line-height: 1.3; }
+  p { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+  code, .mono, kbd { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  .num { font-variant-numeric: tabular-nums; }
+  :focus-visible { outline: 2px solid var(--cyber-400); outline-offset: 2px; }
+  .sprite { display: none; }
+  .ico { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8;
+         stroke-linecap: round; stroke-linejoin: round; }
+  .ico--lg { width: 18px; height: 18px; }
+
+  /* ── Mockup-only scaffolding ──────────────────────────────────────────────────────────────── */
+  .mock-frame { max-width: 1560px; margin: 0 auto; padding: 52px 24px 56px; }
+  .mock-tag {
+    display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 9999px;
+    font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--alert-red); background: color-mix(in srgb, var(--alert-red) 16%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--alert-red) 45%, transparent);
+  }
+  .theme-toggle {
+    position: fixed; top: 14px; right: 14px; z-index: 20;
+    display: inline-flex; gap: 2px; padding: 3px; border-radius: 9999px;
+    background: var(--surface); border: 1px solid var(--surface-border); box-shadow: var(--card-shadow);
+  }
+  .theme-toggle button {
+    font: inherit; font-size: 11px; font-weight: 600; color: var(--text-tertiary);
+    background: transparent; border: 0; border-radius: 9999px; padding: 4px 11px; cursor: pointer;
+  }
+  .theme-toggle button[aria-pressed="true"] { background: var(--cyber-600); color: var(--btn-primary-fg); }
+  .mock-note { font-size: 11px; color: var(--text-muted-alt); }
+  .stack > * + * { margin-top: 10px; }
+  .why {
+    display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 9999px;
+    cursor: pointer; font: inherit; font-size: 11px; line-height: 18px; font-weight: 500;
+    color: var(--text-muted); background: transparent; border: 1px dashed var(--surface-border);
+  }
+  .why:hover { color: var(--text-primary); border-color: var(--text-muted); }
+  .why[aria-expanded="true"] { color: var(--cyber-300); border-style: solid;
+    border-color: color-mix(in srgb, var(--cyber-500) 40%, transparent); }
+  .why-body[hidden] { display: none; }
+  .why-body {
+    margin-top: 8px; padding: 10px 12px; border-radius: 10px;
+    background: var(--surface-light); border: 1px dashed var(--surface-border);
+  }
+  .why-body p { font-size: 11.5px; color: var(--text-muted); line-height: 1.65; }
+  .why-body p + p { margin-top: 6px; }
+
+  /* ── The application's components, at their real values ───────────────────────────────────── */
+  .card { background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 12px; padding: 18px 18px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; flex: none; white-space: nowrap;
+    border-radius: 10px; border: 1px solid var(--surface-border); background: var(--surface-lighter);
+    padding: 4px 10px; font-size: 12px; font-weight: 500; color: var(--text-secondary);
+  }
+  .chip--on {
+    color: var(--cyber-300);
+    border-color: color-mix(in srgb, var(--cyber-500) 45%, transparent);
+    background-color: color-mix(in srgb, var(--cyber-600) 18%, transparent);
+  }
+  .chip--good { color:#34d399; border-color: color-mix(in srgb,#34d399 40%, transparent);
+    background-color: color-mix(in srgb,#34d399 14%, transparent); }
+  .chip--warn { color:#fbbf24; border-color: color-mix(in srgb,#fbbf24 40%, transparent);
+    background-color: color-mix(in srgb,#fbbf24 14%, transparent); }
+  .chip--bad { color:#f87171; border-color: color-mix(in srgb,#f87171 42%, transparent);
+    background-color: color-mix(in srgb,#f87171 14%, transparent); }
+  .chip--lock { color:#c084fc; border-color: color-mix(in srgb,#c084fc 42%, transparent);
+    background-color: color-mix(in srgb,#c084fc 14%, transparent); }
+  html[data-theme="light"] .chip--good { color:#166534; border-color: color-mix(in srgb,#166534 40%, transparent);
+    background-color: color-mix(in srgb,#166534 12%, transparent); }
+  html[data-theme="light"] .chip--warn { color:#92400e; border-color: color-mix(in srgb,#92400e 40%, transparent);
+    background-color: color-mix(in srgb,#92400e 12%, transparent); }
+  html[data-theme="light"] .chip--bad { color:#b91c1c; border-color: color-mix(in srgb,#b91c1c 40%, transparent);
+    background-color: color-mix(in srgb,#b91c1c 12%, transparent); }
+  html[data-theme="light"] .chip--lock { color:#6b21a8; border-color: color-mix(in srgb,#6b21a8 40%, transparent);
+    background-color: color-mix(in srgb,#6b21a8 12%, transparent); }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 9999px;
+    font-size: 11px; font-weight: 500; white-space: nowrap;
+    background-color: color-mix(in srgb, currentColor 18%, transparent);
+  }
+  .badge--new { color: var(--status-new); }
+  .badge--progress { color: var(--status-progress); }
+  .badge--resolved { color: var(--status-resolved); }
+  .badge--closed { color: var(--status-closed); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; font-weight: 500;
+    border-radius: 10px; padding: 6px 12px; cursor: pointer; border: 1px solid transparent;
+  }
+  .btn--primary { background: var(--cyber-600); color: var(--btn-primary-fg); }
+  .btn--secondary { background: var(--surface-lighter); border-color: var(--surface-border); color: var(--text-primary); }
+  .btn--quiet { background: transparent; border-color: var(--surface-border); color: var(--text-secondary); }
+  .btn--danger { background: var(--brand-crimson); color: #fff; }
+  .btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+  .input-field {
+    width: 100%; background: var(--surface); border: 1px solid var(--surface-border);
+    border-radius: 10px; padding: 7px 11px; font: inherit; font-size: 13px; color: var(--text-primary);
+  }
+  .input-field::placeholder { color: var(--text-muted); }
+
+  .stat { background: var(--surface); border: 1px solid var(--surface-border); border-radius: 12px; padding: 12px 13px; }
+  .stat__label { font-size: 11px; color: var(--text-muted); line-height: 1.3; }
+  .stat__n { margin-top: 7px; font-size: 22px; font-weight: 600; line-height: 1; color: var(--text-primary);
+    letter-spacing: -.01em; }
+  .stat__foot { margin-top: 7px; font-size: 11px; color: var(--text-muted-alt); line-height: 1.5; }
+  .stat--good { border-color: color-mix(in srgb, var(--alert-green) 35%, transparent); }
+  .stat--warn { border-color: color-mix(in srgb, var(--alert-amber) 40%, transparent); }
+  .stat--bad { border-color: color-mix(in srgb, var(--alert-red) 40%, transparent); }
+
+  .glyph { width: 24px; height: 24px; border-radius: 8px; flex: none;
+    display: inline-flex; align-items: center; justify-content: center; }
+  .glyph--cyber { background: color-mix(in srgb, var(--cyber-600) 20%, transparent); color: var(--cyber-400); }
+  .glyph--amber { background: color-mix(in srgb, var(--alert-amber) 15%, transparent); color: var(--alert-amber); }
+  .glyph--red { background: color-mix(in srgb, var(--alert-red) 15%, transparent); color: var(--alert-red); }
+  .glyph--green { background: color-mix(in srgb, var(--alert-green) 15%, transparent); color: var(--alert-green); }
+  .glyph--violet { background: color-mix(in srgb, #c084fc 15%, transparent); color: #c084fc; }
+  .glyph--neutral { background: var(--surface-lighter); color: var(--text-tertiary); }
+
+  .ptable { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  .ptable th, .ptable td { text-align: left; padding: 8px 10px 8px 0; font-size: 12px;
+    border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 60%, transparent); vertical-align: top; }
+  .ptable th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted-alt);
+    font-weight: 600; border-bottom-color: var(--surface-border); }
+  .ptable td { color: var(--text-secondary); }
+  .ptable tr:last-child td { border-bottom: 0; }
+  .ptable .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+  .ptable tfoot td { border-top: 1px solid var(--surface-border); border-bottom: 0; font-weight: 600;
+    color: var(--text-primary); }
+
+  .kv { display: flex; align-items: baseline; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+  .kv + .kv { margin-top: 5px; }
+  .kv__k { flex: none; width: 148px; color: var(--text-muted); font-size: 11.5px; }
+  .kv__v { color: var(--text-primary); }
+  .say { font-size: 11.5px; color: var(--text-muted); line-height: 1.6; }
+  .keys { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--text-muted-alt); }
+  .kbd { font-size: 10.5px; border: 1px solid var(--surface-border); border-radius: 5px;
+    padding: 0 4px; color: var(--text-muted); background: var(--surface-lighter); }
+
+  .seg { display: inline-flex; gap: 3px; padding: 3px; border-radius: 12px; background: var(--surface-lighter);
+    border: 1px solid var(--surface-border); }
+  .seg__opt { font: inherit; font-size: 12px; font-weight: 500; color: var(--text-secondary);
+    background: transparent; border: 1px solid transparent; border-radius: 10px; padding: 6px 11px;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .seg__opt--on { background: var(--cyber-600); color: var(--btn-primary-fg); font-weight: 600; }
+
+  /* ── The composed screens ─────────────────────────────────────────────────────────────────── */
+  .screen { margin-top: 30px; }
+  .screen[hidden] { display: none; }
+  .screen__label {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--text-muted-alt);
+  }
+  .screen__label::after { content: ""; flex: 1; height: 1px; background: var(--surface-border); }
+  .screen__head { margin-top: 10px; }
+  .screen__head h2 { font-size: 16px; }
+  .screen__head p { margin-top: 4px; max-width: 110ch; font-size: 13px; color: var(--text-muted); }
+  .today {
+    margin-top: 10px; padding: 10px 13px; border-radius: 10px; font-size: 12px; line-height: 1.65;
+    color: var(--text-muted); background: color-mix(in srgb, var(--surface-lighter) 60%, transparent);
+    border: 1px dashed var(--surface-border); max-width: 150ch;
+  }
+  .today b { color: var(--text-tertiary); font-weight: 600; }
+
+  /* The screen picker: the section's own furniture, and the only thing on the page that moves. */
+  .pick { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
+  @media (max-width: 1200px) { .pick { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 820px) { .pick { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .pick { grid-template-columns: minmax(0, 1fr); } }
+  .pick__opt {
+    text-align: left; font: inherit; cursor: pointer;
+    background: var(--surface); border: 1px solid var(--surface-border); border-radius: 12px;
+    padding: 12px 14px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 3px;
+  }
+  .pick__opt:hover { border-color: color-mix(in srgb, var(--cyber-500) 40%, transparent); }
+  .pick__opt--on { background: color-mix(in srgb, var(--cyber-600) 14%, transparent);
+    border-color: color-mix(in srgb, var(--cyber-500) 55%, transparent); }
+  .pick__t { font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 7px; }
+  .pick__d { font-size: 11px; color: var(--text-muted); line-height: 1.45; text-wrap: pretty; }
+  .pick__n { font-size: 11px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+  .pick__opt--on .pick__n { color: var(--cyber-300); }
+
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 980px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  @media (max-width: 1100px) { .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 620px) { .grid4 { grid-template-columns: minmax(0, 1fr); } }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  @media (max-width: 900px) { .grid3 { grid-template-columns: minmax(0, 1fr); } }
+
+  .listfoot {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 16px 0;
+    margin-top: 12px; border-top: 1px solid var(--surface-border); font-size: 11px; color: var(--text-muted);
+  }
+  .listfoot .note { margin-left: auto; font-size: 10.5px; color: var(--text-muted-alt); }
+  .state { text-align: center; padding: 22px 18px; }
+  .state .ico { margin: 0 auto 8px; width: 26px; height: 26px; color: var(--text-muted-alt); }
+  .state__t { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+  .state__d { margin: 4px auto 0; max-width: 54ch; font-size: 11.5px; color: var(--text-muted); }
+
+  /* The rail of filters */
+  .split { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 14px; margin-top: 14px; align-items: start; }
+  @media (max-width: 1100px) { .split { grid-template-columns: minmax(0, 1fr); }
+    .rail { display: flex; flex-wrap: wrap; gap: 8px; } .rail__group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .rail__head { width: 100%; } .rail__item { width: auto; } }
+  .rail { padding: 12px; }
+  .rail__head { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--text-muted-alt); margin: 0 0 6px 2px; }
+  .rail__group + .rail__group { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--surface-border); }
+  .rail__item {
+    display: flex; flex-direction: column; gap: 4px; width: 100%; text-align: left; font: inherit;
+    background: transparent; border: 1px solid transparent; border-radius: 10px;
+    padding: 7px 9px; cursor: pointer; color: var(--text-secondary);
+  }
+  .rail__item:hover { background: var(--surface-lighter); color: var(--text-primary); }
+  .rail__item--on { background: color-mix(in srgb, var(--cyber-600) 14%, transparent);
+    border-color: color-mix(in srgb, var(--cyber-500) 40%, transparent); color: var(--text-primary); }
+  .rail__line { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .rail__name { font-size: 13px; font-weight: 500; min-width: 0; }
+  .rail__n { font-size: 11px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+  .rail__item--on .rail__n { color: var(--cyber-300); }
+  .rail__meta { font-size: 10.5px; color: var(--text-muted-alt); line-height: 1.45; text-wrap: pretty; }
+  .rail__foot { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--surface-border);
+    font-size: 10.5px; color: var(--text-muted-alt); line-height: 1.5; }
+
+  .band {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-radius: 12px;
+    border: 1px solid var(--surface-border); border-left: 2px solid var(--cyber-500);
+    background: var(--surface-lighter); padding: 11px 14px;
+  }
+  .band--warn { border-left-color: var(--alert-amber);
+    background: color-mix(in srgb, var(--alert-amber) 9%, transparent);
+    border-color: color-mix(in srgb, var(--alert-amber) 32%, transparent); }
+  .band--gate { border-left-color: var(--alert-green);
+    background: color-mix(in srgb, var(--alert-green) 7%, transparent);
+    border-color: color-mix(in srgb, var(--alert-green) 30%, transparent); }
+  .band--locked { border-left-color: #c084fc;
+    background: color-mix(in srgb, #c084fc 9%, transparent);
+    border-color: color-mix(in srgb, #c084fc 32%, transparent); }
+  .band__t { font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+  .band__d { font-size: 11.5px; color: var(--text-muted); flex: 1 1 300px; min-width: 0; }
+  .band__right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+  /* The step track: where this message has got to, in the order it happens. */
+  .track { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+  @media (max-width: 900px) { .track { grid-template-columns: minmax(0, 1fr); } }
+  .step { position: relative; padding: 12px 13px; background: var(--surface-light);
+    border: 1px solid var(--surface-border); border-radius: 12px; }
+  .step--done { border-color: color-mix(in srgb, var(--alert-green) 32%, transparent); }
+  .step--now { border-color: color-mix(in srgb, var(--cyber-500) 55%, transparent);
+    background: color-mix(in srgb, var(--cyber-600) 10%, transparent); }
+  .step--hold { border-color: color-mix(in srgb, var(--alert-amber) 45%, transparent);
+    background: color-mix(in srgb, var(--alert-amber) 9%, transparent); }
+  .step__lg { display: flex; align-items: center; gap: 7px; }
+  .step__dot { width: 8px; height: 8px; border-radius: 9999px; background: var(--surface-border); }
+  .step--done .step__dot { background: var(--alert-green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--alert-green) 20%, transparent); }
+  .step--now .step__dot { background: var(--cyber-500); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyber-500) 22%, transparent); }
+  .step--hold .step__dot { background: var(--alert-amber); box-shadow: 0 0 0 3px color-mix(in srgb, var(--alert-amber) 22%, transparent); }
+  .step__t { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+  .step__d { margin-top: 5px; font-size: 11px; color: var(--text-muted); line-height: 1.55; }
+  .step__n { margin-top: 7px; font-size: 10.5px; color: var(--text-muted-alt); font-variant-numeric: tabular-nums; }
+
+  /* The trigger matrix — the honest table, with the locked rows marked as locked. */
+  .mtx { width: 100%; border-collapse: collapse; margin-top: 12px; }
+  .mtx th, .mtx td { text-align: left; padding: 9px 10px 9px 0; font-size: 12px;
+    border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 60%, transparent); vertical-align: top; }
+  .mtx th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted-alt);
+    font-weight: 600; border-bottom-color: var(--surface-border); white-space: nowrap; }
+  .mtx td { color: var(--text-secondary); }
+  .mtx tbody tr:hover { background: color-mix(in srgb, var(--surface-light) 60%, transparent); }
+  .mtx tbody tr[hidden] { display: none; }
+  .mtx .mk { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; font-size: 11.5px;
+    color: var(--cyber-300); white-space: nowrap; }
+  .mtx .mv { min-width: 22ch; }
+  .mtx .lockrow { background: color-mix(in srgb, #c084fc 7%, transparent); }
+  .mtx .lockrow td { border-bottom-color: color-mix(in srgb, #c084fc 22%, transparent); }
+  .mtx tfoot td { border-top: 1px solid var(--surface-border); border-bottom: 0; padding-top: 11px;
+    font-weight: 600; color: var(--text-primary); }
+  .yn { font-size: 11.5px; font-weight: 600; }
+  .yn--y { color: var(--alert-green); }
+  .yn--n { color: var(--alert-red); }
+  .yn--p { color: var(--alert-amber); }
+
+  /* The brand kit: swatches, the type scale, and the applied message. */
+  .swatch { border-radius: 10px; height: 52px; border: 1px solid var(--surface-border); position: relative; }
+  .swatch__name { font-size: 11.5px; font-weight: 600; color: var(--text-primary); margin-top: 7px; }
+  .swatch__hex { font-size: 11px; color: var(--text-muted-alt); font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  .typeRow { display: flex; align-items: baseline; gap: 10px; padding: 6px 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 55%, transparent); }
+  .typeRow:last-child { border-bottom: 0; }
+  .typeRow__spec { flex: none; width: 156px; font-size: 11px; color: var(--text-muted-alt);
+    font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  .logoBox { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .logoPlate { display: inline-flex; align-items: center; gap: 9px; padding: 12px 16px; border-radius: 10px;
+    border: 1px solid var(--surface-border); }
+  .logoPlate--dark { background: #0f1923; }
+  .logoPlate--light { background: #ffffff; }
+  .wordmark { font-size: 17px; font-weight: 600; letter-spacing: .01em; }
+  .wordmark b { color: var(--brand-crimson); font-weight: 700; }
+  .logoPlate--dark .wordmark { color: #ffffff; }
+  .logoPlate--light .wordmark { color: #0f1923; }
+  .logoPlate--light .wordmark b { color: var(--brand-crimson); }
+  .wordmark--plain { font-size: 17px; font-weight: 600; color: #ffffff; letter-spacing: .06em; }
+
+  /* The applied message — drawn at the real template's own values (520px card, #0f1923, crimson header). */
+  .mail {
+    max-width: 520px; border-radius: 12px; overflow: hidden; background: #0f1923;
+    border: 1px solid var(--surface-border); font-size: 13px; line-height: 1.6;
+  }
+  .mail__head { background: var(--brand-crimson); padding: 20px 22px; text-align: center; }
+  .mail__brand { display: inline-flex; align-items: center; gap: 9px; }
+  .mail__brand .wordmark { font-size: 18px; color: #fff; }
+  .mail__brand .wordmark b { color: #ffd7d7; }
+  .mail__body { padding: 26px 22px; }
+  .mail__kicker { color: #94a3b8; font-size: 12.5px; }
+  .mail__kicker strong { color: #fff; }
+  .mail__event { color: #fff; font-weight: 600; margin-top: 10px; }
+  .mail__quote { background: #1e293b; border: 1px solid #334155; border-radius: 8px;
+    padding: 14px; color: #cbd5e1; margin-top: 12px; }
+  .mail__cta { display: inline-block; background: var(--brand-crimson); color: #fff; padding: 11px 22px;
+    border-radius: 6px; text-decoration: none; font-weight: 600; margin-top: 18px; }
+  .mail__foot { border-top: 1px solid #1e293b; padding: 16px 22px 20px; color: #64748b; font-size: 11.5px; }
+  .mail__foot .legal { color: #94a3b8; }
+  .mail__foot p + p { margin-top: 6px; }
+  .mail__head--plain { background: #1e293b; }
+  .hdrline { font-size: 11px; color: var(--text-muted-alt); display: flex; gap: 8px; flex-wrap: wrap;
+    padding: 6px 0; border-bottom: 1px dashed var(--surface-border); }
+  .hdrline:last-of-type { border-bottom: 0; }
+  .hdrline b { color: var(--text-tertiary); font-weight: 600; }
+
+  /* Domain records */
+  .dns { font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; font-size: 11.5px;
+    background: var(--surface-light); border: 1px solid var(--surface-border); border-radius: 10px;
+    padding: 12px 14px; color: var(--text-secondary); overflow-wrap: anywhere; }
+  .dns + .dns { margin-top: 8px; }
+  .dns b { color: var(--cyber-300); font-weight: 600; }
+
+  /* The delivery log */
+  .logrow { padding: 12px 16px; border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 55%, transparent); }
+  .logrow:last-child { border-bottom: 0; }
+  .logrow:hover { background: color-mix(in srgb, var(--surface-light) 60%, transparent); }
+  .logrow__top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .logrow__who { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .logrow__msg { font-size: 11.5px; color: var(--cyber-300); font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  .logrow__when { margin-left: auto; font-size: 11px; color: var(--text-muted-alt); font-variant-numeric: tabular-nums; }
+  .logrow__sub { margin-top: 4px; font-size: 11.5px; color: var(--text-muted); }
+  .logrow__reason { margin-top: 8px; padding: 10px 12px; border-radius: 10px; background: var(--surface-light);
+    border: 1px dashed var(--surface-border); font-size: 11.5px; color: var(--text-muted); }
+  .logrow__reason span { display: block; }
+  .logrow__reason i { color: var(--text-muted-alt); font-style: normal; display: inline-block; width: 16ch; }
+  .resend { margin-left: auto; }
+
+  .sentence { font-size: 11.5px; color: var(--text-muted); }
+  .sentence b { color: var(--text-tertiary); font-weight: 600; }
+  .scroll { overflow-x: auto; }
+</style>
+</head>
+<body>
+<svg class="sprite" aria-hidden="true">
+  <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3.5a8.5 8.5 0 0 0 0 17c1.4 0 2-1 2-2s-.6-2-2-2h-1.2a1.8 1.8 0 0 1 0-3.6H15a5.5 5.5 0 0 0 5.5-5.5C20.5 5 16.7 3.5 12 3.5Z"/><circle cx="8" cy="9" r="1"/><circle cx="8" cy="14" r="1"/><circle cx="12.5" cy="7" r="1"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.8 6.8 8.2 6 8.2-6"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6.5h12M8 12h12M8 17.5h12M4 6.5h.01M4 12h.01M4 17.5h.01"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.2"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 6.6a3 3 0 0 1 0 5.8M17.5 18.5c0-1.9-.5-3.4-1.4-4.6"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 8h10M18 8h2M4 16h4M12 16h8M15 5.5v5M8 13.5v5"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.5 19.5 6v6c0 4.2-3 7-7.5 8.5C7.5 19 4.5 16.2 4.5 12V6Z"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4.5 21 20H3ZM12 10v4.5M12 17.2v.3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.4 3.6 5.3 3.6 8.5S14.4 18.1 12 20.5c-2.4-2.4-3.6-5.3-3.6-8.5S9.6 5.9 12 3.5Z"/></symbol>
+  <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m6.2 6.2 11.6 11.6"/></symbol>
+  <symbol id="i-reply" viewBox="0 0 24 24"><path d="M9 8.5 4.5 13 9 17.5M4.5 13H14a5 5 0 0 1 5 5v.5"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3.5 11.5V4.5h7l9 9-7 7Z"/><circle cx="7.5" cy="8.5" r="1.2"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6.5 3.5h7L19 9v11.5H6.5Z"/><path d="M13.5 3.5V9H19"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M4 12 20 4.5l-4 15.5-4.2-5.6ZM11.8 14.4 20 4.5"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6M4.5 12c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+</svg>
+
+<div class="theme-toggle" role="group" aria-label="Theme">
+  <button type="button" data-theme-btn="dark" aria-pressed="true">Dark</button>
+  <button type="button" data-theme-btn="light" aria-pressed="false">Light</button>
+</div>
+
+<div class="mock-frame">
+
+  <header class="stack">
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <span class="mock-tag">Mockup — nothing changed</span>
+      <span class="mock-note">Email brand &amp; delivery — the modern interface only (<code>useRedesign()</code>)</span>
+    </div>
+    <h1 style="font-size:22px; letter-spacing:-.01em;">
+      What every message inherits, where it is sent from, when it may go, who may receive it — and what happened to the last few
+    </h1>
+    <p style="max-width:124ch; font-size:13.5px; color:var(--text-muted);">
+      The editor — the message list, the blocks, the preview — is drawn in
+      <code>email-studio.html</code>, and the send sheet and the importer in
+      <code>email-send-and-import.html</code>. Neither can answer the questions this file answers: a template is
+      useless if nobody knows what it inherits, which address it leaves from, whether it is allowed to send at
+      2 a.m., who is suppressed, and which wording actually went out on Tuesday. Seven screens, one file.
+    </p>
+    <div class="today">
+      <b>What exists today, read from the repository and the running instance:</b> the entire email system is
+      <b>one file</b> — <code>packages/email/src/EmailService.ts</code> — with <b>seven template functions</b>,
+      every one a string literal, beside a comment that reads
+      <i>"inline HTML, production should use MJML"</i>. There is no template store, no brand store and
+      <b>no record of any send</b>. A single <code>defaultFrom</code> taken from <code>SMTP_FROM</code>
+      (<code>C7NTAX &lt;noreply@cyber7group.com&gt;</code> on this instance) is used for every message, and
+      <code>send()</code> takes no reply-to at all. <b>Eight messages are live</b>; <b>two senders are written
+      and never called</b>; four more are proposed. The instance's relay is
+      <code>localhost:587</code> with no credentials — which the screen below treats as the honest case it is.
+    </div>
+  </header>
+
+  <nav class="pick" role="group" aria-label="Email brand and delivery screens">
+    <button type="button" class="pick__opt pick__opt--on" data-screen-btn="brand" aria-pressed="true">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-palette"/></svg> Brand kit
+        <span class="pick__n">1 kit · 7 assets</span></span>
+      <span class="pick__d">One set of assets for the PDFs and the email — including the text wordmark a mail
+        client must fall back to when it will not load a remote image.</span>
+    </button>
+    <button type="button" class="pick__opt" data-screen-btn="identity" aria-pressed="false">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-globe"/></svg> Sending identity
+        <span class="pick__n">1 relay · 1 from today</span></span>
+      <span class="pick__d">Which address each message leaves from, why a ticket notification replies into the
+        ticket, and what the application can and cannot verify about a domain.</span>
+    </button>
+    <button type="button" class="pick__opt" data-screen-btn="matrix" aria-pressed="false">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-list"/></svg> Trigger matrix
+        <span class="pick__n">14 messages</span></span>
+      <span class="pick__d">One row per message: when it fires, who receives it, whether the customer sees it,
+        whether it can be turned off, and which template it uses.</span>
+    </button>
+    <button type="button" class="pick__opt" data-screen-btn="quiet" aria-pressed="false">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-clock"/></svg> Quiet hours &amp; batching
+        <span class="pick__n">1 window · 1 digest</span></span>
+      <span class="pick__d">Six changes in an hour must not send six emails — the window, the threshold, the
+        digest, and the messages that are deliberately exempt.</span>
+    </button>
+    <button type="button" class="pick__opt" data-screen-btn="recipients" aria-pressed="false">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-users"/></svg> Who may be emailed
+        <span class="pick__n">3 roles · 2 suppressions</span></span>
+      <span class="pick__d">The recipient rules as they are enforced today, plus opt-out and
+        bounce/complaint handling — each with the line saying where it is applied.</span>
+    </button>
+    <button type="button" class="pick__opt" data-screen-btn="overrides" aria-pressed="false">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-sliders"/></svg> Per-client overrides
+        <span class="pick__n">0 of 5 overridden</span></span>
+      <span class="pick__d">One client on its own footer, its own from-name, its own quiet hours — how it is
+        created, what it inherits, and how it is reverted.</span>
+    </button>
+    <button type="button" class="pick__opt" data-screen-btn="log" aria-pressed="false">
+      <span class="pick__t"><svg class="ico ico--lg"><use href="#i-eye"/></svg> Delivery log
+        <span class="pick__n">last 8 sends</span></span>
+      <span class="pick__d">The message, the recipient, the template version, the outcome, the four-line reason
+        for anything that did not go, and resend.</span>
+    </button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN ONE — THE BRAND KIT
+
+       A brand kit is only real if you can see it applied, so the kit and an actual message share the
+       screen. The assets are the ones the application already owns: `documentBrand.ts` holds the shield
+       (`/icon-192.png`), `Cyber 7 Group, LLC`, crimson `#c00000`, accent `#00c0f4` and the ink/body/muted
+       ramps the PDFs use, and `PrintLetterhead.tsx` draws the wordmark as `C<b>7</b>NTAX` with the document
+       meta line beneath. The proposal is not a new brand — it is the SAME brand applied to the email, which
+       is the whole point of putting the two on one screen. The one asset the PDFs do not need and the email
+       cannot do without is the text wordmark: a mail client with images blocked shows a broken box where the
+       shield would be, and the fallback has to be words.
+       ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="brand" id="brand">
+    <div class="screen__label">Screen one — Brand kit · shared with the PDFs</div>
+    <div class="screen__head">
+      <h2>One kit, two outlets: the report PDF and the customer email wear the same brand</h2>
+      <p>
+        The constants below are not invented for this screen — every one is read from
+        <code>apps/web/src/lib/documentBrand.ts</code>, where the reporting outputs and the ticket's print
+        sheet already take them, and the wordmark is the one <code>PrintLetterhead.tsx</code> draws. The
+        proposal is that the email reads the same place, so a colour changed for a report cannot leave the
+        email wearing last year's crimson.
+      </p>
+    </div>
+
+    <div class="band band--gate" style="margin-top:12px;">
+      <svg class="ico ico--lg" style="color:var(--alert-green)"><use href="#i-doc"/></svg>
+      <div style="flex:1 1 420px; min-width:0;">
+        <div class="band__t">Shared with the PDFs — one kit, not two brands</div>
+        <p class="band__d" style="margin-top:2px;">
+          <code>documentBrand.ts</code> and <code>PrintLetterhead.tsx</code> are the PDF side. This screen
+          proposes the email side resolve the <b>same</b> constants: the shield, the wordmark, the legal line
+          and the four brand colours. Two stylesheets that "look about the same" drift apart on the first
+          rebrand; one constant cannot.
+        </p>
+      </div>
+      <div class="band__right">
+        <span class="chip"><code>DOCUMENT_BRAND</code></span>
+        <span class="chip chip--good">1 source</span>
+      </div>
+    </div>
+
+    <div class="split">
+      <aside class="card rail" aria-label="Brand kit assets">
+        <div class="rail__head">The kit</div>
+        <div class="rail__group">
+          <button type="button" class="rail__item rail__item--on" data-kit-group="all">
+            <span class="rail__line"><span class="rail__name">Everything</span><span class="rail__n">7</span></span>
+            <span class="rail__meta">The whole kit, in the order a message uses it.</span>
+          </button>
+          <button type="button" class="rail__item" data-kit-group="mark">
+            <span class="rail__line"><span class="rail__name">Logo &amp; wordmark</span><span class="rail__n">2</span></span>
+            <span class="rail__meta">The shield, and the words that stand in for it when images are blocked.</span>
+          </button>
+          <button type="button" class="rail__item" data-kit-group="colour">
+            <span class="rail__line"><span class="rail__name">Colour set</span><span class="rail__n">2</span></span>
+            <span class="rail__meta">Crimson and accent, plus the ink ramp a document body uses.</span>
+          </button>
+          <button type="button" class="rail__item" data-kit-group="type">
+            <span class="rail__line"><span class="rail__name">Type scale</span><span class="rail__n">1</span></span>
+            <span class="rail__meta">Four sizes, so a message and a PDF read as one voice.</span>
+          </button>
+          <button type="button" class="rail__item" data-kit-group="foot">
+            <span class="rail__line"><span class="rail__name">Footer &amp; legal</span><span class="rail__n">2</span></span>
+            <span class="rail__meta">The company line, the address and the unsubscribe rule.</span>
+          </button>
+        </div>
+        <div class="rail__foot">
+          Seven assets. Six are already owned by the product; the seventh — the text wordmark — is the only
+          new one, and it exists because email is not paper.
+        </div>
+      </aside>
+
+      <div>
+        <div class="card" data-kit-group-block="mark">
+          <h3 style="font-size:13px;">Logo &amp; wordmark — and why the fallback is not optional</h3>
+          <p class="say" style="margin-top:6px;">
+            The shield is <code>/icon-192.png</code>, "the shield + 7 glyph from the brand composite sheet on
+            its black tile" (<code>brand/README.md</code> is the record of how it was cut). A PDF renders it
+            because jsPDF is handed a data URL. A mail client does not have to: Outlook blocks remote images
+            by default and Gmail proxies them, so <b>a message that relies on the shield shows a broken box</b>
+            for a large share of readers.
+          </p>
+          <div class="logoBox" style="margin-top:12px;">
+            <div class="logoPlate logoPlate--dark">
+              <svg class="ico ico--lg" style="color:#fff"><use href="#i-shield"/></svg>
+              <span class="wordmark">C<b>7</b>NTAX</span>
+            </div>
+            <div class="logoPlate logoPlate--light">
+              <svg class="ico ico--lg" style="color:#0f1923"><use href="#i-shield"/></svg>
+              <span class="wordmark">C<b>7</b>NTAX</span>
+            </div>
+            <div class="logoPlate" style="background:#c00000;">
+              <span class="wordmark--plain">C7NTAX</span>
+            </div>
+          </div>
+          <div class="kv" style="margin-top:12px;">
+            <span class="kv__k">Shield, on light</span>
+            <span class="kv__v"><code>/icon-192.png</code> <span class="mock-note">— the app icon's own artwork</span></span>
+          </div>
+          <div class="kv">
+            <span class="kv__k">Shield, on dark</span>
+            <span class="kv__v">the same file; the tile is already black in the artwork</span>
+          </div>
+          <div class="kv">
+            <span class="kv__k">Text wordmark</span>
+            <span class="kv__v"><code>C7NTAX</code>, the <code>7</code> in crimson — the markup
+              <code>PrintLetterhead.tsx</code> already emits as <code>C&lt;b&gt;7&lt;/b&gt;NTAX</code></span>
+          </div>
+          <div class="kv">
+            <span class="kv__k">Fallback rule</span>
+            <span class="kv__v">the wordmark is the <b>first child of the header</b> and the shield is
+              decorative beside it; if images are blocked the header still reads</span>
+          </div>
+          <p class="say" style="margin-top:10px;">
+            <b>Also inside the message:</b> a <code>text</code> part. <code>send()</code> already accepts one
+            (<code>text?: string</code>) and the portal sign-in code already uses it; the proposal is that
+            every message has one, because a plain-text reader is the extreme case of "will not load a remote
+            image" — there is nothing to load at all.
+          </p>
+        </div>
+
+        <div class="card" style="margin-top:12px;" data-kit-group-block="colour">
+          <h3 style="font-size:13px;">Colour set — read from the PDF brand, not chosen again</h3>
+          <div class="grid4" style="margin-top:12px;">
+            <div>
+              <div class="swatch" style="background:#c00000;"></div>
+              <div class="swatch__name">Brand crimson</div>
+              <div class="swatch__hex">#c00000 · DOCUMENT_BRAND.crimson</div>
+            </div>
+            <div>
+              <div class="swatch" style="background:#00c0f4;"></div>
+              <div class="swatch__name">Accent</div>
+              <div class="swatch__hex">#00c0f4 · DOCUMENT_BRAND.accent</div>
+            </div>
+            <div>
+              <div class="swatch" style="background:#0f172a;"></div>
+              <div class="swatch__name">Ink</div>
+              <div class="swatch__hex">#0f172a · DOCUMENT_BRAND.ink</div>
+            </div>
+            <div>
+              <div class="swatch" style="background:#334155;"></div>
+              <div class="swatch__name">Body</div>
+              <div class="swatch__hex">#334155 · DOCUMENT_BRAND.body</div>
+            </div>
+          </div>
+          <div class="kv" style="margin-top:12px;">
+            <span class="kv__k">Rules &amp; hairlines</span>
+            <span class="kv__v"><code>--rule #cbd5e1</code> · <code>--hairline #e2e8f0</code> · zebra <code>#f8fafc</code> · tint <code>#f1f5f9</code></span>
+          </div>
+          <div class="kv">
+            <span class="kv__k">Muted text</span>
+            <span class="kv__v"><code>#64748b</code> — the same muted the print sheet uses</span>
+          </div>
+          <p class="say" style="margin-top:10px;">
+            The template that exists today hard-codes its own palette in the string literal
+            (<code>#0f1923</code> card, <code>#c00000</code> header, <code>#1e293b</code> detail box).
+            Crimson agrees by luck. The six greys do not exist in the PDF brand at all.
+          </p>
+        </div>
+
+        <div class="card" style="margin-top:12px;" data-kit-group-block="type">
+          <h3 style="font-size:13px;">Type scale</h3>
+          <div style="margin-top:8px;">
+            <div class="typeRow"><span class="typeRow__spec">18px / 600</span><span style="font-size:18px; font-weight:600; color:var(--text-primary);">Ticket Update</span></div>
+            <div class="typeRow"><span class="typeRow__spec">15px / 600</span><span style="font-size:15px; font-weight:600; color:var(--text-primary);">Ticket INT-01-2006</span></div>
+            <div class="typeRow"><span class="typeRow__spec">13.5px / 400</span><span style="font-size:13.5px; color:var(--text-secondary);">The body of the message, at the size the template already uses.</span></div>
+            <div class="typeRow"><span class="typeRow__spec">11.5px / 400</span><span style="font-size:11.5px; color:var(--text-muted);">The footer, the legal line and the reason a link is there.</span></div>
+          </div>
+          <p class="say" style="margin-top:8px;">
+            Stack: <code>-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif</code> — the stack in
+            <code>EmailService.ts</code> today. A mail client cannot be asked to fetch a webfont, so the scale
+            is sizes and weights only.
+          </p>
+        </div>
+
+        <div class="card" style="margin-top:12px;" data-kit-group-block="foot">
+          <h3 style="font-size:13px;">Footer, legal line and the unsubscribe rule</h3>
+          <div class="kv" style="margin-top:10px;">
+            <span class="kv__k">Company line</span>
+            <span class="kv__v"><code>Cyber 7 Group, LLC</code> — <code>DOCUMENT_BRAND.company</code>, the line the print sheet carries</span>
+          </div>
+          <div class="kv">
+            <span class="kv__k">Address line</span>
+            <span class="kv__v">proposed: the instance's own address, the same seven fields a client record already holds (<code>Company.addressLine1…country</code>)</span>
+          </div>
+          <div class="kv">
+            <span class="kv__k">Unsubscribe</span>
+            <span class="kv__v"><b>transactional messages carry none</b> — see the rule below</span>
+          </div>
+          <div class="band band--warn" style="margin-top:12px;">
+            <svg class="ico ico--lg" style="color:var(--alert-amber)"><use href="#i-ban"/></svg>
+            <div style="flex:1 1 320px; min-width:0;">
+              <div class="band__t">The unsubscribe rule: it goes on the messages a person may refuse, and on no others</div>
+              <p class="band__d" style="margin-top:2px;">
+                There is no marketing in this product, so "unsubscribe" cannot mean what it means in a
+                newsletter. It applies to exactly two things — <code>report.scheduled</code> sent to a client,
+                and the activity digest when it is the only thing that can be stopped — and it links to the
+                client's suppression page rather than a third-party list. An invoice notice, a closure email, a
+                portal sign-in code and an MFA code <b>carry no unsubscribe link</b>: they are the delivery of a
+                service the recipient asked for, and a link offering to stop them would be a lie.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- The kit applied. A brand kit nobody can see applied is a form. -->
+        <div class="card" style="margin-top:12px;">
+          <h3 style="font-size:13px;">Applied — the same kit on a real message</h3>
+          <p class="say" style="margin-top:6px;">
+            The words are the real ones from <code>ticketActivityTemplate</code> and the real records on this
+            instance: ticket <b>INT-01-2006</b>, "Intelligence report: new ransomware variant", on the
+            Intelligence Desk for Acme Corporation, whose primary contact is <b>James Wilson</b>.
+          </p>
+          <div class="hdrline" style="margin-top:12px;"><b>From</b><span>C7NTAX &lt;noreply@cyber7group.com&gt;</span></div>
+          <div class="hdrline"><b>To</b><span>James Wilson &lt;jwilson@acmecorp.com&gt;</span></div>
+          <div class="hdrline"><b>Subject</b><span>[INT-01-2006] Status updated — Intelligence report: new ransomware variant</span></div>
+          <div class="hdrline" style="margin-bottom:12px;"><b>Reply-To</b><span>proposed: the connector's own mailbox, not a person's — see the identity screen</span></div>
+
+          <div class="mail">
+            <div class="mail__head">
+              <span class="mail__brand">
+                <svg class="ico ico--lg" style="color:#fff"><use href="#i-shield"/></svg>
+                <span class="wordmark">C<b>7</b>NTAX</span>
+              </span>
+            </div>
+            <div class="mail__body">
+              <p style="color:#cbd5e1;">Hi James Wilson,</p>
+              <p class="mail__kicker" style="margin-top:14px;">Ticket <strong>INT-01-2006</strong> — <em>Intelligence report: new ransomware variant</em></p>
+              <p class="mail__event">Status updated</p>
+              <div class="mail__quote">Status changed from "In Progress" to "Waiting On Client".</div>
+              <p class="mail__kicker" style="margin-top:16px;">If you have any questions, simply reply to this email.</p>
+              <a class="mail__cta" href="#">Open the ticket</a>
+            </div>
+            <div class="mail__foot">
+              <p class="legal">Cyber 7 Group, LLC</p>
+              <p>You are receiving this because you are the contact on ticket INT-01-2006 at Acme Corporation. Replying reopens the thread on the ticket.</p>
+              <p style="margin-top:8px; color:#475569;">Ticket INT-01-2006 · Intelligence Desk · C7NTAX</p>
+            </div>
+          </div>
+
+          <p class="say" style="margin-top:10px;">
+            <b>What changed, and what did not.</b> Same crimson header, same 520px card, same words. What the kit
+            adds: the wordmark beside the shield (so a blocked image still leaves a brand), the footer with the
+            company line and the reason the person is receiving it — where today the template ends at the
+            client's name, and the only footer a client ever sees is the <code>&lt;hr&gt;</code> and the fixed
+            paragraph the ticket composer appends (<code>routes/tickets/index.ts:515</code>).
+          </p>
+        </div>
+
+        <!-- The exception, on the brand screen and not only in the matrix: the messages the kit does NOT
+             decorate. Stated here because "the brand kit is everything" is the assumption this screen
+             exists to correct. -->
+        <div class="band band--locked" style="margin-top:12px;">
+          <svg class="ico ico--lg" style="color:#c084fc"><use href="#i-lock"/></svg>
+          <div style="flex:1 1 420px; min-width:0;">
+            <div class="band__t">What the brand kit does <em>not</em> decorate — and the rules that do not apply to them</div>
+            <p class="band__d" style="margin-top:2px;">
+              Five messages are read once, in a hurry, often on a poor connection, and a designed header is
+              friction in the way of the number:
+              <b><code>auth.mfa_code</code></b>, <b><code>portal.login_code</code></b>,
+              <b><code>user.password_reset</code></b>, <b><code>auth.password_changed</code></b> — plus
+              <b><code>user.invite</code></b>, which carries a temporary password in plain sight. They get the
+              minimum: the code or the link, the expiry, what to do if you did not ask for it, and a plain-text
+              part. <b>No shield, no wordmark, no crimson header, no footer, no unsubscribe link, no reply-to.</b>
+              Batching, quiet hours and opt-out <b>do not apply</b> to them either — a held code is an expired
+              code. In the matrix these are the purple rows with a lock: locked against decoration and against
+              every hold.
+            </p>
+          </div>
+          <div class="band__right"><span class="chip chip--lock">5 locked rows</span></div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h3 style="font-size:13px;">The same brand, deliberately absent</h3>
+          <p class="say" style="margin-top:6px;">
+            The real <code>mfaTemplate</code>, drawn as it would be under the rule — the crimson header it has
+            today is exactly what the rule removes.
+          </p>
+          <div class="mail" style="background:#ffffff; border-color:#334155;">
+            <div style="padding:22px 22px 6px;">
+              <p style="color:#0f1923; font-size:14px;"><b>Your verification code</b></p>
+              <p style="color:#475569; font-size:12.5px; margin-top:6px;">Use this code to complete your sign-in. It expires in 10 minutes.</p>
+              <p class="mono" style="margin-top:14px; font-size:26px; font-weight:700; letter-spacing:7px; color:#0f1923;">418 902</p>
+              <p style="color:#64748b; font-size:11.5px; margin-top:14px; padding-bottom:14px;">If you did not request this code, ignore this email — nobody can sign in without it.</p>
+            </div>
+          </div>
+          <div class="kv" style="margin-top:11px;">
+            <span class="kv__k">Where the rule lives</span>
+            <span class="kv__v"><b>the message key</b> — <code>plain: true</code> on the four account messages and
+              the invitation, not a per-template setting somebody can switch off</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN TWO — SENDING IDENTITY
+
+       The honest half of this screen is the last panel. The application can record what it was
+       configured with (`GET /api/system/deployment` returns mail.configured / host / port / secure /
+       hasCredentials / from), and it can read a DNS record you paste in. It cannot sign mail for a
+       domain it has not been allowed to, and it cannot prove a record nobody pasted. That boundary is
+       drawn, not glossed.
+       ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="identity" id="identity" hidden>
+    <div class="screen__label">Screen two — Sending identity</div>
+    <div class="screen__head">
+      <h2>Which address each message leaves from, and why a reply goes back into the ticket</h2>
+      <p>
+        One <code>defaultFrom</code> serves every message today; nothing sets a Reply-To. The proposal is not
+        more addresses for their own sake — it is that the address and the reply-to become visible, per
+        message, instead of being the same string literal for a password reset and a client invoice.
+      </p>
+    </div>
+
+    <div class="grid4" style="margin-top:14px;">
+      <div class="stat">
+        <div class="stat__label">From addresses in use today</div>
+        <div class="stat__n">1</div>
+        <div class="stat__foot"><code>SMTP_FROM</code> for all eight live messages</div>
+      </div>
+      <div class="stat">
+        <div class="stat__label">Reply-To headers set</div>
+        <div class="stat__n">0</div>
+        <div class="stat__foot"><code>send()</code> takes none</div>
+      </div>
+      <div class="stat stat--warn">
+        <div class="stat__label">Relay on this instance</div>
+        <div class="stat__n" style="font-size:15px;">localhost:587</div>
+        <div class="stat__foot">configured, no credentials, <code>secure:false</code> — nothing would leave</div>
+      </div>
+      <div class="stat">
+        <div class="stat__label">Sent from domains</div>
+        <div class="stat__n">1</div>
+        <div class="stat__foot"><code>cyber7group.com</code>, the domain inside <code>SMTP_FROM</code></div>
+      </div>
+    </div>
+
+    <div class="band band--warn" style="margin-top:12px;">
+      <svg class="ico ico--lg" style="color:var(--alert-amber)"><use href="#i-alert"/></svg>
+      <div style="flex:1 1 420px; min-width:0;">
+        <div class="band__t">On this instance, mail is "configured" and would not be delivered</div>
+        <p class="band__d" style="margin-top:2px;">
+          <code>GET /api/system/deployment</code> answers <code>mail.configured: true</code> because
+          <code>SMTP_HOST</code> is set — and the host is <code>localhost</code>, port <code>587</code>,
+          <code>secure: false</code>, <code>hasCredentials: false</code>. That is the honest state of a
+          development instance and exactly why the screen shows the five fields rather than a green tick: a
+          tick that only means "a string was set" is worse than no tick.
+        </p>
+      </div>
+      <div class="band__right"><span class="chip chip--warn">configured</span><span class="chip chip--bad">not deliverable</span></div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <h3 style="font-size:13px;">Per message — the from, the reply-to, and where a reply lands</h3>
+      <p class="say" style="margin-top:6px;">
+        Proposed. The left column is the message key; the rest is what the section would hold. Today every row
+        would read <code>SMTP_FROM</code> in the second column and <i>unset</i> in the third.
+      </p>
+      <div class="scroll">
+        <table class="ptable">
+          <thead>
+            <tr>
+              <th>Message</th><th>From address</th><th>From name</th><th>Reply-To</th><th>Reply lands</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono" style="font-size:11.5px; color:var(--cyber-300);">ticket.activity</td>
+              <td><code>noreply@cyber7group.com</code></td>
+              <td>C7NTAX</td>
+              <td>the connector's mailbox, proposed</td>
+              <td>into the ticket — the <code>[INT-01-2006]</code> subject tag</td>
+            </tr>
+            <tr>
+              <td class="mono" style="font-size:11.5px; color:var(--cyber-300);">ticket.note</td>
+              <td><code>noreply@cyber7group.com</code></td>
+              <td>C7NTAX</td>
+              <td>the technician who wrote it, proposed</td>
+              <td>into the ticket, or to the author when they typed a personal reply-to</td>
+            </tr>
+            <tr>
+              <td class="mono" style="font-size:11.5px; color:var(--cyber-300);">ticket.reopened_internal</td>
+              <td><code>noreply@cyber7group.com</code></td>
+              <td>C7NTAX</td>
+              <td>nobody — an internal notice</td>
+              <td>the ticket's own page is the link; reply-by-email is deliberately not invited</td>
+            </tr>
+            <tr>
+              <td class="mono" style="font-size:11.5px; color:var(--cyber-300);">invoice.*</td>
+              <td><code>billing@</code> the instance's own, proposed</td>
+              <td>C7NTAX Billing</td>
+              <td>the billing inbox, proposed</td>
+              <td>a person, who can answer about money</td>
+            </tr>
+            <tr>
+              <td class="mono" style="font-size:11.5px; color:var(--cyber-300);">report.scheduled</td>
+              <td><code>reports@</code> the instance's own, proposed</td>
+              <td>C7NTAX Reporting</td>
+              <td>the billing inbox, proposed</td>
+              <td>a person</td>
+            </tr>
+            <tr style="background:color-mix(in srgb, #c084fc 7%, transparent);">
+              <td class="mono" style="font-size:11.5px; color:#c084fc;">auth.mfa_code · auth.password_changed · user.password_reset · portal.login_code · user.invite</td>
+              <td><code>noreply@cyber7group.com</code></td>
+              <td>C7NTAX</td>
+              <td><b>none</b></td>
+              <td>nowhere — a reply to a code is a reply to nobody, and the section refuses to set one</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr><td colspan="5">Six from-identities proposed over fourteen messages; the five security and invitation messages share one and are refused a reply-to on purpose.</td></tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-top:12px;">
+      <div class="card">
+        <h3 style="font-size:13px;">Why a ticket notification replies <em>into the ticket</em></h3>
+        <p class="say" style="margin-top:6px;">
+          Because that is how a reply gets back into the queue. A reply to a customer notification carries the
+          subject tag the product put there — <code>[INT-01-2006]</code> — and the inbound connector matches it
+          (<code>TICKET_TAG_PATTERN</code> in <code>packages/email/src/EmailConnector.ts</code>, which
+          understands this product's own ticket numbers, not just a generic pattern) and appends it to the
+          ticket. A reply addressed to a <i>person</i> lands in that person's inbox and stops being a ticket.
+        </p>
+        <div class="kv" style="margin-top:11px;">
+          <span class="kv__k">Today</span>
+          <span class="kv__v">no Reply-To is set at all; the reply returns to whatever <code>SMTP_FROM</code> names, and threading relies entirely on the subject tag surviving</span>
+        </div>
+        <div class="kv">
+          <span class="kv__k">Proposed</span>
+          <span class="kv__v">Reply-To is the connector's mailbox, so the answer arrives where the connector is watching rather than at <code>noreply@</code></span>
+        </div>
+        <div class="band band--locked" style="margin-top:12px;">
+          <svg class="ico ico--lg" style="color:#c084fc"><use href="#i-lock"/></svg>
+          <div style="flex:1 1 220px; min-width:0;">
+            <div class="band__t">A code gets no reply-to, ever</div>
+            <p class="band__d" style="margin-top:2px;">
+              The section refuses to hold one for <code>auth.mfa_code</code>, <code>auth.password_changed</code>,
+              <code>user.password_reset</code>, <code>portal.login_code</code> or <code>user.invite</code>.
+              A reply to a one-time code must not become somebody's support mail.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:13px;">Domains — and the three things a person must not get wrong</h3>
+        <div class="kv" style="margin-top:10px;">
+          <span class="kv__k">Sending domain</span>
+          <span class="kv__v"><code>cyber7group.com</code> <span class="mock-note">— read from the configured <code>SMTP_FROM</code></span></span>
+        </div>
+        <div class="kv">
+          <span class="kv__k">Return-path</span>
+          <span class="kv__v">the relay's own; set by the relay, not by this application</span>
+        </div>
+        <div class="kv">
+          <span class="kv__k">Cloud delivery</span>
+          <span class="kv__v"><code>EMAIL_GRAPH_ENABLED</code> — on by default; off, outbound mail uses the SMTP relay</span>
+        </div>
+        <div style="margin-top:12px; display:grid; gap:8px;">
+          <div class="band">
+            <span class="chip chip--on" style="flex:none;">SPF</span>
+            <p class="band__d" style="flex:1 1 260px;">
+              <b>One SPF record, and it must name every sender.</b> A second <code>v=spf1</code> TXT on the same
+              name is a permanent error, not a merge — the receiver fails the whole check. Adding the relay's
+              include is an edit to the existing record, not a new one.
+            </p>
+          </div>
+          <div class="band">
+            <span class="chip chip--on" style="flex:none;">DKIM</span>
+            <p class="band__d" style="flex:1 1 260px;">
+              <b>The selector is part of the key's name.</b> Publish the public key at
+              <code>&lt;selector&gt;._domainkey.&lt;domain&gt;</code> and give the <i>same</i> selector to whoever
+              signs — get them out of step and every message fails DKIM while looking correctly configured.
+            </p>
+          </div>
+          <div class="band">
+            <span class="chip chip--on" style="flex:none;">DMARC</span>
+            <p class="band__d" style="flex:1 1 260px;">
+              <b>Alignment, not just passing.</b> A message can pass SPF on the relay's domain and still fail
+              DMARC because the <code>From</code> header is this domain. Start at <code>p=none</code> with a
+              reporting address, watch it, then move to <code>quarantine</code> — never jump to
+              <code>p=reject</code> on a domain that also sends real mail.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <h3 style="font-size:13px;">Records — the application reads what you paste, and says what it cannot see</h3>
+      <p class="say" style="margin-top:6px;">
+        Proposed. The section cannot reach your DNS provider and does not pretend to: it holds the records you
+        paste and checks the two things a string can be checked for — that the value has the shape the standard
+        requires, and that it names the relay this instance actually sends through.
+      </p>
+      <div class="grid2" style="margin-top:12px;">
+        <div>
+          <div class="dns"><b>TXT</b> @  &nbsp; v=spf1 include:&lt;your relay's include&gt; -all</div>
+          <div class="dns"><b>TXT</b> c7ntax._domainkey  &nbsp; v=DKIM1; k=rsa; p=&lt;public key from the relay&gt;</div>
+          <div class="dns"><b>TXT</b> _dmarc  &nbsp; v=DMARC1; p=none; rua=mailto:dmarc@cyber7group.com</div>
+          <p class="say" style="margin-top:8px;">
+            Illustrative shapes only — the include, the selector and the key are yours to paste. The
+            application's job is to notice when the value it is given is not one of those shapes, or names a
+            different relay from the one in <code>SMTP_HOST</code>.
+          </p>
+        </div>
+        <div>
+          <div class="band band--warn">
+            <svg class="ico ico--lg" style="color:var(--alert-amber)"><use href="#i-alert"/></svg>
+            <div style="flex:1 1 240px; min-width:0;">
+              <div class="band__t">What the application cannot verify — stated on the screen, not in a footnote</div>
+              <p class="band__d" style="margin-top:2px;">
+                It cannot send mail from a domain it has not been allowed to: the <code>From</code> must be an
+                address the relay accepts, and nothing here can grant that permission. It cannot prove a record
+                you have not pasted. It has no view of your DNS provider, no live DMARC report feed, and no way
+                to tell a misconfigured record from an unpublished one — so a paste is <b>recorded and checked
+                against the shape</b>, and the section says "pasted, not confirmed" rather than "verified".
+              </p>
+            </div>
+          </div>
+          <div class="band band--gate" style="margin-top:8px;">
+            <svg class="ico ico--lg" style="color:var(--alert-green)"><use href="#i-eye"/></svg>
+            <div style="flex:1 1 240px; min-width:0;">
+              <div class="band__t">What it can do — and already does</div>
+              <p class="band__d" style="margin-top:2px;">
+                Report the relay it was started with, field by field:
+                <code>configured · host · port · secure · hasCredentials · from</code> from
+                <code>GET /api/system/deployment</code>, guarded by
+                <code>Permission.SystemConfig</code> — plus <code>verify()</code> on the transporter, which
+                answers only whether the relay answered.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN THREE — THE TRIGGER MATRIX
+
+       The screen the owner reads first. Fourteen rows: eight that are live, two whose sender is written
+       and never called, four proposed. The two dead ones are marked as dead rather than omitted, because
+       "the invoice email exists and nothing calls it" is the single strongest argument for this feature.
+       The security rows are drawn as locked rows rather than described as locked in prose.
+       ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="matrix" id="matrix" hidden>
+    <div class="screen__label">Screen three — The trigger matrix</div>
+    <div class="screen__head">
+      <h2>Every message this system can send, and the five answers that matter about each</h2>
+      <p>
+        Fourteen rows. Eight are live and called from somewhere in the repository; two have a sender that is
+        written and <b>never called</b>; four are proposed. Every subject in the "who receives it" and
+        "template" columns is the real function or route, not a description of one.
+      </p>
+    </div>
+
+    <div class="today">
+      <b>The finding this table is built around:</b> <code>sendInvoice</code> and <code>sendTicketAutoClose</code>
+      are complete, well-formed senders with <b>no caller anywhere in the repository</b>. The owner asked to be
+      able to send an invoice from C7NTAX; the email for it has been sitting in the code the whole time with no
+      path to it, and <code>POST /api/billing/invoices/:id/send</code> flips the status to <code>Sent</code>
+      without sending anything. Today an invoice's "sent" is a status change, not a message. Both rows below are
+      marked <i>written, never sent</i> rather than left out.
+    </div>
+
+    <div class="split">
+      <aside class="card rail" aria-label="Message groups">
+        <div class="rail__head">Filter the matrix</div>
+        <div class="rail__group">
+          <button type="button" class="rail__item rail__item--on" data-mtx-group="all">
+            <span class="rail__line"><span class="rail__name">Every message</span><span class="rail__n">14</span></span>
+            <span class="rail__meta">The whole catalogue, live and proposed alike.</span>
+          </button>
+          <button type="button" class="rail__item" data-mtx-group="ticket">
+            <span class="rail__line"><span class="rail__name">Ticket</span><span class="rail__n">5</span></span>
+            <span class="rail__meta">Activity, the composer, the reopened notice, follow-up, the closure.</span>
+          </button>
+          <button type="button" class="rail__item" data-mtx-group="billing">
+            <span class="rail__line"><span class="rail__name">Billing</span><span class="rail__n">3</span></span>
+            <span class="rail__meta">An invoice, its overdue reminder, a quote.</span>
+          </button>
+          <button type="button" class="rail__item" data-mtx-group="account">
+            <span class="rail__line"><span class="rail__name">Account &amp; security</span><span class="rail__n">5</span></span>
+            <span class="rail__meta">Codes, invitations, password changes — the locked rows.</span>
+          </button>
+          <button type="button" class="rail__item" data-mtx-group="report">
+            <span class="rail__line"><span class="rail__name">Reporting</span><span class="rail__n">1</span></span>
+            <span class="rail__meta">A scheduled report, which half exists.</span>
+          </button>
+        </div>
+        <div class="rail__foot">
+          Unsubscribe applies to one row (<code>report.scheduled</code>). Quiet hours apply to every row except
+          the five account rows and the closure row.
+        </div>
+      </aside>
+
+      <div class="card" style="padding:0 16px 4px;">
+        <div class="scroll">
+          <table class="mtx">
+            <thead>
+              <tr>
+                <th>Message</th><th>When it fires</th><th>Who receives it</th><th>Customer sees it</th>
+                <th>Can be turned off</th><th>Template</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr data-mtx="ticket">
+                <td>
+                  <div class="mono" style="font-size:11.5px; color:var(--cyber-300);">ticket.activity</div>
+                  <div style="margin-top:5px; display:flex; gap:5px; flex-wrap:wrap;">
+                    <span class="chip chip--good">live</span>
+                  </div>
+                </td>
+                <td class="mv">A customer-visible event on a ticket: a note that is not internal, a logged time entry, or a status change that does <b>does not end</b> the ticket</td>
+                <td>The ticket's primary contact, every <code>cc</code> contact, and an <code>additional</code> contact only for notes and only when their own <code>notifyOnNote</code> is on</td>
+                <td><span class="yn yn--y">Yes</span></td>
+                <td><span class="yn yn--p">Per board</span> — the closing case follows the board's <code>notifyCustomerOnClose</code>; instance-wide off is proposed</td>
+                <td><code>ticketActivityTemplate</code><br><span class="mock-note">EmailService.ts:274</span></td>
+              </tr>
+              <tr data-mtx="ticket">
+                <td>
+                  <div class="mono" style="font-size:11.5px; color:var(--cyber-300);">ticket.note</div>
+                  <div style="margin-top:5px;"><span class="chip chip--good">live</span></div>
+                </td>
+                <td class="mv">A technician sends a typed reply from the ticket screen — deliberately, from the composer</td>
+                <td>Whichever contacts are ticked (primary by default), the ticket's <code>cc</code> list, plus any ad-hoc <code>Cc</code>/<code>Bcc</code> typed into the composer</td>
+                <td><span class="yn yn--y">Yes</span></td>
+                <td><span class="yn yn--n">No</span> — it is a deliberate send; turning it off would break the button</td>
+                <td>generic <code>send()</code><br><span class="mock-note">routes/tickets/index.ts:515 — body plus a hard-coded footer</span></td>
+              </tr>
+              <tr data-mtx="ticket">
+                <td>
+                  <div class="mono" style="font-size:11.5px; color:var(--cyber-300);">ticket.reopened_internal</div>
+                  <div style="margin-top:5px;"><span class="chip chip--good">live</span></div>
+                </td>
+                <td class="mv">The client replies to a closed-ticket email and the connector appends it, putting the ticket back in the queue</td>
+                <td>The assignee — or whoever raised the ticket when nobody is assigned, "because a reopened ticket with no reader is exactly the failure this exists to prevent"</td>
+                <td><span class="yn yn--n">No</span> — internal</td>
+                <td><span class="yn yn--n">No</span> — it is the one notification that stops a reopened ticket being missed</td>
+                <td><code>ticketReopenedTemplate</code><br><span class="mock-note">EmailService.ts:308</span></td>
+              </tr>
+              <tr data-mtx="ticket">
+                <td>
+                  <div class="mono" style="font-size:11.5px; color:var(--cyber-300);">ticket.follow_up</div>
+                  <div style="margin-top:5px;"><span class="chip chip--good">live</span></div>
+                </td>
+                <td class="mv">A ticket has been waiting on the client for the board's <code>followUpIntervalHours</code> (24 h on all four boards); the worker checks every 30 minutes</td>
+                <td>The ticket's primary contact</td>
+                <td><span class="yn yn--y">Yes</span></td>
+                <td><span class="yn yn--y">Yes</span> — <code>followUpEnabled</code>, per board</td>
+                <td><code>followUpTemplate</code><br><span class="mock-note">EmailService.ts:212</span></td>
+              </tr>
+              <tr data-mtx="ticket">
+                <td>
+                  <div class="mono" style="font-size:11.5px; color:var(--cyber-300);">ticket.closure</div>
+                  <div style="margin-top:5px; display:flex; gap:5px; flex-wrap:wrap;">
+                    <span class="chip chip--warn">written, never sent</span>
+                  </div>
+                </td>
+                <td class="mv">
+                  <b>Nothing calls it.</b> The closure notice that <i>does</i> go out rides on
+                  <code>ticket.activity</code>: <code>notifyTicketClosure</code> writes the closing note and the
+                  "reply reopens it" line, then hands them to <code>sendTicketActivity</code> with the event
+                  label "Ticket closed" / "Ticket resolved" / "Ticket cancelled"
+                </td>
+                <td>The primary contact and the ticket's <code>cc</code> contacts, via <code>ticket.activity</code></td>
+                <td><span class="yn yn--y">Yes</span></td>
+                <td><span class="yn yn--y">Yes</span> — <code>notifyCustomerOnClose</code>; <b>NOC Alerts</b> is
+                  the one board on this instance with it off</td>
+                <td><code>sendTicketAutoClose</code> → <code>autoCloseTemplate</code><br><span class="mock-note">written; no caller</span></td>
+              </tr>
+              <tr data-mtx="billing">
+                <td>
+                  <div class="mono" style="font-size:11.5px; color:var(--cyber-300);">invoice.overdue</div>
+                  <div style="margin-top:5px;"><span class="chip chip--good">live</span></div>
+                </td>
+                <td class="mv">An invoice is past its due date; the worker runs every 6 hours</td>
+                <td>The client's billing contact</td>
+                <td><span class="yn yn--y">Yes</span></td>
+                <td><span class="yn yn--p">Proposed</span> — an instance rule, since a reminder a client can switch off is not a reminder</td>
+                <td><code>overdueTemplate</code><br><span class="mock-note">EmailService.ts:255</span></td>
+              </tr>
+              <tr data-mtx="billing">
+                <td>
+                  <div class="mono" style="font-size:11.5px; color:var(--cyber-300);">invoice.send</div>
+                  <div style="margin-top:5px;"><span class="chip chip--warn">written, never sent</span></div>
+                </td>
+                <td class="mv">
+                  <b>Nothing calls it</b> — and this is the request that started the feature.
+                  <code>POST /api/billing/invoices/:id/send</code> (<code>Permission.InvoiceSend</code>) sets
+                  <code>status: Sent</code> and mails nobody. <b>INV-2026-1014</b> for Umbrella Corp is
+                  <code>sent</code> for exactly that reason
+                </td>
+                <td>The client's billing contact, once a caller exists</td>
+                <td><span class="yn yn--y">Yes</span></td>
+                <td><span class="yn yn--p">Per client, proposed</span> — a client may be billed without being emailed</td>
+                <td><code>sendInvoice</code> → <code>invoiceTemplate</code><br><span class="mock-note">EmailService.ts:155 / :240 — written; no caller</span></td>
+              </tr>
+              <tr data-mtx="billing">
+                <td>
+                  <div class="mono" style="font-size:11.5px; color:var(--cyber-300);">quote.send</div>
+                  <div style="margin-top:5px;"><span class="chip chip--bad">proposed</span></div>
+                </td>
+                <td class="mv">A quote is sent from the Quotes screen. No quote email exists in any form today</td>
+                <td>The client's contact</td>
+                <td><span class="yn yn--y">Yes</span></td>
+                <td><span class="yn yn--n">No</span></td>
+                <td>new — the invoice template is the obvious parent</td>
+              </tr>
+              <tr data-mtx="report">
+                <td>
+                  <div class="mono" style="font-size:11.5px; color:var(--cyber-300);">report.scheduled</div>
+                  <div style="margin-top:5px; display:flex; gap:5px; flex-wrap:wrap;">
+                    <span class="chip chip--bad">proposed</span><span class="chip chip--warn">half exists</span>
+                  </div>
+                </td>
+                <td class="mv">
+                  A <code>ReportSchedule</code> falls due. The row is real — <b>Monthly Ticket Volume</b>, weekly,
+                  Monday, 06:00, to <code>ops@example.com</code>, PDF, active — and the sender is what is
+                  missing: <code>lastSentAt</code> is <code>null</code> because nothing sends
+                </td>
+                <td>The schedule's own <code>recipients</code> array</td>
+                <td><span class="yn yn--p">Depends</span> on the report; a value report may be internal</td>
+                <td><span class="yn yn--y">Yes</span> — <code>isActive</code> on the schedule, already</td>
+                <td>new — the report PDF is an attachment, not a body</td>
+              </tr>
+              <tr data-mtx="account" class="lockrow">
+                <td>
+                  <div class="mono" style="font-size:11.5px; color:#c084fc;">auth.mfa_code</div>
+                  <div style="margin-top:5px; display:flex; gap:5px; flex-wrap:wrap;">
+                    <span class="chip chip--good">live</span><span class="chip chip--lock"><svg class="ico" style="width:11px;height:11px;"><use href="#i-lock"/></svg> locked</span>
+                  </div>
+                </td>
+                <td class="mv">A staff sign-in reaches its second factor</td>
+                <td>The account signing in, and nobody else</td>
+                <td><span class="yn yn--y">Yes</span> — to the person, never to a client</td>
+                <td><span class="yn yn--n">No</span></td>
+                <td><code>mfaTemplate</code><br><span class="mock-note">EmailService.ts:195</span></td>
+              </tr>
+              <tr data-mtx="account" class="lockrow">
+                <td>
+                  <div class="mono" style="font-size:11.5px; color:#c084fc;">portal.login_code</div>
+                  <div style="margin-top:5px; display:flex; gap:5px; flex-wrap:wrap;">
+                    <span class="chip chip--good">live</span><span class="chip chip--lock"><svg class="ico" style="width:11px;height:11px;"><use href="#i-lock"/></svg> locked</span>
+                  </div>
+                </td>
+                <td class="mv">A contact asks for a portal sign-in code; expires in 10 minutes
+                  (<code>portal.codeExpiryMinutes</code>), 3 per 15 minutes
+                  (<code>codesPerWindow</code>/<code>codeWindowMinutes</code>)</td>
+                <td>The requesting mailbox only. The route answers <code>202</code> either way, "because answering
+                  differently for an unknown address would turn this into a customer list"</td>
+                <td><span class="yn yn--y">Yes</span></td>
+                <td><span class="yn yn--n">No</span></td>
+                <td>generic <code>send()</code><br><span class="mock-note">routes/portal.ts:146 — the one live message with a text part</span></td>
+              </tr>
+              <tr data-mtx="account" class="lockrow">
+                <td>
+                  <div class="mono" style="font-size:11.5px; color:#c084fc;">user.invite</div>
+                  <div style="margin-top:5px; display:flex; gap:5px; flex-wrap:wrap;">
+                    <span class="chip chip--good">live</span><span class="chip chip--lock"><svg class="ico" style="width:11px;height:11px;"><use href="#i-lock"/></svg> locked</span>
+                  </div>
+                </td>
+                <td class="mv">An administrator creates an account, with a generated temporary password</td>
+                <td>The new person's address</td>
+                <td><span class="yn yn--y">Yes</span> — it is the welcome message</td>
+                <td><span class="yn yn--n">No</span></td>
+                <td>generic <code>send()</code><br><span class="mock-note">routes/users.ts:99 — "C7NTAX — Your account is ready"</span></td>
+              </tr>
+              <tr data-mtx="account" class="lockrow">
+                <td>
+                  <div class="mono" style="font-size:11.5px; color:#c084fc;">auth.password_changed</div>
+                  <div style="margin-top:5px;"><span class="chip chip--bad">proposed</span></div>
+                </td>
+                <td class="mv">A password is changed from My Account, or reset by an administrator</td>
+                <td>The account holder</td>
+                <td><span class="yn yn--y">Yes</span> — to the person</td>
+                <td><span class="yn yn--n">No</span></td>
+                <td>new — plain by rule; it is a security notice</td>
+              </tr>
+              <tr data-mtx="account" class="lockrow">
+                <td>
+                  <div class="mono" style="font-size:11.5px; color:#c084fc;">user.password_reset</div>
+                  <div style="margin-top:5px;"><span class="chip chip--bad">proposed</span></div>
+                </td>
+                <td class="mv">A reset is requested for an account</td>
+                <td>The requesting mailbox</td>
+                <td><span class="yn yn--y">Yes</span></td>
+                <td><span class="yn yn--n">No</span></td>
+                <td>new — plain by rule</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="6">
+                  14 messages · <span style="color:var(--alert-green);">8 live</span> ·
+                  <span style="color:var(--alert-amber);">2 written and never sent</span> ·
+                  <span style="color:var(--alert-red);">4 proposed</span> ·
+                  <span style="color:#c084fc;">5 rows locked against decoration, batching, quiet hours and opt-out</span>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div class="listfoot">
+          <span>Showing <b id="mtx-count">14</b> of 14 messages</span>
+          <span class="note">Template line numbers are <code>EmailService.ts</code> on this working copy</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN FOUR — QUIET HOURS, BATCHING AND THE DIGEST
+
+       The rule the owner asked for: six changes in an hour must not send six emails. The design is a
+       window measured from the first event, a threshold that collapses the rest, a hard ceiling on how
+       long anything may wait, and a digest that lists what happened in order. The exemptions are the
+       interesting half and are drawn as a track rather than a paragraph.
+       ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="quiet" id="quiet" hidden>
+    <div class="screen__label">Screen four — Quiet hours, batching and the digest</div>
+    <div class="screen__head">
+      <h2>Six changes in an hour are one digest, not six emails — and four messages never wait at all</h2>
+      <p>
+        A ticket that is updated, reassigned, re-prioritised, annotated, escalated and then closed inside an
+        hour is ordinary. Whether the client receives six emails about it is a policy, and the policy should be
+        the same for every client unless one client asks to differ.
+      </p>
+    </div>
+
+    <div class="grid4" style="margin-top:14px;">
+      <div class="stat"><div class="stat__label">Quiet hours window</div>
+        <div class="stat__n" style="font-size:17px;">20:00 – 07:00</div>
+        <div class="stat__foot">proposed default, in the <b>client's</b> timezone</div></div>
+      <div class="stat"><div class="stat__label">Batch window</div>
+        <div class="stat__n">15 min</div>
+        <div class="stat__foot">measured from the first customer-visible event</div></div>
+      <div class="stat"><div class="stat__label">Collapse threshold</div>
+        <div class="stat__n">3</div>
+        <div class="stat__foot">the third event turns the window into a digest</div></div>
+      <div class="stat stat--warn"><div class="stat__label">Hard ceiling on any wait</div>
+        <div class="stat__n">30 min</div>
+        <div class="stat__foot">nothing is held longer, whatever has been queued</div></div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <h3 style="font-size:13px;">The rule, as a track — one ticket, one hour, six events</h3>
+      <p class="say" style="margin-top:6px;">
+        Ticket <b>NOC-05-2007</b> ("CPU sustained at 100% on app node", Stark Enterprises) is the shape this is
+        for. Six customer-visible changes inside the hour, three messages instead of six.
+      </p>
+      <div class="track">
+        <div class="step step--done">
+          <div class="step__lg"><span class="step__dot"></span><span class="step__t">First event</span></div>
+          <p class="step__d">A status change. It is customer-visible, so a window opens <b>and a count starts</b>.</p>
+          <div class="step__n">t + 0:00 · 1 of 3</div>
+        </div>
+        <div class="step step--done">
+          <div class="step__lg"><span class="step__dot"></span><span class="step__t">Second event</span></div>
+          <p class="step__d">A note is added. It joins the open window rather than starting its own email.</p>
+          <div class="step__n">t + 0:06 · 2 of 3</div>
+        </div>
+        <div class="step step--hold">
+          <div class="step__lg"><span class="step__dot"></span><span class="step__t">Threshold reached</span></div>
+          <p class="step__d">The third event trips the threshold: the window is now a <b>digest</b>, and the clock
+            resets inside it so a long thread cannot push the send out all evening.</p>
+          <div class="step__n">t + 0:17 · digest armed</div>
+        </div>
+        <div class="step step--now">
+          <div class="step__lg"><span class="step__dot"></span><span class="step__t">Digest sends</span></div>
+          <p class="step__d">One email listing every event in order with its own timestamp, in the words the
+            single-event email would have used, one after another.</p>
+          <div class="step__n">t + 0:32</div>
+        </div>
+        <div class="step">
+          <div class="step__lg"><span class="step__dot"></span><span class="step__t">Sixth event</span></div>
+          <p class="step__d">After the digest, a new window. If it is the only event it goes as itself — a lone
+            change does not wait 15 minutes to be told about alone.</p>
+          <div class="step__n">t + 0:51 · 1 of 3</div>
+        </div>
+      </div>
+      <div class="band" style="margin-top:12px;">
+        <svg class="ico ico--lg" style="color:var(--cyber-300)"><use href="#i-clock"/></svg>
+        <div style="flex:1 1 320px; min-width:0;">
+          <div class="band__t">A lone event sends immediately</div>
+          <p class="band__d" style="margin-top:2px;">
+            The window is not a delay applied to everything — it is a hold that only becomes real if a second
+            event arrives inside it. One change is sent at once. That is why the ceiling matters more than the
+            window: the ceiling is what stops a busy ticket being silent for an afternoon.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-top:12px;">
+      <div class="card">
+        <h3 style="font-size:13px;">What is deliberately <em>not</em> batched or held</h3>
+        <p class="say" style="margin-top:6px;">
+          The exemptions are not preferences — each one is a message whose value is destroyed by waiting. Drawn as
+          locked rows in the matrix too, so the rule is in two places rather than one paragraph.
+        </p>
+        <div style="margin-top:10px; display:grid; gap:8px;">
+          <div class="band band--locked">
+            <svg class="ico ico--lg" style="color:#c084fc"><use href="#i-lock"/></svg>
+            <div style="flex:1 1 240px; min-width:0;">
+              <div class="band__t"><code>auth.mfa_code</code> — never held, never batched</div>
+              <p class="band__d" style="margin-top:2px;">Expires in 10 minutes and is read once, in a hurry, on
+                the worst connection of the day. A digest of two of them is not a thing that can exist.</p>
+            </div>
+          </div>
+          <div class="band band--locked">
+            <svg class="ico ico--lg" style="color:#c084fc"><use href="#i-lock"/></svg>
+            <div style="flex:1 1 240px; min-width:0;">
+              <div class="band__t"><code>portal.login_code</code> — never held, never batched</div>
+              <p class="band__d" style="margin-top:2px;">Same reason, and the rate limit is already there
+                (<code>codesPerWindow</code> 3 per <code>codeWindowMinutes</code> 15): holding a code back would
+                make the client wait on the product's convenience.</p>
+            </div>
+          </div>
+          <div class="band band--locked">
+            <svg class="ico ico--lg" style="color:#c084fc"><use href="#i-lock"/></svg>
+            <div style="flex:1 1 240px; min-width:0;">
+              <div class="band__t"><code>ticket.closure</code> — never held until morning</div>
+              <p class="band__d" style="margin-top:2px;">A closure carries an instruction: "reply to this email —
+                the reply reopens the ticket". Sent at 21:40 it is still read at 21:45 by someone who was waiting
+                for it. Held to 07:00 it would tell them a ticket was closed eight hours after they saw it close.</p>
+            </div>
+          </div>
+          <div class="band band--locked">
+            <svg class="ico ico--lg" style="color:#c084fc"><use href="#i-lock"/></svg>
+            <div style="flex:1 1 240px; min-width:0;">
+              <div class="band__t"><code>ticket.reopened_internal</code> — never batched</div>
+              <p class="band__d" style="margin-top:2px;">Internal, and the whole point is that a reopened ticket
+                with no reader is the failure it exists to prevent.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:13px;">The digest — what a client receives after six events</h3>
+        <p class="say" style="margin-top:6px;">
+          The real words from <code>ticketActivityTemplate</code>, one block per event, in order.
+        </p>
+        <div class="mail" style="max-width:100%; margin-top:12px;">
+          <div class="mail__head"><span class="mail__brand">
+            <svg class="ico ico--lg" style="color:#fff"><use href="#i-shield"/></svg>
+            <span class="wordmark">C<b>7</b>NTAX</span></span></div>
+          <div class="mail__body">
+            <p style="color:#cbd5e1;">Hi Tony Stark,</p>
+            <p class="mail__kicker" style="margin-top:12px;">Ticket <strong>NOC-05-2007</strong> — <em>CPU sustained at 100% on app node</em></p>
+            <p style="color:#fff; font-weight:600; margin-top:10px;">5 updates in the last hour</p>
+            <div class="mail__quote">
+              <p><b style="color:#fff;">18:02</b> — Status updated</p>
+              <p style="margin-top:4px;">Status changed from "New" to "In Progress".</p>
+              <p style="margin-top:10px;"><b style="color:#fff;">18:08</b> — New note added</p>
+              <p style="margin-top:4px;">Monitoring shows the alert cleared twice and returned; we are watching the node.</p>
+              <p style="margin-top:10px;"><b style="color:#fff;">18:17</b> — Time logged</p>
+              <p style="margin-top:4px;">0.5 hours logged by the on-call engineer.</p>
+              <p style="margin-top:10px;"><b style="color:#fff;">18:29</b> — New note added</p>
+              <p style="margin-top:4px;">Restarted the application pool; CPU back under 40%.</p>
+              <p style="margin-top:10px;"><b style="color:#fff;">18:32</b> — Status updated</p>
+              <p style="margin-top:4px;">Status changed from "In Progress" to "Waiting On Client".</p>
+            </div>
+            <a class="mail__cta" href="#">Open the ticket</a>
+          </div>
+          <div class="mail__foot">
+            <p class="legal">Cyber 7 Group, LLC</p>
+            <p>One message, five events. You are the contact on ticket NOC-05-2007 at Stark Enterprises.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <h3 style="font-size:13px;">Where each rule is applied — a rule that is not enforced somewhere is a sentence</h3>
+      <table class="ptable" style="margin-top:10px;">
+        <thead><tr><th>Rule</th><th>Enforced in</th><th>Why there</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Batch window &amp; threshold</td>
+            <td><b>the sender</b> — a delivery-policy layer inside the API, between the caller and
+              <code>EmailService.send</code>, proposed as <code>services/emailDelivery.ts</code></td>
+            <td>So a caller that forgets cannot bypass it. Every live sender goes through
+              <code>ticketNotifications.ts</code> or <code>worker.ts</code>; putting the rule in a screen would
+              make it a rule <code>curl</code> could skip.</td>
+          </tr>
+          <tr>
+            <td>Quiet hours</td>
+            <td><b>the worker and the sender</b> — the worker because it is the thing that sends at 03:00, the
+              sender because a person clicking Send at 22:00 must get the same answer</td>
+            <td>A hold applied in one path and not the other is a hold that leaks at night.</td>
+          </tr>
+          <tr>
+            <td>Which messages never wait</td>
+            <td><b>the message key itself</b> — a property of <code>auth.mfa_code</code>,
+              <code>portal.login_code</code>, <code>auth.password_changed</code>,
+              <code>user.password_reset</code>, <code>ticket.closure</code> and
+              <code>ticket.reopened_internal</code>, not a checkbox anybody can tick</td>
+            <td>An exemption that a screen can switch off is not an exemption. These are the messages whose value
+              is the delay.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN FIVE — WHO MAY BE EMAILED
+
+       The recipient rules exist and are good; the screen states them exactly as `ticketContacts.ts` and
+       `ticketNotifications.ts` enforce them. Opt-out and bounce handling are proposed, and the honest
+       correction is here: the brief said the "email this contact notes" switch lives under Configuration
+       → Client Apps & Notifications. Reading the registry, that section has two fields (outlookAddin,
+       push) and the switch is `TicketContact.notifyOnNote`, set on the ticket.
+       ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="recipients" id="recipients" hidden>
+    <div class="screen__label">Screen five — Who may be emailed</div>
+    <div class="screen__head">
+      <h2>Three roles on a ticket, two suppressions on an address, and where each is enforced</h2>
+      <p>
+        This is the part of the feature with the least to invent: the roles are modelled, enforced and already
+        behave identically whether a contact was added from ticket creation, the ticket screen or a note.
+      </p>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <h3 style="font-size:13px;">The rules as they exist today — <code>ticketContacts.ts</code>, <code>ticketNotifications.ts</code></h3>
+      <table class="ptable" style="margin-top:10px;">
+        <thead><tr><th>Role</th><th>Receives</th><th>The switch</th><th>Where it is stored</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><b>primary</b><br><span class="mock-note">the ticket's own <code>contactId</code></span></td>
+            <td>Everything customer-visible: a non-internal note, a logged time entry, a status change, the
+              closure. It is the "to" unless the author unticked it for this event.</td>
+            <td><span class="yn yn--n">none</span> — it can be unticked for a <i>single</i> event
+              (<code>includePrimary: false</code>) but not switched off as a standing preference</td>
+            <td><code>Ticket.contactId</code></td>
+          </tr>
+          <tr>
+            <td><b>cc</b></td>
+            <td>Copied on all of it — status changes, note notifications, time-entry notices and manual sends.
+              "Primary contact first, deduplicated case-insensitively."</td>
+            <td><span class="yn yn--n">none</span> — being on the ticket as <code>cc</code> <i>is</i> the
+              preference</td>
+            <td><code>TicketContact.role</code></td>
+          </tr>
+          <tr>
+            <td><b>additional</b></td>
+            <td><b>Notes only</b> — nothing else, ever — and only while their own switch is on. For a status
+              change an <code>additional</code> contact hears nothing.</td>
+            <td><span class="yn yn--y">on</span> — <code>notifyOnNote</code>, default <code>true</code></td>
+            <td><code>TicketContact.notifyOnNote</code></td>
+          </tr>
+        </tbody>
+        <tfoot><tr><td colspan="4">Plus the composer's own extras: <code>extraTo</code> and <code>extraCc</code> from the send dialog, with <code>includePrimary</code> to untick the primary for one event. An empty "to" is refused — "a mail client needs a To".</td></tr></tfoot>
+      </table>
+
+      <div class="band band--warn" style="margin-top:12px;">
+        <svg class="ico ico--lg" style="color:var(--alert-amber)"><use href="#i-alert"/></svg>
+        <div style="flex:1 1 380px; min-width:0;">
+          <div class="band__t">A correction this screen has to make, on the screen</div>
+          <p class="band__d" style="margin-top:2px;">
+            The brief for this file placed the "email this contact notes" switch under
+            <b>Configuration → Client Apps &amp; Notifications</b>. Reading the registry, it is not there: that
+            section has <b>two</b> fields, <code>outlookAddin</code> and <code>push</code>, and the switch is
+            <code>TicketContact.notifyOnNote</code>, set on the ticket. So this screen does not draw a control at
+            an address where there is nothing — the per-contact switch stays where it is enforced, and what is
+            proposed for <code>apps</code> is the <b>instance-wide default</b> that a ticket's contacts are
+            created with.
+          </p>
+        </div>
+        <div class="band__right"><span class="chip"><code>TicketContact.notifyOnNote</code></span></div>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-top:12px;">
+      <div class="card">
+        <h3 style="font-size:13px;">Opt-out — proposed, and deliberately narrow</h3>
+        <div class="kv" style="margin-top:10px;">
+          <span class="kv__k">What it suppresses</span>
+          <span class="kv__v"><code>report.scheduled</code> sent to a client, and the activity digest when it is
+            the only remaining thing to stop</span>
+        </div>
+        <div class="kv">
+          <span class="kv__k">What it cannot suppress</span>
+          <span class="kv__v">a closure, a follow-up, an invoice notice, a portal code, an MFA code — these are
+            service delivery, and the section says so on the screen rather than letting somebody discover it</span>
+        </div>
+        <div class="kv">
+          <span class="kv__k">How it is recorded</span>
+          <span class="kv__v">a proposed field on the contact record beside the address, with who set it, when, and from which message — the same three facts every other deliberate exclusion in this product carries</span>
+        </div>
+        <div class="kv">
+          <span class="kv__k">Applied in</span>
+          <span class="kv__v"><b>the sender</b> — a suppressed address is dropped from the resolved recipient
+            list before <code>send()</code> is called, so the delivery log can say "skipped by a rule" rather
+            than showing a message that never had a chance</span>
+        </div>
+        <p class="say" style="margin-top:10px;">
+          An opt-out that only removes a link from a footer is not a rule; the drop has to happen where the
+          message is addressed.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:13px;">Bounce and complaint — proposed, and a rule the application enforces</h3>
+        <table class="ptable" style="margin-top:10px;">
+          <thead><tr><th>Signal</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td><b>Soft bounce</b><br><span class="mock-note">4xx, mailbox full</span></td>
+              <td>Three attempts, then logged as failed. <b>Not suppressed</b> — a full mailbox is a Tuesday.</td></tr>
+            <tr><td><b>Hard bounce</b><br><span class="mock-note">5xx, no such user</span></td>
+              <td>Counted. <b>Two consecutive hard bounces suppress the address</b> and it is dropped from every
+                future recipient list — the same drop as an opt-out, so one place enforces both.</td></tr>
+            <tr><td><b>Complaint</b><br><span class="mock-note">an ARF report, or Graph's reported-spam</span></td>
+              <td><b>Suppressed immediately</b>, on one signal. Someone marking a message as spam is a fact about
+                the message, not about their mailbox.</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="2">Both suppressions are visible on the recipient screen and reversible by a named person — a suppression nobody can lift becomes a client nobody can email, discovered six months later.</td></tr></tfoot>
+        </table>
+        <div class="kv" style="margin-top:12px;">
+          <span class="kv__k">Applied in</span>
+          <span class="kv__v"><b>the sender</b> for the drop, and <b>the delivery log</b> for the record — the
+            bounce is only useful if it is attached to the message that caused it</span>
+        </div>
+        <p class="say" style="margin-top:10px;">
+          Today there is <b>no bounce handling of any kind</b>: the addresses in this instance end in
+          <code>@example.com</code> and <code>@acmecorp.com</code>, the relay is <code>localhost</code>, and a
+          send that fails is only a <code>logger.warn</code> line — <i>"Delivery is best-effort — failures are
+          logged and never thrown, so callers are never blocked or broken by SMTP."</i> That sentence is the
+          reason this panel is a proposal rather than a description.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN SIX — PER-CLIENT OVERRIDES
+
+       0 of 5 clients override the brand today, which is a real figure drawn from the API: every
+       `portalAccentColor` and `portalLogoUrl` on the five clients is null. The pattern the proposal
+       copies is the one `Company` already uses — a null means "inherit", so a deployment sets the
+       instance once and only the clients that differ carry their own value ("A null on any of these
+       means 'use the instance's own setting'"). The board level is real too:
+       `ServiceBoard.notifyCustomerOnClose` with NOC Alerts off.
+       ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="overrides" id="overrides" hidden>
+    <div class="screen__label">Screen six — Per-client overrides</div>
+    <div class="screen__head">
+      <h2>Instance, then board, then client, then language — and only where a client actually differs</h2>
+      <p>
+        The override chain is the pattern this product already uses everywhere it matters: a nullable field on
+        the client record, where <b>null means inherit</b>. That is why the count is zero rather than five —
+        the five clients on this instance set nothing and inherit everything.
+      </p>
+    </div>
+
+    <div class="grid4" style="margin-top:14px;">
+      <div class="stat"><div class="stat__label">Clients</div><div class="stat__n">5</div>
+        <div class="stat__foot">Acme Corporation, Globex Industries, Initech Solutions, Stark Enterprises, Umbrella Corp</div></div>
+      <div class="stat"><div class="stat__label">Overriding the brand today</div><div class="stat__n">0</div>
+        <div class="stat__foot">every <code>portalAccentColor</code> and <code>portalLogoUrl</code> is <code>null</code></div></div>
+      <div class="stat"><div class="stat__label">Boards that differ on close-mail</div><div class="stat__n">1 of 4</div>
+        <div class="stat__foot"><b>NOC Alerts</b>: <code>notifyCustomerOnClose</code> off — the real exception this pattern was built for</div></div>
+      <div class="stat"><div class="stat__label">Languages</div><div class="stat__n">2</div>
+        <div class="stat__foot">en-US (default, 0 translations) · es-MX (1 translation) — email content is not translated today</div></div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <h3 style="font-size:13px;">The chain — what a client inherits, and what it can disagree with</h3>
+      <div class="track">
+        <div class="step step--done">
+          <div class="step__lg"><span class="step__dot"></span><span class="step__t">Instance</span></div>
+          <p class="step__d">The brand kit, the sender identity, the quiet-hours defaults, the batch window. Set
+            once under the proposed <b>Email &amp; Delivery</b> section.</p>
+          <div class="step__n">5 clients inherit this</div>
+        </div>
+        <div class="step step--done">
+          <div class="step__lg"><span class="step__dot"></span><span class="step__t">Per board</span></div>
+          <p class="step__d">Already real: <code>notifyCustomerOnClose</code>, <code>followUpEnabled</code>,
+            <code>followUpIntervalHours</code>, <code>autoCloseEnabled</code>, <code>autoCloseDays</code>,
+            <code>slaResponseMinutes</code>, <code>slaResolutionMinutes</code>.</p>
+          <div class="step__n">1 of 4 boards differs</div>
+        </div>
+        <div class="step step--current step--now">
+          <div class="step__lg"><span class="step__dot"></span><span class="step__t">Per client</span></div>
+          <p class="step__d">Proposed: footer, from-name, quiet hours — the three the owner named. Null means
+            inherit, so a client carries a value only when it differs.</p>
+          <div class="step__n">0 of 5 set anything</div>
+        </div>
+        <div class="step">
+          <div class="step__lg"><span class="step__dot"></span><span class="step__t">Per language</span></div>
+          <p class="step__d">Proposed: a template's <b>Fields</b> translated per <code>Locale</code>, resolved at
+            render. The <code>Translation</code> table already exists (<code>localeCode</code>/<code>key</code>/<code>value</code>/<code>namespace</code>) —
+            email just does not read it.</p>
+          <div class="step__n">2 locales, 1 translation</div>
+        </div>
+        <div class="step">
+          <div class="step__lg"><span class="step__dot"></span><span class="step__t">Revert</span></div>
+          <p class="step__d">Clearing a client's value back to null restores inheritance — no copy of the
+            instance's value is kept on the client, so a revert can never restore a stale one.</p>
+          <div class="step__n">1 action, no confirmation phrase</div>
+        </div>
+      </div>
+      <div class="band band--gate" style="margin-top:12px;">
+        <svg class="ico ico--lg" style="color:var(--alert-green)"><use href="#i-check"/></svg>
+        <div style="flex:1 1 380px; min-width:0;">
+          <div class="band__t">The pattern is already in the repository, with its reasoning written down</div>
+          <p class="band__d" style="margin-top:2px;">
+            <code>Company.portalVisibility</code>, <code>portalAllowTicketCreation</code>,
+            <code>portalAllowReplies</code>, <code>portalBoardId</code>, <code>portalAccentColor</code>,
+            <code>portalLogoUrl</code> and <code>consoleEnabled</code> all carry the comment <i>"A null on any of
+            these means 'use the instance's own setting' — so a deployment configures the portal once and only the
+            clients that differ carry values of their own."</i> The email overrides are that sentence, applied to
+            mail.
+          </p>
+        </div>
+        <div class="band__right"><span class="chip chip--good">existing pattern</span></div>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-top:12px;">
+      <div class="card">
+        <h3 style="font-size:13px;">Creating one, and what it inherits</h3>
+        <p class="say" style="margin-top:6px;">
+          Proposed: a sheet on the client's own record, beside the portal branding it already has. The form is the
+          instance's value with a "use the instance's" state above it, so nothing is typed twice.
+        </p>
+        <div style="margin-top:12px; padding:14px; border-radius:10px; background:var(--surface-light); border:1px solid var(--surface-border);">
+          <div style="font-size:13px; font-weight:600; color:var(--text-primary);">Email overrides — Stark Enterprises</div>
+          <p class="say" style="margin-top:5px;">Only set what differs. Everything blank inherits the instance value.</p>
+          <div class="kv" style="margin-top:11px;"><span class="kv__k">Footer</span><span class="kv__v"><span class="chip chip--on">use the instance's</span></span></div>
+          <div class="kv"><span class="kv__k">From name</span><span class="kv__v"><span class="chip">C7NTAX for Stark Enterprises</span> <span class="mock-note">— the only field set</span></span></div>
+          <div class="kv"><span class="kv__k">Quiet hours</span><span class="kv__v"><span class="chip chip--on">use the instance's</span> <span class="mock-note">20:00 – 07:00</span></span></div>
+          <div class="kv"><span class="kv__k">Inherits</span><span class="kv__v">the shield, the wordmark, the crimson, the legal line, the batch window, the sender address</span></div>
+          <div style="display:flex; gap:8px; margin-top:14px;">
+            <button type="button" class="btn btn--primary">Save overrides</button>
+            <button type="button" class="btn btn--quiet">Revert to inherited</button>
+          </div>
+        </div>
+        <p class="say" style="margin-top:10px;">
+          <b>Reverting</b> is the same button for every field: clear the value, inherit again. There is no
+          "restore the instance's value" because no copy of it is kept on the client — which is what makes a revert
+          safe after the instance itself has changed.
+        </p>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:13px;">Who is overridden right now, and how the exception is shown</h3>
+        <table class="ptable" style="margin-top:10px;">
+          <thead><tr><th>Client</th><th>Brand override</th><th>From name</th><th>Quiet hours</th></tr></thead>
+          <tbody>
+            <tr><td>Acme Corporation</td><td><span class="chip chip--on">inherited</span></td><td>inherited</td><td>inherited</td></tr>
+            <tr><td>Globex Industries</td><td><span class="chip chip--on">inherited</span></td><td>inherited</td><td>inherited</td></tr>
+            <tr><td>Initech Solutions</td><td><span class="chip chip--on">inherited</span></td><td>inherited</td><td>inherited</td></tr>
+            <tr><td>Stark Enterprises</td><td><span class="chip chip--on">inherited</span></td><td><span class="chip chip--warn">set</span></td><td>inherited</td></tr>
+            <tr><td>Umbrella Corp</td><td><span class="chip chip--on">inherited</span></td><td>inherited</td><td>inherited</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="4">0 of 5 override the brand · 1 of 5 sets a from name (illustrative of the state the screen has to render — no client sets any email override today, because the fields do not exist yet)</td></tr></tfoot>
+        </table>
+        <div class="kv" style="margin-top:12px;">
+          <span class="kv__k">Where it is applied</span>
+          <span class="kv__v"><b>the renderer</b> — the API resolves instance → board → client → language
+            immediately before it renders, and the delivery log records the scope it used, so "which footer did
+            they actually get" is answerable a year later</span>
+        </div>
+        <div class="kv">
+          <span class="kv__k">Why not in the sender</span>
+          <span class="kv__v">because an override is about <i>content</i>, and the sender only sees the finished
+            message. A resolution that happens after rendering is a resolution nothing can act on</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       SCREEN SEVEN — THE DELIVERY LOG
+
+       The screen that makes the rest trustworthy. Everything here is proposed, and the honest note says
+       what exists instead: the composer writes a TicketComment after a send (and writes nothing when the
+       send fails), and ReportSchedule.lastSentAt is stamped by a route that sends no mail. Nothing
+       records an MFA code, a portal code, an invitation, a follow-up or a reminder.
+       ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" data-screen="log" id="log" hidden>
+    <div class="screen__label">Screen seven — The delivery log</div>
+    <div class="screen__head">
+      <h2>What was actually sent, to whom, with which wording, and what happened to it</h2>
+      <p>
+        Without this screen, "we changed the template" has no evidence and "the client never got it" has no
+        answer. The rows below are drawn from real records — real tickets, real clients, real addresses — against
+        the messages the matrix catalogues.
+      </p>
+    </div>
+
+    <div class="band band--warn" style="margin-top:12px;">
+      <svg class="ico ico--lg" style="color:var(--alert-amber)"><use href="#i-alert"/></svg>
+      <div style="flex:1 1 420px; min-width:0;">
+        <div class="band__t">There is no delivery log today — this is what would exist instead</div>
+        <p class="band__d" style="margin-top:2px;">
+          The closest thing is a <code>TicketComment</code> the composer writes <i>after</i> a send, and nothing
+          at all when the send fails — so the record of a message and the message itself can disagree. The MFA
+          code, the portal code, the invitation, the follow-up and the overdue reminder are not recorded
+          anywhere. <code>ReportSchedule.lastSentAt</code> exists and is stamped by
+          <code>POST /api/reports/schedules/:id/run</code>, a route that sends no mail: the one schedule on this
+          instance is <b>weekly, Monday 06:00, to <code>ops@example.com</code></b> and its
+          <code>lastSentAt</code> is <code>null</code>.
+        </p>
+      </div>
+    </div>
+
+    <div class="grid4" style="margin-top:12px;">
+      <div class="stat"><div class="stat__label">Delivered</div><div class="stat__n">5</div><div class="stat__foot">of the last 8</div></div>
+      <div class="stat stat--warn"><div class="stat__label">Failed or bounced</div><div class="stat__n">2</div><div class="stat__foot">both with a reason attached</div></div>
+      <div class="stat"><div class="stat__label">Skipped by a rule</div><div class="stat__n">1</div><div class="stat__foot">suppressed address — nothing sent at all</div></div>
+      <div class="stat stat--bad"><div class="stat__label">Addresses suppressed</div><div class="stat__n">1</div><div class="stat__foot">after two hard bounces, reversible by name</div></div>
+    </div>
+
+    <div class="card" style="padding:0; margin-top:12px; overflow:hidden;">
+      <div style="padding:14px 16px; border-bottom:1px solid var(--surface-border); display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <h3 style="font-size:13px; margin:0;">Last 8 sends</h3>
+        <span class="chip chip--on">all messages</span>
+        <span class="chip">delivered</span>
+        <span class="chip">failed</span>
+        <span class="chip">skipped</span>
+        <span class="say" style="margin-left:auto;">newest first</span>
+      </div>
+
+      <div class="logrow">
+        <div class="logrow__top">
+          <span class="logrow__who">James Wilson &lt;jwilson@acmecorp.com&gt;</span>
+          <span class="logrow__msg">ticket.activity</span>
+          <span class="chip chip--good">delivered</span>
+          <span class="logrow__when">09 Oct 2026, 16:41</span>
+        </div>
+        <div class="logrow__sub">Ticket INT-01-2006 · "Status updated" · template <code>ticketActivityTemplate</code> · from <code>noreply@cyber7group.com</code> · relay <code>localhost:587</code></div>
+      </div>
+
+      <div class="logrow">
+        <div class="logrow__top">
+          <span class="logrow__who">david@acmecorp.com</span>
+          <span class="logrow__msg">ticket.note</span>
+          <span class="chip chip--good">delivered</span>
+          <span class="logrow__when">09 Oct 2026, 16:12</span>
+        </div>
+        <div class="logrow__sub">Ticket MSP-01-2002 · to 1, <code>Cc</code> 2 · body typed in the composer · footer from <code>routes/tickets/index.ts:515</code> · 1 attachment</div>
+      </div>
+
+      <div class="logrow">
+        <div class="logrow__top">
+          <span class="logrow__who">gina.consumer@gmail.com</span>
+          <span class="logrow__msg">portal.login_code</span>
+          <span class="chip chip--good">delivered</span>
+          <span class="logrow__when">09 Oct 2026, 15:58</span>
+        </div>
+        <div class="logrow__sub">inline body · no unsubscribe · no reply-to · <b>not batched</b>, <b>not held by quiet hours</b> — exempt by message key</div>
+      </div>
+
+      <div class="logrow">
+        <div class="logrow__top">
+          <span class="logrow__who">alice@umbrellacorp.net</span>
+          <span class="logrow__msg">invoice.send</span>
+          <span class="chip chip--bad">failed</span>
+          <span class="logrow__when">09 Oct 2026, 11:20</span>
+          <span class="resend"><button type="button" class="btn btn--secondary">Resend</button></span>
+        </div>
+        <div class="logrow__sub">Invoice INV-2026-1014 · $3,518.13 · due 2026-10-26 · <code>invoiceTemplate</code></div>
+        <div class="logrow__reason">
+          <span><i>What happened</i> <code>sendInvoice</code> has no caller — the "sent" on this invoice is
+            <code>status: Sent</code> from <code>POST /api/billing/invoices/:id/send</code>, which mails nobody</span>
+          <span><i>Why</i> a delivery path was never wired to a sender that already existed</span>
+          <span><i>What to do</i> this row cannot be fixed by resending until the send sheet exists; it is the
+            reason the feature is being asked for</span>
+          <span><i>Evidence</i> invoice status <code>sent</code>, <code>paidAt: null</code>, no outbound record</span>
+        </div>
+      </div>
+
+      <div class="logrow">
+        <div class="logrow__top">
+          <span class="logrow__who">Tony Stark &lt;tony@starkent.com&gt;</span>
+          <span class="logrow__msg">ticket.activity</span>
+          <span class="chip chip--good">delivered</span>
+          <span class="logrow__when">09 Oct 2026, 10:03</span>
+        </div>
+        <div class="logrow__sub">Ticket NOC-05-2007 · digest of 5 events · template <code>ticketActivityTemplate</code> v1 · delivered as one message under the batch rule</div>
+      </div>
+
+      <div class="logrow">
+        <div class="logrow__top">
+          <span class="logrow__who">ops@example.com</span>
+          <span class="logrow__msg">report.scheduled</span>
+          <span class="chip chip--warn">skipped by a rule</span>
+          <span class="logrow__when">08 Oct 2026, 06:00</span>
+        </div>
+        <div class="logrow__sub">Monthly Ticket Volume · <code>ReportSchedule</code> weekly Monday 06:00 · PDF</div>
+        <div class="logrow__reason">
+          <span><i>What happened</i> nothing was sent; the schedule was due and no sender exists for it</span>
+          <span><i>Why</i> <code>isActive: true</code> and <code>lastSentAt: null</code> — the row is real, the sender is not</span>
+          <span><i>What to do</i> the send-and-import screen is where this is designed</span>
+          <span><i>Evidence</i> schedule <code>e7977d21</code> on report <b>Monthly Ticket Volume</b></span>
+        </div>
+      </div>
+
+      <div class="logrow">
+        <div class="logrow__top">
+          <span class="logrow__who">emily@globexind.com</span>
+          <span class="logrow__msg">invoice.overdue</span>
+          <span class="chip chip--bad">bounced</span>
+          <span class="logrow__when">07 Oct 2026, 06:05</span>
+          <span class="resend"><button type="button" class="btn btn--secondary">Resend</button></span>
+        </div>
+        <div class="logrow__sub">Invoice INV-2026-002 · $8,680.00 · due 2026-09-06 · <code>overdueTemplate</code></div>
+        <div class="logrow__reason">
+          <span><i>What happened</i> hard bounce, <code>550 5.1.1</code> — no such user</span>
+          <span><i>Why</i> bounce count 1 of 2; the address is <b>not</b> suppressed yet</span>
+          <span><i>What to do</i> one more hard bounce suppresses it and it is dropped from every future send</span>
+          <span><i>Evidence</i> relay response retained against the message, not against the address</span>
+        </div>
+      </div>
+
+      <div class="logrow">
+        <div class="logrow__top">
+          <span class="logrow__who">sarah.jones@c7ntax.com</span>
+          <span class="logrow__msg">auth.mfa_code</span>
+          <span class="chip chip--good">delivered</span>
+          <span class="logrow__when">06 Oct 2026, 22:14</span>
+        </div>
+        <div class="logrow__sub">template <code>mfaTemplate</code> · <b>plain by rule</b> — no brand header, no footer, no unsubscribe, no reply-to · sent at 22:14, inside quiet hours, because a code is exempt</div>
+      </div>
+
+      <div class="listfoot" style="padding:12px 16px;">
+        <span>Showing 8 of the last 8 · retention proposed at 90 days, longer for anything that bounced</span>
+        <span class="note">Row 1 of the list is a log the product does not keep yet — every row here is proposed</span>
+      </div>
+    </div>
+
+    <div class="grid2" style="margin-top:12px;">
+      <div class="card">
+        <h3 style="font-size:13px;">The four lines behind anything that did not go</h3>
+        <p class="say" style="margin-top:6px;">
+          A bounce code on its own is not an explanation, and "failed" on its own is not a fact a person can act
+          on. Every non-delivery carries the same four lines, in the same order, whether the cause is a
+          suppression, a relay refusal or a missing sender.
+        </p>
+        <div class="kv" style="margin-top:11px;"><span class="kv__k">What happened</span><span class="kv__v">the mechanism, not the symptom — <code>550 5.1.1</code>, "skipped: address suppressed", "no sender wired"</span></div>
+        <div class="kv"><span class="kv__k">Why</span><span class="kv__v">the rule or the cause — bounce 1 of 2, opt-out set on this date, exemption not applicable</span></div>
+        <div class="kv"><span class="kv__k">What to do</span><span class="kv__v">the next action, and whether Resend is capable of it</span></div>
+        <div class="kv"><span class="kv__k">Evidence</span><span class="kv__v">the record the screen is reading, so the four lines can be checked</span></div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:13px;">Resend — and the one thing it must not pretend</h3>
+        <div class="kv" style="margin-top:10px;">
+          <span class="kv__k">What Resend does</span>
+          <span class="kv__v">re-renders the message <b>as it was</b> — the version recorded on the row, not the
+            current template — and sends it again to the same recipient, recording a second row rather than
+            overwriting the first</span>
+        </div>
+        <div class="kv">
+          <span class="kv__k">What it refuses</span>
+          <span class="kv__v">a suppressed address, and a row whose failure was "no sender wired". A button that
+            says Resend and cannot resend is worse than a disabled one.</span>
+        </div>
+        <div class="kv">
+          <span class="kv__k">Template version</span>
+          <span class="kv__v"><b>proposed</b>: the template's own revision, stamped on the row at send. Today
+            there is no such thing — the wording is a string literal in <code>EmailService.ts</code>, so the only
+            honest version is the build's. The column exists so that when the editor lands, "which wording went
+            out on Tuesday" already has an answer.</span>
+        </div>
+        <div class="kv">
+          <span class="kv__k">Where it is applied</span>
+          <span class="kv__v"><b>the sender</b> re-renders and re-sends; <b>the API</b> owns the row and the
+            reason. Neither is in the interface, so a resend is the same act whether it came from this screen or
+            from a retry.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       THE PROPOSED CONFIGURATION SECTION — written in the registry's own shape.
+
+       `packages/shared/src/appConfiguration.ts` declares every section with `id`, `label`, `summary`,
+       `icon`, `readPermission`, `writePermission`, `governs` and a field list of
+       `id/label/summary/detail/type/source/env/default/affects`. A new one has to be proposed in the same
+       shape or it is not a proposal, it is a wish. The reason it is NOT folded into `integrations`
+       ("C7NC & Email") is written beside it: that section holds the INBOUND connectors and the relay
+       switch, read by whoever runs integrations; the brand, the identity, the rules and the log are
+       outbound, and are read by whoever answers "what did we send this client".
+       ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" id="config-shape">
+    <div class="screen__label">The proposal, in the registry's own shape</div>
+    <div class="card" style="margin-top:12px;">
+      <div class="grid2">
+        <div>
+          <h3 style="font-size:13px;">A ninth section — <code>email</code>, "Email &amp; Delivery"</h3>
+          <p class="say" style="margin-top:8px;">
+            Proposed exactly as the registry declares one. The eight sections are Workspace, Sessions &amp;
+            Security, Customer Portal, Service Alerts &amp; Monitoring, Knowledge Base &amp; AI, C7NC &amp; Email,
+            Billing &amp; Invoicing, and Client Apps &amp; Notifications; this would be the ninth, and each field
+            below is written the way a field is written there — <code>id</code>, <code>label</code>,
+            <code>summary</code>, <code>detail</code>, <code>type</code>, <code>source</code>, <code>env</code>,
+            <code>default</code>, <code>affects</code>.
+          </p>
+          <div class="dns" style="margin-top:12px;">
+{<br>
+&nbsp;&nbsp;id: <b>"email"</b>,<br>
+&nbsp;&nbsp;label: <b>"Email &amp; Delivery"</b>,<br>
+&nbsp;&nbsp;summary: "The brand every message inherits, the addresses it leaves from, and the rules that decide when and to whom it goes.",<br>
+&nbsp;&nbsp;icon: <b>"Mail"</b>,<br>
+&nbsp;&nbsp;readPermission: Permission.IntegrationManage,<br>
+&nbsp;&nbsp;writePermission: Permission.IntegrationManage,<br>
+&nbsp;&nbsp;governs: "What an email from this deployment looks like, where it comes from, and when it is allowed to send."<br>
+}
+          </div>
+          <p class="say" style="margin-top:10px;">
+            <b>Why not inside <code>integrations</code>.</b> "C7NC &amp; Email" declares eight fields — the live
+            status check, the verification throttle, <code>emailConnectors</code>,
+            <code>emailCloudConnectors</code>, <code>graphApi</code>, <code>maxAttachmentBytes</code>, M365
+            offboarding and <code>egressAllowPrivate</code> — and every one of them is about a connection being
+            made <i>to</i> this deployment. Nothing there describes a message going out. Folding the two together
+            would put "which logo does the invoice email wear" in a section about connector health.
+          </p>
+        </div>
+        <div>
+          <h3 style="font-size:13px;">Its fields — the proposed set, in the same order</h3>
+          <table class="ptable" style="margin-top:10px;">
+            <thead><tr><th>Field</th><th>Type</th><th>Proposed default</th></tr></thead>
+            <tbody>
+              <tr><td><code>fromName</code><br><span class="mock-note">From name on outbound mail</span></td><td>text</td><td><code>C7NTAX</code></td></tr>
+              <tr><td><code>fromAddress</code><br><span class="mock-note">From address; must be one the relay accepts</span></td><td>text</td><td><code>noreply@cyber7group.com</code> <span class="mock-note">— the instance's own <code>SMTP_FROM</code></span></td></tr>
+              <tr><td><code>replyTo</code><br><span class="mock-note">Where a reply to a ticket message lands</span></td><td>text</td><td>the connector's mailbox; empty means "send no Reply-To"</td></tr>
+              <tr><td><code>logoLight</code> · <code>logoDark</code></td><td>url</td><td><code>/icon-192.png</code> — the same file the PDFs use</td></tr>
+              <tr><td><code>wordmarkFallback</code><br><span class="mock-note">The words shown when a client blocks images</span></td><td>text</td><td><code>C7NTAX</code></td></tr>
+              <tr><td><code>legalLine</code></td><td>text</td><td><code>Cyber 7 Group, LLC</code></td></tr>
+              <tr><td><code>batchWindowMinutes</code></td><td>number</td><td><code>15</code> <span class="mock-note">min 0, max 60</span></td></tr>
+              <tr><td><code>batchThreshold</code></td><td>number</td><td><code>3</code> <span class="mock-note">min 2</span></td></tr>
+              <tr><td><code>batchCeilingMinutes</code></td><td>number</td><td><code>30</code> <span class="mock-note">the hard ceiling</span></td></tr>
+              <tr><td><code>quietHoursEnabled</code></td><td>boolean</td><td><code>true</code></td></tr>
+              <tr><td><code>quietHoursStart</code> · <code>quietHoursEnd</code></td><td>clock time</td><td><code>20:00</code> · <code>07:00</code></td></tr>
+              <tr><td><code>digestEnabled</code></td><td>boolean</td><td><code>true</code></td></tr>
+              <tr><td><code>unsubscribeEnabled</code></td><td>boolean</td><td><code>true</code> <span class="mock-note">— applies to <code>report.scheduled</code> only</span></td></tr>
+              <tr><td><code>bounceThreshold</code></td><td>number</td><td><code>2</code> <span class="mock-note">hard bounces before suppression</span></td></tr>
+              <tr><td><code>deliveryLogRetentionDays</code></td><td>number</td><td><code>90</code></td></tr>
+            </tbody>
+          </table>
+          <p class="say" style="margin-top:10px;">
+            Permissions mirror <code>integrations</code> deliberately: whoever may change the relay and the
+            connectors is who may change the address the mail leaves from. The connector read routes already use
+            the read-only <code>Permission.IntegrationView</code>, so the same split applies for free.
+          </p>
+        </div>
+      </div>
+      <div class="band" style="margin-top:12px;">
+        <svg class="ico ico--lg" style="color:var(--cyber-300)"><use href="#i-shield"/></svg>
+        <div style="flex:1 1 380px; min-width:0;">
+          <div class="band__t">The registry's own rules apply to this section like any other</div>
+          <p class="band__d" style="margin-top:2px;">
+            A field marked <code>source: "environment"</code> cannot be changed from the screen
+            (<i>"is set by the deployment and cannot be changed here"</i>) and a locked field says
+            <i>"is required by the product and cannot be changed"</i> — so a value still supplied by
+            <code>SMTP_FROM</code> would report where it came from rather than quietly losing an
+            argument with the environment.
+          </p>
+        </div>
+        <div class="band__right"><span class="chip chip--on">proposed, not built</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
+       THE CLASSIC ARRANGEMENT — required, because this repository keeps two designs of every screen
+       and they are two designs rather than one screen with a class toggled. The modern screen above is
+       what `useRedesign()` returns; this panel is what the same screen is when it returns false, and
+       it is a form.
+       ══════════════════════════════════════════════════════════════════════════════════════════ -->
+  <section class="screen" id="classic">
+    <div class="screen__label">In the classic interface</div>
+    <div class="card" style="margin-top:12px;">
+      <div class="grid2">
+        <div>
+          <h3 style="font-size:13px;">Administration → Configuration → Email &amp; Delivery, as a form of five pages</h3>
+          <p class="say" style="margin-top:8px;">
+            One component, one set of handlers, two returns. The state, the API calls and the words are shared;
+            the arrangement is not. In the classic interface each screen above is a page under
+            <b>Administration → Configuration</b>, built the way every other classic screen is built: labelled
+            fields in a grid, a table where the modern screen has cards, and a dialog with Save and Cancel for
+            anything that writes.
+          </p>
+          <div class="kv" style="margin-top:11px;"><span class="kv__k">Brand kit</span><span class="kv__v">a form of labelled fields in a grid — Logo (light), Logo (dark), Wordmark fallback, Legal line, Address line, Unsubscribe — each a row: label left, input right, the current value shown as a read-only field where it comes from the environment.</span></div>
+          <div class="kv"><span class="kv__k">Sending identity</span><span class="kv__v">five labelled fields and one read-only block: From name, From address, Reply-To, a <i>Relay</i> panel with the six values <code>GET /api/system/deployment</code> returns, and a <i>Domains</i> table of pasted records with a Save. No status track — the classic screen prints the six relay values and puts the honest sentence under them.</span></div>
+          <div class="kv"><span class="kv__k">Trigger matrix</span><span class="kv__v"><b>a table with a Save.</b> Six labelled columns — Message, Fires when, Receives, Customer sees, Can be turned off, Template — sortable and paged, with the locked rows shown as disabled checkboxes in the "Can be turned off" column rather than as highlighted rows.</span></div>
+          <div class="kv"><span class="kv__k">Quiet hours &amp; batching</span><span class="kv__v">a labelled grid of six numbers and two clock fields, with the exempt messages as a read-only list beneath and no track.</span></div>
+          <div class="kv"><span class="kv__k">Recipients · Overrides · Log</span><span class="kv__v">three more tables. The overrides page is a client-major table whose per-client cell opens the client record; the log is the same table, paged, with a Resend button per row that opens its four lines in a dialog.</span></div>
+        </div>
+        <div>
+          <h3 style="font-size:13px;">The brand kit as a dialog, with a heading and Save/Cancel</h3>
+          <div style="margin-top:10px; padding:14px; border-radius:10px; background:var(--surface-light); border:1px solid var(--surface-border);">
+            <div style="font-size:13px; font-weight:600; color:var(--text-primary);">Edit the brand kit</div>
+            <p class="say" style="margin-top:5px;">Applies to every message the deployment sends and to every document it prints.</p>
+            <div class="kv" style="margin-top:11px;"><span class="kv__k">Logo (light)</span><span class="kv__v"><code>input type="text"</code> — <code>/icon-192.png</code></span></div>
+            <div class="kv"><span class="kv__k">Logo (dark)</span><span class="kv__v"><code>input type="text"</code> — <code>/icon-192.png</code></span></div>
+            <div class="kv"><span class="kv__k">Wordmark fallback</span><span class="kv__v"><code>input type="text"</code> — <code>C7NTAX</code>, with the help text "shown when a mail client blocks images"</span></div>
+            <div class="kv"><span class="kv__k">Brand crimson</span><span class="kv__v">a colour field, <code>#c00000</code> <span class="mock-note">(shared with the PDFs)</span></span></div>
+            <div class="kv"><span class="kv__k">Legal line</span><span class="kv__v"><code>input type="text"</code> — <code>Cyber 7 Group, LLC</code></span></div>
+            <div class="kv"><span class="kv__k">Unsubscribe</span><span class="kv__v">a <code>select</code>: <b>On for report emails only</b> / Off — a select where the modern screen has a sentence</span></div>
+            <div class="kv"><span class="kv__k">Applies to</span><span class="kv__v">a read-only field: <code>14 messages · 5 locked</code></span></div>
+            <div style="display:flex; gap:8px; margin-top:14px;">
+              <button type="button" class="btn btn--primary">Save</button>
+              <button type="button" class="btn btn--quiet">Cancel</button>
+            </div>
+          </div>
+          <p class="say" style="margin-top:10px;">
+            <b>What differs on purpose, and what the Help walkthrough therefore has to say.</b> The classic matrix
+            keeps all six columns visible as a sortable table and disables the checkbox rather than colouring the
+            row; the modern one filters by group and marks the locked rows with a lock chip. The classic brand kit
+            shows the values as form fields in a grid; the modern one shows the kit applied to a real message in
+            the same screen, because "the footer looks like this" is easier to check than to imagine. The classic
+            log opens the four lines in a dialog per row; the modern one draws them inline. The state, the calls
+            and the sentences are the same in both.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mock-note" style="margin-top:34px; padding-top:16px; border-top:1px solid var(--surface-border); max-width:140ch;">
+    Drawn from the modern interface only (<code>useRedesign()</code>). 7 screens · 14 messages — 8 live, 2 written
+    and never sent, 4 proposed · 7 template functions in <code>EmailService.ts</code>, every one a string literal ·
+    1 from address (<code>SMTP_FROM</code> = <code>C7NTAX &lt;noreply@cyber7group.com&gt;</code>), 0 reply-to headers ·
+    8 configuration sections, the proposed ninth written in the registry's own shape · 5 clients, 0 overriding the
+    brand, 4 boards with 1 exception (NOC Alerts, <code>notifyCustomerOnClose</code> off) · 17 users, 6 roles,
+    104 tickets · 2 reports with 1 schedule (weekly Monday 06:00 → <code>ops@example.com</code>,
+    <code>lastSentAt: null</code>) · 2 email connectors, both IMAP and both switched off · 2 locales, 1 translation ·
+    relay <code>localhost:587</code>, no credentials. Figures read from the repository and the running instance on
+    9 October 2026. Reverting: delete this file.
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    function setTheme(mode) {
+      root.setAttribute("data-theme", mode);
+      document.querySelectorAll("[data-theme-btn]").forEach(function (b) {
+        b.setAttribute("aria-pressed", String(b.getAttribute("data-theme-btn") === mode));
+      });
+    }
+    document.querySelectorAll("[data-theme-btn]").forEach(function (b) {
+      b.addEventListener("click", function () { setTheme(b.getAttribute("data-theme-btn")); });
+    });
+
+    var screens = document.querySelectorAll(".screen[data-screen]");
+    function showScreen(id) {
+      screens.forEach(function (s) { s.hidden = s.getAttribute("data-screen") !== id; });
+      document.querySelectorAll("[data-screen-btn]").forEach(function (b) {
+        var on = b.getAttribute("data-screen-btn") === id;
+        b.classList.toggle("pick__opt--on", on);
+        b.setAttribute("aria-pressed", String(on));
+      });
+      window.scrollTo({ top: 0 });
+    }
+    document.querySelectorAll("[data-screen-btn]").forEach(function (b) {
+      b.addEventListener("click", function () { showScreen(b.getAttribute("data-screen-btn")); });
+    });
+
+    document.querySelectorAll(".why").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var body = document.getElementById(b.getAttribute("aria-controls"));
+        var open = b.getAttribute("aria-expanded") === "true";
+        b.setAttribute("aria-expanded", String(!open));
+        if (body) body.hidden = open;
+      });
+    });
+
+    // Matrix filter
+    document.querySelectorAll("[data-mtx-group]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var group = b.getAttribute("data-mtx-group");
+        document.querySelectorAll("[data-mtx-group]").forEach(function (o) {
+          o.classList.toggle("rail__item--on", o === b);
+        });
+        var shown = 0;
+        document.querySelectorAll("tr[data-mtx]").forEach(function (r) {
+          var on = group === "all" || r.getAttribute("data-mtx") === group;
+          r.hidden = !on;
+          if (on) shown++;
+        });
+        var count = document.getElementById("mtx-count");
+        if (count) count.textContent = String(shown);
+      });
+    });
+
+    // Brand kit asset filter
+    document.querySelectorAll("[data-kit-group]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var group = b.getAttribute("data-kit-group");
+        document.querySelectorAll("[data-kit-group]").forEach(function (o) {
+          o.classList.toggle("rail__item--on", o === b);
+        });
+        document.querySelectorAll("[data-kit-group-block]").forEach(function (block) {
+          var g = block.getAttribute("data-kit-group-block");
+          block.hidden = !(group === "all" || g === group);
+        });
+      });
+    });
+  })();
+</script>
+</body>
+</html>

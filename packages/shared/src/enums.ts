@@ -268,6 +268,34 @@ export enum Permission {
   ConsoleUse = "console:use",
 
   /**
+   * The Email Studio — seeing and controlling what this instance sends.
+   *
+   * `email:view` opens the Studio (the message list, the editor, the preview, the delivery log);
+   * `email:manage` may change a template, the brand kit or the delivery rules. Separate for the same
+   * reason `report:view` and `report:create` are: reading what a customer will receive is a different
+   * decision from deciding it, and the person who checks the wording of an invoice is often not the
+   * person who owns it.
+   */
+  EmailView = "email:view",
+  EmailManage = "email:manage",
+
+  /**
+   * Branding — whose paper this is.
+   *
+   * `branding:view` opens the settings and their previews; `branding:manage` changes the logo, the
+   * icon, the colours, the letterhead and what a printed page wears. Separate for the reason the other
+   * pairs are: knowing what the company's letterhead looks like is not the same decision as owning it,
+   * and the logo on a document a client keeps is worth a deliberate grant rather than an inherited one.
+   *
+   * Deliberately **not** a Developer capability. An instance is expected to be branded before it goes
+   * live, so an ordinary administrator who cannot set the company's own logo would be unable to do the
+   * setup the product assumes — withholding this from Admin would break the common case to guard
+   * nothing.
+   */
+  BrandingView = "branding:view",
+  BrandingManage = "branding:manage",
+
+  /**
    * The Developer section — the surface for changes that are not normally available, including the
    * purge that empties the instance of its data.
    *
@@ -412,6 +440,21 @@ export const PERMISSION_CATEGORIES: { key: string; label: string; permissions: P
     key: "developer", label: "Developer",
     permissions: [Permission.DeveloperView, Permission.DeveloperPurge],
   },
+  {
+    /*
+     * Its own category because the Studio is a surface in its own right — the words on every message
+     * this system sends, including the ones a customer reads — rather than a line under
+     * Administration's settings.
+     */
+    key: "email", label: "Email",
+    permissions: [Permission.EmailView, Permission.EmailManage],
+  },
+  /*
+   * Its own category because it is neither an email setting nor a report setting: it is the identity
+   * every document and every message inherits — the logo, the letterhead, the colours and the footer —
+   * and the pages that own it sit in the Branding section rather than under either.
+   */
+  { key: "branding", label: "Branding", permissions: [Permission.BrandingView, Permission.BrandingManage] },
 ];
 
 /**
@@ -471,6 +514,9 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
     Permission.UserManage,
     // Staff get the console; see the note on `ConsoleUse` for why it is a capability and not a widening.
     Permission.ConsoleUse,
+    // A manager runs the desk and answers for what customers received, so they may read the Studio and
+    // the delivery log. Changing the words is `email:manage`, which they do not hold.
+    Permission.EmailView,
   ],
   [SystemRole.Technician]: [
     // Deliberately no TicketViewAll: internal technicians already see every ticket
@@ -517,6 +563,9 @@ export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
     Permission.ProcurementView,
     // Billing reads the catalog to price and invoice; it does not maintain it.
     Permission.ProductView,
+    // Billing owns the invoice notices, so it may read what the Studio will send — and see the
+    // delivery log when a customer says the invoice never arrived. Wording stays with EmailManage.
+    Permission.EmailView,
   ],
   [SystemRole.ClientAdmin]: [
     // A client-facing role: no internal chat and no internal HR surfaces. Everything

@@ -6,23 +6,34 @@
  * engine put it, so a change in the engine cannot leave one of those surfaces behind.
  *
  * Coordinates are millimetres and are converted to pixels with `zoom`, which is what makes the page on
- * screen a scaled copy of the page in the PDF rather than a re-interpretation of it.
+ * screen a scaled copy of the page in the PDF rather than a re-interpretation of it. **The layout's
+ * millimetres are the content box's, not the paper's**, so the page's own margins are added here —
+ * once, for the tint overlay, the elements and the print window alike — and a designed report sits
+ * inside its margins on screen exactly as it does in the file.
+ *
+ * Colours are the layout's, which the engine has already resolved to the document's palette and accent
+ * (`inkStyle` in `reportLayout.ts`), so a page drawn from the dark theme is still dark ink on white
+ * paper. Only the two palette values this file needs of its own are the ones the engine cannot put on
+ * an element.
  */
 import type { CSSProperties } from "react";
-import { mmToPx, type LaidOutElement, type LaidOutPage, type LaidOutReport } from "@C7NTAX/shared";
-import { BAND_BACKGROUNDS } from "../../../lib/reportOutput";
+import {
+  DOCUMENT_PALETTE, mmToPx,
+  type LaidOutElement, type LaidOutPage, type LaidOutReport, type PageMargins,
+} from "@C7NTAX/shared";
+import { BAND_BACKGROUNDS, TABULAR_FORMATS } from "../../../lib/reportOutput";
 import { chartSvg } from "../../../lib/reportChartSvg";
 import { FONT_STACKS } from "../../../lib/reportMeasure";
 
 const isTransparent = (colour: string | null | undefined): boolean =>
   !colour || colour === "transparent" || colour === "none";
 
-/** A placed element's box in pixels at the current zoom. */
-export function placedStyle(element: LaidOutElement, zoom: number): CSSProperties {
+/** A placed element's box in pixels at the current zoom, measured from the paper's top-left corner. */
+export function placedStyle(element: LaidOutElement, zoom: number, margins: PageMargins): CSSProperties {
   return {
     position: "absolute",
-    left: mmToPx(element.x) * zoom,
-    top: mmToPx(element.y) * zoom,
+    left: mmToPx(margins.left + element.x) * zoom,
+    top: mmToPx(margins.top + element.y) * zoom,
     width: mmToPx(element.w) * zoom,
     height: mmToPx(element.h) * zoom,
   };
@@ -30,11 +41,14 @@ export function placedStyle(element: LaidOutElement, zoom: number): CSSPropertie
 
 function textStyle(element: LaidOutElement): CSSProperties {
   const style = element.payload.style;
+  const format = element.payload.kind === "text" ? element.payload.format : undefined;
+  const figures = !!format && TABULAR_FORMATS.includes(format);
   return {
     fontFamily: FONT_STACKS[style.fontFamily].css,
     fontSize: `${style.fontSize * (96 / 72)}px`,
     fontWeight: style.bold ? 700 : 400,
     fontStyle: style.italic ? "italic" : "normal",
+    fontVariantNumeric: figures ? "tabular-nums" : "normal",
     textDecoration: style.underline ? "underline" : "none",
     color: style.color,
     lineHeight: 1.2,
@@ -42,7 +56,7 @@ function textStyle(element: LaidOutElement): CSSProperties {
 }
 
 /** One placed element. */
-export function PlacedElement({ element, zoom }: { element: LaidOutElement; zoom: number }) {
+export function PlacedElement({ element, zoom, margins }: { element: LaidOutElement; zoom: number; margins: PageMargins }) {
   const style = element.payload.style;
   const border = style.border && !isTransparent(style.border.color)
     ? `${Math.max(0.6, mmToPx(style.border.width) * zoom)}px solid ${style.border.color}`
@@ -52,24 +66,24 @@ export function PlacedElement({ element, zoom }: { element: LaidOutElement; zoom
   if (element.payload.kind === "line") {
     const thickness = Math.max(0.5, mmToPx(style.border?.width ?? 0.3) * zoom);
     return (
-      <div style={{ position: "absolute", left: mmToPx(element.x) * zoom, top: mmToPx(element.y) * zoom, width: mmToPx(element.w) * zoom, height: thickness }}>
-        <div style={{ height: thickness, background: style.border?.color ?? "#94a3b8" }} />
+      <div style={{ ...placedStyle(element, zoom, margins), height: thickness }}>
+        <div style={{ height: thickness, background: style.border?.color ?? DOCUMENT_PALETTE.rule }} />
       </div>
     );
   }
 
   if (element.payload.kind === "box") {
-    return <div style={{ ...placedStyle(element, zoom), border, background }} />;
+    return <div style={{ ...placedStyle(element, zoom, margins), border, background }} />;
   }
 
   // A chart is drawn by the same function the print window uses, so the two cannot disagree — the
   // markup is a millimetre box that the `zoom` scales, not a second implementation of the geometry.
   if (element.payload.kind === "chart") {
-    return <div style={{ ...placedStyle(element, zoom) }} dangerouslySetInnerHTML={{ __html: chartSvg(element.payload.chart, { zoom, origin: "box" }) }} />;
+    return <div style={{ ...placedStyle(element, zoom, margins) }} dangerouslySetInnerHTML={{ __html: chartSvg(element.payload.chart, { zoom, origin: "box" }) }} />;
   }
 
   return (
-    <div style={{ ...placedStyle(element, zoom), border, background, overflow: "hidden" }}>
+    <div style={{ ...placedStyle(element, zoom, margins), border, background, overflow: "hidden" }}>
       {element.payload.kind === "image" && element.payload.src ? (
         <img src={element.payload.src} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
       ) : null}
@@ -93,39 +107,51 @@ export function PlacedElement({ element, zoom }: { element: LaidOutElement; zoom
   );
 }
 
-/** One page of the report, at its designed size, with the band tints the designer overlays. */
+/**
+ * One page of the report, at its designed size, with the band tints the designer overlays.
+ *
+ * The page number sits *below* the sheet rather than on it: the sheet is the document, and the number
+ * a reader gets on paper comes from the layout's own page footer. This is the screen's own furniture,
+ * which is why it is outside the paper and in the interface's grey rather than the document's.
+ */
 export function LaidOutPageView({ page, laid, zoom, showBandTint }: {
   page: LaidOutPage;
   laid: LaidOutReport;
   zoom: number;
   showBandTint?: boolean;
 }) {
+  const margins = laid.page.margins;
   return (
-    <div
-      className="relative bg-white shadow-lg mx-auto"
-      style={{ width: mmToPx(laid.page.width) * zoom, height: mmToPx(laid.page.height) * zoom }}
-      data-page={page.number}
-    >
-      {showBandTint
-        ? page.bands.map((band, index) => (
-            <div
-              key={`${band.bandId}-${index}`}
-              className="absolute left-0 w-full"
-              style={{
-                top: mmToPx(band.y) * zoom,
-                height: mmToPx(band.height) * zoom,
-                background: BAND_BACKGROUNDS[band.kind] ?? "#ffffff",
-                opacity: 0.55,
-              }}
-            />
-          ))
-        : null}
-      {page.bands.flatMap((band, bandIndex) =>
-        band.elements.map(element => <PlacedElement key={`${bandIndex}-${element.id}`} element={element} zoom={zoom} />),
-      )}
-      <span className="absolute text-[9px] text-gray-400" style={{ right: 4, bottom: 2 }}>
-        Page {page.number} of {laid.pages.length}
-      </span>
+    <div className="mx-auto" style={{ width: mmToPx(laid.page.width) * zoom }} data-page={page.number}>
+      <div
+        className="relative shadow-lg"
+        // The paper is the document's own white, not the theme's `bg-white`: a screen surface token in a
+        // dark theme is a soft grey, and a report whose paper is grey on screen is not the page it prints.
+        style={{ background: DOCUMENT_PALETTE.paper, width: mmToPx(laid.page.width) * zoom, height: mmToPx(laid.page.height) * zoom }}
+      >
+        {showBandTint
+          ? page.bands.map((band, index) => (
+              <div
+                key={`${band.bandId}-${index}`}
+                className="absolute"
+                style={{
+                  left: mmToPx(margins.left) * zoom,
+                  width: mmToPx(laid.content.width) * zoom,
+                  top: mmToPx(margins.top + band.y) * zoom,
+                  height: mmToPx(band.height) * zoom,
+                  background: BAND_BACKGROUNDS[band.kind] ?? DOCUMENT_PALETTE.paper,
+                  opacity: 0.55,
+                }}
+              />
+            ))
+          : null}
+        {page.bands.flatMap((band, bandIndex) =>
+          band.elements.map(element => (
+            <PlacedElement key={`${bandIndex}-${element.id}`} element={element} zoom={zoom} margins={margins} />
+          )),
+        )}
+      </div>
+      <div className="pt-1 text-[9px] text-gray-400">Page {page.number} of {laid.pages.length}</div>
     </div>
   );
 }
