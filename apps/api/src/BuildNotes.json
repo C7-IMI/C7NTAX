@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.10.8.063",
+    "date": "2026-10-08",
+    "title": "Configurations, by its own name",
+    "changes": [
+      {
+        "text": "**The context column's third card is *Configurations* again**, with *Open Configurations*",
+        "type": "Fix"
+      },
+      {
+        "text": "**Help's *The ticket screens* section** uses the same word, so the walkthrough and the",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.062",
     "date": "2026-10-08",
     "title": "The composer logs time, the context pane is a preference, and the working set",

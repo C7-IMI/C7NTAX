@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.062 | Last Updated: 2026-10-08
+## Version: 2026.10.8.063 | Last Updated: 2026-10-08
 
 ---
 
@@ -13,6 +13,18 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.8.063 — Configurations, by its own name
+
+"Estate" was the mockup's word for the client's configuration records, and it is not a word this
+product uses anywhere else. A rail that renames a thing the rest of the application calls
+Configurations is a rail that makes the reader work out whether they are the same thing — so the
+context column calls it **Configurations**, like the tab, the Kumo pages and the client record do.
+
+- **[Fix]** **The context column's third card is *Configurations* again**, with *Open Configurations*
+  as its action, and the description says what it holds rather than what it used to be called.
+- **[Update]** **Help's *The ticket screens* section** uses the same word, so the walkthrough and the
+  screen cannot disagree about the name of a feature.
 
 ## 2026.10.8.062 — The composer logs time, the context pane is a preference, and the working set
 

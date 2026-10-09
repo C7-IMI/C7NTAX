@@ -2678,11 +2678,9 @@ export function TicketDetailPage() {
             </div>
 
             <div className="card space-y-3">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
-                <Server size={12} /> Estate <span className="text-[10px] font-normal normal-case tracking-normal text-gray-600">was "Configurations"</span>
-              </h3>
-              <p className="text-xs text-gray-500 leading-relaxed">What this client runs — servers, workstations and network gear, from the configuration records.</p>
-              <button onClick={() => setActiveTab("configurations")} className="btn-secondary text-xs w-full justify-center flex items-center gap-1.5"><Wrench size={12} /> Open the estate</button>
+              <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-500"><Server size={12} /> Configurations</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">What this client runs — servers, workstations and network gear.</p>
+              <button onClick={() => setActiveTab("configurations")} className="btn-secondary text-xs w-full justify-center flex items-center gap-1.5"><Wrench size={12} /> Open Configurations</button>
             </div>
           </>) : (<>
           <div className="card space-y-3">

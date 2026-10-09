@@ -6923,3 +6923,30 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **"Selective elements" is a design failure, not a shortcut.** A record with three of the mockup's
   eight elements does not read as a partial redesign; it reads as the old page with new furniture,
   which is exactly how it was described to me.
+
+---
+
+### Prompt 310 — Call it Configurations
+
+**Timestamp:** 2026-10-08 22:25 | **Status:** Complete | **Duration:** ~10 min
+
+**BuildNotes IDs:** **2026.10.8.063**.
+
+**Prompt**
+
+> WHen you're done rename Estate back to configurations. Estate is confusinig
+
+**What I did**
+- **Renamed the context column's third card to Configurations**, with *Open Configurations* as its
+  action, and rewrote its description to say what it holds rather than what it replaced. "Estate" came
+  from the mockup and appears nowhere else in the product; a rail that renames a thing the rest of the
+  application calls Configurations makes the reader work out whether they are the same thing. The
+  mockup's *"was Configurations"* note went with it — it only made sense while the rename stood.
+- **Updated Help's *The ticket screens* section** to use the same word, and took the opportunity to
+  describe the composer as it now is: the three tabs, the internal-or-emailed choice beside them, and
+  Work type / Role / Hours / Billable on the composer itself.
+
+**Notes for next time**
+- **A mockup's vocabulary is a draft, not a decision.** "Estate" was my attempt at a better name and
+  it cost the user a moment of confusion every time they opened a ticket. When a design renames an
+  established concept, the burden of proof is on the rename.
