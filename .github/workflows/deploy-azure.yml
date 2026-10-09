@@ -194,11 +194,17 @@ jobs:
 
           # Create the first time, move the image afterwards: `job create` on a job that already
           # exists fails, which is what a second push to main would hit.
+          #
+          # The update passes **only** `--image`. Identity and the registry pull identity are not
+          # update arguments at all — `az containerapp job update` takes neither `--mi-user-assigned`
+          # nor `--registry-identity` (checked against the Azure CLI reference) — and they do not need
+          # re-stating: both were set at creation and persist. Passing them made every push after the
+          # first fail here with `unrecognized arguments`, before the deploy stage, which is the same
+          # outcome §3 fixed, moved from the first push to the second.
           if az containerapp job show --name "$JOB" --resource-group "$RG" --query "name" -o tsv >/dev/null 2>&1; then
             az containerapp job update \
               --name "$JOB" --resource-group "$RG" \
               --image "$IMAGE" \
-              --mi-user-assigned "$ID" --registry-identity "$ID" \
               --only-show-errors
           else
             az containerapp job create \
@@ -268,12 +274,16 @@ jobs:
           RG="rg-c7ntax-${ENVIRONMENT}"
           APP="c7ntax-${ENVIRONMENT}"
           FQDN=$(az containerapp revision show --name "$APP" --resource-group "$RG" --revision "${ENVIRONMENT}-${{ needs.build.outputs.tag }}" --query "properties.fqdn" -o tsv)
+          # /api/ready, not /api/health: this gate decides whether a revision takes 100% of traffic, and
+          # "Node is listening" is not the same as "this revision can serve" — a wrong DATABASE_URL or a
+          # failed migration passes the shallow check. deep=1 is safe here: migrations have already run
+          # in this workflow, unlike the readiness probe, which is left shallow for the first run.
           for i in $(seq 1 12); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" "https://$FQDN/api/health" || true)
+            code=$(curl -s -o /dev/null -w "%{http_code}" "https://$FQDN/api/ready?deep=1" || true)
             [ "$code" = "200" ] && exit 0
             sleep 10
           done
-          echo "health gate failed for the new revision"; exit 1
+          echo "readiness gate failed for the new revision"; exit 1
 
       - name: Shift traffic
         run: |
@@ -289,7 +299,7 @@ jobs:
           RG="rg-c7ntax-${ENVIRONMENT}"
           APP="c7ntax-${ENVIRONMENT}"
           FQDN=$(az containerapp show --name "$APP" --resource-group "$RG" --query "properties.configuration.ingress.fqdn" -o tsv)
-          for path in /api/health /; do
+          for path in /api/ready /api/health /; do
             code=$(curl -s -o /dev/null -w "%{http_code}" "https://$FQDN$path")
             echo "$path -> $code"
             [ "$code" = "200" ] || exit 1

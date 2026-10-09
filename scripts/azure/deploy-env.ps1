@@ -14,7 +14,7 @@
       3. image                docker build + push to ACR (or az acr build)
       4. migration job        same image, overridden command: prisma migrate deploy
       5. revision             new Container App revision, 0% traffic
-      6. health gate          /api/health and an authenticated call on the new revision
+      6. health gate          /api/ready?deep=1 and an authenticated call on the new revision
       7. traffic shift        move 100% traffic, then re-check
       8. report               environment URL, revision name, rollback command
 
@@ -493,10 +493,14 @@ if (-not $SkipMigrations) {
         $jobExists = (& az containerapp job show --name $jobName --resource-group $rg --query "name" -o tsv 2>$null)
     }
     if ($jobExists) {
+        # Only the image moves. `az containerapp job update` does not accept `--mi-user-assigned` or
+        # `--registry-identity` (they are `job create` arguments; identity is managed by
+        # `job identity assign` and the registry by `job registry set`), and there is nothing to
+        # re-state: both were set at creation and persist. Passing them fails the second run here with
+        # `unrecognized arguments` — the same failure §1.8 fixed for the first one.
         Invoke-Az @('containerapp', 'job', 'update',
             '--name', $jobName, '--resource-group', $rg,
-            '--image', $image,
-            '--mi-user-assigned', $jobIdentity, '--registry-identity', $jobIdentity) | Out-Null
+            '--image', $image) | Out-Null
         Write-Info "updated $jobName to $image"
     } else {
         Invoke-Az @('containerapp', 'job', 'create',
@@ -563,12 +567,16 @@ if (-not $WhatIf) {
 }
 
 Write-Step 'Health gate (on the new revision, before any traffic)'
-if ($WhatIf) { Write-Info 'would call /api/health on the new revision with 0% traffic' }
+# Readiness, and *deep* readiness: this runs after the migration step, so it can also insist that the
+# newest migration the image ships has been applied. The probe in the Bicep asks the shallow question on
+# purpose — on a first run the app is created before the migration job, and a probe that waited for
+# migrations would hold the revision at 0% for ever. See GET /api/ready.
+if ($WhatIf) { Write-Info 'would call /api/ready?deep=1 on the new revision with 0% traffic' }
 else {
     $probe = & az containerapp revision show --name $appName --resource-group $ResourceGroup --revision $revisionSuffix --query "properties.fqdn" -o tsv
-    $health = Invoke-WebRequest -Uri "https://$probe/api/health" -UseBasicParsing -TimeoutSec 30
-    if ($health.StatusCode -ne 200) { throw "New revision did not answer /api/health (HTTP $($health.StatusCode)); traffic not shifted." }
-    Write-Info "health: $($health.Content)"
+    $health = Invoke-WebRequest -Uri "https://$probe/api/ready?deep=1" -UseBasicParsing -TimeoutSec 30
+    if ($health.StatusCode -ne 200) { throw "New revision did not answer /api/ready (HTTP $($health.StatusCode)); traffic not shifted." }
+    Write-Info "ready: $($health.Content)"
 }
 
 Write-Step 'Traffic shift'
@@ -578,7 +586,7 @@ Write-Step 'Verification'
 if ($WhatIf) { Write-Info 'would re-check /api/health on the public endpoint' }
 else {
     $fqdn = & az containerapp show --name $appName --resource-group $ResourceGroup --query "properties.configuration.ingress.fqdn" -o tsv
-    foreach ($path in @('/api/health', '/')) {
+    foreach ($path in @('/api/ready', '/api/health', '/')) {
         $response = Invoke-WebRequest -Uri "https://$fqdn$path" -UseBasicParsing -TimeoutSec 30
         Write-Info "$path -> HTTP $($response.StatusCode)"
         if ($response.StatusCode -ne 200) { throw "$path answered $($response.StatusCode) after the traffic shift. Roll back with: ./scripts/azure/deploy-env.ps1 -Environment $Environment -ImageTag <previous-tag>" }

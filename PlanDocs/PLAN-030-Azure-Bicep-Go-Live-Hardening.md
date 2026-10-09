@@ -489,8 +489,40 @@ and the three cases — first run, redeploy, dry run — were read back from the
 contract guards still pass (`imageTag` with no default, `activeRevision` defaulting to `''` and used as
 `revisionName`, `activeRevisionsMode: 'Multiple'`, the script still reading `properties.trafficWeight`).
 
-## 9. Two review comments, assessed
+### 8.14 — Review round 2: the workflow's second push, and a gate that could not see the database
 
+**Applied 2026-10-09.** Two findings from `PLAN-030-Review-Round-2.md`, both accepted, fixed and
+exercised locally — **compiled and run against the dev instance, not against Azure**.
+
+- **The workflow's `job update` path passed creation-only flags.** `az containerapp job update` accepts
+  `--image` and neither `--mi-user-assigned` nor `--registry-identity` (checked against the CLI's own
+  reference, since no Azure CLI is installed here). The first push took the `create` branch and worked;
+  **every push after it** took the update branch and failed at the migration step. Both the workflow and
+  `deploy-env.ps1` now move only the image, which is all that needs to move — identity, the registry pull
+  identity, the Key Vault secret reference and the env var are set at creation and persist.
+- **The promotion gate could not see the database.** `/api/health` proves only that Node is listening, so a
+  revision with a wrong `DATABASE_URL`, an unreachable server, a rotated password or a failed migration
+  passed the readiness probe and both gates and took 100% of traffic. `GET /api/ready` now runs a
+  `SELECT 1` with a 2 s budget and answers `{ "status": "ready" | "not-ready" }` — with nothing else in
+  the body, because it is unauthenticated. `?deep=1` adds "the newest migration this image ships has been
+  applied". The **readiness probe** and **both gates** ask it; the **liveness probe** is deliberately left
+  on `/api/health`, because a liveness check that queries the database restarts every replica in a loop.
+- **The first-run interaction is resolved by keeping the probe shallow.** On a first run the app is created
+  before the migration job, so a probe that waited on migration state would hold the revision at 0% — and
+  the migration question is only answerable after migrations have run. Only the two gates pass `deep=1`.
+- **A defect in my own first version, worth recording because it is the same class of mistake as the
+  finding.** The timeout helper resolved *whether the work finished* rather than *what it answered*, so
+  the deep check computed `false` correctly and the gate read `true`: it could never fail. It surfaced by
+  shipping a fake migration directory so the newest migration was definitely unapplied and **expecting**
+  `503` — the endpoint answered `200`. With that fixed, the three states are: healthy `200/200`; an
+  unapplied migration shipped in the image `200` shallow / **`503` deep**; probe removed `200/200`.
+
+**Verified here:** `npx tsc --noEmit` clean in `apps/api` and `apps/web`; `check-route-guards.mjs` passes
+(436 routes); `validate-bicep.mjs` compiles all three files with **0 warnings**; `preflight.mjs` reports
+only the two known pre-existing failures; and the endpoint was exercised live in all three states above.
+**Not run:** the runner's CLI version, and any real deployment.
+
+## 9. Two review comments, assessed
 ### 9.1 — "Probably don't need geo redundancy. That'll shave the cost."
 
 **That comment was answered, and the answer was wrong. It is reversed: geo-redundant backup is on in

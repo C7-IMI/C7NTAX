@@ -665,7 +665,11 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = if (createApp) 
           ]
           probes: [
             { type: 'Liveness', httpGet: { path: '/api/health', port: appPort }, initialDelaySeconds: 20, periodSeconds: 30 }
-            { type: 'Readiness', httpGet: { path: '/api/health', port: appPort }, initialDelaySeconds: 10, periodSeconds: 10 }
+            // Readiness asks a different question, and the difference is the point: liveness must stay
+            // shallow (a liveness probe that queries the database restarts every replica in a loop and
+            // turns an outage into a crash storm), while readiness has to know whether the revision can
+            // actually serve — the database included. See GET /api/ready in apps/api/src/index.ts.
+            { type: 'Readiness', httpGet: { path: '/api/ready', port: appPort }, initialDelaySeconds: 10, periodSeconds: 10 }
           ]
         }
       ]

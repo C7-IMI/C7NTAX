@@ -237,7 +237,8 @@ same user-assigned identity the app uses.
 ## Rotating the secrets
 
 Each secret has a different blast radius, and two of them have an order that matters. Every
-rotation ends the same way: deploy, then check `/api/health`.
+rotation ends the same way: deploy, then check `/api/ready` (add `?deep=1` to insist that the newest
+migration in the image has been applied).
 
 | Secret | How to rotate | What to expect |
 |---|---|---|

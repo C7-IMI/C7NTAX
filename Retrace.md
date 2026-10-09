@@ -8377,3 +8377,55 @@ Both are in the reply and in the briefing's pre-deployment list, and neither was
   success case — it required asserting what *should* fail to surface at all.
 - **A secret that can never be read back should move as ciphertext.** Re-encrypting it means decrypting
   it, and a value that is never decrypted is one that cannot leak into a log on the way past.
+
+---
+
+### Prompt 343 — Review round 2: the second push, and a gate that could not see the database
+
+**Timestamp:** 2026-10-09 09:05 | **Status:** Complete | **Duration:** ~80 min
+
+**BuildNotes IDs:** **2026.10.9.017**.
+
+**Prompt**
+
+> Here is Claude's response. Fix what you can and list otherwise. Prepare a reply and updated the doc: … **[§1]** The workflow's `job update` path passes flags that `job update` likely does not accept (verify). … **[§2]** The health gate cannot see the database. … It also includes a note on telling other developers about the database rename, and lists what's still open.
+
+**What I did**
+- **Read the review from the branch it was pushed to.** `PlanDocs/PLAN-030-Review-Round-2.md` was not on
+  `main`; the branch had been force-pushed, so it was fetched and the file checked out by name rather than
+  merging a branch that sits on an older `main`.
+- **Verified §1 against the CLI's own reference rather than guessing.** No Azure CLI is installed here, so
+  the `az containerapp job` reference was read directly: `job update` takes `--image` and neither
+  `--mi-user-assigned` nor `--registry-identity`, which appear only under `job create`. The finding is
+  right, and so is its blast radius — the first push succeeds, every push after it dies on the migration
+  step. Fixed in **both** the workflow and `deploy-env.ps1`, because they are documented as having to stay
+  in step and were wrong together.
+- **Implemented §2 as specified**: `GET /api/ready` (a `SELECT 1` with a 2 s budget, `{"status":…}` and
+  nothing else, since it is unauthenticated), `?deep=1` for the migration comparison, the readiness probe
+  and both gates pointed at it, and the liveness probe deliberately left shallow.
+- **Took the review's own fallback for the first-run interaction.** The probe could not ask the migration
+  question — on a first run the app is created before the migration job, so it would hold the revision at
+  0% while ARM waited — so only the two gates pass `deep=1`, which run after migrations.
+- **Found a defect in my own implementation, by trying to make the check fail.** The timeout helper
+  resolved *whether the work finished* rather than *what it answered*, so the deep check computed `false`
+  correctly and the gate read `true`: it could never fail, and would have shipped as a gate that proves
+  nothing — the same class of mistake as the finding it was written to fix. Caught by putting a fake
+  migration directory in `apps/api/prisma/migrations` so the newest migration was definitely unapplied
+  and expecting `503`; it answered `200`. Now verified in three states.
+- **Declined one sub-item with a reason**: the audit-log exclusions need nothing added, because that
+  middleware returns before logging for every method outside POST/PUT/PATCH/DELETE and this is a GET.
+- Added the database-rename note the review asked for (`.env.production.example`, with the
+  `ALTER DATABASE … RENAME TO` and the API-stopped caveat), updated `docs/API.md` (the endpoint table and
+  the §13 guide) and `infra/README.md`, and wrote `PlanDocs/PLAN-030-Response-to-Review-Round-2.md`
+  plus a status line in the briefing and the plan.
+
+**Notes for next time**
+- **A gate that cannot fail is worse than no gate, because it is believed.** The shallow `/api/health` was
+  the finding; my own deep check reproduced it one layer down. The way out was not more care but a
+  deliberate negative test: construct the state that *should* fail and assert the failure.
+- **"Verify the flags" was the whole finding, and the answer was in the CLI reference.** The reviewer
+  could not run `az` either, so they said so and asked; reading the command's own argument list settled it
+  in one fetch. Guessing here would have been a second blind edit.
+- **The plan documents were the right place for the "not run against Azure" status.** Two fixes that
+  compile and pass local checks are still not proof, and saying so in the same breath as the fix is what
+  keeps the go-live checklist honest.

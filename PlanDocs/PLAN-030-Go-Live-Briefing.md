@@ -102,6 +102,11 @@ Being explicit, because "applied" and "working" are different words:
   without the app, the image build, pass 2 with it. It is designed to remove the failure the previous
   briefing predicted, and it has not been executed against ARM.
 - **No CI run has happened since the workflow fix.**
+- **Review round 2's two findings are fixed and exercised locally, not run against Azure**: the
+  `az containerapp job update` flags (the update path now moves only the image) and the readiness
+  endpoint (`GET /api/ready`, with `?deep=1` checking that the newest migration in the image has been
+  applied) — including a deliberate negative test that proved the deep check can fail. See
+  `PlanDocs/PLAN-030-Response-to-Review-Round-2.md`.
 - **Two pre-existing preflight failures** are unrelated to this work and were confirmed on a pristine
   checkout before the change: the dependency audit baseline and a list of environment variables the
   template does not document.
@@ -112,6 +117,8 @@ Being explicit, because "applied" and "working" are different words:
 |---|---|
 | `PlanDocs/PLAN-030-Azure-Bicep-Go-Live-Hardening.md` | The plan: what was hardened, the four deliberate deviations from the original review, the open recommendations (§8), the cost and reservation analysis (§9), and the current status line saying what is confirmed versus compiled. |
 | `PlanDocs/PLAN-030-Response-to-Review.md` | The point-by-point reply to the second review, including where the earlier reasoning was wrong and why — and an addendum covering the first-run fix, the database rename, a correction to the plan's own §8.1, and the parked security item. |
+| `PlanDocs/PLAN-030-Review-Round-2.md` | Review round 2 (on the branch that produced it): the `job update` flags and the health gate that cannot see the database. |
+| `PlanDocs/PLAN-030-Response-to-Review-Round-2.md` | The reply to that round, with the verification that the readiness check can actually fail. |
 | `PlanDocs/PLAN-030-Review-of-Applied-Changes.md` | The second review itself (on the branch that produced it). |
 | `infra/README.md` | The operational runbook: what to run, secret rotation, the ingress checklist, the cost table and the open items. |
 | `docs/API.md` §13 | The maintenance rule for the API documentation, for whoever integrates with this next. |

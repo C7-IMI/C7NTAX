@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.9.017",
+    "date": "2026-10-09",
+    "title": "A readiness check that can see the database, and a second push that no longer fails",
+    "changes": [
+      {
+        "text": "**The second push to `main` would have failed at the migration step.** `az containerapp job",
+        "type": "Fix"
+      },
+      {
+        "text": "**`GET /api/ready`** — readiness as a different question from liveness. It runs a `SELECT 1`",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The liveness probe stays on `/api/health`**, deliberately: a liveness check that queries",
+        "type": "Update"
+      },
+      {
+        "text": "**The deep check could not fail, and was fixed after it was made to try.** Its first version",
+        "type": "Fix"
+      },
+      {
+        "text": "`infra/env/.env.production.example` records the `c7_overwatch` → `c7ntax` rename, its date",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.016",
     "date": "2026-10-09",
     "title": "One Microsoft 365 app, many mailboxes, each filing to its own board",

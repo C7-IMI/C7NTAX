@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.016 | Last Updated: 2026-10-09
+## Version: 2026.10.9.017 | Last Updated: 2026-10-09
 
 ---
 
@@ -13,6 +13,49 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.9.017 — A readiness check that can see the database, and a second push that no longer fails
+
+Two findings from `PlanDocs/PLAN-030-Review-Round-2.md`, both about the same thing: a deployment that
+reports success, or fails, for a reason nobody could see from the outside.
+
+- **[Fix]** **The second push to `main` would have failed at the migration step.** `az containerapp job
+  update` accepts `--image` and **not** `--mi-user-assigned` or `--registry-identity` — those are
+  `job create` arguments, and identity and the registry have their own commands. The first push took the
+  `create` branch and worked; every push after it took the update branch and died on `unrecognized
+  arguments`. Both the workflow and `deploy-env.ps1` now move only the image, which is all that needs to
+  move: identity, the registry pull identity, the Key Vault secret reference and the env var are set at
+  creation and persist.
+- **[New]** **`GET /api/ready`** — readiness as a different question from liveness. It runs a `SELECT 1`
+  with a two-second budget and answers `{ "status": "ready" }` or `{ "status": "not-ready" }`, and it is
+  what the **readiness probe**, the deploy script's gate and the workflow's gate now ask. `?deep=1` adds
+  "the newest migration this image ships has been applied", which only the two gates ask, because on a
+  first run the app is created before the migration job.
+- **[Update]** **The liveness probe stays on `/api/health`**, deliberately: a liveness check that queries
+  the database restarts every replica in a loop and turns a database outage into a crash storm. The
+  promotion design rests on a revision proving itself before it takes traffic, and "Node is listening"
+  was not that proof — a wrong `DATABASE_URL`, an unreachable server, a rotated password or a failed
+  migration all passed it.
+- **[Fix]** **The deep check could not fail, and was fixed after it was made to try.** Its first version
+  resolved *whether the work finished* instead of *what it answered*, so the migration comparison
+  computed `false` correctly and the gate read `true`. It was caught by shipping a fake migration
+  directory so the newest migration was definitely unapplied and expecting `503` — the endpoint answered
+  `200`. The helper now returns the answer (or `null` on timeout), and the three states are verified:
+  healthy `200/200`, unapplied migration shipped `200` shallow / **`503` deep**, probe removed `200/200`.
+- **[Update]** `infra/env/.env.production.example` records the `c7_overwatch` → `c7ntax` rename, its date
+  and the `ALTER DATABASE … RENAME TO` for a machine that still says the old name — the note the review
+  asked for, because the local rename left every other machine and script pointing at a database that no
+  longer exists.
+
+**Verification:** `npx tsc --noEmit` clean in `apps/api` and `apps/web`; `check-route-guards.mjs` passes
+(436 routes); `validate-bicep.mjs` compiles `main.bicep` and both param files with **0 warnings**;
+`deploy-env.ps1` parses with **0 errors**; the workflow YAML parses and its gates use `/api/ready?deep=1`;
+`preflight.mjs` reports only its two known pre-existing failures. The endpoint was exercised live against
+the dev API in all three states above. **Not run:** the runner's own `az` version, and any real
+deployment — both are recorded as compiled-and-exercised, not proven.
+
+---
+
 
 ## 2026.10.9.016 — One Microsoft 365 app, many mailboxes, each filing to its own board
 

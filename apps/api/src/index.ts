@@ -1,6 +1,6 @@
 import express from "express";
 import path from "node:path";
-import { existsSync } from "node:fs";import cookieParser from "cookie-parser";
+import { existsSync, readdirSync } from "node:fs";import cookieParser from "cookie-parser";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -149,7 +149,7 @@ app.use(cors({ origin: process.env.CORS_ORIGIN || WEB_ORIGIN, credentials: true 
 // Morgan HTTP logging piped to dev-errors.log
 // TOKEN-SAVE-01: skip unauthenticated health/poller probes (401 spam)
 const QUIET_POLL_PATHS = [
-  "/api/auth/login", "/api/tickets", "/api/clients",
+  "/api/health", "/api/ready", "/api/auth/login", "/api/tickets", "/api/clients",
   "/api/users", "/api/billing/invoices", "/api/boards",
 ];
 app.use(morgan("short", {
@@ -175,6 +175,97 @@ import { auditMiddleware } from "./middleware/auditLog";
 app.use(auditMiddleware);
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok", version: "1.0.0" }));
+
+/**
+ * Readiness, which is deliberately a different question from liveness.
+ *
+ * `/api/health` above answers "is this process listening", and it is what the **liveness** probe asks.
+ * Liveness must stay that shallow: a liveness probe that queries the database turns an outage into a
+ * crash storm — every replica fails, gets killed, restarts, and fails again, and nothing recovers when
+ * the database does.
+ *
+ * `/api/ready` answers "can this revision actually serve a request", and the database is most of that
+ * answer. Without it the promotion gate proves only that Node is up, so a revision with a wrong
+ * `DATABASE_URL`, an unreachable server, a password rotated in Key Vault but not on the server, or a
+ * failed migration is declared healthy and takes 100% of traffic. This is what the readiness probe and
+ * both deployment gates ask (PLAN-030 §8, review round 2 §2).
+ *
+ * `?deep=1` additionally checks that the newest migration this image ships has been applied, which is a
+ * question only worth asking *after* migrations have run — the deploy script's gate, not the probe. On
+ * a first run the app is created before the migration job runs, so the probe must not ask it.
+ *
+ * The body says ready or not-ready and nothing else, because this route is unauthenticated: an
+ * anonymous caller learns nothing about the host, the database or the driver's error from it.
+ */
+const READY_TIMEOUT_MS = 2000;
+
+/**
+ * Resolves with `work`'s own answer, or `null` if it neither answers nor fails within `ms`.
+ *
+ * The *value* is what makes this usable: an earlier version of this helper resolved `true` whenever the
+ * work finished, which quietly made the deep check below incapable of failing — the migration check was
+ * computing `false` correctly and the gate was reading "it answered" instead. A probe that cannot fail
+ * is worse than no probe, because it is believed.
+ */
+function withinMs<T>(work: Promise<T>, ms: number): Promise<T | null> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(null), ms);
+    work
+      .then((value) => { clearTimeout(timer); resolve(value); })
+      .catch(() => { clearTimeout(timer); resolve(null); });
+  });
+}
+
+/**
+ * Whether every migration in the image has been applied.
+ *
+ * `"unknown"` means "could not tell" — the migrations directory is not where this layout keeps it — and
+ * the caller treats that as ready rather than failing a deployment over a check that could not run. The
+ * `SELECT 1` has already proved the database answers, and the difference between "checked and fine" and
+ * "not checked at all" is worth a log line in a container with an unexpected layout.
+ */
+async function migrationsApplied(): Promise<boolean | "unknown"> {
+  const dir = path.join(__dirname, "..", "prisma", "migrations");
+  if (!existsSync(dir)) {
+    logger.warn("ready", `migration state not checked — no migrations directory at ${dir}`);
+    return "unknown";
+  }
+  const newest = readdirSync(dir)
+    .filter((name) => /^\d{14}_/.test(name))
+    .sort()
+    .pop();
+  if (!newest) return "unknown";
+  const rows = await prisma.$queryRaw<Array<{ migration_name: string }>>`
+    SELECT migration_name FROM _prisma_migrations
+    WHERE finished_at IS NOT NULL ORDER BY finished_at DESC LIMIT 1
+  `;
+  const applied = rows[0]?.migration_name;
+  if (applied !== newest) {
+    logger.info("ready", `not ready: this image ships ${newest}, the database has ${applied ?? "nothing"} applied`);
+  }
+  return applied === newest;
+}
+
+app.get("/api/ready", async (req, res) => {
+  const deep = req.query.deep === "1" || req.query.deep === "true";
+  const connected = await withinMs(prisma.$queryRaw`SELECT 1`, READY_TIMEOUT_MS);
+  if (connected === null) {
+    logger.warn("ready", `not ready: the database did not answer within ${READY_TIMEOUT_MS}ms`);
+    return res.status(503).json({ status: "not-ready" });
+  }
+
+  if (deep) {
+    const applied = await withinMs(migrationsApplied(), READY_TIMEOUT_MS);
+    // `null` here is a timeout or a throw from the migration query itself: the database answered a
+    // moment ago and now cannot be asked, which is not a state to send traffic into. `"unknown"` is the
+    // layout case and passes.
+    if (applied === false || applied === null) {
+      logger.warn("ready", "not ready: the migration state could not be confirmed as applied");
+      return res.status(503).json({ status: "not-ready" });
+    }
+  }
+  res.json({ status: "ready" });
+});
 
 // Core routes
 app.use("/api/auth/sso", ssoExchangeRouter);
