@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.8.066",
+    "date": "2026-10-08",
+    "title": "The dashboard's four bands",
+    "changes": [
+      {
+        "text": "A row of six figures: **Open tickets**, **Waiting on client**, **Service alerts**,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Needs a person** — every ticket inside four hours of its target or past it, soonest",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Board load** — each board's open work as a bar, tinted once the board is carrying work",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Service alerts** — what is currently reporting a problem, worst first, each with when",
+        "type": "New Feature"
+      },
+      {
+        "text": "The bands are read only in the redesigned interface: Classic draws the widget grid",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.065",
     "date": "2026-10-08",
     "title": "The client record",

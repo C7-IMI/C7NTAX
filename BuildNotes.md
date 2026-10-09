@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.065 | Last Updated: 2026-10-08
+## Version: 2026.10.8.066 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,37 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.066 — The dashboard's four bands
+
+The dashboard was your own arrangement of widgets and nothing else: no figures until you added the
+right tiles, nothing about what was about to breach, and no sign of where the load was sitting. The
+redesigned dashboard opens with the four questions a service desk asks in the morning and leaves the
+widget grid underneath, intact and still yours.
+
+- **[New]** A row of six figures: **Open tickets**, **Waiting on client**, **Service alerts**,
+  **Overdue invoices**, **Active clients** and **My time this week** — the same numbers the widget
+  tiles carry, in one band, so they are read rather than arranged.
+- **[New]** **Needs a person** — every ticket inside four hours of its target or past it, soonest
+  first, with its client, its technician, its age and a chip saying how much time is left (or how
+  far over it is). Each row opens the ticket, and **Open the queue** goes to the list.
+- **[New]** **Board load** — each board's open work as a bar, tinted once the board is carrying work
+  nobody has touched for a week, with the count beside it and a line stating the stale total.
+- **[New]** **Service alerts** — what is currently reporting a problem, worst first, each with when
+  it started. **What changed** — your own trail, the same list the header's *Recent* menu folds to
+  five, each row linking to the record it mentions.
+- **[Update]** The bands are read only in the redesigned interface: Classic draws the widget grid
+  with no extra requests, and the activity trail is its own component so a band that is not drawn
+  costs nothing.
+
+**Verification:** `tsc --noEmit` clean; `pnpm build`; in the browser the redesigned dashboard shows
+Open tickets 28 · Waiting on client 11 · Service alerts 3 · Overdue invoices 1 · Active clients 5 ·
+My time 0.8h, an at-risk table of real tickets (INF-1905 Globex 1365h over, INF-1904 Acme 1341h
+over, MSP-1005 Stark 1269h over), four boards with bars, the two live DownDetector alerts, and eight
+activity rows. With `c7_ui_redesign=0` the page is the widget grid and quick links as before, and
+`/boards/metrics` is not requested.
 
 ---
 

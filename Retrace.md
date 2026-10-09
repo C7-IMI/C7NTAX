@@ -7009,3 +7009,57 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **Next up: Dashboard, then the remaining pages in the pass order**, each against its mockup
   renderer (`viewDashboard` is next in `app-redesign-views.js`), and the report designer last.
 
+### Prompt 311 (continued) — Keep going: the client record
+
+**BuildNotes IDs:** **2026.10.8.065**.
+
+**What I did**
+- **Rebuilt the client record on the ticket record's shape**: one row carrying `CLIENT-…`, the
+  location, the name, and **New ticket** / **Copy brief** / **Edit**; a row of state (tickets, MRR,
+  service level, active, industry, console, portal); the sections as the shared `Tabs` strip.
+- **Overview** now leads with **The account** — the mockup's label-and-value list, with every row
+  backed by a real field and read with `Field`'s own hiding rule — beside **Brief**, **Recent work**
+  (the client's latest tickets, each a link) and **At a glance**. `Edit` swaps the label-and-value
+  rows for the same nine fields as inputs, so nothing was dropped to gain the density.
+- **Added a Configurations section** listing the client's assets (`/inventory/assets?companyId=…`,
+  read on demand, `CardSkeleton` while loading, and an amber line rather than an empty list when the
+  read fails) with the mockup's columns: tag, name, type, state, detail, warranty.
+- **Extracted `monthlyValue` / `monthlyLabel` into `apps/web/src/lib/agreements.ts`** so the client
+  list and the client record cannot disagree about what a client is worth per month.
+- **Help**: *The client screens* gained the record's shape and its sections.
+
+**Notes for next time**
+- **`Field` already hid empty values, which is what made the read/edit split cheap.** The redesigned
+  read view is not a second field set; it is the same fields presented as rows. Any record page with
+  a `Field`-style editor can get the mockup's density the same way.
+- **The client list's stat needed an API field; the record's did not.** `serviceAgreements` were
+  already in the detail payload, so MRR cost nothing there — worth checking the payload before
+  adding an endpoint.
+- **Initial failure was a stale Vite module**, not a code error: the served `/src/pages/ClientDetail.tsx`
+  had no `function Kv` while the file on disk did. Touching `LastWriteTime` forced the transform.
+  Always fetch the module and grep it before debugging a "not defined" that `tsc` accepts.
+
+### Prompt 311 (continued) — Keep going: the dashboard
+
+**BuildNotes IDs:** **2026.10.8.066**.
+
+**What I did**
+- **Added the mockup's four bands above the widget grid**: six figure tiles, **Needs a person** (the
+  mockup's at-risk queue with SLA chips), **Board load** (bars from `/boards/metrics`, tinted by
+  `stale7Days`) and **Service alerts** (`/service-alerts`).
+- **At-risk is computed the way the mockup describes it** — inside four hours of the target, or past
+  it — from `slaResolutionDue || dueDate`, soonest first, because the API has no "at risk" filter and
+  inventing a status would have been the easy lie.
+- **`What changed` became its own component** (`WhatChanged`) because it is the one band that reads
+  something the page does not: the activity hook fires an audit request, and a band that is not drawn
+  should not cost one. The three extra list requests are also behind `redesign ?`, so Classic makes
+  none of them.
+- **Help**: a *The dashboard* section in the Interface walkthrough.
+
+**Notes for next time**
+- **A widget system and a designed dashboard are not in conflict if the design goes *above* the
+  widgets.** The user's arrangement is a product feature; the mockup's bands are the page's argument.
+  Adding them as catalogue entries would have hidden them from anyone with a saved layout.
+- **Guard extra reads by interface, not by visibility.** `{redesign && <Bands/>}` keeps the request
+  out of Classic; a hook called in the page body would have fired it in both.
+
