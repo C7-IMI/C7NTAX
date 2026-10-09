@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.005 | Last Updated: 2026-10-09
+## Version: 2026.10.9.006 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,22 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.006 — The recent list says why a page is in it
+
+A visit appeared in **Recent activity** as *Viewed — stayed over two minutes*: a true statement about how
+the entry was recorded, and no answer at all to the question the list is asking. It now reads *Viewed —
+read at length*, which is the same fact told from the reader's side.
+
+- **[Update]** **"stayed over two minutes" → "read at length"** in the recent-activity list, on the header
+  menu and on **My Activity**, which share one entry. The two-minute rule itself is unchanged and is still
+  where somebody would go to understand it: the Help's activity table and the My Activity page both
+  explain it.
+
+**Verification:** the header menu was opened in a browser and read back — `Tickets · 1m ago · Viewed —
+read at length` — with the older entries unchanged.
 
 ---
 

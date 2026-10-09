@@ -7958,3 +7958,32 @@ Both are in the reply and in the briefing's pre-deployment list, and neither was
 - **A width is a measurement, not a preference.** Both the agent and I measured the strings in the live
   browser font before choosing a number, and both times the number the eye would have guessed (138, then
   176, then 162) was wrong by enough to clip a real value.
+
+### Prompt 334 — The recent list stops quoting the stopwatch
+
+**Timestamp:** 2026-10-09 06:25 | **Status:** Complete | **Duration:** ~10 min
+
+**BuildNotes IDs:** **2026.10.9.006**.
+
+**Prompt**
+
+> After you're done or using another agent. Don't say stayed over two minutes. Say something else that
+> describes why it's in the activity list. Keep it brief
+
+**What I did**
+- Changed the visit entry's subject from "stayed over two minutes" to "read at length" in
+  `recentActivity.ts`, where the entry is built once for both surfaces that show it (the header's Recent
+  menu and My Activity).
+- Rewrote the comment that explained the old wording, because the reasoning had to move with it: the
+  subject is there to say *why* a page is in a list of things you did, and naming the measurement said how
+  we knew rather than what it meant.
+- Moved the paired sentence in the menu's empty state to the same words, so the list and the line that
+  explains it do not disagree.
+- **Left the two-minute rule where it is explained** - the Help's activity table and the My Activity page
+  still state it, because the request was about the row, not about hiding how a visit is decided.
+
+**Notes for next time**
+- **A rule and its label are two different jobs.** The threshold is worth documenting and worth not
+  displaying: the same sentence that makes the Help honest reads as noise in a five-line menu.
+- One string, three files read back: the change touched the model, the component's empty state, and the
+  BuildNotes - worth grepping the repo for the old phrase rather than assuming one place.

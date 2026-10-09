@@ -90,7 +90,7 @@ export function RecentActivityMenu() {
           {activities.length === 0 ? (
             <p className="px-3 py-4 text-[11px] text-gray-500">
               Nothing yet. Changes you make appear here, and so does a page you
-              stay on for two minutes.
+              read at length.
             </p>
           ) : (
             <ul className="py-1">

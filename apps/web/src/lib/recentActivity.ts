@@ -640,10 +640,11 @@ export function activityFromVisit(visit: VisitRecord): RecentActivity {
     kind: "visit",
     at: visit.at,
     where: visit.label,
-    // The action says *why* a page is in a list of things you did: it held you for two minutes. Without
-    // that, "Tickets / Viewed" is a line that only makes the menu look like a browser history.
+    // The subject says *why* a page is in a list of things you did: you read it, rather than passing
+    // through. Without that, "Tickets / Viewed" is a line that only makes the menu look like a browser
+    // history — and naming the time it took would say how we know, not what it means.
     action: "Viewed",
-    subject: "stayed over two minutes",
+    subject: "read at length",
     to: visit.path,
     target: "page-heading",
     icon: "page",

@@ -1,5 +1,16 @@
 [
   {
+    "version": "2026.10.9.006",
+    "date": "2026-10-09",
+    "title": "The recent list says why a page is in it",
+    "changes": [
+      {
+        "text": "**\"stayed over two minutes\" → \"read at length\"** in the recent-activity list, on the header",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.005",
     "date": "2026-10-09",
     "title": "The queue counts in minutes, and the ticket has two dates",
