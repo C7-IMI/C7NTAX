@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import { BookOpen, HelpCircle, Settings2, ListOrdered, ChevronRight, ArrowRight, Wrench } from "lucide-react";
-import { HELP_SECTIONS } from "./HelpDoc";
+import { HELP_SECTIONS, helpVisible } from "./HelpDoc";
 import { PageHeader } from "../components/ui";
 import { useRedesign } from "../hooks/useNavigationStyle";
+import { useAuth } from "../hooks/useAuth";
 
 const SECTION_ICONS: Record<string, typeof BookOpen> = {
   "getting-started": BookOpen,
@@ -13,8 +14,11 @@ const SECTION_ICONS: Record<string, typeof BookOpen> = {
 
 export function HelpPage() {
   const redesign = useRedesign();
-  const core = HELP_SECTIONS.filter((s) => s.group === "core");
-  const walkthroughs = HELP_SECTIONS.filter((s) => s.group === "walkthroughs");
+  const { permissions } = useAuth();
+  // The list is still derived from HELP_SECTIONS — help-home never grows a list of its own — and the
+  // permission gate is applied *to that list*, so a gated walkthrough is one this reader never meets.
+  const core = HELP_SECTIONS.filter((s) => s.group === "core").filter((s) => helpVisible(s.permission, permissions));
+  const walkthroughs = HELP_SECTIONS.filter((s) => s.group === "walkthroughs").filter((s) => helpVisible(s.permission, permissions));
 
   return (
     <div className="space-y-6 animate-fade-in">

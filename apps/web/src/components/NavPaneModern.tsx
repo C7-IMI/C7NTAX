@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronDown, Compass, Pin, Rows3, Star, type LucideIcon } from "lucide-react";
+import { AlertTriangle, ChevronDown, Compass, Pin, Rows3, Star, type LucideIcon } from "lucide-react";
 import type { NavNode } from "./Layout";
 import { KumoWordmark } from "./KumoWordmark";
 import {
@@ -345,7 +345,9 @@ export function NavPaneModern({
         ? "bg-surface-lighter text-white"
         : isActive
           ? "nav-item--active text-white"
-          : "text-gray-400 hover:text-white hover:bg-surface-lighter"
+          : domain.danger
+            ? "text-alert-red hover:bg-alert-red/10"
+            : "text-gray-400 hover:text-white hover:bg-surface-lighter"
     }`;
     const rowContents = (
       <>
@@ -365,9 +367,15 @@ export function NavPaneModern({
             <span className="badge-count absolute -right-1.5 -top-1 h-[15px] min-w-[15px] px-[3px] text-[9px] leading-none">{badge}</span>
           </span>
         ) : (
-          <domain.icon size={18} className={`shrink-0 ${badge > 0 ? "text-alert-red" : ""}`} />
+          <domain.icon size={18} className={`shrink-0 ${badge > 0 || domain.danger ? "text-alert-red" : ""}`} />
         )}
-        {!collapsed && !isKumo && <span className="min-w-0 flex-1 truncate text-left">{domain.label}</span>}
+        {!collapsed && !isKumo && <span className={`min-w-0 flex-1 truncate text-left ${domain.danger ? "text-alert-red font-medium" : ""}`}>{domain.label}</span>}
+        {/* The warning mark, which is the "clearly marked" part: a red row alone reads as a coloured
+            section, and someone scanning the rail for a settings page should not have to know which
+            colour means "this can empty the database". */}
+        {!collapsed && domain.danger && (
+          <AlertTriangle size={12} className="shrink-0 text-alert-red" aria-hidden />
+        )}
         {!collapsed && badge > 0 && (
           <span
             className="badge-count shrink-0 min-w-[18px] h-[18px] px-1 text-[10px]"
@@ -607,10 +615,16 @@ export function NavPaneModern({
                 </div>
               ) : (
                 <>
-                  <openDomain.icon size={15} className="mt-0.5 shrink-0 text-cyber-400" />
+                  <openDomain.icon size={15} className={`mt-0.5 shrink-0 ${openDomain.danger ? "text-alert-red" : "text-cyber-400"}`} />
                   <div className="min-w-0 flex-1">
                     <h2 className="text-sm font-semibold text-white truncate">{openDomain.label}</h2>
                     <p className="mt-0.5 text-[11px] leading-snug text-gray-500">{openDomain.what}</p>
+                    {openDomain.danger && (
+                      <p className="mt-1 flex items-start gap-1 text-[10px] leading-snug text-alert-red">
+                        <AlertTriangle size={11} className="mt-[1px] shrink-0" aria-hidden />
+                        <span>Not recoverable by undoing it. Every action on these pages is written to the audit log.</span>
+                      </p>
+                    )}
                   </div>
                 </>
               )}

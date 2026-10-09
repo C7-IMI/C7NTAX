@@ -812,6 +812,82 @@ A row is written for **every** way in and for signing out, successes included, a
 in the server log instead. `userId` is null when the address typed was not an account — the attempt still
 happened, and it is kept.
 
+### The Developer section — for whoever is about to deploy this, not for whoever is integrating with it
+
+Five operations under `/api/developer`, and one of them is irreversible. All of them need
+**`developer:view`**, which the **`Developer Admin`** role alone holds: it is subtracted from the
+Super Admin and Admin blanket grants on purpose, so "am I a Super Admin?" is not a useful question here
+and "do I hold the permission?" is. Nothing below is drawn in the SPA without it, and every route refuses
+without it.
+
+```bash
+GET  /api/developer/environment      # what this instance is configured to be
+GET  /api/developer/purge/preview    # what a purge would remove — and what it would leave standing
+POST /api/developer/purge            # { phrase, reason } — the destructive one
+GET  /api/developer/health           # the repository's own guards, run here
+GET  /api/developer/deployment       # where the deployment stands against PLAN-030
+POST /api/developer/deployment/records   # { kind, id, note } — write down what was decided
+```
+
+`GET /api/developer/environment` reports every environment name the application declares — the ones the
+configuration registry names as the variable a setting replaces, and the ones the API reads directly —
+as set or falling back to the declared default, with the value in force where it is safe to print it. **A
+secret is never returned.** A name that looks like a credential reports `set`, `secret: true`,
+`withheld: true`, `effective: null` and a `hint` — the last characters of a fingerprint, enough to confirm
+*which* value is in place and useless to anybody who reads it. The `badge` beside it names the instance
+(`NODE_ENV`, whether that means production, host and port, version, commit), which is what every refusal
+in the section quotes.
+
+`GET /api/developer/purge/preview` is a dry run with real counts, in three lists. `removed` is the set
+`pnpm db:sample-off` deletes, `preserved` is the identity and platform configuration it keeps so the
+instance stays usable, and `unlisted` is the reason this endpoint exists: **models the schema declares
+that neither list names, and which therefore survive a purge.** They are reported with their row counts,
+because data outliving a "purge" is how a demonstration tenant reaches production. The same response
+carries the snapshot a purge would replace, how many `auditLog` rows are inside the removed figure (the
+purge takes the audit trail too), whether the sample dataset is already off, and `requiredPhrase` — the
+exact string the POST accepts, returned rather than hard-coded on the screen so the two cannot drift.
+
+`POST /api/developer/purge` takes `{ "phrase": "…", "reason": "…" }` and is the CLI's own code path
+rather than a second implementation: snapshot first, delete children before parents, then set the marker
+that locks the snapshot and pauses automatic capture and reseed. It is refused with **400** unless the
+phrase matches `requiredPhrase` exactly and the reason is a sentence — `details` names which field failed —
+and with **409** if the sample dataset is already disabled or a purge is already running. It also needs
+**`developer:purge`** in addition to `developer:view`; the two are chained, so a credential holding
+`developer:view` alone cannot empty the database. `pnpm db:sample-on` is what puts the data back.
+
+The response is the receipt: who, when, why, the phrase, the dry-run figure, the rows and tables removed,
+and the snapshot taken. **Keep it, because the act destroys its own audit trail** — the purge deletes
+`auditLog`, so the audit row is written after the wipe and the durable copy is a `SystemConfig` row under
+the reserved `sample_data:` prefix, which the general configuration endpoint refuses to every caller
+including administrators. The response says where it lives in `receiptPath` and `wrote`. A purge takes as
+long as the snapshot capture takes, so a client may give up before the answer arrives; the work continues
+and the receipt is still written.
+
+`GET /api/developer/health` runs the repository's own guards as child processes and reports each with its
+command, its own output and how long it took. Status is one of **three** words — `pass`, `fail`, `skip` —
+and a check that could not run is `skip` with the reason, never a pass: a green tick for a check that never
+executed is the one comfortable lie this section exists to refuse. A failing check does not fail the
+request; the failure list *is* the answer.
+
+`GET /api/developer/deployment` is PLAN-030 with a surface: eight steps, each with a state drawn from
+five values — `done`, `attention`, `blocked`, `decision`, `unverified` — and a checklist whose every item
+names the evidence its state was decided from and what happens if it is skipped. An item whose answer is
+in the repository is decided by reading it; everything that needs an Azure subscription is `unverified`
+with the reason. Nothing in the package has run against a subscription, and the payload says so.
+
+`POST /api/developer/deployment/records` is where the operator writes the answer the plan cannot: the body
+is `{ "kind": "decision" | "check", "id": "…", "note": "…" }`, and `id` must be one of the ids the report
+itself names under that kind — a decision such as `2.3`, or a checklist item such as `5.1`. An unknown
+`kind` or `id`, an `id` that belongs to the other list, and an empty `note` are each refused with `400`
+naming the field. It needs `developer:view` and deliberately **not** `developer:purge`: writing down what
+was decided is not the same act as emptying the database. The answer is kept in `SystemConfig` under the
+reserved `deployment:record:<kind>:<id>` prefix — the same mechanism the purge receipt uses, reserved so no
+caller can read or rewrite one and untouched by a purge, which matters because the purge is one of the
+things a decision may be about. Recording again replaces the answer rather than stacking a second one
+(`201` when it created one, `200` when it replaced one), and the reply is the whole deployment payload plus
+`saved`, so a screen re-renders from one response. Read it back on the `GET`, which returns every answer in
+`records` and attaches it to its own decision or checklist item as `record`.
+
 ---
 
 ## 13. What integration work looks like, end to end

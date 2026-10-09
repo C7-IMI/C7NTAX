@@ -1,16 +1,71 @@
 import { Router } from "express";
 import { prisma } from "../index";
 import { authenticate, requirePermission, computePermissions, type AuthRequest } from "../middleware/auth";
-import { Permission, ROLE_PERMISSIONS, SystemRole, validatePassword } from "@C7NTAX/shared";
+import {
+  Permission, ROLE_PERMISSIONS, SystemRole, validatePassword,
+  DEVELOPER_ACCOUNT_REFUSAL, developerPermissionsIn, developerRefusalMessage, isDeveloperRole,
+  isSuperAdminRole, wearsDeveloperRole, withoutDeveloperPermissions,
+} from "@C7NTAX/shared";
 import bcrypt from "bcryptjs";
 import { randomInt } from "node:crypto";
 import { EmailService } from "@C7NTAX/email";
 import { AppError } from "../middleware/errorHandler";
 import { endSessionsForUser } from "../services/signIn";
+import { developerRoleIds } from "../services/developerAccounts";
 
 export const usersRouter = Router();
 usersRouter.use(authenticate);
 const emailService = new EmailService();
+
+/*
+ * ── The Developer Admin rule ──────────────────────────────────────────────────────────────────────
+ * Putting a person onto the Developer Admin role, or granting them `developer:view` /
+ * `developer:purge` one at a time, is a **Super Admin's** decision and nobody else's. `routes/roles.ts`
+ * enforces the same rule for the role itself; `packages/shared/src/developerAccess.ts` holds the rule
+ * and the sentence every refusal uses. A Developer Admin is deliberately *not* a Super Admin for this
+ * purpose — it holds `role:manage`, and a role that can widen itself is not a role.
+ */
+
+/** The one refusal for naming a developer role or permission here. */
+function developerRefusal(offending: string[]): AppError {
+  return new AppError(developerRefusalMessage(offending), 403);
+}
+
+/**
+ * The refusal for acting on a person rather than on a role — see `DEVELOPER_ACCOUNT_REFUSAL`.
+ *
+ * Every route that can change an account calls this before it changes anything: role, activation,
+ * password, MFA, permissions. Refused rather than ignored, because an administrator who deactivated,
+ * reset or re-roled somebody on the developer surface and was told nothing would believe it had
+ * happened.
+ */
+function developerAccountRefusal(name: string): AppError {
+  return new AppError(`Refused: ${name}. ${DEVELOPER_ACCOUNT_REFUSAL}`, 403);
+}
+
+/** Only the fields the redaction below touches, so a record keeps everything else the query selected. */
+interface DeveloperPermissionsCarrier {
+  role?: { permissions?: string[] | null } | null;
+  permissions?: string[] | null;
+  deniedPermissions?: string[] | null;
+}
+
+/**
+ * A user record with the developer permissions taken out of its role's list and out of the person's own
+ * grants and removals, for a caller who may not be shown them.
+ *
+ * The account wearing the Developer Admin role is *not* returned at all (see the list and single-fetch
+ * routes), so what this covers is the other case: a custom role that was deliberately given one of the
+ * two keys. Its name and its people stay; the key does not.
+ */
+function hideDeveloperPermissions<T extends DeveloperPermissionsCarrier>(user: T): T {
+  return {
+    ...user,
+    ...(user.role ? { role: { ...user.role, permissions: withoutDeveloperPermissions(user.role.permissions) } } : {}),
+    ...(user.permissions !== undefined ? { permissions: withoutDeveloperPermissions(user.permissions) } : {}),
+    ...(user.deniedPermissions !== undefined ? { deniedPermissions: withoutDeveloperPermissions(user.deniedPermissions) } : {}),
+  } as T;
+}
 
 /** Password handed to a user when an administrator does not choose one. */
 function generateStrongPassword(length = 20): string {
@@ -73,6 +128,18 @@ usersRouter.get("/", requirePermission(Permission.UserManage), async (req: AuthR
         { lastName: { contains: search } },
       ];
     }
+    /*
+     * The accounts on the developer surface do not exist to this caller.
+     *
+     * Excluded inside the query rather than filtered out of the page, which is what keeps the promise
+     * whole in all three places it could weaken: `total` counts only what the caller can see, `?role=`
+     * and `?search=` narrow and cannot reach an account that was never in the set to begin with, and a
+     * picker built from this endpoint (assignees, approvers, managers) is built from the same answer.
+     * A `search` for the address of one of them returns nothing rather than returning it.
+     */
+    if (!isSuperAdminRole(req.user!.role)) {
+      where.AND = [{ roleId: { notIn: await developerRoleIds() } }];
+    }
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where,
@@ -93,7 +160,16 @@ usersRouter.get("/", requirePermission(Permission.UserManage), async (req: AuthR
       }),
       prisma.user.count({ where }),
     ]);
-    res.json({ data: users, total, limit: Number(limit), offset: Number(offset) });
+    /*
+     * The developer permissions are stripped from every role's list and from the person's own grants
+     * and removals, on top of the exclusion above: a *custom* role may hold one of the keys, and this
+     * caller has no business reading which. See `hideDeveloperPermissions`.
+     */
+    const superAdmin = isSuperAdminRole(req.user!.role);
+    res.json({
+      data: superAdmin ? users : users.map(hideDeveloperPermissions),
+      total, limit: Number(limit), offset: Number(offset),
+    });
   } catch (e) { next(e); }
 });
 
@@ -122,6 +198,16 @@ usersRouter.get("/:id", requirePermission(Permission.UserManage), async (req: Au
       },
     });
     if (!user) throw new AppError("User not found", 404);
+    if (!isSuperAdminRole(req.user!.role)) {
+      // "Not found", not "forbidden": to this caller the account does not exist, and saying otherwise
+      // would confirm it does. The same answer as the list gives, which is the point — an id learned
+      // from somewhere else must not be a way around it.
+      if (wearsDeveloperRole(user)) throw new AppError("User not found", 404);
+      const { passwordHash, mfaSecret, ...visible } = user;
+      // The same redaction as the list, for the same reason: one record must not become the way around it.
+      res.json(hideDeveloperPermissions(visible));
+      return;
+    }
     const { passwordHash, mfaSecret, ...safe } = user;
     res.json(safe);
   } catch (e) { next(e); }
@@ -155,6 +241,20 @@ usersRouter.post("/", requirePermission(Permission.UserManage), async (req: Auth
       ? await prisma.role.findUnique({ where: { id: roleId } })
       : await prisma.role.findFirst({ where: { systemRole: role } });
     if (!roleRecord) throw new AppError(`Role "${roleId ?? role}" not found`, 400);
+
+    /*
+     * A Super Admin is the only caller who may put somebody on the Developer Admin role, or grant them
+     * a developer permission directly. Refused by name rather than stripped: a create that quietly
+     * dropped `developer:view` would report success and leave the administrator believing they had
+     * built a trusted operator when they had built an ordinary one.
+     */
+    if (!isSuperAdminRole(req.user!.role)) {
+      const offending = [
+        ...(isDeveloperRole(roleRecord.systemRole) ? [roleRecord.name] : []),
+        ...developerPermissionsIn(permissions),
+      ];
+      if (offending.length) throw developerRefusal(offending);
+    }
 
     // Handing out an administrative role is a privilege change: UserManage is enough
     // to create people, but only RoleManage may create another administrator.
@@ -229,7 +329,7 @@ usersRouter.post("/", requirePermission(Permission.UserManage), async (req: Auth
 
     const { passwordHash: _, mfaSecret: __, ...safe } = user;
     res.status(201).json({
-      ...safe,
+      ...(isSuperAdminRole(req.user!.role) ? safe : hideDeveloperPermissions(safe)),
       // Shown once so the administrator can hand it over; never sent for an invite.
       temporaryPassword: mode === "invite" ? undefined : plainPassword,
       mustChangePassword: !!mustChangePassword,
@@ -245,8 +345,11 @@ usersRouter.post("/", requirePermission(Permission.UserManage), async (req: Auth
 // the reset (see middleware/auth.ts).
 usersRouter.post("/:id/reset-password", requirePermission(Permission.SecurityManage), async (req: AuthRequest, res, next) => {
   try {
-    const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+    const user = await prisma.user.findUnique({ where: { id: req.params.id }, include: { role: true } });
     if (!user) throw new AppError("User not found", 404);
+    // Resetting the password of somebody on the developer surface is changing their account, so it is
+    // a Super Admin's to do — and it is refused *before* the new hash is written, not after.
+    if (!isSuperAdminRole(req.user!.role) && wearsDeveloperRole(user)) throw developerAccountRefusal(user.email);
 
     const { mode = "generate", password, requireChange = true, unlock = true, sendEmail = false } = req.body ?? {};
     const manual = mode === "manual";
@@ -305,6 +408,14 @@ usersRouter.patch("/:id", requirePermission(Permission.UserManage), async (req: 
     const target = await prisma.user.findUnique({ where: { id: req.params.id }, include: { role: true } });
     if (!target) throw new AppError("User not found", 404);
 
+    /*
+     * A Super Admin is the only person who may change an account on the developer surface — and that
+     * covers the whole route, not only the role: activation, deactivation, a password write, a
+     * permission override and the placements beside them. It is refused before anything is written,
+     * because a partial edit told as a failure is worse than no edit at all.
+     */
+    if (!isSuperAdminRole(req.user!.role) && wearsDeveloperRole(target)) throw developerAccountRefusal(target.email);
+
     const isSelf = req.user!.userId === target.id;
     const canManageRoles = req.user!.permissions.includes(Permission.RoleManage);
 
@@ -316,6 +427,36 @@ usersRouter.patch("/:id", requirePermission(Permission.UserManage), async (req: 
     if (touchesPermissions) {
       if (isSelf) throw new AppError("You cannot change your own role or permissions", 403);
       if (!canManageRoles) throw new AppError("Managing roles and permissions requires the role:manage permission", 403);
+    }
+
+    /*
+     * The developer surface is a Super Admin's, in both directions and on both halves of a user:
+     *
+     *   · moving somebody **onto** the Developer Admin role, named by `roleId` or by `systemRole`;
+     *   · moving somebody already wearing it **off** it, or editing the permissions they hold while
+     *     they wear it — the role is not one this caller may change either way;
+     *   · naming `developer:view` or `developer:purge` in a grant or a removal list, which the caller
+     *     cannot even be shown, so they could not have meant to act on it.
+     *
+     * Every one of them is refused by name. A Developer Admin asking this of itself is refused too:
+     * it holds `role:manage`, and a role that can widen itself is not a role.
+     */
+    if (!isSuperAdminRole(req.user!.role)) {
+      const namedRoleId = typeof req.body.roleId === "string" && req.body.roleId ? req.body.roleId : null;
+      const namedSystemRole = typeof req.body.role === "string" && req.body.role ? req.body.role : null;
+      const namedRole = namedRoleId
+        ? await prisma.role.findUnique({ where: { id: namedRoleId } })
+        : namedSystemRole
+          ? await prisma.role.findFirst({ where: { systemRole: namedSystemRole } })
+          : null;
+      const offending = [
+        ...(namedRole && isDeveloperRole(namedRole.systemRole) ? [namedRole.name] : []),
+        ...(namedSystemRole && isDeveloperRole(namedSystemRole) && !namedRole ? [namedSystemRole] : []),
+        ...(touchesPermissions && isDeveloperRole(target.role.systemRole) ? [target.role.name] : []),
+        ...developerPermissionsIn(req.body.permissions),
+        ...developerPermissionsIn(req.body.deniedPermissions),
+      ];
+      if (offending.length) throw developerRefusal(offending);
     }
 
     const updates: Record<string, unknown> = {};
@@ -404,13 +545,16 @@ usersRouter.patch("/:id", requirePermission(Permission.UserManage), async (req: 
     // a session cookie would otherwise keep working after either.
     if (passwordReset || req.body.isActive === false) await endSessionsForUser(user.id);
     const { passwordHash, mfaSecret, ...safe } = user;
-    res.json(safe);
+    res.json(isSuperAdminRole(req.user!.role) ? safe : hideDeveloperPermissions(safe));
   } catch (e) { next(e); }
 });
 
 // ── Deactivate user (soft delete) ────────────────────────────────────
 usersRouter.delete("/:id", requirePermission(Permission.UserManage), async (req: AuthRequest, res, next) => {
   try {
+    const target = await prisma.user.findUnique({ where: { id: req.params.id }, include: { role: true } });
+    if (!target) throw new AppError("User not found", 404);
+    if (!isSuperAdminRole(req.user!.role) && wearsDeveloperRole(target)) throw developerAccountRefusal(target.email);
     await prisma.user.update({ where: { id: req.params.id }, data: { isActive: false } });
     res.json({ message: "User deactivated" });
   } catch (e) { next(e); }
@@ -419,6 +563,9 @@ usersRouter.delete("/:id", requirePermission(Permission.UserManage), async (req:
 // ── Lock / unlock user ───────────────────────────────────────────────
 usersRouter.post("/:id/lock", requirePermission(Permission.UserManage), async (req: AuthRequest, res, next) => {
   try {
+    const target = await prisma.user.findUnique({ where: { id: req.params.id }, include: { role: true } });
+    if (!target) throw new AppError("User not found", 404);
+    if (!isSuperAdminRole(req.user!.role) && wearsDeveloperRole(target)) throw developerAccountRefusal(target.email);
     const { locked } = req.body; // true to lock, false to unlock
     await prisma.user.update({
       where: { id: req.params.id },
@@ -431,6 +578,9 @@ usersRouter.post("/:id/lock", requirePermission(Permission.UserManage), async (r
 // ── Reset MFA for user ───────────────────────────────────────────────
 usersRouter.post("/:id/reset-mfa", requirePermission(Permission.SecurityManage), async (req: AuthRequest, res, next) => {
   try {
+    const target = await prisma.user.findUnique({ where: { id: req.params.id }, include: { role: true } });
+    if (!target) throw new AppError("User not found", 404);
+    if (!isSuperAdminRole(req.user!.role) && wearsDeveloperRole(target)) throw developerAccountRefusal(target.email);
     await prisma.user.update({
       where: { id: req.params.id },
       data: { mfaEnabled: false, mfaSecret: null, mfaBackupCodes: [] },

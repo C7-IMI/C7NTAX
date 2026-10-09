@@ -1,7 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 import { BookOpen, HelpCircle, Settings2, ListOrdered, ChevronRight, Lightbulb, AlertTriangle, Wrench } from "lucide-react";
+import { Permission } from "@C7NTAX/shared";
 import { useRedesign } from "../hooks/useNavigationStyle";
+import { useAuth } from "../hooks/useAuth";
 
 // ── PSA-style documentation frame (structure modeled on Autotask / ConnectWise Asio / HaloPSA docs) ──
 // Sections are grouped: "core" (the four Help subsections) and "walkthroughs" (step-by-step
@@ -16,6 +18,14 @@ import { useRedesign } from "../hooks/useNavigationStyle";
 // A walkthrough is reachable as soon as it is in this array (the route is /help/walkthroughs/:slug),
 // so a new section needs no route or menu change — but it must be listed in the Index, because that
 // is where people look for something they cannot name.
+//
+// PERMISSION GATE — a section, a block or a table row may carry `permission`. Where it does, that help
+// does not exist for somebody who lacks it: not in the sidebar, not in the Index, not in the
+// configuration reference, not in the FAQ, and not behind a typed URL. `helpVisible` is the one test and
+// every place that enumerates HELP_SECTIONS applies it, which is what the `developer:view` gate needs.
+// Keep gated content *in the array*: `scripts/check-help-links.mjs` reads this source and requires every
+// walkthrough to be listed in the Index, so the gate is a filter rather than something deleted, and the
+// check stays honest while the rows stay conditionally absent.
 
 export type HelpSection = {
   id: string;
@@ -24,18 +34,48 @@ export type HelpSection = {
   title: string;
   description: string;
   blocks: HelpBlock[];
-  related: Array<{ label: string; to: string; external?: boolean }>;
+  related: Array<{ label: string; to: string; external?: boolean; permission?: Permission }>;
+  /**
+   * When set, the section is not drawn for anybody who does not hold this permission — no sidebar row,
+   * no help-home card, no Index entry, and the walkthrough's route falls to the not-found screen. The
+   * Developer walkthrough is gated on `developer:view`, so an administrator without it finds no trace
+   * of the section anywhere in the Help.
+   */
+  permission?: Permission;
 };
 
-type HelpBlock =
+/**
+ * A table row: plain cells, or cells that exist only for somebody holding `permission`.
+ *
+ * The second form is what the Index uses — the Developer topics sit in the same Index as everything
+ * else, and vanish for a reader without `developer:view` rather than being kept in a second list.
+ */
+export type HelpTableRow = string[] | { cells: string[]; permission: Permission };
+
+type HelpBlockShape =
   | { kind: "p"; text: string }
   | { kind: "h"; text: string }
   | { kind: "steps"; items: string[] }
   | { kind: "note"; text: string }
   | { kind: "tip"; text: string }
   | { kind: "warn"; text: string }
-  | { kind: "table"; headers: string[]; rows: string[][] }
+  | { kind: "table"; headers: string[]; rows: HelpTableRow[] }
   | { kind: "figure"; src: string; alt: string; caption: string };
+
+/** A whole block may be gated too — a heading that introduces gated rows is part of the gate. */
+type HelpBlock = HelpBlockShape & { permission?: Permission };
+
+/**
+ * Whether a gated piece of help may be read.
+ *
+ * `permission` is absent on almost everything, and absent means open, so the gate is opted into rather
+ * than backfilled. `held` is the signed-in person's effective permissions (`useAuth`) — the same list the
+ * navigation is built from, so a walkthrough hidden here and a section hidden in the rail are hidden by
+ * one decision rather than two that could disagree.
+ */
+export function helpVisible(permission: Permission | undefined, held: readonly string[]): boolean {
+  return permission === undefined || held.includes(permission);
+}
 
 export const HELP_SECTIONS: HelpSection[] = [
   // ════════════════════════════ CORE ════════════════════════════
@@ -150,6 +190,12 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "h", text: "Clients & contacts" },
       { kind: "p", text: "Q: Where do I find everybody at a client, and what they have raised? — A: **Clients → Contacts**, the address book by client. The rail narrows the list to one view or one client, every row carries the person and their client with how many tickets they have raised and how many are still open, and selecting somebody opens the sheet: their client's weight, what they have raised with the newest tickets linking through, whether they can sign in to the portal, the last thing recorded against them, and the four things you do from here." },
       { kind: "p", text: "Q: Somebody has left — how do I stop them signing in to the portal? — A: **Clients → Contacts**, select the person, and turn on **Refuse the portal to this person** under **Signing in to the portal**. It refuses that person alone: it holds whether or not their client's portal is on, and it would still refuse them if the client's portal were switched on tomorrow. **What they would see** beside it overrules the client's own answer for one person. Both controls are offered to whoever may change the portal's settings; turning the client's own portal off is the blunter answer, because it takes the portal away from everybody at that client." },
+      { kind: "h", text: "Users, roles & permissions", permission: Permission.DeveloperView },
+      /*
+       * This question is about the Developer Admin role, and a reader who cannot reach the Developer
+       * section must not meet it — the heading is gated with it, because it is the only question under it.
+       */
+      { kind: "p", text: "Q: Why is the Developer Admin role missing from my roles list, and why can I not see the person who holds it? — A: Because only a **Super Admin** is shown either one. Two permissions, `developer:view` and `developer:purge`, are the only ones whose worst case is removing what this instance holds, so the role that carries them — and the account wearing it — belong to a Super Admin alone: an ordinary administrator sees no Developer line in a role list, no Developer category in a permission picker, and no such account in Manage Users, in a picker, in a filter or in an export. The API answers the same way and names what it refused: fetching the role gives `404` rather than a blank version of it, and setting `developer:view` on a role gives `Refused: developer:view. Only a Super Admin may see or set the Developer Admin role and the developer permissions.` A **Developer Admin** is not a Super Admin for this purpose either, so it cannot widen its own role. A Super Admin sees and edits all of it normally.", permission: Permission.DeveloperView },
       { kind: "h", text: "Console" },
       { kind: "p", text: "Q: Why can't I see the Console button? — A: One of three switches is closed. Your account must hold `console:use` (Administration → Users & Roles → Console), your client must not have the console turned off (its own record has the switch), and the deployment must have it on (Configuration → Workspace → Command console). All three answers are the same to the interface: no button, and a `/console` link lands on a refusal rather than a console." },
       { kind: "p", text: "Q: If somebody has the permission, can they run everything? — A: No. `console:use` decides whether they get a console at all; each command is then filtered by the permission it needs, so a technician types `help` and sees the commands their account may use. The API answers the same way — a command a key or a person may not run is refused rather than hidden." },
@@ -195,6 +241,14 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "p", text: "Q: Are passwords encrypted? — A: Yes — Kumo stores passwords AES-256 encrypted, with TOTP and access logs." },
       { kind: "p", text: "Q: Who changed a shared document? — A: Each Kumo item shows an audit trail with the action, the user who made the change, and the last modified date." },
       { kind: "p", text: "Q: Does the product disable a departed user's Microsoft 365 account? — A: No, deliberately. The inactivity report finds dormant accounts and an offboarding raises an ordered checklist with an owner and a record; a human still does the disabling, in the tenant, where the consequence of a mistake is visible." },
+      /*
+       * The question nobody can see is the one whose answer they most want, so it is written for the
+       * reader who *can* see the section — usually the person a colleague asks. Gated, like the section:
+       * a reader without `developer:view` finds no Developer question here either.
+       */
+      { kind: "h", text: "Developer", permission: Permission.DeveloperView },
+      { kind: "p", text: "Q: Why can I not see the Developer section, and why can a colleague not see it? — A: Because it takes a permission almost nobody holds. **`developer:view`** is held by the **Super Admin** and **Developer Admin** roles and deliberately **not** by **Admin**, so an ordinary administrator has no Developer row in the navigation, no Developer permission to tick, no Developer page behind a typed URL — and no Developer content in this Help, this Index or the walkthrough list. If somebody believes they should have it, a Super Admin grants it at **Administration → Users & Roles → Permissions**, and it applies on their next request without a sign-out.", permission: Permission.DeveloperView },
+      { kind: "p", text: "Q: Is the purge the same thing as the database script I have read about? — A: Yes. `pnpm db:sample-off` and the Purge Data screen run the **same operation**, taken from one implementation rather than two, so they cannot disagree about what is removed. The screen adds the parts a command line cannot: the count in front of the button, the typed phrase, the mandatory reason and a receipt. `pnpm db:sample-on` is what puts the sample data back from the snapshot.", permission: Permission.DeveloperView },
     ],
     related: [
       { label: "Getting Started", to: "/help/getting-started" },
@@ -281,6 +335,17 @@ export const HELP_SECTIONS: HelpSection[] = [
         ["`VITE_UI_REDESIGN`", "A build that should not offer the redesigned screens at all. It beats the setting, and because it is not a preference it is not offered in the menu."],
       ] },
       { kind: "note", text: "Colour scheme, light/dark and density are **not** part of this switch: they are held in the same two layouts and carry across the change unchanged." },
+      /*
+       * The Developer section's access model, gated on `developer:view`. The heading, the prose and the
+       * table are all gated so nothing is left standing for a reader who may not see the section.
+       */
+      { kind: "h", text: "Developer", permission: Permission.DeveloperView },
+      { kind: "p", text: "The Developer section is a **permission rather than a flag**: no environment variable turns it on and no field under Configuration offers it. **Administration → Users & Roles → Permissions** is where both of its permissions are granted, on a role's record or on one person's own.", permission: Permission.DeveloperView },
+      { kind: "table", headers: ["Permission", "What it decides"], rows: [
+        ["developer:view", "Whether the section exists for that person at all — the navigation row, the four pages (`/developer`, Purge Data, Prepare for Live Deployment and the Danger Zone) and this walkthrough. Nothing is drawn without it, and a typed URL gets the not-found screen rather than an empty page."],
+        ["developer:purge", "Whether the destructive controls inside the section will arm: the purge, and the Danger Zone behind it. A role can be trusted with the environment inspector and the deployment checklist without being trusted to empty the database."],
+      ], permission: Permission.DeveloperView },
+      { kind: "note", text: "Both are held by **Super Admin** and by the **Developer Admin** role, and deliberately **not** by **Admin** — an ordinary administrator has no Developer row, no Developer permission to tick, no Developer page behind a typed URL and no Developer walkthrough to read. It is hidden rather than unarmed. **Only a Super Admin may see or set the role, its two permissions, or the account wearing it**, and a Developer Admin cannot widen its own role. Withdrawing either permission takes effect on the next request, with no sign-out.", permission: Permission.DeveloperView },
       { kind: "h", text: "Where settings live" },
       { kind: "p", text: "Every setting the application reads is declared in one place and shown under **Administration → Configuration**, grouped into eight areas. Each field states what it changes, what the deployment's own value is, and whether a restart is needed. A value is decided in this order: **a saved setting, then the deployment's environment variable, then the documented default** — so a deployment configured the old way keeps behaving exactly as it did." },
       { kind: "table", headers: ["Area", "What it governs"], rows: [
@@ -419,6 +484,7 @@ export const HELP_SECTIONS: HelpSection[] = [
         ["Sessions and the inactivity timeout", "/help/walkthroughs/identity-security"],
         ["MFA and passkeys", "/help/walkthroughs/identity-security"],
         ["Sign-in audit: successes, failures, lockouts and who tried", "/help/walkthroughs/sign-in-audit"],
+        { cells: ["Why the Developer Admin role, and the people on it, are a Super Admin's alone", "/help/faq"], permission: Permission.DeveloperView },
         ["Active sessions, revoking one, and signing an account out everywhere", "/help/walkthroughs/sign-in-audit"],
         ["Registered devices (passkeys and notifications) and removing one", "/help/walkthroughs/sign-in-audit"],
         ["Single Sign-On: registering the provider, and who may sign in", "/help/walkthroughs/sso-oidc"],
@@ -455,6 +521,18 @@ export const HELP_SECTIONS: HelpSection[] = [
         ["Kumo: passwords, configurations, documents, checklists and audit", "/help/walkthroughs/kumo"],
         ["Knowledge Base articles, categories and AI drafts", "/help/walkthroughs/knowledge-base"],
         ["Knowledge Base", "/kb"],
+      ] },
+      /*
+       * The Developer topics, and the heading above them, carry `developer:view` — see the gate note at the
+       * top of the file. Held by Super Admin and Developer Admin and deliberately not by Admin, so an
+       * ordinary administrator reads an Index with no Developer heading and no Developer rows in it.
+       */
+      { kind: "h", text: "Developer", permission: Permission.DeveloperView },
+      { kind: "table", headers: ["Topic", "Where"], rows: [
+        { cells: ["The Developer section: what it is, who can open it, and the catalogue it is", "/help/walkthroughs/developer"], permission: Permission.DeveloperView },
+        { cells: ["Purge Data: the dry run, the snapshot, the survivors and the receipt", "/help/walkthroughs/developer"], permission: Permission.DeveloperView },
+        { cells: ["Prepare for Live Deployment: the eight steps and the five states", "/help/walkthroughs/developer"], permission: Permission.DeveloperView },
+        { cells: ["Danger Zone: the operations with no way back, and the production refusal", "/help/walkthroughs/developer"], permission: Permission.DeveloperView },
       ] },
       { kind: "note", text: "MAINTENANCE RULE: whenever a feature is added, updated, changed, or removed, update its walkthrough here and in the Index rows in the same change. Every walkthrough in this file is also linked from the Help home page, so a new one is reachable without editing the menu." },
     ],
@@ -1989,9 +2067,89 @@ export const HELP_SECTIONS: HelpSection[] = [
       { label: "Help Index", to: "/help/index" },
     ],
   },
+  {
+    id: "developer", group: "walkthroughs",
+    path: "/help/walkthroughs/developer",
+    title: "Developer",
+    description: "The section for changes that are not normally available — the catalogue, the purge, the go-live checklist and the operations with no way back.",
+    // Gated: held by Super Admin and Developer Admin and deliberately not by Admin, so this walkthrough
+    // does not exist for an ordinary administrator — the product owner's rule is that no Developer content
+    // is in the Help for anybody who cannot reach the section.
+    permission: Permission.DeveloperView,
+    blocks: [
+      { kind: "h", text: "What the section is, and who can see it" },
+      { kind: "p", text: "**Developer** is the section for the changes that are not normally available to users — the ones that can take an instance apart as easily as they can prepare it. It has four pages: the **Developer Hub** at `/developer`, **Purge Data** at `/developer/purge`, **Prepare for Live Deployment** at `/developer/deployment`, and the **Danger Zone** at `/developer/danger`. It is deliberately small, and deliberately awkward to reach." },
+      { kind: "table", headers: ["Permission", "What it decides"], rows: [
+        ["`developer:view`", "Whether the section exists for that person at all — its navigation row, its four pages, its command-palette entries **and this walkthrough**. Nothing is drawn without it, and typing a Developer URL gets the not-found screen rather than an empty page."],
+        ["`developer:purge`", "Whether the destructive controls inside the section will arm — the purge, and everything in the Danger Zone. A role can be given the environment inspector and the deployment checklist without being given the purge."],
+      ] },
+      { kind: "note", text: "Both permissions are held by the **Super Admin** role and by the **Developer Admin** role, and deliberately **not** by **Admin**. An ordinary administrator therefore has no Developer row in the navigation, no Developer permission to tick, no Developer page behind a typed URL, and no Developer walkthrough — this one — to read. The useful question here is *do I hold the permission?*, not *am I an administrator?*; they are different questions in this section. One step further: **only a Super Admin may see or set the Developer Admin role, its two permissions, or the account wearing it** — an ordinary administrator sees no Developer line in a role list and no Developer category in a permission picker, and a Developer Admin is deliberately not a Super Admin for this purpose, so it cannot widen the role it wears." },
+      { kind: "h", text: "The Developer Hub is a catalogue, not a set of buttons" },
+      { kind: "p", text: "`/developer` opens on what the section can change, grouped by subject, and every entry answers the same three questions in the same three words: **Does**, **Can destroy**, **Safeguard**. That is the whole argument of the page — a section for changes nobody else may make is only defensible if every control can say what it does, what it would take with it, and what stops it, on its own line. So it is a list of answers rather than a grid of tiles." },
+      { kind: "table", headers: ["On the hub", "What it gives you"], rows: [
+        ["The three screens", "Purge Data, Prepare for Live Deployment and the Danger Zone, each with one sentence saying what it is for."],
+        ["The environment badge", "Whether this instance reads as development or production. The Danger Zone quotes the same badge, and refuses to arm when it says production."],
+        ["Repo health", "Whatever this working copy's own checks really printed — a failure and a `skip` included, because a health panel that only ever shows green is a panel nobody reads."],
+        ["The audit notice", "The section's promise, stated where the controls are: every action, the reads included, written down with the actor, the IP, the section, the operation and the reason."],
+      ] },
+      { kind: "h", text: "Purge Data" },
+      { kind: "p", text: "**Purge Data** removes the sample and seed data, so an instance that has been demonstrated, seeded and developed on becomes a **clean slate** before live data arrives. It is the same operation the command line runs as `pnpm db:sample-off` — one implementation, asked by both — and it is reversible with `pnpm db:sample-on`, which reseeds from the snapshot." },
+      { kind: "p", text: "The order is the safeguard, and it is fixed:" },
+      { kind: "steps", items: [
+        "**Snapshot first.** A capture of the database is written — its manifest is `apps/api/src/snapshots/_manifest.json` — because the snapshot is what `pnpm db:sample-on` restores from. A wipe that ran before it would leave nothing to restore.",
+        "**Then the wipe**, in a declared order with children before parents, so no foreign key is left holding a row that has gone.",
+        "**Then the marker** (`apps/api/src/.sample-data-disabled`), set last because while it is set the snapshot is locked: automatic snapshot capture, and the automatic reseed after a change, both stop until sample data is enabled again.",
+      ] },
+      { kind: "p", text: "The screen puts the count in front of the button. The dry run reports **three lists**, and the third is the one that matters:" },
+      { kind: "table", headers: ["The list", "What it means"], rows: [
+        ["Preserved — `KEEP_MODELS`", "**13 tables** of identity and platform configuration: users, roles, sessions, refresh tokens, the tenant, system config, SSO config, field permissions, locales, translations, currencies, exchange rates and the retention policy. They survive so the instance still works — you can still sign in while it empties."],
+        ["Removed — `WIPE_MODELS`", "**85 tables** of work: tickets, time, comments, boards, invoices, payments, agreements, opportunities, projects, checklists, assets, purchase orders, vendors, reports, workflows, Kumo, the AI caches, the alerting tables, and the audit log itself."],
+        ["**Left behind — named by neither list**", "**21 of the 119 models `schema.prisma` declares are on neither list, and therefore survive a purge.**"],
+      ] },
+      { kind: "warn", text: "Read that third list before you press anything. A purge does **not** empty the database: it empties the work while leaving live-shaped records that neither list has classified. Among the 21 are **Company**, **Contact**, **Product**, **Quote**, **QuoteLineItem**, **ApiKey**, **SignInEvent** and **PushDevice**. Clients, contacts, the product catalogue, quotes and API keys therefore outlive a \"purge\" — if the reason you are running it is to hand the instance to somebody else, they are what you still have to deal with. The screen does not resolve this; it counts it, names it and puts it beside the preserved list." },
+      { kind: "p", text: "Two things are asked of you before the control arms. It does **not** arm at all for an account without `developer:purge` — the control is drawn disabled with the sentence saying why, because a control that refuses after the click is worse than one that never armed." },
+      { kind: "steps", items: [
+        "The **phrase**, typed exactly as the dry run publishes it: `purge sample data`. It says what is about to happen rather than naming a random token, because a phrase that can be re-typed from memory is one that gets typed by accident.",
+        "A **reason** — a sentence of at least three words, recorded with your account, your role and your IP address.",
+      ] },
+      { kind: "note", text: "The **receipt** is the record, not the connection: the dry run's figures, what was actually removed, what was preserved, what was left, the snapshot it took, the phrase and the reason. It is written in two places — an audit row, and a `SystemConfig` row under the reserved `sample_data:purge:` prefix. The second copy is not a luxury: `auditLog` is itself in the wipe list, so a receipt kept only in the audit trail would be destroyed by the act it describes. A client or proxy that gives up before the answer arrives changes nothing — the work continues and the receipt is still written." },
+      { kind: "h", text: "Prepare for Live Deployment" },
+      { kind: "p", text: "**Prepare for Live Deployment** is the migration plan with a surface: the plan's sections and exit conditions as **eight steps** — target and naming, parameters and secrets, infrastructure, database, the readiness gate, network and ingress, **sanitisation**, and validate-and-hand-off — each with a state and a checklist. Every checklist item carries the evidence it was checked against and the sentence saying what happens if it is skipped, and a step that owes a decision gets an owner and a place to record the answer rather than a checkbox." },
+      { kind: "p", text: "There are **five states, not two**:" },
+      { kind: "table", headers: ["State", "What it means"], rows: [
+        ["Done", "The check ran and passed, with the evidence it was checked against."],
+        ["Attention", "It ran and found something that needs a person — a placeholder value, a known pre-existing failure."],
+        ["Blocked", "It cannot pass until a named thing changes, and the card names the thing."],
+        ["Decision owed", "Not a task: an owner, and a place to record the answer."],
+        ["Could not verify", "**The check did not run.** It is a distinct state, and it is never drawn as a pass."],
+      ] },
+      { kind: "warn", text: "**A check that could not run is not a pass.** The plan's own second review found a gate that could not see the database, and that is why the screen exists: an unrecognised state becomes *could not verify*, the open items are shown as open, and if the deployment read fails altogether the page says what it could not read rather than falling back to a green tick — the fallback is the plan's eight steps with every state unverified. The screen finishes with a **hand-off report** you can print or export, instead of a tick mark." },
+      { kind: "h", text: "Danger Zone" },
+      { kind: "p", text: "**Danger Zone** holds the operations with **no way back at all**, kept apart from the purge not because they are more severe — a purge is severe too — but because nothing here can be undone, and a control with no way back should not sit under a heading whose other entries are recoverable. Each states what it will destroy, in countable figures, before its control can arm. The screen draws four cards: the three operations below, and the audit read-out, which is not an operation at all." },
+      { kind: "table", headers: ["Operation", "What it destroys"], rows: [
+        ["Purge all business data", "The deletion the Purge Data screen performs, as a single act rather than a return to a sample state: no snapshot, no marker, no route back. Its phrase is the operation's own name rather than a policy word."],
+        ["Reset the database to the empty schema", "Drops and recreates the schema from the migrations, so nothing survives — not even the identity and configuration tables the purge keeps. The login being used to run it stops existing mid-operation."],
+        ["Rotate every API key and disable every integration", "Every machine's access stops at once, and some of those machines are ones nobody remembered. It shows each caller's last-seen time before it acts, and reports afterwards what has not been heard from — which is the only way to find the machine nobody remembered."],
+      ] },
+      { kind: "warn", text: "**A production instance refuses.** Every operation here quotes the environment badge and will not arm at all when the badge says production; the refusal is drawn on the card rather than left to the API to say. Where an operation has no route behind it yet, the card says **not built** and an armed press states that nothing ran rather than pretending." },
+      { kind: "h", text: "Everything here is written down" },
+      { kind: "note", text: "Every action in the section — the reads as well as the destructive ones — is written to the audit log with the **actor**, the **IP**, the **operation**, the **reason** and the blast radius the dry run reported. It is written by the service that performs the work, never by the screen, so a `curl` cannot skip it, and the destructive operations additionally write a copy outside the wiped set because the purge deletes the audit trail along with everything else it takes." },
+    ],
+    related: [
+      // Every chip is gated as well as the section: they point at the Developer section's own screens
+      // and at its walkthrough, so a reader without `developer:view` must not meet one even if this
+      // section were ever drawn for them — see the related-chip filter in HelpDocPage.
+      { label: "API Access & the Event Gateway", to: "/help/walkthroughs/api-access", permission: Permission.DeveloperView },
+      { label: "Configuration", to: "/help/configuration", permission: Permission.DeveloperView },
+      { label: "Help Index", to: "/help/index", permission: Permission.DeveloperView },
+      { label: "Developer Hub", to: "/developer", permission: Permission.DeveloperView },
+    ],
+  },
 ];
 
-function Block({ block }: { block: HelpBlock }) {
+function Block({ block, permissions }: { block: HelpBlock; permissions: readonly string[] }) {
+  // A gated block is not drawn at all — an orphaned heading or an empty table is still a trace.
+  if (!helpVisible(block.permission, permissions)) return null;
   switch (block.kind) {
     case "h": return <h2 id={slugify(block.text)} className="text-base font-semibold text-white mt-6 mb-2">{block.text}</h2>;
     case "p": return <p className="text-sm text-gray-300 leading-relaxed mb-3">{inline(block.text)}</p>;
@@ -2003,16 +2161,24 @@ function Block({ block }: { block: HelpBlock }) {
     case "note": return <div className="bg-cyber-600/10 rounded-md px-3 py-2 my-3 text-sm text-gray-300"><span className="font-semibold text-cyber-400">Note: </span>{inline(block.text)}</div>;
     case "tip": return <div className="bg-green-600/10 rounded-md px-3 py-2 my-3 text-sm text-gray-300 flex gap-2"><Lightbulb size={16} className="text-green-400 shrink-0 mt-0.5" /><span>{inline(block.text)}</span></div>;
     case "warn": return <div className="bg-amber-600/10 rounded-md px-3 py-2 my-3 text-sm text-gray-300 flex gap-2"><AlertTriangle size={16} className="text-amber-400 shrink-0 mt-0.5" /><span>{inline(block.text)}</span></div>;
-    case "table": return (
-      <div className="overflow-x-auto my-3">
-        <table className="w-full text-sm border-collapse">
-          <thead><tr>{block.headers.map((h, i) => <th key={i} className="text-left text-gray-400 font-semibold border-b border-surface-border px-3 py-2">{h}</th>)}</tr></thead>
-          <tbody>
-            {block.rows.map((r, ri) => <tr key={ri} className="border-b border-surface-border/50">{r.map((c, ci) => <td key={ci} className="text-gray-300 px-3 py-2">{inline(c)}</td>)}</tr>)}
-          </tbody>
-        </table>
-      </div>
-    );
+    case "table": {
+      // A row may carry its own permission. The table is dropped when nothing survives it, because a
+      // heading over an empty body discloses exactly what the gate withholds.
+      const rows = block.rows
+        .map((row) => (Array.isArray(row) ? { cells: row, permission: undefined } : row))
+        .filter((row) => helpVisible(row.permission, permissions));
+      if (rows.length === 0) return null;
+      return (
+        <div className="overflow-x-auto my-3">
+          <table className="w-full text-sm border-collapse">
+            <thead><tr>{block.headers.map((h, i) => <th key={i} className="text-left text-gray-400 font-semibold border-b border-surface-border px-3 py-2">{h}</th>)}</tr></thead>
+            <tbody>
+              {rows.map((r, ri) => <tr key={ri} className="border-b border-surface-border/50">{r.cells.map((c, ci) => <td key={ci} className="text-gray-300 px-3 py-2">{inline(c)}</td>)}</tr>)}
+            </tbody>
+          </table>
+        </div>
+      );
+    }
     /*
      * A picture of the screen a step is talking about. The caption carries the pointing — "the switch is
      * the second row" — because a screenshot without an arrow is a second rendering of the same
@@ -2071,11 +2237,48 @@ function SectionIcon({ id }: { id: string }) {
   return <Wrench size={14} />;
 }
 
+/**
+ * The screen a walkthrough the reader may not open falls to — the same card a URL that names no
+ * walkthrough gets, so a gated section and a wrong address are indistinguishable from inside the Help.
+ */
+function HelpNotFound() {
+  return (
+    <div className="card p-6">
+      <h1 className="text-xl font-bold text-white">That walkthrough has moved</h1>
+      <p className="text-sm text-gray-400 mt-2">
+        It is no longer part of the documentation. The <Link className="text-cyber-400 hover:text-cyber-300" to="/help/index">Help Index</Link> lists
+        every topic, and <Link className="text-cyber-400 hover:text-cyber-300" to="/help">Help Home</Link> lists every walkthrough.
+      </p>
+    </div>
+  );
+}
+
 function HelpDocPage({ section }: { section: HelpSection }) {
   const redesign = useRedesign();
-  const pageAnchors = section.blocks.filter((b): b is Extract<HelpBlock, { kind: "h" }> => b.kind === "h").map((h) => ({ id: slugify(h.text), label: h.text }));
-  const core = HELP_SECTIONS.filter((s) => s.group === "core");
-  const walkthroughs = HELP_SECTIONS.filter((s) => s.group === "walkthroughs");
+  const { permissions } = useAuth();
+  /*
+   * The second line of defence, and the one that makes the gate deterministic: a gated section is not
+   * drawn by this component whoever asks it to draw it. `HelpWalkthrough` already refuses to *look one
+   * up*, but "the caller remembered to check" is not a property worth relying on — and what leaks from a
+   * section is not only its body. This page draws the sidebar, the "On this page" rail and the related
+   * chips out of the section's own metadata, so a gated section that arrived here by any route would
+   * still tell the reader that it exists, what it is called and where it lives.
+   */
+  if (!helpVisible(section.permission, permissions)) return <HelpNotFound />;
+  /*
+   * A related chip is a link to another topic, so it is gated on *that topic's* permission as well as on
+   * its own: a chip pointing at a section the reader cannot open is a chip that should not be there. The
+   * target is resolved from this same array, so a walkthrough that links to a gated walkthrough is held
+   * back without either of them having to know about the other.
+   */
+  const related = section.related.filter((r) =>
+    helpVisible(r.permission ?? HELP_SECTIONS.find((candidate) => candidate.path === r.to)?.permission, permissions),
+  );
+  // The anchors and both lists are gated, so a hidden walkthrough cannot leak its title through the
+  // "On this page" rail or through the sidebar of a page the reader is allowed to see.
+  const pageAnchors = section.blocks.filter((b): b is Extract<HelpBlock, { kind: "h" }> => b.kind === "h" && helpVisible(b.permission, permissions)).map((h) => ({ id: slugify(h.text), label: h.text }));
+  const core = HELP_SECTIONS.filter((s) => s.group === "core" && helpVisible(s.permission, permissions));
+  const walkthroughs = HELP_SECTIONS.filter((s) => s.group === "walkthroughs" && helpVisible(s.permission, permissions));
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       <aside className="lg:w-56 shrink-0">
@@ -2103,17 +2306,19 @@ function HelpDocPage({ section }: { section: HelpSection }) {
       <article className="flex-1 card p-6">
         <h1 className={redesign ? "text-base font-semibold text-white" : "text-xl font-bold text-white"}>{section.title}</h1>
         <p className={redesign ? "text-xs text-gray-500 mt-1 mb-3" : "text-sm text-gray-400 mt-1 mb-4"}>{section.description}</p>
-        {section.blocks.map((b, i) => <Block key={i} block={b} />)}
-        <div className="border-t border-surface-border/50 mt-6 pt-4">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Related topics</p>
-          <div className="flex flex-wrap gap-2">
-            {section.related.map((r) => (
-              <Link key={r.to + r.label} to={r.to} className="text-xs px-2.5 py-1 rounded-full bg-surface-lighter text-gray-300 hover:text-white hover:bg-cyber-600/20 inline-flex items-center gap-1">
-                {r.label} <ChevronRight size={12} />
-              </Link>
-            ))}
+        {section.blocks.map((b, i) => <Block key={i} block={b} permissions={permissions} />)}
+        {related.length > 0 && (
+          <div className="border-t border-surface-border/50 mt-6 pt-4">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Related topics</p>
+            <div className="flex flex-wrap gap-2">
+              {related.map((r) => (
+                <Link key={r.to + r.label} to={r.to} className="text-xs px-2.5 py-1 rounded-full bg-surface-lighter text-gray-300 hover:text-white hover:bg-cyber-600/20 inline-flex items-center gap-1">
+                  {r.label} <ChevronRight size={12} />
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </article>
     </div>
   );
@@ -2126,24 +2331,19 @@ export function HelpIndex() { return <HelpCore id="index" />; }
 
 /** Looks the section up by id rather than by position, so reordering the array cannot swap a page. */
 function HelpCore({ id }: { id: string }) {
-  const section = HELP_SECTIONS.find(candidate => candidate.id === id);
+  const { permissions } = useAuth();
+  const section = HELP_SECTIONS.find(candidate => candidate.id === id && helpVisible(candidate.permission, permissions));
   if (!section) return null;
   return <HelpDocPage section={section} />;
 }
 
 export function HelpWalkthrough() {
   const { pathname } = useLocation();
-  const section = HELP_SECTIONS.find(candidate => candidate.path === pathname);
-  if (!section) {
-    return (
-      <div className="card p-6">
-        <h1 className="text-xl font-bold text-white">That walkthrough has moved</h1>
-        <p className="text-sm text-gray-400 mt-2">
-          It is no longer part of the documentation. The <Link className="text-cyber-400 hover:text-cyber-300" to="/help/index">Help Index</Link> lists
-          every topic, and <Link className="text-cyber-400 hover:text-cyber-300" to="/help">Help Home</Link> lists every walkthrough.
-        </p>
-      </div>
-    );
-  }
+  const { permissions } = useAuth();
+  // A gated walkthrough is *not found* rather than refused: a typed URL reaches the same screen a
+  // mistyped one does, which is what the rest of the product does for a section that is not there.
+  // `HelpDocPage` refuses a gated section too, so this is the fast path rather than the only one.
+  const section = HELP_SECTIONS.find(candidate => candidate.path === pathname && helpVisible(candidate.permission, permissions));
+  if (!section) return <HelpNotFound />;
   return <HelpDocPage section={section} />;
 }

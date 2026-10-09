@@ -17,7 +17,7 @@ import {
   AlertTriangle, XCircle, Settings2, ListOrdered, Globe, Package, Presentation, Filter, Radio, Bot,
   MonitorSmartphone, Mail, KeyRound, Plug, ShieldAlert,
   Star, StarOff, Link2, AppWindow, SquareArrowOutUpRight, ChevronsUpDown, ChevronsDownUp, ChevronUp,
-  SquareTerminal,
+  SquareTerminal, Bug, Trash2, Rocket,
   type LucideIcon,
 } from "lucide-react";
 import { Breadcrumbs, buildBreadcrumbs, BreadcrumbTrailProvider } from "./Breadcrumbs";
@@ -44,6 +44,15 @@ export type NavNode = {
   label: string;
   /** Hidden from anyone without this permission, mirroring the API gate on the same module. */
   permission?: Permission;
+  /**
+   * A section whose worst case is not a mistake you can undo.
+   *
+   * Only the Developer section sets it. It is not decoration: both panes paint the row in the alert
+   * colour with a warning mark beside the label, because the failure mode this guards against is
+   * somebody opening it because it sat two rows below an ordinary settings section and looked like
+   * one.
+   */
+  danger?: boolean;
   children?: NavNode[];
 };
 
@@ -153,6 +162,26 @@ export const NAV_TREE: NavNode[] = [
       // everything on its page besides the reading is a write to a financial system.
       { id: "c7nc-flexpoint", to: "/c7nc/flexpoint", icon: CreditCard, label: "FlexPoint Payment Solutions", permission: Permission.IntegrationManage },
       { id: "c7nc-apps", to: "/c7nc/apps", icon: MonitorSmartphone, label: "Companion Apps" },
+    ],
+  },
+  {
+    /*
+     * The Developer section — the one part of this navigation whose worst case is not a mistake you
+     * can undo. It sits after Kumo, at the foot of the spine, and it is drawn in the alert colour with
+     * a warning mark beside its label (`danger: true`) so that never reads as another settings drawer.
+     *
+     * The parent carries `developer:view`, and that permission is held by the **Developer Admin** role
+     * and by nothing else — not by Super Admin and not by Admin. That is the whole gate: a role without
+     * it sees no section, no rail entry and no route, and the API answers the same way it does for the
+     * console, on the permission rather than on being senior. The destructive operations inside need
+     * the second permission, `developer:purge`, so a role can be given the checklist and the
+     * environment inspector without being given the purge.
+     */
+    id: "developer", icon: Bug, label: "Developer", permission: Permission.DeveloperView, danger: true, children: [
+      { id: "developer-hub", to: "/developer", icon: LayoutDashboard, label: "Developer Hub" },
+      { id: "developer-purge", to: "/developer/purge", icon: Trash2, label: "Purge Data" },
+      { id: "developer-deployment", to: "/developer/deployment", icon: Rocket, label: "Prepare for Live Deployment" },
+      { id: "developer-danger", to: "/developer/danger", icon: AlertTriangle, label: "Danger Zone" },
     ],
   },
   {
@@ -370,9 +399,22 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/mfa-setup": "Set up multi-factor authentication for your account.",
   "/activity": "Your own changes, and the pages you stayed on.",
   "/console": "Run commands against this instance, or via the c7ntax CLI.",
+
+  /*
+   * The Developer section. Each of these is written to say what the page can do to the instance,
+   * because the header is the last thing read before the page is used — and these are the four pages
+   * in the product where that sentence matters most.
+   */
+  "/developer": "What can be changed here that cannot be changed anywhere else, and what each one costs.",
+  "/developer/purge": "Remove the sample and seed data so the instance is a clean slate before live data arrives; identity and platform configuration stay.",
+  "/developer/deployment": "Sanitise and validate this instance before it is deployed, against the migration plan.",
+  "/developer/danger": "The four operations that cannot be undone.",
 };
 
-function getSectionDescription(pathname: string): string {
+function getSectionDescription(pathname: string, hidden: ReadonlySet<string> = new Set()): string {
+  // A path this session cannot open has no description. See `hiddenPaths` where it is built: naming
+  // a hidden page and describing what it does is the leak the not-found screen exists to prevent.
+  if (hidden.has(pathname)) return "";
   // Exact match first
   if (SECTION_DESCRIPTIONS[pathname]) return SECTION_DESCRIPTIONS[pathname];
   // Try parent path for nested routes (e.g., /tickets/abc123 → /tickets)
@@ -383,7 +425,7 @@ function getSectionDescription(pathname: string): string {
     // An empty parent is the root of a one-segment path, not a section worth inheriting from: falling
     // back to "/" here gave every top-level page the Dashboard's blurb (`/console` explained itself as
     // "key metrics, ticket volumes, and technician workload").
-    if (parent && SECTION_DESCRIPTIONS[parent]) return SECTION_DESCRIPTIONS[parent];
+    if (parent && SECTION_DESCRIPTIONS[parent] && !hidden.has(parent)) return SECTION_DESCRIPTIONS[parent];
   }
   return "";
 }
@@ -410,6 +452,32 @@ export function Layout({ children }: { children: ReactNode }) {
 
   // The navigation only offers what the API will actually serve for this role.
   const visibleTree = useMemo(() => filterNavByPermission(NAV_TREE, permissions), [permissions]);
+
+  /**
+   * The paths that exist in the tree but are hidden from *this* person by permission.
+   *
+   * The header is the other way a hidden section gives itself away: a typed URL renders the
+   * not-found screen, and then the title above it reads "Developer Hub — what can be changed here
+   * that cannot be changed anywhere else", which is the answer to the question the hidden row was
+   * refusing to ask. So the title, the breadcrumb and the one-line description are all resolved
+   * against the tree this session can actually open, and a path that is only in the full tree gets
+   * no name and no description rather than a borrowed one.
+   */
+  const hiddenPaths = useMemo(() => {
+    const reachable = new Set<string>();
+    const hidden = new Set<string>();
+    const collect = (nodes: NavNode[], into: Set<string>) => {
+      for (const node of nodes) {
+        if (node.to) into.add(node.to);
+        if (node.children) collect(node.children, into);
+      }
+    };
+    collect(visibleTree, reachable);
+    collect(NAV_TREE, hidden);
+    for (const path of reachable) hidden.delete(path);
+    return hidden;
+  }, [visibleTree]);
+
 
   /**
    * Which navigation pane to draw. The instance's setting decides, this browser can disagree with it,
@@ -912,6 +980,10 @@ export function Layout({ children }: { children: ReactNode }) {
     // Service Alerts reads as a live alert channel rather than a page, so its label and icon
     // carry the alert colour (matching its count badge) instead of the neutral nav grey.
     const isAlerts = node.id === "service-alerts";
+    // A section marked as a dangerous one wears the same warning colour *and* a mark, in the classic
+    // sidebar as well as the rail — the marking is a property of the section, not of one of the two
+    // navigation designs. See `NavNode.danger`.
+    const isDanger = node.danger === true;
     const dragProps = canDrag
       ? {
           draggable: true,
@@ -994,8 +1066,11 @@ export function Layout({ children }: { children: ReactNode }) {
               }`}
               style={{ paddingLeft: `${12 + depth * 12}px` }}
             >
-              <node.icon size={18} />
-              {!collapsed && <span className="flex-1 text-left truncate">{node.label}</span>}
+              <node.icon size={18} className={isAlerts || isDanger ? "text-alert-red" : undefined} />
+              {!collapsed && (isAlerts || isDanger ? <span className="text-alert-red">{node.label}</span> : node.label)}
+              {!collapsed && isDanger && (
+                <AlertTriangle size={12} className="shrink-0 text-alert-red" aria-hidden />
+              )}
               {!collapsed && favorites.includes(node.id) && !options.favorite && (
                 <Star size={12} className="shrink-0 text-amber-400" aria-label="Pinned to Favorites" />
               )}
@@ -1018,8 +1093,11 @@ export function Layout({ children }: { children: ReactNode }) {
                 active ? "nav-item--active bg-surface-lighter text-white" : "text-gray-400 hover:text-white hover:bg-surface-lighter"
               }`}
             >
-              <node.icon size={18} className={isAlerts ? "text-alert-red" : undefined} />
-              {!collapsed && (isAlerts ? <span className="text-alert-red">{node.label}</span> : node.label)}
+              <node.icon size={18} className={isAlerts || isDanger ? "text-alert-red" : undefined} />
+              {!collapsed && (isAlerts || isDanger ? <span className="text-alert-red">{node.label}</span> : node.label)}
+              {!collapsed && isDanger && (
+                <AlertTriangle size={12} className="shrink-0 text-alert-red" aria-hidden />
+              )}
               {!collapsed && favorites.includes(node.id) && !options.favorite && (
                 <Star size={12} className="shrink-0 text-amber-400" aria-label="Pinned to Favorites" />
               )}
@@ -1235,8 +1313,8 @@ export function Layout({ children }: { children: ReactNode }) {
               <button className="lg:hidden text-gray-400 hover:text-white p-1 shrink-0" onClick={() => setMobileOpen(true)} aria-label="Open the navigation">
                 <Menu size={20} />
               </button>
-              <h1 className="text-sm font-semibold text-white shrink-0">{getPageTitle(NAV_TREE, location.pathname)}</h1>
-              {(() => { const desc = getSectionDescription(location.pathname); return desc ? <span className="text-xs text-gray-500 truncate min-w-0">— {desc}</span> : null; })()}
+              <h1 className="text-sm font-semibold text-white shrink-0">{getPageTitle(visibleTree, location.pathname)}</h1>
+              {(() => { const desc = getSectionDescription(location.pathname, hiddenPaths); return desc ? <span className="text-xs text-gray-500 truncate min-w-0">— {desc}</span> : null; })()}
             </div>
           ) : (
           <div className="flex flex-col gap-0.5 min-w-0 flex-1 mr-6">
@@ -1245,11 +1323,11 @@ export function Layout({ children }: { children: ReactNode }) {
                 <Menu size={20} />
               </button>
               <h1 className="text-base font-semibold text-white truncate">
-                {getPageTitle(NAV_TREE, location.pathname)}
-                {(() => { const desc = getSectionDescription(location.pathname); return desc ? <span className="text-gray-500 font-normal text-sm ml-2">— {desc}</span> : null; })()}
+                {getPageTitle(visibleTree, location.pathname)}
+                {(() => { const desc = getSectionDescription(location.pathname, hiddenPaths); return desc ? <span className="text-gray-500 font-normal text-sm ml-2">— {desc}</span> : null; })()}
               </h1>
             </div>
-            <Breadcrumbs segments={buildBreadcrumbs(NAV_TREE, location.pathname)} />
+            <Breadcrumbs segments={buildBreadcrumbs(visibleTree, location.pathname)} />
           </div>
           )}
           {/* Header toolbar */}
@@ -1337,15 +1415,15 @@ export function Layout({ children }: { children: ReactNode }) {
                 segments.length < 3 ? "border-cyber-500 text-white" : "border-transparent text-gray-500 hover:text-gray-300"
               }`}
             >
-              {getPageTitle(NAV_TREE, `/${location.pathname.split("/")[1] || ""}`)}
+              {getPageTitle(visibleTree, `/${location.pathname.split("/")[1] || ""}`)}
             </Link>
             {segments.length >= 3 && (
               <Link
                 to={location.pathname}
                 className="flex items-center gap-2 border-b-2 border-cyber-500 px-3 py-1.5 text-xs text-white"
-                title={getPageTitle(NAV_TREE, location.pathname)}
+                title={getPageTitle(visibleTree, location.pathname)}
               >
-                <span className="max-w-[16rem] truncate">{getPageTitle(NAV_TREE, location.pathname)}</span>
+                <span className="max-w-[16rem] truncate">{getPageTitle(visibleTree, location.pathname)}</span>
               </Link>
             )}
             <button
@@ -1359,7 +1437,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
         )}
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-          <KumoTrail segments={buildBreadcrumbs(NAV_TREE, location.pathname)} />
+          <KumoTrail segments={buildBreadcrumbs(visibleTree, location.pathname)} />
           {children}
         </main>
         {/* Pinned rather than trailing the content: a notice that is only reachable by scrolling to

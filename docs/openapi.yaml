@@ -54,6 +54,8 @@ tags:
     description: "5 operations"
   - name: "Dashboard"
     description: "3 operations"
+  - name: "Developer"
+    description: "6 operations"
   - name: "Email connectors"
     description: "11 operations"
   - name: "Events"
@@ -2771,6 +2773,108 @@ paths:
       x-required-permissions: []
       x-permission-note: "No permission is required beyond being signed in."
       x-source: "dashboard.ts · dashboardRouter.delete"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/developer/deployment":
+    get:
+      tags: ["Developer"]
+      operationId: "getDeveloperdeployment"
+      summary: "Where the deployment stands against PLAN-030"
+      description: "The Azure go-live plan with a surface: eight steps — target and naming, parameters and secrets, infrastructure, database, the readiness gate, network and ingress, sanitisation, and validate-and-hand-off — each with whether it is shared or Azure-specific, a state drawn from five values (`done`, `attention`, `blocked`, `decision`, `unverified`), what the step decides, the commands that run it, and a checklist whose every item names the evidence its state was decided from and what happens if it is skipped.\n\n**Derived where it can be, `unverified` where it cannot.** An item whose answer is in this repository is decided by reading it — the migrations that exist, whether a deployment switch is set, whether TLS verification is on, the database name, whether the API has a readiness endpoint and whether both promotion gates ask it, whether the parameter file still carries a placeholder. Everything else is `unverified` with the reason, and nothing in this package has met an Azure subscription (said in `plan.unverified` and in `unread`). The two open items — `webOrigin` still a placeholder, and the app connecting as the server administrator — come back as `blocked`/`attention` rather than green, and the last High item, the least-privilege database role, is a `decision` deferred by the operator rather than a forgotten finding. Also carries the four advisories, the four decisions the operator owns with their recommendation, the §8.11 go-live bar, and a hand-off summary. Requires `developer:view`."
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["developer:view"]
+      x-source: "developer.ts · developerRouter.get"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/developer/deployment/records":
+    post:
+      tags: ["Developer"]
+      operationId: "postDeveloperdeploymentrecords"
+      summary: "Record the answer to a decision or a check"
+      description: "Body: `{ kind, id, note }` — `kind` is `decision` or `check`, `id` is one of the ids the report itself names under that kind (a decision such as `2.3`, or a checklist item such as `5.1`), and `note` is what was decided. **Refused with 400 naming the field that failed**: an unknown `kind`; an `id` this report does not name — or names under the *other* kind, so a checklist id submitted as a decision is refused rather than filed against the wrong list; and an empty `note`, because a record that names nothing is a record nobody can act on and it would sit in the payload looking like an answer. The refusals are a `details` list as well as a message.\n\n**Recording is not destructive**, so this needs `developer:view` like its siblings and deliberately not `developer:purge`: deciding what to do about the ingress is not the same act as emptying the database.\n\n**Where the answer is kept.** One record per subject, in `SystemConfig` under the reserved prefix `deployment:record:<kind>:<id>` — the same mechanism the purge receipt uses, and reserved in `routes/system.ts` beside `sample_data:`, so no HTTP caller can read or rewrite one (administrator included) and **a purge never touches it**. A decision taken before a purge is a decision that survives it, which matters because the purge is one of the things a decision may be about. Recording again **replaces** the answer rather than stacking a second one; the reply is `201` when the subject had no answer and one was created, `200` when an earlier answer was replaced.\n\nThe response is the **whole payload `GET /api/developer/deployment` would have returned** — including the updated records — plus `saved` naming the record just written, so a screen re-renders from one response instead of a write followed by a read. On the GET, every recorded answer appears three ways: in `records`, and attached to its own decision or checklist item as `record`. A record whose subject the report no longer names is still returned in `records` — a check that lost its id is exactly when somebody needs to read what was decided about it."
+      requestBody:
+        content:
+          application/json:
+            example: {"kind":"decision","id":"D1","note":"Front Door Premium alone, with a Private Link origin. Agreed with the operator."}
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["developer:view"]
+      x-source: "developer.ts · developerRouter.post"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/developer/environment":
+    get:
+      tags: ["Developer"]
+      operationId: "getDeveloperenvironment"
+      summary: "What this instance is configured to be"
+      description: "Every environment name the application declares — the ones the configuration registry names as the variable a setting replaces, and the ones the API reads directly — reported as `set` or falling back to the declared default, with the value in force where it is safe to print it. **A secret is never returned**: a name that looks like a credential reports `set`, `secret: true`, `withheld: true`, `effective: null` and a `hint` (the last characters of a fingerprint, enough to confirm *which* value is in place), and the payload says so in `secretsWithheld`. Beside it, `badge` names the instance (NODE_ENV, whether that means production, the host and port, the app version, the git commit where it can be read), `flags` is the flag registry as read-only rows with what is saved and what the environment alone would give, and `settings` is the effective value of every declared setting grouped by configuration section. Requires `developer:view`, which only the `Developer Admin` role holds."
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["developer:view"]
+      x-source: "developer.ts · developerRouter.get"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              example: {"badge":{"nodeEnv":"development","isProduction":false,"host":"…","port":4000,"version":"2026.10.9.123","commit":"0bfb0e8"},"env":[{"name":"DATABASE_URL","set":true,"effective":null,"source":"env","secret":true,"hint":"set; ends …c7ntax","withheld":true,"declaredBy":"read directly by the API"},{"name":"UI_INTERFACE_STYLE","set":false,"effective":"redesign","source":"default","secret":false,"hint":null,"declaredBy":"Workspace · Interface style"}]}
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/developer/health":
+    get:
+      tags: ["Developer"]
+      operationId: "getDeveloperhealth"
+      summary: "The repository's own guards, as they answer on this working copy"
+      description: "Runs the repository's check scripts — `check-route-guards`, `check-api-docs`, `check-config-reads`, `check-console-catalog`, `plugin-metadata check`, `audit-baseline`, `check-encoding`, `check-help-links`, `lint-design-tokens` — as child processes from the repository root, and reports each with its command, its own output (`detail`) and how long it took. Status is one of **three** words: `pass`, `fail`, or `skip` — and a check that could not run (its script is not on this working copy, the tool it needs is not installed, or it ran out of time) is `skip` with the reason, *never* a pass. A failing check never fails the request: the failure list is the answer, and an HTTP 500 instead of \"plugin metadata: fail\" would hide the thing the panel exists to show. On this tree `guard:plugin` fails and `guard:deps` needs `pnpm audit`, so it may not run at all. Requires `developer:view`."
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["developer:view"]
+      x-source: "developer.ts · developerRouter.get"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/developer/purge":
+    post:
+      tags: ["Developer"]
+      operationId: "postDeveloperpurge"
+      summary: "Purge the sample data, exactly as db:sample-off does"
+      description: "Body: `{ phrase, reason }`. **Refused with 400 unless the phrase matches `requiredPhrase` exactly and the reason is a sentence** — a `details` list names which field failed (`phrase`, `reason`), and the message says so too. Refused with **409** when the sample dataset is already disabled (the CLI returns quietly in that state; a route that did would answer 200 for an act that did not happen) and when a purge is already running.\n\nWhat it does is `pnpm db:sample-off`'s own code path, called rather than re-implemented: take a snapshot, delete `WIPE_MODELS` children-before-parents, then set `.sample-data-disabled`. While that marker is set the snapshot is **locked** — automatic snapshot capture and the automatic reseed after a change both stop — and `pnpm db:sample-on` is what clears it and reseeds. `KEEP_MODELS` and the unlisted models are untouched, so the instance stays usable but not empty of everything an operator might expect.\n\n**The receipt is the record, and it is written where the purge cannot reach it.** The purge deletes `auditLog`, so the audit row is written *after* the wipe and the durable copy is a `SystemConfig` row under the reserved `sample_data:` prefix, which the general configuration endpoint refuses to every caller including administrators. The response names it in `receiptPath` and `wrote`, and carries who, when, why, the phrase, the dry-run figure, the rows and tables removed, and the snapshot taken. A purge takes as long as the snapshot capture takes, so a client may give up before the answer arrives — the work continues and the receipt is still written. **Requires `developer:purge` *and* `developer:view`**, chained rather than listed together: `developer:view` alone cannot purge, and neither Super Admin nor Admin holds either permission."
+      requestBody:
+        content:
+          application/json:
+            example: {"phrase":"purge sample data","reason":"Clearing the demo dataset before the first production deployment."}
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["developer:purge"]
+      x-source: "developer.ts · developerRouter.post"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/developer/purge/preview":
+    get:
+      tags: ["Developer"]
+      operationId: "getDeveloperpurgepreview"
+      summary: "What a purge would remove — and what it would leave standing"
+      description: "A dry run with real counts, in three lists. `removed` is `WIPE_MODELS` (85 tables, counted in the child-before-parent order `db:sample-off` deletes them, each with a `why`), `preserved` is `KEEP_MODELS` (13 tables: identity and platform configuration, so the instance stays usable), and `unlisted` is the third list this endpoint exists for — models `apps/api/prisma/schema.prisma` declares that **neither** list names, and which therefore *survive* a purge. That is not a defect in the lists: it is the fact an operator has to see before pressing the button, because data outliving a \"purge\" is how a demo tenant reaches production. `dryRun` totals the removed figure, `auditRows` says how many rows of `auditLog` are inside it (the purge takes the trail too), `snapshot` describes the manifest a purge would replace (`locked` when the sample dataset is already off), `disabled` says whether it is already off, and `requiredPhrase` is the exact string `POST /api/developer/purge` will accept — returned rather than hard-coded on the screen so the two cannot drift. Requires `developer:view`."
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["developer:view"]
+      x-source: "developer.ts · developerRouter.get"
       responses:
         "200": { description: "OK" }
         "400": { $ref: "#/components/responses/BadRequest" }
@@ -5804,7 +5908,8 @@ paths:
     get:
       tags: ["Roles"]
       operationId: "getRoles"
-      summary: "Read roles"
+      summary: "Every role, and the one role only a Super Admin is shown"
+      description: "The role inventory with how many people wear each one. Two things are withheld from a caller who is not a **Super Admin**: the **Developer Admin** role is not returned at all, and `developer:view` and `developer:purge` are removed from every role's permission list — including a custom role that was deliberately given one. A Super Admin sees all of it. The same rule governs `GET /api/roles/:id`, which answers `404` for that role rather than returning it, so a single fetch is not a way around the list. Requires `role:manage`."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["role:manage"]
       x-source: "roles.ts · rolesRouter.get"
@@ -5849,7 +5954,8 @@ paths:
     patch:
       tags: ["Roles"]
       operationId: "patchRolesbyId"
-      summary: "Update roles/the one named"
+      summary: "Rename a role, change its type, or set its permissions"
+      description: "Only the fields sent are changed. A caller who is not a Super Admin is **refused with the offending key named** — `Refused: developer:view. Only a Super Admin may see or set the Developer Admin role and the developer permissions.` — when the submitted permission list contains `developer:view` or `developer:purge`, when the target role *is* the Developer Admin role, when the edit would move a role onto `developer_admin`, or when the role already holds one of the two keys. That last case is refused rather than accepted because those keys are not returned to that caller, so honouring the edit would quietly withdraw a permission they were never shown; a rename of such a role is refused for the same reason. A Super Admin is unrestricted. Requires `role:manage`."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["role:manage"]
       x-source: "roles.ts · rolesRouter.patch"
@@ -5960,7 +6066,7 @@ paths:
       tags: ["Security"]
       operationId: "getSecuritydevices"
       summary: "The devices registered to accounts"
-      description: "Passkeys (which sign in) and browser notification subscriptions (which receive), each with the account it belongs to, when it was registered and when it was last used. Filter with `userId`. Both kinds are *added* by the person they belong to, so this is the half an administrator needs: seeing a device nobody recognises, and a path to a lost phone. Requires `security:manage`."
+      description: "Passkeys (which sign in) and browser notification subscriptions (which receive), each with the account it belongs to, when it was registered and when it was last used. Filter with `userId`. Both kinds are *added* by the person they belong to, so this is the half an administrator needs: seeing a device nobody recognises, and a path to a lost phone. A device belonging to an account on the **Developer Admin** role is withheld from a caller who is not a Super Admin, and `?userId=` for one narrows to nothing. Requires `security:manage`."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["security:manage"]
       x-source: "security.ts · securityRouter.get"
@@ -5975,7 +6081,7 @@ paths:
       tags: ["Security"]
       operationId: "deleteSecuritydevicespasskeybyId"
       summary: "Remove a registered passkey"
-      description: "Deletes the credential, so the device can no longer sign in as that person. The recovery path for a lost phone as much as the response to a device that should not be there — the account holder can also do it themselves, under My Settings → Security. Requires `security:manage`."
+      description: "Deletes the credential, so the device can no longer sign in as that person. The recovery path for a lost phone as much as the response to a device that should not be there — the account holder can also do it themselves, under My Settings → Security. Removing a credential from an account on the **Developer Admin** role is refused to a caller who is not a Super Admin, by name. Requires `security:manage`."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["security:manage"]
       x-source: "security.ts · securityRouter.delete"
@@ -5995,7 +6101,7 @@ paths:
       tags: ["Security"]
       operationId: "deleteSecuritydevicespushbyId"
       summary: "Remove a notification subscription"
-      description: "Deletes the browser's push subscription, so alerts stop arriving there. Separate from the passkey route because it deletes from a different table: a mistake in a shared handler would be a mistake in both. Requires `security:manage`."
+      description: "Deletes the browser's push subscription, so alerts stop arriving there. Separate from the passkey route because it deletes from a different table: a mistake in a shared handler would be a mistake in both. Removing a subscription from an account on the **Developer Admin** role is refused to a caller who is not a Super Admin, by name. Requires `security:manage`."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["security:manage"]
       x-source: "security.ts · securityRouter.delete"
@@ -6015,7 +6121,7 @@ paths:
       tags: ["Security"]
       operationId: "getSecuritysessions"
       summary: "Who is signed in right now"
-      description: "One row per browser session with the person, the device read from the user agent, the `method` that opened it (from the sign-in event, not the session row), the address it arrived from, when it started and when it was last seen. `state` is `active` (the default), `ended` or `all`. Requires `security:manage`."
+      description: "One row per browser session with the person, the device read from the user agent, the `method` that opened it (from the sign-in event, not the session row), the address it arrived from, when it started and when it was last seen. `state` is `active` (the default), `ended` or `all`. Sessions belonging to an account on the **Developer Admin** role are withheld from a caller who is not a Super Admin, and `?userId=` for one narrows to nothing rather than being replaced by the rest. Requires `security:manage`."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["security:manage"]
       x-source: "security.ts · securityRouter.get"
@@ -6030,7 +6136,7 @@ paths:
       tags: ["Security"]
       operationId: "deleteSecuritysessionsbyId"
       summary: "Revoke one session"
-      description: "Stamps `invalidatedAt` rather than deleting the row: the session keeps saying what happened, and the cookie it belonged to stops resolving on the next request. Revoking one that has already ended answers `{ \"revoked\": false }` rather than failing. Requires `security:manage`."
+      description: "Stamps `invalidatedAt` rather than deleting the row: the session keeps saying what happened, and the cookie it belonged to stops resolving on the next request. Revoking one that has already ended answers `{ \"revoked\": false }` rather than failing. A session belonging to an account on the **Developer Admin** role is refused to a caller who is not a Super Admin, by name. Requires `security:manage`."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["security:manage"]
       x-source: "security.ts · securityRouter.delete"
@@ -6050,7 +6156,7 @@ paths:
       tags: ["Security"]
       operationId: "postSecuritysessionsrevokeUser"
       summary: "Sign one account out everywhere"
-      description: "Ends every live session a user has, for the day a laptop is lost or a password is suspected leaked. Body is `{ \"userId\": \"…\" }`; the answer is how many sessions were ended. Changing a password or disabling an account already does this, so it exists for when neither has happened and it is needed now. Requires `security:manage`."
+      description: "Ends every live session a user has, for the day a laptop is lost or a password is suspected leaked. Body is `{ \"userId\": \"…\" }`; the answer is how many sessions were ended. Changing a password or disabling an account already does this, so it exists for when neither has happened and it is needed now. An account on the **Developer Admin** role is refused to a caller who is not a Super Admin, by name. Requires `security:manage`."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["security:manage"]
       x-source: "security.ts · securityRouter.post"
@@ -6065,7 +6171,7 @@ paths:
       tags: ["Security"]
       operationId: "getSecuritysignIns"
       summary: "The sign-in log: every attempt, and how it ended"
-      description: "Newest first, filterable by `result` (`success`, `failure`, `locked`, `mfa_failed`, `code_failed`, `signed_out`), `userId`, a `from`/`to` window and a `search` across the address, device, IP address and reason. The `summary` beside the rows counts the whole **filtered** set, not the page, so \"how many of these were lockouts\" is answerable per window. Each row names the `method` — password, authenticator app, emailed code, passkey, single sign-on or portal code — which is what separates \"signed in\" from \"signed in with a second factor\". A row is written for every way in and for signing out, successes included, and `userId` is null when the address typed was not an account. Requires `security:manage`."
+      description: "Newest first, filterable by `result` (`success`, `failure`, `locked`, `mfa_failed`, `code_failed`, `signed_out`), `userId`, a `from`/`to` window and a `search` across the address, device, IP address and reason. The `summary` beside the rows counts the whole **filtered** set, not the page, so \"how many of these were lockouts\" is answerable per window. Each row names the `method` — password, authenticator app, emailed code, passkey, single sign-on or portal code — which is what separates \"signed in\" from \"signed in with a second factor\". A row is written for every way in and for signing out, successes included, and `userId` is null when the address typed was not an account. Events about an account on the **Developer Admin** role are withheld from a caller who is not a Super Admin — by account *and* by address, because a row records what was typed and can be written with no `userId` at all — and the `summary` is counted over the same filtered set. A row whose address is not an account at all still reads, because what it holds is what somebody typed. Requires `security:manage`."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["security:manage"]
       x-source: "security.ts · securityRouter.get"
@@ -7217,7 +7323,8 @@ paths:
     get:
       tags: ["Users"]
       operationId: "getUsers"
-      summary: "Read users"
+      summary: "The user directory, without the accounts on the developer surface"
+      description: "`search`, `role`, `status`, `limit` and `offset` as usual. The accounts wearing the **Developer Admin** role are excluded for a caller who is not a Super Admin, and excluded **inside the query** rather than filtered out of the page: `total` counts only what the caller can see, and `?search=` cannot reach one. Every picker built on this endpoint — assignees, approvers, managers — inherits the same answer. Requires `user:manage`."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["user:manage"]
       x-source: "users.ts · usersRouter.get"
@@ -7262,7 +7369,8 @@ paths:
     patch:
       tags: ["Users"]
       operationId: "patchUsersbyId"
-      summary: "Update users/the one named"
+      summary: "Edit a person: profile, placement, status, role, permissions"
+      description: "Only the fields sent are changed; a role or permission change needs `role:manage` **and** can never be applied to your own account. An account wearing the **Developer Admin** role may only be changed by a Super Admin: every write to one from anybody else is refused, by name — `Refused: devadmin@example.com. Only a Super Admin may see or change an account on the Developer Admin role.` — whether it edits the profile, activation, the password, MFA, the role or a permission override. `GET /api/users/:id`, `DELETE /api/users/:id`, `POST /api/users/:id/lock`, `POST /api/users/:id/reset-password` and `POST /api/users/:id/reset-mfa` answer the same way, and the single fetch answers `404` instead, so an id learned elsewhere is not a way round the directory. Requires `user:manage` (`security:manage` for the two reset routes)."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["user:manage"]
       x-source: "users.ts · usersRouter.patch"
@@ -7491,5 +7599,5 @@ components:
         occurredAt: { type: string, format: date-time }
         data: { type: object, description: "Kept as it arrived, on the ticket." }
 
-# 82 of 443 operations carry a curated summary from docs/api-operations.json;
+# 92 of 449 operations carry a curated summary from docs/api-operations.json;
 # the rest are described from their own path, which is still enough to call them correctly.

@@ -1,14 +1,18 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, Shield, Edit3, Trash2, Save, X, AlertTriangle, ChevronDown, ChevronRight, Users, CheckSquare, Copy, UserPlus, UserMinus, Search, ExternalLink, Download, RotateCw } from "lucide-react";
-import { SystemRole, Permission, PERMISSION_CATEGORIES, ROLE_PERMISSIONS } from "@C7NTAX/shared";
+import {
+  SystemRole, Permission, PERMISSION_CATEGORIES, ROLE_PERMISSIONS,
+  DEVELOPER_PERMISSION_KEYS, DEVELOPER_ROLE_REFUSAL, isDeveloperRole, withoutDeveloperPermissions,
+} from "@C7NTAX/shared";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { copyText, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { PageHeader, ListViews, ListFooter, StatCard } from "../components/ui";
 import { useRedesign } from "../hooks/useNavigationStyle";
+import { useSuperAdmin } from "../hooks/useSuperAdmin";
 
 interface RoleRow {
   id: string; name: string; systemRole: string; permissions: string[];
@@ -19,8 +23,22 @@ function formatPermLabel(perm: Permission): string {
   return perm.split(":")[1]!.replace(/_/g, " ");
 }
 
+/**
+ * Why the Developer category is on its own, shown to a Super Admin — the only person who sees it.
+ *
+ * The two permissions it holds are the only ones whose worst case is removing this instance's
+ * contents, and the Developer Admin role exists so that being senior is not the same as being trusted
+ * with them: the category is deliberately **not** inherited by Super Admin, which is why this says
+ * "grant it on purpose" rather than "already yours". It closes with the sentence the API refuses with,
+ * so the interface and the refusal say the same thing.
+ */
+const DEVELOPER_CATEGORY_REASON =
+  "This category stands alone, and is not inherited by Super Admin, because it holds the only two permissions whose worst case is removing this instance's contents: developer:view opens the Developer section and developer:purge empties it. The Developer Admin role exists so that being senior is not the same as being trusted with them. " +
+  DEVELOPER_ROLE_REFUSAL;
+
 export function RolesPage() {
   const redesign = useRedesign();
+  const superAdmin = useSuperAdmin();
   const [roles, setRoles] = useState<RoleRow[]>([]);
   const [view, setView] = useState("all");
   const [loading, setLoading] = useState(true);
@@ -44,6 +62,27 @@ export function RolesPage() {
   const [memberSearch, setMemberSearch] = useState("");
   const [membersLoading, setMembersLoading] = useState(false);
   const menu = useContextMenu();
+
+  /*
+   * What a Super Admin sees that nobody else does: the Developer category, the Developer Admin system
+   * role in the two pickers, and the two permissions themselves in "Select all" and in the full-access
+   * count. `PERMISSION_CATEGORIES` and `SystemRole` are compiled into the bundle, so without these the
+   * screen would offer a role and two keys the API refuses — and the API *is* the gate: it omits the
+   * role from the list entirely and strips the keys from every role it returns, which is why this page
+   * needs no filter over the role rows themselves.
+   */
+  const visibleCategories = useMemo(
+    () => (superAdmin ? PERMISSION_CATEGORIES : PERMISSION_CATEGORIES.filter(cat => !cat.permissions.some(p => DEVELOPER_PERMISSION_KEYS.includes(p)))),
+    [superAdmin],
+  );
+  const roleTypes = useMemo(
+    () => Object.values(SystemRole).filter(sr => superAdmin || !isDeveloperRole(sr)),
+    [superAdmin],
+  );
+  const selectablePermissions = useMemo(
+    () => (superAdmin ? Object.values(Permission) : withoutDeveloperPermissions(Object.values(Permission))),
+    [superAdmin],
+  );
 
   const fetch = useCallback(async () => {
     try { const r = await api.get("/roles"); setRoles(r.data.data); }
@@ -103,7 +142,12 @@ export function RolesPage() {
       setSaving(false);
       setEditing(false);
       fetch();
-    } catch { toast.error("Failed to save"); setSaving(false); }
+    } catch (e: any) {
+      // The API's own wording, because its refusals name the permission or the role they refused —
+      // "Failed to save" would hide the one sentence that explains why.
+      toast.error(e?.response?.data?.error?.message || "Failed to save");
+      setSaving(false);
+    }
   };
 
   const handleCreateRole = async () => {
@@ -114,7 +158,9 @@ export function RolesPage() {
       setShowCreate(false);
       setNewRole({ name: "", systemRole: "technician", permissions: undefined });
       fetch();
-    } catch { toast.error("Failed to create"); }
+    } catch (e: any) {
+      toast.error(e?.response?.data?.error?.message || "Failed to create");
+    }
   };
 
   const handleDeleteRole = async (id: string) => {
@@ -124,7 +170,9 @@ export function RolesPage() {
       setShowDeleteConfirm(null);
       if (selected?.id === id) setSelected(null);
       fetch();
-    } catch { toast.error("Failed to delete"); }
+    } catch (e: any) {
+      toast.error(e?.response?.data?.error?.message || "Failed to delete");
+    }
   };
 
   // ── Right-click menu: Manage Roles ──
@@ -236,7 +284,7 @@ export function RolesPage() {
    * nobody holds, and one that grants nothing at all. Those are the three an administrator audits,
    * and each is a fact about the row rather than a second request.
    */
-  const ALL_PERMISSIONS = Object.values(Permission).length;
+  const ALL_PERMISSIONS = selectablePermissions.length;
   const fullAccess = (r: RoleRow) => ALL_PERMISSIONS > 0 && r.permissions.length >= ALL_PERMISSIONS;
   const noMembers = (r: RoleRow) => (r._count?.users ?? 0) === 0;
   const emptyRoles = roles.filter(noMembers).length;
@@ -397,7 +445,7 @@ export function RolesPage() {
                       <div className="space-y-1.5">
                         <input className="input-field text-sm py-1" value={editName} onChange={e => setEditName(e.target.value)} placeholder="Role name" />
                         <select className="input-field text-sm py-1 w-auto" value={editSystemRole} onChange={e => { setEditSystemRole(e.target.value); setEditPerms(new Set(ROLE_PERMISSIONS[e.target.value as SystemRole] || [])); }}>
-                          {Object.values(SystemRole).map(sr => <option key={sr} value={sr}>{sr.replace(/_/g, " ")}</option>)}
+                        {roleTypes.map(sr => <option key={sr} value={sr}>{sr.replace(/_/g, " ")}</option>)}
                         </select>
                       </div>
                     ) : (
@@ -476,19 +524,22 @@ export function RolesPage() {
                   {editing && (
                     <div className="flex items-center gap-2">
                       <button onClick={() => setEditPerms(new Set())} className="text-xs text-gray-500 hover:text-white">Clear All</button>
-                      <button onClick={() => setEditPerms(new Set(Object.values(Permission)))} className="text-xs text-gray-500 hover:text-white">Select All</button>
+                      <button onClick={() => setEditPerms(new Set(selectablePermissions))} className="text-xs text-gray-500 hover:text-white">Select All</button>
                       <button onClick={resetToDefaults} className="text-xs text-cyber-400 hover:text-cyber-300 flex items-center gap-1"><Copy size={10} /> Reset Defaults</button>
                     </div>
                   )}
                 </div>
 
                 <div className="space-y-1">
-                  {PERMISSION_CATEGORIES.map(cat => {
+                  {visibleCategories.map(cat => {
                     const allChecked = catAllChecked(cat.permissions);
                     const partial = catPartial(cat.permissions);
                     const expanded = expandedCats.has(cat.key);
                     const hasSensitive = cat.key === "admin" || cat.key === "security";
                     const isEditingSensitive = editing && hasSensitive && allChecked;
+                    // The category the Developer section is gated on. Only a Super Admin reaches it —
+                    // `visibleCategories` above is what removes it for everybody else.
+                    const isDeveloperCategory = cat.permissions.some(p => DEVELOPER_PERMISSION_KEYS.includes(p));
 
                     return (
                       <div key={cat.key} className="rounded-lg border border-surface-border/50 overflow-hidden">
@@ -501,9 +552,9 @@ export function RolesPage() {
                           className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-surface-lighter/30 transition-colors text-left"
                         >
                           {expanded ? <ChevronDown size={14} className="text-gray-500" /> : <ChevronRight size={14} className="text-gray-500" />}
-                          <span className={`text-xs font-medium flex-1 ${hasSensitive && editing ? "text-red-400" : "text-gray-300"}`}>
+                          <span className={`text-xs font-medium flex-1 ${(hasSensitive || isDeveloperCategory) && editing ? "text-red-400" : "text-gray-300"}`}>
                             {cat.label}
-                            {hasSensitive && editing && <AlertTriangle size={11} className="inline ml-1 text-red-400" />}
+                            {(hasSensitive || isDeveloperCategory) && editing && <AlertTriangle size={11} className="inline ml-1 text-red-400" />}
                           </span>
                           {editing && (
                             <input
@@ -519,6 +570,24 @@ export function RolesPage() {
                             {cat.permissions.filter(p => editPerms.has(p)).length}/{cat.permissions.length}
                           </span>
                         </button>
+
+                        {/*
+                          * The one category that is different in kind, so it is explained where it is
+                          * read rather than in a tooltip. Modern draws it as a sentence beside the
+                          * control it describes; classic draws it as a form note under the label. The
+                          * words are shared — only the arrangement differs.
+                        */}
+                        {isDeveloperCategory && (redesign ? (
+                          <p className="flex items-start gap-1.5 px-3 pb-2 text-[11px] leading-relaxed text-gray-500">
+                            <Shield size={12} className="text-red-400 shrink-0 mt-0.5" />
+                            <span>{DEVELOPER_CATEGORY_REASON}</span>
+                          </p>
+                        ) : (
+                          <div className="mx-3 mb-2 border-l-2 border-red-600/40 pl-3 text-[11px] leading-relaxed text-gray-500">
+                            <span className="block font-medium text-red-400">Separate on purpose</span>
+                            {DEVELOPER_CATEGORY_REASON}
+                          </div>
+                        ))}
 
                         {expanded && (
                           <div className="border-t border-surface-border/30 px-3 py-2 bg-surface/30">
@@ -619,7 +688,7 @@ export function RolesPage() {
               autoFocus
             />
             <select className="input-field" value={newRole.systemRole} onChange={e => setNewRole({ ...newRole, systemRole: e.target.value })}>
-              {Object.values(SystemRole).map(sr => <option key={sr} value={sr}>{sr.replace(/_/g, " ")}</option>)}
+              {roleTypes.map(sr => <option key={sr} value={sr}>{sr.replace(/_/g, " ")}</option>)}
             </select>
             <p className="text-xs text-gray-500">The system role type determines the default permission set. You can customize permissions after creation.</p>
             <div className="flex gap-2 pt-2 border-t border-surface-border">

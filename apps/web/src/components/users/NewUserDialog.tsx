@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import api from "../../api";
 import toast from "react-hot-toast";
 import { AlertTriangle, Check, Copy, KeyRound, Mail, UserPlus, X } from "lucide-react";
-import { validatePassword } from "@C7NTAX/shared";
+import { validatePassword, isDeveloperRole } from "@C7NTAX/shared";
 import { copyText } from "../../lib/menuActions";
 import { localTimezone, timezoneOptions } from "../../lib/timezones";
 import { PasswordInput } from "./PasswordFields";
@@ -26,6 +26,12 @@ interface Props {
   defaults?: { roleId?: string; companyId?: string; department?: string; timezone?: string; fromName?: string };
   /** Whether the signed-in user may hand out administrative roles. */
   canManageRoles?: boolean;
+  /**
+   * Whether the Developer Admin role is offered at all. False for everybody but a Super Admin, because
+   * the role is a Super Admin's alone to grant — see `packages/shared/src/developerAccess.ts`. The API
+   * refuses it either way; this is so the dialog does not offer a choice that would be refused.
+   */
+  showDeveloperRoles?: boolean;
 }
 
 type CredentialMode = "generate" | "set" | "invite";
@@ -63,7 +69,7 @@ export function isAdministrativeRole(role: { permissions?: string[] }): boolean 
  * placement and role on separate tabs, and an explicit choice about how the
  * first password reaches the person.
  */
-export function NewUserDialog({ open, onClose, onCreated, roles, clients, users, defaults, canManageRoles = true }: Props) {
+export function NewUserDialog({ open, onClose, onCreated, roles, clients, users, defaults, canManageRoles = true, showDeveloperRoles = false }: Props) {
   const [tab, setTab] = useState<number>(0);
   const [values, setValues] = useState<Values>(EMPTY);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -102,7 +108,9 @@ export function NewUserDialog({ open, onClose, onCreated, roles, clients, users,
     if (!source) return;
     setValues(v => ({
       ...v,
-      roleId: source.role?.id ?? v.roleId,
+      // The role travels with everything else *only* when the caller may hold it: copying the access
+      // settings of somebody on the Developer Admin role must not set this form up to be refused.
+      roleId: showDeveloperRoles || !isDeveloperRole(source.role?.systemRole) ? (source.role?.id ?? v.roleId) : v.roleId,
       companyId: source.companyId ?? v.companyId,
       department: source.department ?? v.department,
       timezone: source.timezone ?? v.timezone,
@@ -327,7 +335,7 @@ export function NewUserDialog({ open, onClose, onCreated, roles, clients, users,
                 <div className="space-y-1.5">
                   <label className="block text-xs font-medium text-gray-400">Role <span className="text-red-400">*</span></label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {roles.filter(r => canManageRoles || !isAdministrativeRole(r)).map(r => {
+                    {roles.filter(r => (canManageRoles || !isAdministrativeRole(r)) && (showDeveloperRoles || !isDeveloperRole(r.systemRole))).map(r => {
                       const selected = values.roleId === r.id;
                       return (
                         <button key={r.id} type="button" onClick={() => set("roleId", r.id)}

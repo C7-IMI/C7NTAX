@@ -49,6 +49,11 @@ import { CustomReportsPage } from "./pages/CustomReports";
 import { ReportDesignerPage } from "./pages/ReportDesigner";
 import { SectionLanding, SECTION_DESCRIPTIONS } from "./pages/SectionLanding";
 import { NotFoundPage } from "./pages/NotFound";
+import { DeveloperHubPage } from "./pages/Developer";
+import { DeveloperPurgePage } from "./pages/DeveloperPurge";
+import { DeveloperDeploymentPage } from "./pages/DeveloperDeployment";
+import { DeveloperDangerPage } from "./pages/DeveloperDanger";
+import { RequireDeveloper } from "./components/developer/RequireDeveloper";
 import { ProductCatalogPage } from "./pages/ProductCatalog";
 import { OutlookAddInPage } from "./pages/OutlookAddIn";
 import { C7NCFlexpointPage } from "./pages/C7NCFlexpoint";
@@ -125,6 +130,15 @@ function ProtectedRoutes() {
         <Route path="/ai-actions" element={<AiActionsPage />} />
         {/* The console as a page: the same component as the popup, plus a URL worth sharing. */}
         <Route path="/console" element={<ConsolePage />} />
+        {/*
+          The Developer section. Every route goes through the same gate, so the section's visibility is
+          decided in one place — `developer:view` — rather than four times over in four pages. Someone
+          without it gets the not-found screen: hidden, not refused.
+        */}
+        <Route path="/developer" element={<RequireDeveloper><DeveloperHubPage /></RequireDeveloper>} />
+        <Route path="/developer/purge" element={<RequireDeveloper><DeveloperPurgePage /></RequireDeveloper>} />
+        <Route path="/developer/deployment" element={<RequireDeveloper><DeveloperDeploymentPage /></RequireDeveloper>} />
+        <Route path="/developer/danger" element={<RequireDeveloper><DeveloperDangerPage /></RequireDeveloper>} />
         <Route path="/assistant" element={<AssistantPage />} />
         <Route path="/admin/service-alerts" element={<ServiceAlertsSettingsPage />} />
         <Route path="/opportunities" element={<OpportunitiesPage />} />

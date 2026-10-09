@@ -9030,4 +9030,839 @@ report-designer mockups before them.
   the outbound-mail sandbox, `developer:manage`, impersonation, maintenance mode — are labelled as proposals
   inside the file, not drawn as if they existed.
 
+---
+
+### Prompt 356 — The Developer section's API, and a purge that is the CLI's own code path
+
+**Timestamp:** 2026-10-09 13:38 | **Status:** Complete | **Duration:** ~22 min
+
+**BuildNotes IDs:** 2026.10.9.025 — the API half of the Developer section.
+
+**Prompt** (the brief this turn was given; the section's pages were built alongside it by the agents that
+own them)
+
+> You are building the **API half of a new Developer section** that is being added today. Two other agents
+> are building the pages that call you; three files are owned by the coordinator and you must NOT edit them:
+> `apps/web/src/App.tsx`, `apps/web/src/lib/navModel.ts`, `apps/web/src/components/Layout.tsx`,
+> `packages/shared/src/enums.ts`.
+>
+> Build `apps/api/src/routes/developer.ts` and mount it where the other routers are mounted. All routes are
+> `requirePermission(Permission.DeveloperView)` except the purge POST, which needs `Permission.DeveloperPurge`
+> on top of it — a purge must not be reachable by somebody who holds only `developer:view`:
+> `GET /api/developer/environment` (the environment inspector — every declared name, set or falling back,
+> never a secret's value, plus the badge and the effective `app_settings`), `GET /api/developer/purge/preview`
+> (the dry run: what `db:sample-off` would delete, what it would preserve, and the models named by neither
+> list that therefore survive), `POST /api/developer/purge` (body `{ phrase, reason }`, refused with 400
+> naming the field that failed, then **exactly what `db:sample-off` performs — the same code path**, with a
+> receipt written somewhere the purge does not touch), `GET /api/developer/health` (the repository's own
+> checks, three statuses, never letting a failure fail the request), and `GET /api/developer/deployment`
+> (eight steps, five states, evidence per item, two open items never green, everything unverifiable marked
+> `unverified`).
+>
+> Also yours: `docs/openapi.yaml` and `docs/API.md` — run the generator, add curated entries for the
+> operations a parser cannot invent, run the guards, and add the endpoints to the guide in the voice that
+> file already uses. TypeScript must compile: `npx tsc --noEmit -p tsconfig.json` in `apps/api` must be exit 0.
+> Never round-trip a UTF-8 file through PowerShell. Clean up any scratch files. Report the endpoints, what
+> the purge reuses and what had to be refactored, where the receipt is stored, what was verified against the
+> live database with figures, what could not be verified, and the guard results.
+
+**What I did**
+
+- **Read the neighbours before writing anything**, as the brief asked: `routes/reports.ts`, `routes/system.ts`,
+  `services/appSettings.ts`, the audit middleware, `autoSnapshot.ts`, `snapshot-capture.ts`, the shared
+  configuration registry and all four PLAN-030 documents. Two things that read differently from how they
+  first look, and both changed the design: `requirePermission(a, b)` admits a caller holding **either**
+  permission (`.some()`), so the purge chains two calls rather than naming both in one — a single call would
+  have let a `developer:view`-only account empty the database; and `resolveEnvironmentValue` is the registry's
+  authority, so the inspector reports the *declared default* rather than re-deriving the value in force.
+- **The purge is the CLI's own code path, and the CLI was refactored to keep it that way** — the one decision
+  worth the review. `sample-data-toggle.ts` had its model lists, its wipe loop and its snapshot/flag steps
+  inline, and opened its own `PrismaClient` at module load, so a route could not import it. The shared part
+  moved to `services/sampleDataOperations.ts`, which both callers use: the CLI keeps its argument parsing,
+  its log lines and its own client, and passes an `onDeleted` callback so its output is byte-identical. Two
+  things had to change for a request to be safe, and both are stated in the file: the child snapshot capture
+  is now `spawn`ed and awaited instead of `execSync` (which would have blocked the event loop for the length
+  of a capture inside a request), and the wipe takes the caller's client so the route reuses the server's
+  pool instead of opening a second one.
+- **The receipt is written where the act cannot reach it, because the purge deletes `auditLog`.** The audit
+  row is written *after* the wipe and the durable copy is a `SystemConfig` row under the reserved
+  `sample_data:` prefix — the convention `routes/system.ts` already withholds from every HTTP caller,
+  administrator included — with the response naming it in `receiptPath` and `wrote`.
+- **Verified against the live database, not against a mock.** The dry run returned **85 removed, 13
+  preserved and 21 unlisted** (the schema's 119 models less both lists), with the unlisted figures the brief
+  predicted — 21 contacts, 8 products, 5 companies, 3 quotes, 5 quote lines, 10 AI actions, 168 sessions,
+  112 sign-in events — and 4,939 `auditLog` rows inside the removed figure. Health ran all nine guards in
+  2.7 s and reported honestly: routes, api-docs, config, console, encoding and help-links pass; `guard:plugin`
+  fails; `guard:deps` cannot run without `pnpm`; the design-token lint reports the report-designer's raw
+  hexes. Deployment returned the eight steps with **2 done, 2 blocked, 2 decisions owed, 2 could not
+  verify** — the plan's own reading — with `webOrigin` a placeholder and the app still connecting as the
+  server administrator both coming back red.
+- **A real mistake, and the repair.** Testing the "already disabled" refusal, I created the marker file at
+  `apps/api/.sample-data-disabled`, which is where the service's *comment* says it lives — it is actually
+  `apps/api/src/.sample-data-disabled`, so the flag was not set and **the purge ran for real against the dev
+  database**. The snapshot behind it made it recoverable and I restored it in full: `db:sample-on` reseeded
+  7,145 of 8,197 records, ten tables (users above all, and the ticket chain that hangs off them) failed on
+  foreign keys, and I re-inserted those ten from their own fixtures in dependency order — finishing at
+  **8,197 of 8,197 across all 101 fixture tables, nothing short and nothing extra**. It was also, by
+  accident, the first end-to-end exercise of the refactored CLI, and the same defect then let me fix the
+  receipt's own wording, which repeated the wrong path. Two lessons worth keeping: a comment that names a
+  path is not evidence of the path, and a destructive path needs its refusal branches tested with the
+  *real* state rather than a file that only looks like it.
+- **Verified the permissions refusal too**: a Super Admin session (which holds neither permission) gets
+  **403** on `/api/developer/environment`, so the "not inherited" rule holds at the API and not only in the
+  rail.
+- **Documentation is part of the change**: `node scripts/generate-openapi.mjs` (448 operations, and the purge
+  documents `developer:purge`), five curated entries in `docs/api-operations.json` carrying the refusal rules
+  and what survives a purge, and a new subsection in `docs/API.md` §12 written in that file's voice.
+  `node scripts/check-api-docs.mjs` and `node scripts/check-route-guards.mjs` both pass, `guard:config` and
+  `guard:encoding` pass, and `npx tsc --noEmit` in `apps/api` is exit 0. The temporary API instance used for
+  the tests was stopped and its port released; every scratch file was deleted.
+
+**One thing this turn did not do:** the in-app Help for the section. The walkthroughs already exist in
+`HelpDoc.tsx` — written by the agent that owns that page — so adding a second would have duplicated it, and
+`check-help-links.mjs` passes against what is there.
+
+---
+
+### Prompt 357 — Developer → Prepare for Live Deployment, from the approved mockup
+
+**Timestamp:** 2026-10-09 14:15 | **Status:** Complete | **Duration:** ~50 min
+
+**BuildNotes IDs:** 2026.10.9.026 — one page of the new Developer section.
+
+**Prompt** (the brief this turn was given, verbatim from the coordinator)
+
+> You are building **one page of a new Developer section**, from a mockup that has already been approved and
+> reviewed. The mockup is the specification: read `docs/mockups/prepare-for-live-deployment.html` in full …
+> The truth this page has to keep: a check that could not run is never drawn as a pass; an open item is shown
+> as open; and the page never claims something was verified when the package has no way to know.
+
+**Changes:**
+- `apps/web/src/pages/DeveloperDeployment.tsx` — the page: one set of handlers (the read, the two record
+  calls, print and export), and a branch on `useRedesign()` between two arrangements.
+- `apps/web/src/components/developer/deploymentContract.ts` — the API contract and the five-state
+  vocabulary, the plan's own eight steps and sanitisation surfaces as a skeleton, defensive normalisation
+  (**an unrecognised or missing state is `unverified`, never `done`**), the counts, and the text export.
+- `apps/web/src/components/developer/useDeveloperDeployment.ts` — the read; on failure it returns the
+  skeleton with every step unverified *and* the reason, rather than a nicer model.
+- `apps/web/src/components/developer/DeploymentChrome.tsx` — the state chip, the five-state legend and the
+  "could not read" panel (which has its own two arrangements).
+- `apps/web/src/components/developer/DeploymentModern.tsx`, `DeploymentModernViews.tsx` — the four modern
+  states: the track, a step in detail, sanitisation, the hand-off, plus the countable sticky footer.
+- `apps/web/src/components/developer/DeploymentClassic.tsx` — the same wizard as a form: a numbered table of
+  contents with a State column, a `<select>` destination, a dialog per step with labelled fields and
+  Save / Save draft / Cancel, a remarks field per unverifiable check, sanitisation as two panels with their
+  own action, counts as a labelled row, and no printed-report preview.
+- `apps/web/src/components/developer/DeploymentPrintReport.tsx` — the report, into the application's own
+  `ticket-print-only` container so Print produces the report and not the chrome.
+
+**Verification:**
+- `npx tsc --noEmit` in `apps/web` — clean for every file this change adds.
+- `node scripts/lint-design-tokens.mjs` — no raw hex; `node scripts/check-encoding.mjs` — unchanged.
+- In the browser (dev web on `:3010`, API on `:4000`): the four modern states and the classic form were
+  checked against a fixture, and the unreadable state against the endpoint answering `404`.
+- **The gate was probed as the brief asked, in scratch work only and reverted**: `RequireDeveloper.tsx` was
+  temporarily made to render its children and the hook temporarily served a fixture. Both edits are gone —
+  `RequireDeveloper.tsx` is byte-identical to what it was, the fixture file was deleted, and no `SCRATCH`
+  marker remains in the tree. With the gate back, `admin@c7ntax.com` (Admin, no `developer:view`) gets the
+  not-found screen, and `devadmin@c7ntax.com` (Developer Admin) gets the page.
+- Every scratch artefact was deleted: the fixture, the extracted mockup text files.
+
+**One thing this turn could not ground:** the API's response shape. `GET /api/developer/deployment` is being
+built in parallel and answered `404` throughout, so the page was written against the contract in the brief
+and normalised defensively; the fixture it was verified against is this turn's reading of the mockup's own
+figures. The one shape assumed beyond the read is the write — `POST /developer/deployment/records` with
+`{ kind, id, note }` for both an owed decision's answer and a check's remark — which is isolated in
+`recordDeploymentRecord` so it is one function to change if the endpoint lands differently.
+
+---
+
+### Prompt 358 — The Developer section's Help, gated on the permission that opens the section
+
+**Timestamp:** 2026-10-09 14:10 | **Status:** Complete | **Duration:** ~45 min
+
+**BuildNotes IDs:** 2026.10.9.027 — a permission gate on Help content, and the Developer walkthrough.
+
+**Prompt** (the brief this turn was given)
+
+> The product's in-app Help is written by hand in **one file**: `apps/web/src/pages/HelpDoc.tsx`. Read its
+> header comment first — it states the maintenance rule this repository enforces: a feature change updates its
+> walkthrough, its rows in the `index` section, the `configuration` reference if a setting or flag is
+> involved, and `faq` if a user would plausibly ask about it. Read the whole file before editing.
+>
+> **What has just been built (by other agents, in parallel with you — treat as fact):** a new **Developer**
+> section — `/developer` (Developer Hub — a catalogue of every capability, each entry saying what it does,
+> what it can destroy and the safeguard), `/developer/purge` (Purge Data — removes the sample and seed data so
+> the instance is a clean slate before live data arrives), `/developer/deployment` (Prepare for Live
+> Deployment — the PLAN-030 migration plan with a surface: eight steps, a checklist that names its evidence, a
+> sanitisation step and a hand-off report) and `/developer/danger` (Danger Zone — the operations that cannot
+> be undone).
+>
+> Facts to get right (read the code rather than trusting the summary where they disagree): **who can see it**
+> — `developer:view` decides whether the section exists for a person at all (rail row, command palette,
+> routes, and this Help) and `developer:purge` decides whether the destructive controls will arm; held by
+> Super Admin and a new Developer Admin role and deliberately not by Admin, so an ordinary administrator has
+> no Developer row, no Developer permission to tick and no Developer pages behind a typed URL. **The purge
+> contract** — `apps/api/src/sample-data-toggle.ts` and what was factored out of it
+> (`services/sampleDataOperations.ts`, `developerPurge.ts`): a snapshot first, `KEEP_MODELS` (13 tables)
+> survive, everything in `WIPE_MODELS` (85 tables) goes, and a disabled flag locks the snapshot and pauses the
+> reseed while it is set; the same operation the CLI runs as `pnpm db:sample-off` / `db:sample-on`. **The
+> honest part** — the purge does not empty everything: the schema declares 119 models, the two lists name 98,
+> so 21 models are named by neither and survive, including Company, Contact, Product, Quote, QuoteLineItem,
+> SignedInEvent/ApiKey/PushDevice and others; the screen says so and so must the Help. Read the real model
+> names and counts from the running page or the preview endpoint rather than copying the list.
+>
+> **Job 1 — gate the Help.** The product owner's rule: none of the Developer content should be in the help
+> docs for anyone who cannot reach the section. A person without `developer:view` must find no trace of the
+> Developer section in Help — not in the sidebar, not in the walkthrough list, not in the `index` table, not
+> in `configuration`, not in `faq`, not in any `related` link, and not on the Help home page. Implement it as
+> a **permission gate on Help content**, not as text to delete: an optional `permission?: Permission` on
+> `HelpSection`, filtered wherever `HELP_SECTIONS` is enumerated; a gated *row* form
+> (`{ cells: string[]; permission: Permission }`) for the `index`/`configuration`/`faq` tables, filtered in
+> the table renderer; a gated route behaving like the rest of the product for a hidden section (Help home or
+> not-found) and no leak of the walkthrough's title through anchors or the sidebar. `check-help-links.mjs`
+> must still pass — read it to see exactly what it asserts and satisfy it honestly rather than by weakening
+> the check.
+>
+> **Job 2 — write the Developer walkthrough.** `id: "developer"`, `path: "/help/walkthroughs/developer"`,
+> gated on `Permission.DeveloperView`, in the voice and structure of `billing-agreements` and `reporting`.
+> Cover, in this order: what the section is and who can see it; the Developer Hub as a catalogue with the
+> three questions every entry answers; Purge Data (the snapshot-first order, what survives, what is removed,
+> **what is left behind and why that matters**, the typed confirmation, the mandatory reason, where the
+> receipt is written); Prepare for Live Deployment (the five states including *could not verify*, and the
+> rule that a check that could not run is not a pass); the Danger Zone refusing to arm on a production
+> instance; and a closing note that every action is written to the audit log with actor, IP, operation and
+> reason. Add its rows to `index`, add the permission to `configuration` if the access model is described
+> there, and add a `faq` entry or two only if a user would plausibly ask.
+>
+> House rules: `npx tsc --noEmit -p tsconfig.json` in `apps/web` exit 0; `node scripts/check-help-links.mjs`
+> and `node scripts/check-encoding.mjs` pass; never round-trip a UTF-8 file through PowerShell; design tokens
+> only; do not touch `apps/api/**`, `packages/shared/src/enums.ts`, `App.tsx`, `navModel.ts`, `Layout.tsx`,
+> the `Developer*.tsx` pages, `components/developer/**` or `useDeveloperAccess.ts`. Verify on dev web
+> `:3010` as `devadmin@c7ntax.com` / `devadmin` (can see the section and its Help) and `admin@c7ntax.com` /
+> `admin` (must see nothing developer-related in Help, including the Index and its search).
+
+**What I did**
+
+- **Read `check-help-links.mjs` before designing the gate, because it constrains the design.** It asserts
+  three things straight from the source: every `to:` link resolves to a declared route; every
+  `/help/walkthroughs/...` path appears in the slice of the file between `id: "index"` and the first
+  `WALKTHROUGHS` comment; and `Help.tsx` still contains the literal
+  `HELP_SECTIONS.filter((s) => s.group === "walkthroughs")`. So a gate that *deletes* content would fail the
+  Index assertion and a gate that re-plumbs the home list would fail the third. The gate is therefore a
+  **filter over arrays that still contain everything**: the Index entry is a gated row inside the Index
+  table, and `Help.tsx` keeps the literal and applies `helpVisible` to the list it produced.
+- **One gate, three places in the type.** `HelpSection.permission`, an optional `permission` on every block
+  (via `HelpBlockShape & { permission?: Permission }`, so a gated heading is gated with the rows it
+  introduces) and `HelpTableRow = string[] | { cells: string[]; permission: Permission }`, with
+  `helpVisible(permission, held)` as the single test. The table renderer drops a table whose rows all
+  disappear, because a heading over an empty body discloses what the gate withholds — `check-help-links`
+  would not have caught that and the browser would have shown it as a bare header row.
+- **Applied it everywhere the array is read**: the sidebar on every Help page, the "On this page" anchors,
+  `HelpCore`, `HelpWalkthrough` (a gated path falls to the existing not-found screen, so a typed URL and a
+  mistyped one look the same), and `Help.tsx`'s two lists. `useAuth().permissions` is the source, so the Help
+  gate and the rail gate are the same decision.
+- **The Developer walkthrough**, in the neighbours' voice: what the section is and who can see it (the two
+  permissions, plus the fact that only a Super Admin may see or set the Developer Admin role itself), the Hub
+  as a catalogue answering **Does / Can destroy / Safeguard**, Purge Data (snapshot → wipe → marker, the 13
+  kept, the 85 wiped, the typed phrase, the reason, the receipt in `SystemConfig` because the purge deletes
+  `auditLog`), Prepare for Live Deployment (eight steps, five states), the Danger Zone and its production
+  refusal, and the audit-log closing note. Index rows, a gated `configuration` entry for the access model,
+  and two gated FAQ answers.
+- **The numbers were taken from the code, not from the brief, because the brief's own list was wrong and the
+  running API was stale.** `GET /api/developer/purge/preview` answered **404** on the running `:4000`
+  instance (that process predates the developer router, and `/api/developer/environment` answers 404 too), so
+  I reproduced `developerPurge.ts`'s own computation — `schema.prisma`'s `model` declarations, delegate-cased,
+  less `WIPE_MODELS` and `KEEP_MODELS` — and got **119 / 13 / 85 / 21**, matching the brief's counts. The
+  survivor *names* did not match the brief: there is no `ApiSession`, and the real list is `userSession`,
+  `signInEvent`, `company`, `contact`, `boardLayout`, `billingBatch`, `apiKey`, `eventRecord`,
+  `kumoAuditLog`, `quote`, `quoteLineItem`, `product`, `webauthnCredential`, `pushDevice`,
+  `userDashboardConfig`, `userNavConfig`, `aiAction`, `aiActionAudit`, `outlookAddinToken`,
+  `portalLoginCode`, `portalSession`. The walkthrough names Company, Contact, Product, Quote, QuoteLineItem,
+  ApiKey, SignInEvent and PushDevice from that list.
+- **Another agent was editing this file at the same time, and had left two pieces of Developer content
+  ungated** — a FAQ answer ("Why is the Developer Admin role missing from my roles list…", which also
+  documents that only a Super Admin sees or sets the role and its holders) and its Index row under Identity &
+  security. Both are now gated, the FAQ heading with the answer because it is the only question under it;
+  `HEAD` does not contain either, so they arrived during this turn rather than before it. I also folded the
+  Super-Admin-only fact into the walkthrough's own note, since it is the question a Developer Admin will ask
+  next.
+
+**Verification:**
+
+- `npx tsc --noEmit -p tsconfig.json` in `apps/web` — **exit 0**. `node scripts/check-help-links.mjs` — 93
+  routes, **33 walkthroughs** (32 + the new one), 63 internal links, all resolving, every walkthrough listed
+  in the Index and on the Help home. `node scripts/check-encoding.mjs` — no double-encoded text.
+- In the browser (dev web `:3010`, API `:4000`), signed in as **`admin@c7ntax.com`** (Admin): `/help`,
+  `/help/index`, `/help/faq` and `/help/configuration` each contain **0** occurrences of "developer" and **0**
+  links to it, no table on any of them renders a body with no rows, and `/help/walkthroughs/developer`
+  renders **"That walkthrough has moved"** rather than the walkthrough. The only "developer" string on that
+  URL is the address bar's own path echoed into `Layout.tsx`'s active-section tab (whose label is "Help
+  Home") — the same tab carries the bogus path on a bogus URL, so it is generic chrome and not Help content.
+- As **`devadmin@c7ntax.com`** (Developer Admin): the Help home lists the Developer walkthrough; the Index
+  shows the Developer heading with its rows; `configuration` shows `developer:view`/`developer:purge`;
+  `faq` shows the Developer questions; and `/help/walkthroughs/developer` renders with its headings in order
+  — *What the section is, and who can see it* / *The Developer Hub is a catalogue, not a set of buttons* /
+  *Purge Data* / *Prepare for Live Deployment* / *Danger Zone* / *Everything here is written down* — with
+  Developer in the sidebar.
+- Two API restarts by other agents ended my browser session mid-verification (the app returned to `/login`
+  with "Your session ended"); both passes were re-run against the restored API and the results above are from
+  the completed runs.
+
+**One thing this turn could not ground:** the live purge preview. The dry run's own endpoint is not served
+by the running API instance, so the figures in the walkthrough are the model *counts* (119/13/85/21) rather
+than that instance's row counts — the walkthrough deliberately never states a row count, because it is a
+property of a particular database rather than of the product.
+
+---
+
+### Prompt 359 — The withheld walkthrough still showed its own sidebar row and related chips
+
+**Timestamp:** 2026-10-09 14:20 | **Status:** Complete | **Duration:** ~15 min
+
+**BuildNotes IDs:** 2026.10.9.027 — refined, not a new version (the coordinator is consolidating at the end).
+
+**Prompt** (the review this turn was given)
+
+> One thing your verification did not catch, and it is the exact failure the requirement is about. Please fix
+> it.
+>
+> ## The leak
+> Signed in as `admin@c7ntax.com` / `admin` (the Admin role — no `developer:view`), visit
+> **`/help/walkthroughs/developer`**. The page correctly refuses to render the walkthrough, but it still
+> renders **two links from that section** inside `main`: `Developer` → `/help/walkthroughs/developer` and
+> `Developer Hub` → `/developer`, sitting in the chip row at the foot of the article — the **`related` links
+> of the Developer walkthrough itself**. So the section's metadata is being rendered even though its body is
+> withheld, and it tells an Admin both that the walkthrough exists and that a `/developer` page exists.
+>
+> ## What to fix
+> 1. **A withheld walkthrough must render nothing from that section** — not its body, not its `related`
+>    links, not its anchors, not its title. The cleanest answer is the treatment the rest of the product uses
+>    for a hidden section: the same not-found screen a wrong URL gets, or a redirect to the Help home.
+>    Whatever you choose, prove that the page contains **zero** anchors whose href contains `/developer`, and
+>    zero occurrences of the string `Developer` in `main`, for an account without the permission.
+> 2. Check the **mirror** of it too: a *readable* walkthrough must not show a `related` chip pointing at a
+>    section the reader cannot open. Search `related:` across `HELP_SECTIONS` for
+>    `/help/walkthroughs/developer` and `/developer`.
+> 3. Re-run your own verification with a **link census rather than a word count** — count
+>    `a[href*="/developer"]` inside `main` on every Help route as the Admin account, including the gated one.
+> 4. Keep `node scripts/check-help-links.mjs` passing and `npx tsc --noEmit -p tsconfig.json` at exit 0. Do
+>    not add another BuildNotes version.
+
+**What I did**
+
+- **The leak was real wherever the section was drawn, and the fix is that it can no longer be drawn.**
+  `HelpDocPage` now refuses a gated section itself — `if (!helpVisible(section.permission, permissions))
+  return <HelpNotFound />` — so no caller can show any part of it: not the title, not the blocks, not the
+  "On this page" rail, not the sidebar and not the related chips. `HelpNotFound` is the card
+  `HelpWalkthrough` already fell back to, extracted so the two paths are literally the same screen; the
+  route keeps its own lookup (the fast path) and the page guard is the one that holds if the lookup is ever
+  wrong. The section's own metadata was the leak in the report: the sidebar row and the related chips are
+  drawn from `section`, so gating the *caller* was never enough.
+- **Related chips are now gated on the topic they point at, not only on the section they sit in.**
+  `related` entries gained an optional `permission`, and the renderer resolves the target from
+  `HELP_SECTIONS` by path when the chip does not carry one: a chip to a walkthrough the reader cannot open
+  is withheld without either section knowing about the other. A section whose chips are all withheld does
+  not draw an empty "Related topics" heading. The Developer walkthrough's four chips carry
+  `developer:view` explicitly as well, so the `/developer` chip (which names a page outside the Help and so
+  cannot be resolved from the array) is covered too.
+- **Searched `related:` for the mirror case**: `to: "/developer"` appears in exactly one related array in
+  the file — the Developer section's own — and `to: "/help/walkthroughs/developer"` appears in none. No
+  readable walkthrough chips to the Developer section, and the new resolution rule keeps that true if one
+  is added.
+
+**The link census** (`a[href*="/developer"]` inside `main`, plus occurrences of "Developer" in `main`):
+
+| Route | `admin@c7ntax.com` (Admin) | `devadmin@c7ntax.com` (Developer Admin) |
+| --- | --- | --- |
+| `/help` | 0 anchors, 0 words | 1 anchor, 1 word — the walkthrough card |
+| `/help/getting-started` | 0, 0 | 1, 1 — sidebar row |
+| `/help/faq` | 0, 0 | 1, 20 |
+| `/help/configuration` | 0, 0 | 1, 13 |
+| `/help/index` | 0, 0 | 1, 9 |
+| **`/help/walkthroughs/developer`** | **0 anchors, 0 words** — renders "That walkthrough has moved" | **2 anchors, 25 words** — sidebar row `Developer` → the walkthrough, related chip `Developer Hub` → `/developer` |
+| `/help/walkthroughs/api-access` | 0, 0 | 1, 1 — sidebar row |
+| `/help/walkthroughs/configuration` | 0, 0 | 1, 1 — sidebar row |
+
+- **Verified after the fix**: `npx tsc --noEmit -p tsconfig.json` in `apps/web` — **exit 0** for the whole
+  project (the deployment page's errors were another agent's mid-edit and cleared);
+  `node scripts/check-help-links.mjs` — 93 routes, 33 walkthroughs, 63 links, all passing;
+  `node scripts/check-encoding.mjs` — no double-encoded text.
+- **What I could not reproduce**: the intermediate bundle the report saw — my own census of that route as
+  Admin already read 0 anchors inside `main` before this fix (the only `/developer` string I found in the
+  document was the redesigned working-set strip in `Layout.tsx`, which links to the current path and lives
+  outside `main`). Since the leak was metadata drawn by `HelpDocPage`, the guard is at that component rather
+  than at the caller, which makes the outcome independent of how the section was reached.
+
+
+---
+
+### Prompt 360 — The deployment screen can write down what was decided
+
+**Timestamp:** 2026-10-09 14:06 | **Status:** Complete | **Duration:** ~12 min
+
+**BuildNotes IDs:** 2026.10.9.025 — the API half, which this extends.
+
+**Prompt**
+
+> Follow-up on your task, and it is a small one. The *Prepare for Live Deployment* screen has been built
+> against your `GET /api/developer/deployment` … But the page also offers the operator a place to **record an
+> answer** for a decision or a check, and it calls an endpoint you did not build:
+> `POST /api/developer/deployment/records` — body `{ kind: "decision" | "check", id: string, note: string }`.
+> It is isolated in one function, so today the screen says "the record was not saved" and the answer stays
+> outstanding — honest, but a feature that only ever fails is worse than one that is absent. Please add it.
+>
+> Persist it somewhere the purge does not touch, under its own reserved prefix; include it in the
+> `GET /api/developer/deployment` payload; permission `developer:view` (recording is not destructive, so it
+> must not need `developer:purge`); validate honestly, refusing an unknown kind, an unknown id and an empty
+> note with a message naming the field; document it (generator, curated entry, `docs/API.md`, then the two
+> guards); `npx tsc --noEmit` exit 0. Do **not** re-run a real purge to test this, and do not touch the
+> ordering or semantics of anything you already built. Also confirm that the GET still answers exactly as it
+> did (2/2/2/2) and that the four decisions each carry an id the POST will accept.
+
+**What I did**
+
+- **Added the write, and kept the read honest.** `buildDeploymentReport()` is untouched — it is still the
+  synchronous repository read it was — and a new `buildDeploymentReportWithRecords()` wraps it: read the
+  answers, attach each to its own decision or checklist item as `record`, and also list them in `records`.
+  The GET route calls the wrapper, so its steps, decisions, advisories, bar and the 2/2/2/2 counts are
+  byte-for-byte what they were, confirmed live before and after.
+- **The reserved prefix is a rule, not a convention.** The record lives at
+  `deployment:record:<kind>:<id>`, and `deployment:` was added to `RESERVED_CONFIG_PREFIXES` in
+  `routes/system.ts` beside `sample_data:` — so `/api/system/config/deployment:record:decision:D1` answers
+  **403** to an administrator and the row is absent from `/api/system/configs`. A purge does not touch
+  `systemConfig` at all, so an answer recorded before a purge is still there after it.
+- **The ids a record may name are read out of the report itself**, not declared a second time, which is what
+  made the interesting refusal possible: `2.3`, `8.3` and `8.5` are *both* decision ids and checklist item
+  ids, so `{ kind: "decision", id: "5.1" }` is refused with "`id` \"5.1\" is a check, not a decision" rather
+  than filed against the wrong list. All four refusals were exercised live with their HTTP codes and field
+  names: unknown kind, unknown id, cross-kind id, empty note.
+- **Verified the whole path against the running database**: `201` on create, `200` on replace (and the read
+  showed the revised note, so the replace is real), `201` for a checklist item, `records` carrying the
+  recorder's role and the reserved key, and the answer attached to `decisions[0]` and `steps[4].items[0]`
+  with unrecorded subjects still `null`. Then the two test rows were **deleted** — the screen should start
+  with no answers rather than with mine — and the temporary instance was stopped with its port released.
+- **No purge was run** to test any of it, and nothing already shipped changed behaviour.
+
+---
+
+### Prompt 361 — Only a Super Admin may see or set the Developer Admin role and its permissions
+
+**Timestamp:** 2026-10-09 14:14 | **Status:** Complete | **Duration:** ~30 min
+
+**BuildNotes IDs:** 2026.10.9.028 — the whole turn, including the follow-up in Prompt 361.
+
+**Prompt** (the sub-agent brief this turn was given, verbatim)
+
+> Repo: `C:\OneDrive\OneDrive - Cyber 7 Group\GHRepo\Kun\C7NTAX` (C7NTAX, pnpm/Turbo monorepo: `apps/api`,
+> `apps/web`, `packages/shared`).
+>
+> ## The requirement, verbatim
+> > Only super admins should be able to see and set the Developer Admin role and permissions. Regular admins,
+> > client admins, or any other type of admin will not be able to see or set them.
+>
+> ## What exists now (built minutes ago — read it, do not redo it)
+> - `packages/shared/src/enums.ts`: `Permission.DeveloperView = "developer:view"` and
+>   `Permission.DeveloperPurge = "developer:purge"`, plus a `PERMISSION_CATEGORIES` entry
+>   `{ key: "developer", label: "Developer" }`, plus `SystemRole.DeveloperAdmin = "developer_admin"` with
+>   `ROLE_PERMISSIONS[DeveloperAdmin] = Object.values(Permission)`. Those two permissions are **subtracted**
+>   from the Super Admin and Admin blanket grants (`DEVELOPER_PERMISSIONS`), so only the Developer Admin role
+>   holds them.
+> - The database already has the role **"Developer Admin"** (`systemRole: "developer_admin"`, 111 permissions)
+>   and the account **`devadmin@c7ntax.com`** wearing it. `apps/api/src/seed-developer-admin.ts` creates both
+>   and is idempotent.
+> - A new Developer section exists in the product (`/developer` …) gated on `developer:view`, with
+>   `useDeveloperAccess()` in `apps/web/src/hooks/useDeveloperAccess.ts` and `RequireDeveloper` in
+>   `apps/web/src/components/developer/RequireDeveloper.tsx`.
+>
+> ## Your job
+> Make the **Developer Admin role and the Developer permission category invisible and unsettable to everybody
+> except a Super Admin** — in the interface *and* in the API. Hiding a control is not a gate: this
+> repository's rule is that the API refuses the same thing the interface declines to draw.
+>
+> ### Server side (do this first — it is the real gate)
+> … 1. **Reading.** For a caller who is not a Super Admin, `GET /api/roles` must not return the Developer
+> Admin role, and must not return any role's `developer:*` permissions. Decide and state which you chose for
+> the role row — omitted entirely, or returned with its `permissions` redacted — and be consistent between the
+> list and the single-role fetch (`GET /api/roles/:id` must not become the way around it). 2. **Writing.**
+> `POST /api/roles` and `PUT/PATCH /api/roles/:id` must **refuse** (not silently strip) when the submitted
+> permission list contains any `developer:*` permission, or when the target role is the Developer Admin role.
+> Name the offending permission in the error so the refusal is diagnosable. 3. **Assigning.** A caller who is
+> not a Super Admin must not be able to put a user onto the Developer Admin role — neither by `roleId` when
+> creating or updating a user, nor by any other route that sets a user's role. 4. **Who counts as a Super
+> Admin.** `user.role.systemRole === "super_admin"`, and the **Developer Admin** role is *not* a Super Admin
+> and therefore cannot manage its own role either — say so in a comment. 5. Do not break anybody else: a Super
+> Admin must be able to do all of the above, and the existing `RoleManage`/`UserManage` gates must still be
+> honoured on top of the new rule.
+>
+> ### Interface (both designs)
+> A non-Super-Admin must not see the **Developer** permission category in any permission picker, and must not
+> see the Developer Admin role in the roles list or in any role dropdown; a Super Admin sees both, and the
+> Developer category should say **why** it is separate. Tell the person why, once, in the same words the API
+> would use, rather than disabling controls wordlessly. Every interface change is designed for both designs,
+> individually (`useRedesign()`), on the `CloseTicketDialog`/`PurchaseOrderDialog` pattern.
+>
+> ### House rules
+> `npx tsc --noEmit` exit 0 in both apps; design tokens only; `check-route-guards`, `check-api-docs`,
+> `check-encoding` and `check-help-links` all run and pass; never round-trip a UTF-8 file through PowerShell;
+> do not touch `App.tsx`, `navModel.ts`, `Layout.tsx`, `enums.ts`, the `Developer*.tsx` pages,
+> `useDeveloperAccess.ts`, `RequireDeveloper.tsx` or `routes/developer.ts`. **Verify against the running
+> system, don't assert** — API on `:4000`, dev web on `:3010`, and a second instance on another port for
+> probes is allowed if it is cleaned up. Report the files changed, the exact refusal rules, what a
+> non-Super-Admin now sees on each screen, how both directions were verified, and anything that could not be
+> enforced.
+
+**What I did**
+
+- **The rule went into one shared place rather than into each route.** `packages/shared/src/developerAccess.ts`
+  holds the two keys, the predicates, and the two refusal sentences — so the sentence a person reads in the
+  interface is the sentence the API would have answered with. `apps/api/src/services/developerAccounts.ts`
+  reads the Developer Admin role ids and its holders' ids and addresses, which is what lets an exclusion sit
+  *inside* a query rather than filter a page of results after the fact.
+- **Reads: the role is omitted, not blanked.** `GET /api/roles` drops the Developer Admin row for a
+  non-Super-Admin and strips `developer:*` from every other role's list; `GET /api/roles/:id` answers **404**
+  for it, so a single fetch is not a way around the list. Redacting the row instead was rejected: "Developer
+  Admin · 0 permissions" is a lie about the one role that holds everything.
+- **Writes: refused by name, never stripped.** `POST`/`PATCH`/`DELETE /api/roles` refuse for a
+  non-Super-Admin when the submitted list names a developer key, when the target *is* the Developer Admin
+  role, when the edit would move a role onto `developer_admin`, or when the target already **holds** one of
+  the keys — that last case is the one worth reading twice, because the permission is not returned to that
+  caller, so accepting their permission list would silently withdraw a permission they were never shown. A
+  rename of such a role is refused for the same reason.
+- **Assigning: three routes, one predicate.** `POST /api/users` refuses a developer role *or* a developer
+  grant on the account; `PATCH /api/users/:id` refuses a role change onto it, off it, and any individual
+  `developer:*` in the grants or the removals. `role` is looked up to its record first, so naming the system
+  role by string is the same refusal as naming it by id.
+- **A Developer Admin is not a Super Admin here, on purpose**, and that is written where it bites: it holds
+  `role:manage`, so the ordinary guard would let it administer its own role, and a role that can widen itself
+  is not a role. Verified live — signed in as `devadmin@c7ntax.com` it sees 6 roles and no Developer Admin row.
+- **Both interfaces, individually.** The Developer category and role pickers are withheld from a
+  non-Super-Admin; for a Super Admin the category carries an explanation of *why* it stands alone, drawn as a
+  sentence beside the control in the modern interface and as a labelled form note with a red rule in classic.
+  `handleSaveRole`/`handleCreateRole` now surface the API's own message in the toast instead of "Failed to
+  save", so a refusal reads as the API said it.
+- **One pre-existing path fixed while I was in it:** `NewUserDialog`'s copy-from-existing and the copy dialog
+  on Manage Users no longer prefill the Developer Admin role for a caller who may not hold it.
+
+**Verification:**
+
+- `npx tsc --noEmit -p tsconfig.json` — **exit 0** in `apps/api` and in `apps/web`.
+  `check-route-guards` (451 routes), `check-api-docs` (448 operations, 91 curated), `check-encoding` (744
+  files, no double-encoded text) and `check-help-links` (93 routes, 33 walkthroughs) all pass.
+  `lint-design-tokens` fails only on files this turn did not touch (`reportKit.tsx`, `designer/*`,
+  `ClientDetail.tsx`), which is the state of the tree before this change.
+- **Refusals, live, against a second instance on `:4010`** as `admin@c7ntax.com` — **14 of 14 refused**
+  with the offending key named: `PATCH`/`POST`/`DELETE` on the role, a `PATCH` moving an ordinary role *onto*
+  `developer_admin`, and a `PATCH` on a role holding `developer:view`; `POST /api/users` onto
+  `developer_admin` and with `developer:view`; `PATCH`/`DELETE`/`lock`/`reset-password`/`reset-mfa` on the
+  account; `POST /api/security/sessions/revoke-user`. The PATCH-onto case was found on a second pass — the
+  first version of the check compared the submitted `systemRole` against the permission keys rather than
+  against the role name — and a rename of an ordinary role still returns **200**, so the rule is not
+  over-refusing.
+- **The other direction, live:** as `persona.superadmin@c7ntax.local` — the role list is **7** with Developer
+  Admin present, the user list is **18** with `devadmin@c7ntax.com` present, and a throwaway role holding
+  `developer:view` was created (201), the Admin was refused when it tried to rename it (403), the Super Admin
+  renamed it (200) and deleted it (200). The database is back to 7 roles and 18 users.
+- **In the browser** (dev web proxied to the probe API, both interfaces): as Admin — Manage Roles shows 6
+  roles, 24 permission categories with no Developer among them, and a Create Role picker with 9 system roles
+  and no `developer admin`; Manage Users shows 17 rows with no `devadmin`, and a role filter without
+  Developer Admin. As Super Admin — 7 roles with Developer Admin, the Developer category with its
+  explanation in both modern and classic arrangements, and 18 users including the account, whose detail sheet
+  saved normally ("User updated").
+
+**Not groundable in this turn:** the *individually*-granted developer permission. An account holding
+`developer:view` on its own record rather than through the role is not hidden from a user list — only the
+key is stripped from it — because the requirement was written about the role and its holders. It is refused
+in both directions as a key (nobody but a Super Admin can add or remove one), but it is a boundary rather
+than a complete answer, and it is the first thing to widen if the intent was "anybody on the developer
+surface".
+
+---
+
+### Prompt 362 — …and the accounts wearing it
+
+**Timestamp:** 2026-10-09 14:14 | **Status:** Complete | **Duration:** the second half of the turn above
+
+**BuildNotes IDs:** 2026.10.9.028 — the same entry as Prompt 360.
+
+**Prompt** (the coordinator's mid-turn update, verbatim)
+
+> Two updates from the coordinator while you work — please fold both in before you report.
+>
+> ## 1. The access model has been settled, and one thing changed under you
+> The product owner has since said: *"If they aren't a Super Admin, then they won't see the Developer options
+> exist."* So the model is now a **union of two roles**, and I have changed
+> `packages/shared/src/enums.ts` (already on disk — re-read it): `ROLE_PERMISSIONS[SuperAdmin]` = **all**
+> permissions, so a Super Admin holds `developer:view` and `developer:purge` and does see the Developer
+> section. This reverses what I told you earlier. `ROLE_PERMISSIONS[Admin]` = all permissions **minus** the
+> two developer ones, so an ordinary Admin sees nothing developer-related anywhere.
+> `ROLE_PERMISSIONS[DeveloperAdmin]` = all permissions. I have already reconciled the database: the **Super
+> Admin** role now holds `developer:view` and `developer:purge` (111 permissions); **Admin** still holds 109
+> without them; **Developer Admin** holds 111. Note the Super Admin role has **4 real accounts**:
+> `jason.redwine@…`, `jonathan.redwine@…`, `stephen.simmons@…`, `persona.superadmin@c7ntax.local`. Use one of
+> these for the "a Super Admin succeeds" direction rather than creating a new account —
+> `persona.superadmin@c7ntax.local` exists for exactly this. If you need to sign in as it and do not know the
+> password, set one **and tell me the value you set and that you changed it**; do not silently leave a
+> modified credential. Your rule 4 ("who counts as a Super Admin: `systemRole === "super_admin"`") is
+> unchanged and still right: a **Developer Admin** cannot administer roles either.
+>
+> ## 2. A second requirement, which extends your task
+> > Only Super Admins will be able to see or edit the devadmin permissions **or any user account with the
+> > Developer Admin role**.
+>
+> So, in addition to hiding the role and the Developer permission category: a non-Super-Admin must not see
+> **the account** `devadmin@c7ntax.com`, nor any other user whose role is Developer Admin, in Manage Users or
+> anywhere else a user can be listed, searched, picked (assignee pickers, "view as", filters, bulk actions,
+> exports, the command palette, `GET /api/users` and any other endpoint that returns users). Decide and state
+> whether you **omit** those accounts from list responses or **redact** them to a locked stub, and be
+> consistent; whatever you choose, a search must not be a way around it, and a list that is filtered must not
+> still report a total that includes them. A non-Super-Admin must not be able to **edit** such an account at
+> all — no role change, no activation/deactivation, no password reset, no MFA reset, no session revocation, no
+> permission override. Refuse server-side (not just in the interface) with a message that says who can. A
+> Super Admin can see and edit them normally, and that must be verified in both directions. The Developer
+> **permission category** must not be visible to a non-Super-Admin in any permission picker, and `developer:*`
+> must not be settable on any role by a non-Super-Admin. Do not weaken the interface rule or the house rules
+> from your original brief. When you report, tell me explicitly: which accounts you used for each side,
+> whether you created or re-credentialed anything, and exactly what a non-Super-Admin now sees on Manage Users
+> and Manage Roles.
+
+**What I did**
+
+- **Chose omission over a locked stub, and made it a property of the query.** The accounts wearing the
+  Developer Admin role are excluded inside `GET /api/users`'s `where`, so `total` counts only what the caller
+  can see, `?search=` returns nothing for the address rather than finding it, and `?role=developer_admin`
+  narrows to an empty set instead of to the account. Because every picker in the product (assignees,
+  approvers, managers, checklist members, the Reports-to list) is built from that one endpoint, they inherit
+  the same answer without a second rule.
+- **`GET /api/users/:id` answers 404** for such an account, so an id learned elsewhere is not a way round the
+  directory, and the record does not become a locked stub that confirms it exists.
+- **Every write on such an account is refused, before anything is written** — `PATCH` (which carries the
+  profile, activation, the password and the permission overrides), `DELETE` (deactivation), `/lock`,
+  `/reset-password`, `/reset-mfa` — each answering `Refused: devadmin@c7ntax.com. Only a Super Admin may see
+  or change an account on the Developer Admin role.`
+- **The security screen keeps the same promise**, because hiding somebody in Manage Users and naming them —
+  with their address and device — in three lists next door is a half-measure. Sign-in events, live sessions
+  and registered devices belonging to such an account are excluded, their totals and group-bys are computed
+  over the same filtered `where`, and revoking a session, signing the account out everywhere and removing a
+  registered device are refused. The sign-in log is excluded **by address as well as by account**: a row
+  records what was typed and can be written with no `userId` at all — I found 14 such rows in this database —
+  so filtering by id alone left `devadmin@…` reading in plain sight.
+- **Re-read `enums.ts` before touching anything**, and left it alone: the Super Admin now holds all 111
+  permissions and a Super Admin is who `useSuperAdmin()` asks for, so the union model needed no change to
+  this turn's rule — and the Developer-Admin-holds-`role:manage`-yet-is-not-a-Super-Admin decision is what
+  keeps the two roles from being the same thing.
+- **Nothing was created and no credential was re-credentialed.** The one Super Admin used for every positive
+  probe is `persona.superadmin@c7ntax.local`, whose password is the one `_personas.mjs` sets for all persona
+  accounts (`Persona-Dev-Only-2026!`) — it signed in on the first attempt, so no password was set or changed
+  anywhere.
+
+**Verification:**
+
+- **Admin (`admin@c7ntax.com`)**: Manage Users **17 rows, 17 users, no `devadmin@c7ntax.com`**, role filter
+  with 6 roles and no Developer Admin; `GET /api/users?search=devadmin` → `{"data":[],"total":0}`;
+  `?role=developer_admin` → `total: 0`; `GET /api/users/<devadmin id>` → `404`. Manage Roles **6 roles**, the
+  Developer Admin row absent, no `developer:*` in any role, `GET /api/roles/<developer role id>` → `404`.
+- **Super Admin (`persona.superadmin@c7ntax.local`)**: `GET /api/users` → **18 rows / total 18** with the
+  account present; Manage Users shows the row with its **Developer Admin** badge and the role filter offers
+  Developer Admin; the detail sheet opened, `Edit` offered the role, and Save returned **"User updated"**.
+  `GET /api/roles` → **7 roles** including Developer Admin (111 permissions).
+- **Developer Admin (`devadmin@c7ntax.com`)** — the interesting third case: it holds every permission and
+  still sees **6 roles, no Developer Admin**, **17 users with its own account absent from Manage Users**, and
+  no Developer Admin in any picker, while the Developer section is in its navigation. Its own password and MFA
+  are still changeable through My Settings; what is gone is the administrative edit of its own account.
+- The session cookies from earlier probing made one read land on a stale identity; every check above was
+  re-taken with the identity asserted through `GET /api/auth/session` in the same step, which is why the
+  figures are quoted with the account that produced them.
+
+**Consequence worth naming, because it is a choice rather than a defect:** a Developer Admin can no longer
+see *itself* in Manage Users, and cannot edit its own profile there. The rule as written is "only a Super
+Admin can see or edit an account on the Developer Admin role", and hiding an account from its own holder
+serves no confidentiality purpose — so if the intent was "concealed from other administrators" rather than
+"from everybody", the fix is one clause (keep `own` rows visible and allow a profile-only self-edit) and I
+have left it undone rather than inventing the exception.
+
+---
+
+### Prompt 363 — The deployment screen against the real payload: 16 steps where there are 8
+
+**Timestamp:** 2026-10-09 14:40 | **Status:** Complete | **Duration:** ~35 min
+
+**BuildNotes IDs:** none added — the coordinator is consolidating the Developer section's entries, so this
+turn extends 2026.10.9.026's page rather than opening another version.
+
+**Prompt** (the coordinator's follow-up, abridged to the finding and the rules)
+
+> Follow-up on the same task — the API is now live and there is a contract mismatch to fix in your code. This
+> is a real defect, observed in the browser, not a style point. … the countable footer reads **16 steps ·
+> 2 done · 2 blocked · 2 decisions owed · 10 could not verify**. The API returns **8** steps and **2**
+> unverified. So your defensive skeleton and the API's real payload are being **merged** rather than
+> reconciled — 8 + 8 = 16, and the 8 you could not match are coming back `unverified`. … the whole point of
+> this screen is that "could not verify" means that, so a page that reports 10 of them when 2 are real is
+> the one failure mode this screen must not have. … 1. Match the API's own steps by `id` (and `number`), and
+> render exactly what it sends. The skeleton must be a *fallback for a failed read only* … 2. The counts must
+> come from the payload (`counts`) or be derived from the steps it actually received — never from a union of
+> the two sources. … 4. The write endpoint is coming. … 5. re-verify **both interfaces** against the live
+> API: the footer must read **8 steps · 2 done · 2 blocked · 2 decisions owed · 2 could not verify** …
+> 6. Do not edit anything outside your files, and do not add another BuildNotes version.
+
+**The defect, and its cause.** `normaliseDeployment` matched the payload's steps into the plan's skeleton by
+`key` and then emitted the skeleton for anything it did not match — and the API calls a step's identity
+`id`, not `key`, and spells an item's "skip it" sentence `ifSkipped`, not `skip`. So no step ever matched,
+all eight skeleton steps were emitted beside the eight real ones, and the skeleton's states were
+`unverified`. The footer reported the union: 16 / 2 / 2 / 2 / 10. The one thing this screen exists to keep
+apart — "we could not check" and "we checked" — was being blurred by the page's own fallback, which is the
+sharpest version of the mistake. Fixed by deleting the merge entirely.
+
+**Changes:**
+- **`deploymentContract.ts`, rewritten against the payload read from the running API** rather than against
+  the brief's prose: `steps[].{number,id,title,scope,state,summary,blockedBy,owedTo,plan,decides,run,items}`,
+  `items[].{id,title,state,evidence,ifSkipped,derived,blocking}`, `destination.{id,label,source}`,
+  `plan.{file,commit,unverified}`, `counts`, `decisions[]`, `advisories[].{title,detail,plan}`,
+  `bar[].{order,item,state,detail}`, `handoff.{runtime,database,mail,provenance}`, `unread[]`. The invented
+  `fields` array (Region, Readiness URL) is gone — the API's own `decides` and `run` are what the mockup's
+  "What this step actually decides" and "How it is run" panels were drawing.
+- **No skeleton on a successful read, at all.** `normaliseDeployment` renders exactly `raw.steps`; the
+  skeleton is now `STEP_FALLBACK` + `emptyModel(reason)`, used only when the read throws or when the body is
+  not a payload (`isDeploymentPayload` requires an array `steps`). The sanitisation step's surface list is
+  likewise the payload's own `items` — `SURFACE_FALLBACK` survives only as the failed-read fallback.
+- **The counts are the payload's `counts`, or derived from the steps actually received** — never the two
+  added together — and `DeploymentCounts.derived` records which happened, so the footer can say "counted
+  from the steps received" when it did the arithmetic itself.
+- **Two facts the API sends and the mockup does not draw are now shown**, because they are the same
+  distinction the page exists for: an item whose state was `derived: true` carries **"read from the
+  repository, not run"**, and an item with `blocking: false` carries "does not hold the deployment".
+- **The write path, aligned to the endpoint the API owner built** (`POST /developer/deployment/records`,
+  `{kind,id,note}`): the id for a decision is the **decision's own id** (`D1`, `2.3`) and for a check the
+  **item's id** (`6.1`) — the ids are read out of the report itself, so a cross-kind id is refused rather
+  than misfiled. The GET attaches each record as `record` on its own decision and its own item, so the screen
+  shows an answer from one read; a POST that answers with the updated payload is adopted straight from the
+  response (`applyPayload`) and only a bare acknowledgement triggers a re-read. Records whose subject the
+  report no longer names are kept and shown rather than dropped, which is the API's own reason for
+  returning them.
+- **Both arrangements updated**: the classic dialog's labelled fields are now the API's `id`, `scope`,
+  `plan`, `decides`, `run` and the step's own note; the hand-off's evidence column is "What it rests on"; the
+  report preview is the real `handoff` groups with `placeholder`/`warning` flags on `webOrigin`,
+  `connectsAs`, `tlsMode`, `configured` and `from`.
+
+**Verified — the live API, both interfaces, `devadmin@c7ntax.com` (Developer Admin):**
+- The track now shows **the eight steps in the API's order with its states** (1 decision · 2 blocked ·
+  3 done · 4 decision · 5 done · 6 blocked · 7 unverified · 8 unverified), and the footer reads exactly
+  **`8 steps · 2 done · 2 blocked · 2 decisions owed · 2 could not verify · 4 advisories`** — the defect is
+  gone, not hidden.
+- **Step 2's page shows the `webOrigin` placeholder evidence**: "derived: prod.bicepparam sets webOrigin =
+  'https://app.c7ntax.example.com'. It is a placeholder (§8.11, briefing ⚠) — it is passed as both
+  WEB_ORIGIN and CORS_ORIGIN…", with the "read from the repository, not run" marker on every derived item.
+- Sanitisation renders **7 surfaces** from the payload, each with its own evidence, "skip it" sentence and
+  state; the hand-off reads **"3 items open on the bar, 2 decisions owed, 2 checks the wizard could not
+  run"**, the report preview carries the real values (`webOrigin http://localhost:3010 placeholder`,
+  `connectsAs c7ntaxadmin warning`, `tlsMode require warning`, `commit 160dd2b`, `bicepCompiled true`,
+  `migrations 20`), and the §8.11 bar shows all five entries in order.
+- The classic arrangement: the numbered table with Id/Scope/Checks/State, the counts as a labelled row (no
+  dialog on load), the step dialog as a form of the API's own fields, the sanitisation step as two panels,
+  and the hand-off as a summary grid.
+- **The write path exercised end to end** (`201`/`200` with `saved.{id,subject,recordedBy,recordedByRole}` —
+  `recordedBy` is a **user id**, `recordedByRole` is `developer_admin`), the answer then rendering on the
+  decision as `answered` and the remark on item 6.1; **the two probe rows were deleted afterwards** and the
+  GET confirms `records: 0` with the counts still 2/2/2/2.
+- **The unreadable state re-checked twice**, by intercepting the request rather than by editing code: a `404`
+  and a `200` carrying `{hello:"world"}` both degrade to the panel that says what it could not read, with the
+  footer at `8 steps · 0 done · 0 blocked · 0 decisions owed · 8 could not verify`.
+- The gate again, incidentally: `admin@c7ntax.com` (no `developer:view`) gets the not-found screen;
+  `devadmin@c7ntax.com` gets the page.
+- `npx tsc --noEmit -p tsconfig.json` in `apps/web` is exit 0; `check-encoding.mjs` passes; the design-token
+  guard's failures are the report designer's and ClientDetail's, not this page's. No scratch file remains.
+
+**The one thing that will need reconciling:** `record.recordedBy` is a **user id** (`44328e33-…`), so the
+screen prints a UUID where a person's name belongs. I read `record.recordedBy`, `record.recordedByRole`,
+`record.recordedAt`, `record.note` and `record.subject`; the id is rendered verbatim rather than resolved,
+and I did not invent a lookup. If the API would rather carry `recordedByName`, or the screen should resolve
+the id through `/api/users/…`, that is one line in the decision card.
+
+**Reconciled after the fact:** the API now captures the recorder's **name** on the record beside the id
+(`recordedByName`, resolved once when the answer is signed off, so a later rename cannot rewrite who
+answered), and the contract reads the name as what it prints — falling back to the id only for a record
+written before the field existed. Verified by writing an answer as `devadmin@c7ntax.com`: the POST and the
+GET both return `recordedByName: "Developer Admin"`, the counts stayed 2/2/2/2, and the probe row was deleted
+afterwards.
+
+---
+
+### Prompt 364 — The four directives that shaped the Developer section, recorded verbatim
+
+**Timestamp:** 2026-10-09 19:30 | **Status:** Recorded | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.9.025 … 2026.10.9.029** (the section was built across them).
+
+The prompts above in this stretch are *work* entries — five agents wrote their own as they went — so the
+owner's own words are recorded here rather than inside each one. Numbered as they were given; each names the
+work entry that carried it out.
+
+**Prompt — the build**
+
+> Build them both. They should both live under the newly created Developer section. Create a new role called
+> Developer Admin with Super Admin permissions. create a user named devadmin with the Developer Admin role.
+>
+> Add the option to the Developer Admin role configuration so that the Developer section will only display
+> to a user if the role is Developer Admin. Otherwise it is hidden. Similar concept as the console.
+>
+> Place the section in the nav pane under Kumo. Clearly mark it in the nav pane to indicate it is a
+> risky/danger section to use.
+
+Carried out in **356** (the API), **357** and **360** and **363** (the wizard), **358** and **359** (Help) and
+the three screens in **2026.10.9.029**. The role and the account came from `seed-developer-admin.ts`: the
+`Developer Admin` role holding all 111 permissions, and `devadmin@c7ntax.com` wearing it. `developer:view`
+and `developer:purge` were added to the permission vocabulary as their own category in the role editor, and
+the section sits directly under Kumo in both panes, drawn in the alert colour with a bug icon and a warning
+mark, with the panel saying it is not recoverable by undoing it.
+
+**Prompt — the role and its permissions**
+
+> Only super admins should be able to see and set the Developer Admin role and permissions. Regular admins,
+> client admins, or any other type of admin will not be able to see or set them.
+
+Carried out in **361** and recorded in **2026.10.9.028**: the role is omitted from `GET /api/roles` rather
+than returned as an empty stub, `developer:*` is stripped from every other role, role writes naming a
+developer key are refused **by name**, and the Developer category does not appear in any permission picker.
+14 of 14 refusals were exercised against a second instance.
+
+**Prompt — the accounts wearing it**
+
+> Only Super admins will be able to see or edit the devadmin permissions or any user account with the
+> Developer Admin role.
+
+Carried out in **362** and recorded in the same version: holders are excluded **inside the query**, so
+`?search=` and `total` cannot disagree, the single-user read answers 404, and every write against such an
+account — role, lock, password, MFA, sessions, registered devices, and the sign-in audit's rows about them —
+is refused before it writes. A Developer Admin therefore cannot see or edit **itself**.
+
+**Prompt — nothing developer-related for anyone else**
+
+> If they aren't a Super Admin, then they won't won't the Developer options exist. None of the Developer
+> related should be in the help docs, either.
+
+Carried out in **358** and **359** and recorded in **2026.10.9.027**: the Help carries an optional
+`permission` per section and per table row, and a withheld walkthrough renders no title, no body, no
+anchors and no `related` chips. Verified by link census — `a[href*="/developer"]` inside `main` is **0** on
+every Help route for an Admin account and non-zero only for an account that may open the section. The same
+rule was then applied to the header chrome, which was still naming the hidden page: `getPageTitle`,
+`getSectionDescription` and `buildBreadcrumbs` now resolve against the permission-filtered tree, so
+`/developer` reads **"Not found"** for an Admin while a normal page is unaffected.
+
+**Notes for next time**
+- **The user's instruction changed the model twice, and the second change invalidated prose the first had
+  written.** Three agents had already written "a permission Super Admin does not inherit" into a screen, the
+  Help and the changelog before the instruction arrived that Super Admins do. Every one of those sentences
+  had to be found and corrected by hand — the lesson is to treat a permission model as a *fact with
+  dependants*, and grep for its name before declaring a change done.
+- **A gate is not one screen.** The Developer section was hidden correctly in the rail, the palette and the
+  route, and still announced itself three other ways: in Help's `related` chips, in the page header's title
+  and description, and in the breadcrumb. Hiding a thing means auditing every surface that can *name* it.
+
+
+
+
+
+
+
+
 

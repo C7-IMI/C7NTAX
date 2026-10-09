@@ -52,6 +52,7 @@ import { reportsRouter } from "./routes/reports";
 import { ssoRouter } from "./routes/sso";
 import { systemRouter } from "./routes/system";
 import { configurationRouter } from "./routes/configuration";
+import { developerRouter } from "./routes/developer";
 import { consoleRouter } from "./routes/console";
 import { configFlag } from "./services/appSettings";
 import { mountAddinRoutes } from "./routes/addin";
@@ -317,6 +318,10 @@ app.use("/api/nav", navRouter);
 app.use("/api/ai-actions", aiActionsRouter);
 app.use("/api/alert-webhooks", alertWebhooksRouter);
 app.use("/api/configuration", configurationRouter);
+// PLAN-030 / the Developer section: the environment inspector, the purge and its dry run, the repo
+// guards, and the go-live checklist. Gated on `developer:view`, which Super Admin and Admin deliberately
+// do not hold — see routes/developer.ts for why the purge needs `developer:purge` chained on top.
+app.use("/api/developer", developerRouter);
 // PLAN-028: the console's catalogue. The console itself parses in the front end and runs the real
 // route as the caller, so this is the only surface it adds to the API — see routes/console.ts.
 app.use("/api/console", consoleRouter);

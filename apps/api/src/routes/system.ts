@@ -154,8 +154,13 @@ const SELF_SERVICE_CONFIG_KEYS = new Set(["app_settings", "session_timeout", "de
  * Keys a request may never write, whoever is asking: connector credentials and OAuth handshake
  * state are owned by the services that create them, and the sample-data switches change what the
  * whole instance contains.
+ *
+ * `deployment:` joins them for the same reason the others are here. An answer recorded against a PLAN-030
+ * decision is a record of what somebody decided about this deployment — it is written by the Developer
+ * section and read back into the go-live report — and a row an administrator could rewrite through the
+ * general key-value endpoint would be a decision anybody could edit after the fact.
  */
-const RESERVED_CONFIG_PREFIXES = ["email_connector:", "oauth", "sso:", "sample_data"];
+const RESERVED_CONFIG_PREFIXES = ["email_connector:", "oauth", "sso:", "sample_data", "deployment:"];
 const RESERVED_CONFIG_PATTERN = /secret|token|password|credential|apikey|api_key|private_?key/i;
 
 /** True for a row that no HTTP caller may see, administrator included. */

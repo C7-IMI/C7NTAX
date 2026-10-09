@@ -1,5 +1,176 @@
 [
   {
+    "version": "2026.10.9.029",
+    "date": "2026-10-09",
+    "title": "Developer → the three screens: the catalogue, the purge and the danger zone",
+    "changes": [
+      {
+        "text": "**Developer Hub** (`/developer`) — the proposal, not a set of buttons: **34 capabilities in 6",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Purge Data** (`/developer/purge`) — `db:sample-off` with a surface. The five-step track (snapshot,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Danger Zone** (`/developer/danger`) — three irreversible operations, each stating in countable",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A refusal is drawn, not discovered.** A role holding `developer:view` without",
+        "type": "Update"
+      },
+      {
+        "text": "**Nothing is rendered as a zero when it could not be read.** Every read has an unavailable",
+        "type": "Update"
+      },
+      {
+        "text": "**Both interfaces, designed twice.** Modern: a rail you filter, a status track, sentences that",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.9.028",
+    "date": "2026-10-09",
+    "title": "The Developer Admin role, its two permissions and the people wearing it are a Super Admin's alone",
+    "changes": [
+      {
+        "text": "**The rule, in one place.** `packages/shared/src/developerAccess.ts` holds the two keys, the",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`GET /api/roles`** omits the Developer Admin row entirely for anybody but a Super Admin",
+        "type": "Update"
+      },
+      {
+        "text": "**`GET /api/roles/:id` answers `404`** for that role rather than returning it, so a single",
+        "type": "Update"
+      },
+      {
+        "text": "**A role write is refused, not stripped**, when the caller is not a Super Admin and the",
+        "type": "Update"
+      },
+      {
+        "text": "**The accounts on that role do not exist for anybody else.** They are excluded inside",
+        "type": "Update"
+      },
+      {
+        "text": "**The security screen keeps the same promise.** Sign-in events, live sessions and registered",
+        "type": "Update"
+      },
+      {
+        "text": "**Manage Roles and Manage Users, in both interfaces.** The Developer permission category, the",
+        "type": "Update"
+      },
+      {
+        "text": "**Documented where an integrator will look**: curated entries for `GET/PATCH /api/roles`,",
+        "type": "Update"
+      },
+      {
+        "text": "A copy-from-existing-user path (`NewUserDialog`, and the copy dialog on Manage Users) no longer",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.9.027",
+    "date": "2026-10-09",
+    "title": "The Developer section's Help, and a gate that keeps it from everyone else",
+    "changes": [
+      {
+        "text": "**A permission gate on Help content.** `HelpSection`, any block and any table row may carry",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The Developer walkthrough** (`/help/walkthroughs/developer`, gated on `developer:view`): what",
+        "type": "New Feature"
+      },
+      {
+        "text": "The walkthrough is listed in the **Index** under a gated Developer heading and in the",
+        "type": "Update"
+      },
+      {
+        "text": "Two pieces of Developer content already in the Help were **ungated** — the \"Users, roles &",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.9.026",
+    "date": "2026-10-09",
+    "title": "Prepare for Live Deployment: the plan as a wizard, with `could not verify` as a state",
+    "changes": [
+      {
+        "text": "**The eight-step track**, drawn from the plan's own items: target and naming, parameters and",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Five states, not two** — `done`, `attention`, `blocked`, `decision` and `unverified`, with a",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A step in detail** — the checklist with each item's state, the evidence it was checked",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The sanitisation step PLAN-030 does not cover**, with the two removals kept visibly apart:",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The hand-off is a report, not a tick** — what was checked with its evidence, what remains the",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Two designs, one set of handlers** — the modern arrangement is the approved mockup (a step",
+        "type": "New Feature"
+      },
+      {
+        "text": "When `GET /api/developer/deployment` does not answer, the page **says what it could not read**",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.9.025",
+    "date": "2026-10-09",
+    "title": "The Developer section has an API: the environment it is, the purge it performs, the guards it runs",
+    "changes": [
+      {
+        "text": "**`GET /api/developer/environment`** — every name the application declares (the configuration",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`GET /api/developer/purge/preview`** — a dry run with real counts in three lists. `removed` is",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`POST /api/developer/purge`** — `{ phrase, reason }`, refused with **400** naming the field that",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`GET /api/developer/health`** — the repository's nine guards, run as child processes from the",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`GET /api/developer/deployment`** — PLAN-030 with a surface: eight steps and a checklist whose",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`sample-data-toggle.ts` now calls `services/sampleDataOperations.ts`**, which is also what the",
+        "type": "Update"
+      },
+      {
+        "text": "**`docs/openapi.yaml`, `docs/api-operations.json` and `docs/API.md`** — five curated entries,",
+        "type": "Update"
+      },
+      {
+        "text": "**`POST /api/developer/deployment/records`** — where the operator writes the answer the plan",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.024",
     "date": "2026-10-09",
     "title": "The six Billing report cards generate, and the two reports they were missing",

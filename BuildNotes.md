@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.024 | Last Updated: 2026-10-09
+## Version: 2026.10.9.029 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,275 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.029 — Developer → the three screens: the catalogue, the purge and the danger zone
+
+The mockups drawn earlier today are now the section. It sits at the foot of the spine under Kumo, drawn in the
+alert colour with a warning mark beside its label, and it is invisible to every role that has not been given
+`developer:view` — no rail row, no palette entry, no page behind a typed URL, no Help walkthrough.
+
+- **[New]** **Developer Hub** (`/developer`) — the proposal, not a set of buttons: **34 capabilities in 6
+  groups** (data & database · environment & configuration · integrations & outbound · identity & access ·
+  diagnostics & repo health · danger zone), each entry answering the same three questions in the same three
+  words — what it **Does**, what it **Can destroy**, and the **Safeguard** that makes it acceptable to ship —
+  with where it lives today. An entry whose capability has no screen says which command owns it instead
+  ("no screen yet — this lives in `pnpm db:seed-coverage`") and carries a `command only` or `proposed` chip,
+  because a catalogue that pretends is a wish list.
+- **[New]** **Purge Data** (`/developer/purge`) — `db:sample-off` with a surface. The five-step track (snapshot,
+  dry run, typed confirmation, purge, receipt), the dry run's real counts, the removed list **beside** the
+  preserved list, and the third list that is the reason this screen exists: the **21 models neither list names,
+  which therefore survive a purge** — clients, contacts and the product catalogue among them. The confirmation
+  arms only on the exact phrase the API publishes plus a written reason, and the receipt names where the record
+  was written.
+- **[New]** **Danger Zone** (`/developer/danger`) — three irreversible operations, each stating in countable
+  terms what it destroys and requiring its own typed confirmation, and each **refusing to arm on a production
+  instance** (drawn in the armed-but-refused state, with the sentence explaining the refusal). A read-only card
+  records what the audit entry for a developer action carries.
+- **[Update]** **A refusal is drawn, not discovered.** A role holding `developer:view` without
+  `developer:purge` sees the dry run and the counts and finds the destructive control disabled with the
+  permission it would need named beside it — a control that refuses after the click is worse than one that
+  never arms.
+- **[Update]** **Nothing is rendered as a zero when it could not be read.** Every read has an unavailable
+  panel naming the failure ("This could not be read … (404)"), so a dead endpoint cannot masquerade as an empty
+  instance.
+- **[Update]** **Both interfaces, designed twice.** Modern: a rail you filter, a status track, sentences that
+  are themselves the guard, cards you press. Classic: a sortable five-column table, a form with a read-only
+  summary grid, a confirmation dialog with a heading and Save/Cancel whose reason field is visible on open, and
+  a four-row table whose Action column opens the same dialog.
+
+**Verification:** `tsc --noEmit` exit 0 in both apps; `guard:encoding` and `check-help-links` pass. Against the
+live API as a Developer Admin: **8,119 rows across 85 tables** removed, **58 across 13** preserved, **450 rows
+across 21 models** left behind, **4,951 audit rows** inside the figure; the health panel reporting 6 pass /
+3 fail with each check's own output; the typed phrase matching and the receipt returned. Stubbed to 404 and 502
+the panels say what they could not read and show no zeros. A `developer:view`-only account can read the dry run
+and cannot arm the purge. Production badge: every card refuses.
+
+---
+
+## 2026.10.9.028 — The Developer Admin role, its two permissions and the people wearing it are a Super Admin's alone
+
+Two permissions, `developer:view` and `developer:purge`, are the only ones whose worst case is removing what
+this instance holds, and **Developer Admin** is the role that carries them. The rule settled here is that a
+Super Admin is the only person who may see or set either the role or the keys **or the account wearing it**:
+every other caller — Admin, Client Admin, any administrator — is shown neither, and is refused by name if
+they ask. It holds in four places, because hiding a control is not a gate: the role list, the role write, the
+user directory and the security screens. A **Developer Admin is deliberately not a Super Admin for this
+purpose**: it holds `role:manage`, and a role that can widen itself is not a role.
+
+- **[New]** **The rule, in one place.** `packages/shared/src/developerAccess.ts` holds the two keys, the
+  predicates (`isSuperAdminRole`, `isDeveloperRole`, `wearsDeveloperRole`, `developerPermissionsIn`,
+  `withoutDeveloperPermissions`) and the two refusal sentences the API answers with and the interface shows —
+  so the words a person reads and the words the API would have said cannot drift. `apps/api/src/services/developerAccounts.ts`
+  reads the Developer Admin role ids and the ids and addresses of its holders, so an exclusion is inside the
+  *query* rather than a filter over a page of results.
+- **[Update]** **`GET /api/roles`** omits the Developer Admin row entirely for anybody but a Super Admin
+  (a blanked row reading "0 permissions" would be a lie about the role that holds everything) and strips
+  `developer:*` from every *other* role's list, including a custom role that was deliberately given one.
+- **[Update]** **`GET /api/roles/:id` answers `404`** for that role rather than returning it, so a single
+  fetch is not a way around the list.
+- **[Update]** **A role write is refused, not stripped**, when the caller is not a Super Admin and the
+  submitted permission list contains a developer key, the target *is* the Developer Admin role, the edit
+  would move a role onto `developer_admin`, or the role already holds one of the keys — the last because
+  those keys are not returned to that caller, so honouring the edit would quietly withdraw a permission they
+  were never shown. Deleting the role is refused the same way. The refusal names the offending key:
+  `Refused: developer:view. Only a Super Admin may see or set the Developer Admin role and the developer permissions.`
+- **[Update]** **The accounts on that role do not exist for anybody else.** They are excluded inside
+  `GET /api/users`'s query, so `total` counts only what the caller can see and `?search=` and `?role=` cannot
+  reach one; every picker built on that endpoint — assignees, approvers, managers — inherits the same answer.
+  `GET /api/users/:id` answers `404`, and **every write on such an account is refused by name** — profile,
+  activation, deactivation, password reset, MFA reset, role and permission override alike: `Refused:
+  devadmin@…. Only a Super Admin may see or change an account on the Developer Admin role.`
+- **[Update]** **The security screen keeps the same promise.** Sign-in events, live sessions and registered
+  devices belonging to such an account are excluded for anybody else — the sign-in log by account *and* by
+  address, because a row records what was typed and can be written with no `userId` at all — and their totals
+  and group-bys are computed over the same filtered set, so a tile cannot count what the list will not show.
+  Revoking a session, revoking every session of an account and removing a registered device are all refused.
+- **[Update]** **Manage Roles and Manage Users, in both interfaces.** The Developer permission category, the
+  Developer Admin system role in the two role pickers, the role filter, the role-template list and "Select
+  all" are all withheld from a non-Super-Admin, and a Super Admin sees the category with a sentence saying
+  *why* it stands alone — drawn as a sentence beside the control in the modern interface and as a form note
+  under the label in classic. The API is the gate; these exist so the screen never offers a choice that would
+  be refused. A refusal from the API is now surfaced in the toast in the API's own words rather than as
+  "Failed to save".
+- **[Update]** **Documented where an integrator will look**: curated entries for `GET/PATCH /api/roles`,
+  `GET/PATCH /api/users` and short notes on the five `/api/security` operations, in `docs/openapi.yaml` via
+  the generator; and one FAQ question in the in-app Help.
+- **[Fix]** A copy-from-existing-user path (`NewUserDialog`, and the copy dialog on Manage Users) no longer
+  prefills the Developer Admin role for a caller who may not hold it, which was one request away from a
+  guaranteed refusal.
+
+**Verification:** `npx tsc --noEmit -p tsconfig.json` — exit 0 in both `apps/web` and `apps/api`;
+`check-route-guards`, `check-api-docs`, `check-encoding` and `check-help-links` all pass. Against a second API
+instance on `:4010`: as **`admin@c7ntax.com`** (Admin) — 6 roles with the Developer Admin row absent and no
+`developer:*` in any role, `404` on the role and on the account, 17 users where the Super Admin sees 18, a
+search for the address returning `total: 0`, and **13 of 13 writes refused with the offending key named**;
+as **`persona.superadmin@c7ntax.local`** — 7 roles including Developer Admin, 18 users including
+`devadmin@c7ntax.com`, 25 permission categories including Developer with its explanation, and role create,
+update and delete on a role holding `developer:view` all succeeding. In the browser, both interfaces were
+screenshotted. The probe role and its writes were cleaned up; the database is back to 7 roles and 18 users.
+
+---
+
+## 2026.10.9.027 — The Developer section's Help, and a gate that keeps it from everyone else
+
+The in-app Help is hand-written in one file, and the Developer section is the one part of it that must not
+exist for most people: the rule kept here is that a reader who cannot reach the section finds **no trace** of
+it in the Help — not in the sidebar, not in the walkthrough list, not in the Index, not in the configuration
+reference, not in the FAQ, and not behind a typed URL. Deleting the words would have satisfied that and rotted
+the documentation, so the gate is a permission on the content and the content stays in the array where the
+guards can still see it.
+
+- **[New]** **A permission gate on Help content.** `HelpSection`, any block and any table row may carry
+  `permission`, and `helpVisible(permission, held)` is the one test — held is the signed-in person's
+  effective permissions, the same list the navigation is drawn from, so a walkthrough hidden here and a
+  section hidden in the rail are hidden by one decision. Every place that enumerates the sections applies
+  it: the sidebar on each Help page, the "On this page" anchors, the four core pages and the Help home list.
+  A table whose rows are all gated is not drawn at all, because a heading over an empty body discloses
+  exactly what the gate withholds, and a gated walkthrough's route falls to the not-found screen rather than
+  rendering. `scripts/check-help-links.mjs` is deliberately still satisfied: it reads the source, so the
+  walkthrough is still *listed in the Index* (as a gated row) and still derived on the Help home from
+  `HELP_SECTIONS` — the gate is a filter, not a deletion.
+- **[New]** **The Developer walkthrough** (`/help/walkthroughs/developer`, gated on `developer:view`): what
+  the section is and who can see it (the two permissions, held by Super Admin and Developer Admin and
+  deliberately not by Admin, with only a Super Admin able to see or set the role and its holders); the
+  Developer Hub as a **catalogue** where every entry answers **Does / Can destroy / Safeguard**; Purge Data —
+  the fixed snapshot → wipe → marker order, the 13 `KEEP_MODELS` that survive, the 85 `WIPE_MODELS` that go,
+  and the honest part: **21 of the 119 models `schema.prisma` declares are named by neither list and
+  therefore survive** (Company, Contact, Product, Quote, QuoteLineItem, ApiKey, SignInEvent, PushDevice among
+  them), the typed phrase `purge sample data`, the mandatory reason, and the receipt kept in `SystemConfig`
+  under `sample_data:purge:` because the purge deletes `auditLog`; Prepare for Live Deployment — the eight
+  steps and the **five states**, with *could not verify* never drawn as a pass; the Danger Zone refusing to
+  arm on a production instance; and the closing note that every action, reads included, is written to the
+  audit log with actor, IP, operation and reason.
+- **[Update]** The walkthrough is listed in the **Index** under a gated Developer heading and in the
+  **configuration** reference's access model, and asks the two FAQ questions a holder would ask (why somebody
+  cannot see the section; whether the purge is the same operation as `pnpm db:sample-off` — it is).
+- **[Fix]** Two pieces of Developer content already in the Help were **ungated** — the "Users, roles &
+  permissions" FAQ answer about the Developer Admin role and its Index row under Identity & security — and
+  are now gated with the rest, heading included.
+
+**Verified** in both interfaces by signing in to the dev instance: as `admin@c7ntax.com` (Admin) the Help
+home, `/help/index`, `/help/faq` and `/help/configuration` contain **zero** occurrences of "developer" and no
+empty table bodies, and `/help/walkthroughs/developer` renders the not-found screen; as
+`devadmin@c7ntax.com` (Developer Admin) the walkthrough renders with its six headings and sidebar row, the
+Index shows the Developer heading with its rows, and the FAQ and configuration show their gated entries.
+`npx tsc --noEmit` in `apps/web` exit 0, `node scripts/check-help-links.mjs` passes (93 routes, 33
+walkthroughs, 63 links) and `node scripts/check-encoding.mjs` reports no double-encoded text.
+
+---
+
+## 2026.10.9.026 — Prepare for Live Deployment: the plan as a wizard, with `could not verify` as a state
+
+PLAN-030 is a plan on paper — a template that compiles, a script, a workflow, a table of findings and a
+go-live bar. What it did not have is a *screen*, so a deployment meant reading **§7** and **§8** and
+remembering which of the eight Phase 1 blockers landed, that **2.3** is *deferred by decision* rather than
+open, and finding out on the first real run that nothing in the package has ever reached ARM. `/developer/deployment`
+is that material with a surface around it.
+
+- **[New]** **The eight-step track**, drawn from the plan's own items: target and naming, parameters and
+  secrets, infrastructure (§1, §7), database (§8.1, §8.12), the readiness gate (§8.14), network and ingress
+  (§2.1, §8.4, §8.6), sanitisation, and validate-and-hand-off (§3, §8.11, §8.13). Each card carries its
+  scope (shared or Azure), a summary, and the one sentence the state came from — `Evidence:`, `Blocked by:`,
+  `Owed to:`, `Could not verify:`.
+- **[New]** **Five states, not two** — `done`, `attention`, `blocked`, `decision` and `unverified`, with a
+  legend that explains each once. **`Could not verify` is a distinct state and is never drawn as a pass**:
+  the plan's own second review found a gate that could not see the database, so an unrecognised or missing
+  state degrades to unverified rather than to green, and a check that cannot run offers *Mark as could not
+  verify* — which records the reason and carries it into the hand-off instead of being pressed into a pass.
+- **[New]** **A step in detail** — the checklist with each item's state, the evidence it was checked
+  against, its "Skip it:" sentence, and — on the right — where the step comes from, what was read for it,
+  and what is still outstanding.
+- **[New]** **The sanitisation step PLAN-030 does not cover**, with the two removals kept visibly apart:
+  removing **sample data** is the reversible `db:sample-off` purge, behind a snapshot, and links to its own
+  screen at `/developer/purge` rather than duplicating it (the destructive controls there arm only for
+  `developer:purge`); removing a **customer's real data** is a locked, out-of-band operation with a different
+  owner and authority, whose confirmation field is disabled and whose button is never armed. Beside them,
+  the surfaces that must not travel — sample and seed data, demo accounts, the outbound-mail sandbox,
+  integration credentials, placeholder origins, issued API keys and the authentication conveniences — each
+  read from the destination and each reported as `could not verify` when the answers belong to the target.
+- **[New]** **The hand-off is a report, not a tick** — what was checked with its evidence, what remains the
+  operator's decision with an owner and a place to record the answer, the report read from
+  `GET /api/system/deployment`, the §8.11 bar in the order it is held, and **Export report** which writes the
+  same document as text. A check that could not run is printed as such, so the exported file is never
+  greener than the screen it came from.
+- **[New]** **Two designs, one set of handlers** — the modern arrangement is the approved mockup (a step
+  track you press, pills, a sheet, a countable sticky footer); the classic arrangement is a form (a numbered
+  table of contents with a State column, a `<select>` for the destination, a dialog per step with labelled
+  fields and Save / Save draft / Cancel, a **remarks field per unverifiable check**, the sanitisation step as
+  two panels with their own headings and their own action, and counts as a labelled row under the table
+  rather than a sticky bar).
+- **[Fix]** When `GET /api/developer/deployment` does not answer, the page **says what it could not read**
+  and draws all eight steps as `could not verify` — no step is shown as done and no check as having run.
+  This was verified in the browser: the not-found screen for an account without `developer:view` (a Super
+  Admin and an Admin both see it), the four modern states and the classic form against a fixture, and the
+  unreadable panel against the endpoint answering `404`.
+
+Verified with `npx tsc --noEmit` in `apps/web` (clean for every file this change adds), and both
+`node scripts/lint-design-tokens.mjs` and `node scripts/check-encoding.mjs` pass.
+
+---
+
+## 2026.10.9.025 — The Developer section has an API: the environment it is, the purge it performs, the guards it runs
+
+The Developer section's pages call five endpoints that did not exist, and one of them is irreversible. All of
+them need `developer:view`, which is held by **Super Admin** and by **Developer Admin** and subtracted from
+**Admin** on purpose, so an ordinary administrator's session is not a purge. The purge needs
+**`developer:purge`** *chained on top* rather than listed beside it, because `requirePermission` admits a
+caller holding *any* of the permissions it is given.
+
+- **[New]** **`GET /api/developer/environment`** — every name the application declares (the configuration
+  registry's `env` declarations, and the API's own direct reads) reported as set or falling back to the
+  declared default. **A secret is never returned**: a credential-looking name reports `set`, `withheld: true`
+  and a `hint` (the last characters of a long value; a truncated digest for a short one), and the payload says
+  so in `secretsWithheld`. Beside it: the environment badge (`NODE_ENV`, production or not, host, port, app
+  version, git commit), the flag registry as read-only rows, and the effective `app_settings` per section.
+- **[New]** **`GET /api/developer/purge/preview`** — a dry run with real counts in three lists. `removed` is
+  the 85 tables `db:sample-off` deletes, in the child-before-parent order it uses; `preserved` is the 13 that
+  keep the instance usable; and `unlisted` is the reason the endpoint exists — the **21 models the schema
+  declares that neither list names, and which therefore survive a purge** (measured here: 21 contacts, 8
+  products, 5 companies, 3 quotes, 5 quote lines, 10 AI actions, 168 sessions, 112 sign-in events). Same
+  response: the snapshot a purge would replace, the 4,939 `auditLog` rows inside the removed figure, whether
+  the sample dataset is already off, and `requiredPhrase` — the exact string the POST accepts, returned rather
+  than hard-coded on the screen.
+- **[New]** **`POST /api/developer/purge`** — `{ phrase, reason }`, refused with **400** naming the field that
+  failed unless the phrase matches exactly and the reason is a sentence, and with **409** when the sample data
+  is already disabled or a purge is already running. What it performs is `db:sample-off`'s own code path,
+  called rather than re-implemented. The receipt is the record and it is written where the act cannot reach
+  it: the purge deletes `auditLog`, so the audit row goes in *after* the wipe and the durable copy is a
+  `SystemConfig` row under the reserved `sample_data:` prefix, named in the response's `receiptPath`.
+- **[New]** **`GET /api/developer/health`** — the repository's nine guards, run as child processes from the
+  repository root, reported individually with their own output and their duration. Status is three words:
+  `pass`, `fail`, `skip`, and a check that could not run is `skip` with the reason — never a pass. A failing
+  check never fails the request. On this tree: `guard:plugin` fails, `guard:deps` cannot run without `pnpm`,
+  and the design-token lint reports the report-designer's raw hexes.
+- **[New]** **`GET /api/developer/deployment`** — PLAN-030 with a surface: eight steps and a checklist whose
+  every item names the evidence its state was decided from and what happens if it is skipped. States are five
+  values — `done`, `attention`, `blocked`, `decision`, `unverified` — and the run above returns **2 done,
+  2 blocked, 2 decisions owed, 2 could not verify**. Items whose answer is in this repository (the migrations
+  that exist, `lockIngressToFrontDoor`, `sslmode`, `databaseName`, the readiness endpoint and whether both
+  promotion gates ask it) are decided by reading it; everything that needs an Azure subscription is
+  `unverified` with the reason, and the two open items come back red: `webOrigin` still a placeholder, and the
+  app still connecting as the server administrator.
+- **[Update]** **`sample-data-toggle.ts` now calls `services/sampleDataOperations.ts`**, which is also what the
+  route calls — one definition of what a purge removes, not two. The CLI's behaviour and log lines are
+  unchanged; the shared function `spawn`s the snapshot child (the script's `execSync` would have blocked the
+  event loop inside a request) and takes the caller's Prisma client, so a request reuses the server's pool
+  instead of opening a second one.
+- **[Update]** **`docs/openapi.yaml`, `docs/api-operations.json` and `docs/API.md`** — five curated entries,
+  including the purge's refusal rules and what it preserves, and a new subsection in §12 for the surface.
+- **[New]** **`POST /api/developer/deployment/records`** — where the operator writes the answer the plan
+  cannot: `{ kind, id, note }`, refused with **400** naming the field for an unknown `kind`, an `id` this
+  report does not name under that kind (a checklist id sent as a decision is refused rather than filed
+  against the wrong list), or an empty `note`. Needs `developer:view` and deliberately **not**
+  `developer:purge` — writing down what was decided is not the same act as emptying the database. One
+  record per subject, kept in `SystemConfig` under the reserved `deployment:record:<kind>:<id>` prefix
+  (`deployment:` joined `RESERVED_CONFIG_PREFIXES` beside `sample_data:`), which no HTTP caller can read or
+  rewrite and **which a purge never touches**; recording again replaces the answer (`201` created, `200`
+  replaced), and the reply is the whole deployment payload plus `saved`. `GET /api/developer/deployment`
+  now returns every answer in `records` and attaches it to its own decision or checklist item as `record`,
+  so the screen shows what was decided without a second read.
 
 ---
 

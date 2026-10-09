@@ -17,63 +17,18 @@
  *
  * Identity and platform configuration are preserved on disable so the
  * application stays usable (login, RBAC, system settings, locales).
+ *
+ * The operation itself lives in `services/sampleDataOperations.ts`, because the Developer section's purge
+ * screen performs the same act and two implementations would be two definitions of "what a purge
+ * removes". This file is now what a command line adds: argument parsing, the log lines, and its own
+ * database connection.
  */
 
-import { execSync } from "child_process";
-import * as path from "path";
 import { PrismaClient } from "@prisma/client";
-import { isSampleDataDisabled, setSampleDataDisabled } from "./services/sampleDataState";
+import { isSampleDataDisabled } from "./services/sampleDataState";
+import { disableSampleData, enableSampleData } from "./services/sampleDataOperations";
 
 const prisma = new PrismaClient();
-
-// Models preserved on disable (identity + platform config)
-const KEEP_MODELS = new Set([
-  "user", "role", "session", "refreshToken", "tenant",
-  "systemConfig", "ssoConfig", "fieldPermission",
-  "locale", "translation", "currency", "exchangeRate", "retentionPolicy",
-]);
-
-// Wipe order: children before parents
-const WIPE_MODELS: string[] = [
-  "kBArticleTicket", "kBArticleAttachment", "kBArticleVersion", "knowledgeBaseArticle", "kBCategory",
-  "surveyAnswer", "surveyResponse", "surveyQuestion", "survey",
-  "projectTaskDependency", "projectTask", "projectPhase", "project",
-  "checklistTask", "checklist",
-  "contractMilestone", "contract", "assetAssignment", "asset",
-  "pOLineItem", "purchaseOrder", "vendor",
-  "workflowExecution", "workflowRuleAction", "workflowRule",
-  "chatMessage", "chatSession",
-  "reportSchedule", "report",
-  "ticketContact", "ticketAttachment", "ticketComment", "timeEntry", "ticket", "ticketCategory", "emailConnector", "serviceBoard",
-  "invoiceLineItem", "payment", "invoice", "serviceAgreement",
-  "salesActivity", "opportunity",
-  "notification", "auditLog", "alertLog", "alertWebhookDelivery", "alertRule", "expense", "recentlyViewedItem",
-  "serviceAlert", "serviceAlertService",
-  "m365Subscription", "m365Group", "m365User", "syncedEntity", "syncLog", "integration", "webhookConfig",
-  "technicianSkill", "scheduleEntry", "ptoRequest", "holiday", "bulkOperation", "calendarSyncConfig",
-  "kumoFile", "kumoCertificate", "kumoDomain", "kumoLink", "kumoDocumentRevision",
-  "kumoDocument", "kumoFolder", "kumoPasswordAccessLog", "kumoPassword",
-  "kumoNetworkDevice", "kumoWorkstation", "kumoServer",
-  "kumoAssetFieldValue", "kumoAsset", "kumoTemplateField", "kumoAssetTemplate",
-  "aiProviderConfig", "inferenceCache", "ticketSimilarity", "detectedPattern",
-];
-
-async function wipeBusinessData(): Promise<number> {
-  let total = 0;
-  for (const modelName of WIPE_MODELS) {
-    const model = (prisma as any)[modelName];
-    if (model && typeof model.deleteMany === "function") {
-      try {
-        const result = await model.deleteMany();
-        if (result.count > 0) {
-          console.log(`  ✓ Deleted ${result.count} ${modelName} records`);
-          total += result.count;
-        }
-      } catch { /* table may not exist yet */ }
-    }
-  }
-  return total;
-}
 
 async function main(): Promise<void> {
   const mode = (process.argv[2] || "").toLowerCase();
@@ -81,8 +36,6 @@ async function main(): Promise<void> {
     console.error("Usage: npx tsx src/sample-data-toggle.ts off|on");
     process.exit(1);
   }
-
-  const scriptDir = __dirname;
 
   if (mode === "off") {
     if (isSampleDataDisabled()) {
@@ -92,21 +45,17 @@ async function main(): Promise<void> {
 
     console.log("[SampleData] Disabling sample data...\n");
 
-    // 1. Capture a snapshot of the current state (established process)
-    console.log("[SampleData] Capturing snapshot before clearing...");
-    execSync(`npx tsx "${path.join(scriptDir, "snapshot-capture.ts")}"`, {
-      cwd: scriptDir,
-      stdio: "inherit",
-      env: { ...process.env, NODE_ENV: process.env.NODE_ENV || "development" },
+    // 1. Capture a snapshot of the current state, 2. remove all business data so the application appears
+    //    empty, 3. set the disabled flag — which locks the snapshot and pauses auto-capture.
+    const result = await disableSampleData(prisma, {
+      onStep: (step) => {
+        if (step === "snapshot") console.log("[SampleData] Capturing snapshot before clearing...");
+        if (step === "wipe") console.log("\n[SampleData] Removing sample/business data...");
+      },
+      onDeleted: (model, rows) => console.log(`  ✓ Deleted ${rows} ${model} records`),
     });
 
-    // 2. Remove all business data so the application appears empty
-    console.log("\n[SampleData] Removing sample/business data...");
-    const removed = await wipeBusinessData();
-    console.log(`[SampleData] Removed ${removed} business records (identity & platform config preserved).`);
-
-    // 3. Set the disabled flag — locks the snapshot and pauses auto-capture
-    setSampleDataDisabled(true);
+    console.log(`[SampleData] Removed ${result.rows} business records (identity & platform config preserved).`);
     console.log("\n[SampleData] Sample data disabled.");
     console.log("[SampleData] Snapshot is locked — it will not be overwritten until sample data is re-enabled.");
     console.log("[SampleData] Automatic reseed after changes is paused.");
@@ -119,16 +68,10 @@ async function main(): Promise<void> {
 
     console.log("[SampleData] Enabling sample data...\n");
 
-    // 1. Reseed from the preserved snapshot files (established process)
-    //    The disabled flag is still set during reseed so captures stay locked.
-    execSync(`npx tsx "${path.join(scriptDir, "seed-from-snapshots.ts")}"`, {
-      cwd: scriptDir,
-      stdio: "inherit",
-      env: { ...process.env, NODE_ENV: process.env.NODE_ENV || "development" },
-    });
+    // 1. Reseed from the preserved snapshot files, then 2. clear the flag — which resumes
+    //    snapshot-after-change captures. The flag stays set during the reseed so captures stay locked.
+    await enableSampleData();
 
-    // 2. Clear the disabled flag — resumes snapshot-after-change captures
-    setSampleDataDisabled(false);
     console.log("\n[SampleData] Sample data enabled.");
     console.log("[SampleData] Snapshot-after-change process resumed.");
   }

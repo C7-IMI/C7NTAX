@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  AlertTriangle, BarChart3, Bot, Building2, Clock, Database, DollarSign, FolderKanban,
+  AlertTriangle, BarChart3, Bot, Bug, Building2, Clock, Database, DollarSign, FolderKanban,
   HelpCircle, Home, LayoutDashboard, Settings2, Shield, SquareTerminal, Ticket,
 } from "lucide-react";
 import type { NavNode } from "../components/Layout";
@@ -31,6 +31,8 @@ export interface NavDestination {
   /** Rendered indented beneath its parent — a page that lives inside a hub rather than beside it. */
   child?: boolean;
   note?: string;
+  /** Read from the tree node: a destination whose worst case cannot be undone. */
+  danger?: boolean;
   /** Filled in by the caller: the live service-alert count. */
   badge?: number;
 }
@@ -42,6 +44,12 @@ export interface NavDomain {
   /** One line saying what the domain is for. Shown above its rows. */
   what: string;
   items: NavDestination[];
+  /**
+   * The domain is a dangerous one — taken from its `NAV_TREE` node rather than declared here, so the
+   * rail cannot decide the Developer section is ordinary while the tree and the classic sidebar say it
+   * is not.
+   */
+  danger?: boolean;
   /**
    * Set on a domain that **is a page** rather than a container: the rail row navigates instead of
    * opening a panel. Only for a domain whose contents have been deliberately collapsed into one
@@ -283,6 +291,27 @@ const DOMAIN_SPECS: DomainSpec[] = [
       { id: "kumo-domains" },
     ],
   },
+  {
+    /**
+     * The Developer section, directly under Kumo and above the utilities.
+     *
+     * It is the last thing in the spine on purpose. Everything above it is a part of running the
+     * service desk; this is the row that can empty the instance, so it sits where the eye arrives last
+     * and where nothing can be mistaken for its contents. The `danger` flag is not declared here — it
+     * is read back out of the tree node, so this pane, the tree and the classic sidebar cannot disagree
+     * about whether the section is a risky one.
+     */
+    id: "developer",
+    label: "Developer",
+    icon: Bug,
+    what: "The changes that are not normally available, including the ones that cannot be undone.",
+    rows: [
+      { id: "developer-hub" },
+      { id: "developer-purge" },
+      { id: "developer-deployment" },
+      { id: "developer-danger" },
+    ],
+  },
 ];
 
 /** The utilities at the foot of the rail. Assistant joins the spine when the setting says so. */
@@ -366,6 +395,7 @@ export function buildNavPane(
         icon: node.icon,
         ...(extra?.child ? { child: true } : {}),
         ...(extra?.note ? { note: extra.note } : {}),
+        ...(node.danger ? { danger: true } : {}),
       };
     }
     const extraNode = EXTRA_NODES[id];
@@ -412,6 +442,7 @@ export function buildNavPane(
       icon: spec.icon,
       what: spec.what,
       items,
+      ...(byId.get(spec.id)?.danger ? { danger: true } : {}),
       ...(spec.to ? { to: spec.to } : {}),
       ...(nodeId ? { nodeId } : {}),
     };

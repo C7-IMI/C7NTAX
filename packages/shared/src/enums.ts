@@ -92,6 +92,14 @@ export enum SystemRole {
   ClientAdmin = "client_admin",
   ClientUser = "client_user",
   ReadOnly = "read_only",
+  /**
+   * A role that is a Super Admin **plus** the Developer section.
+   *
+   * It exists as its own system role rather than an extra permission on Super Admin because the
+   * developer surface is not a widening of administration — it is the ability to take the instance
+   * apart — and the person who holds it should be visible in Users & Roles as somebody who does.
+   */
+  DeveloperAdmin = "developer_admin",
 }
 
 /** Detailed permission keys — each maps to a discrete action */
@@ -258,6 +266,29 @@ export enum Permission {
    * request succeeds. Internal staff roles hold it; the client-facing and read-only roles do not.
    */
   ConsoleUse = "console:use",
+
+  /**
+   * The Developer section — the surface for changes that are not normally available, including the
+   * purge that empties the instance of its data.
+   *
+   * A **capability** in the same sense as `console:use`: it decides whether the section is drawn at
+   * all, in the navigation, in the command palette, behind a typed URL and in the Help. What makes it
+   * different is who holds it. Everything else in this list widens what somebody may do *inside* the
+   * application; these two can remove its contents, so they are held by exactly two roles — **Super
+   * Admin**, the break-glass role that sees everything, and **Developer Admin**, a role that can run
+   * the section but cannot administer it — and are deliberately subtracted from **Admin**. An ordinary
+   * administrator therefore has no Developer rail row, no Developer permission to tick, no Developer
+   * page at `/developer` and no Developer walkthrough to read: hidden rather than unarmed.
+   */
+  DeveloperView = "developer:view",
+  /**
+   * May run the section's destructive operations: the purge and the danger zone behind it.
+   *
+   * Separate from `DeveloperView` because looking and destroying are different decisions — a role can
+   * be trusted with the environment inspector and the deployment checklist without being trusted to
+   * empty the database.
+   */
+  DeveloperPurge = "developer:purge",
 }
 
 /** Permission categories for UI grouping — order matters */
@@ -371,12 +402,47 @@ export const PERMISSION_CATEGORIES: { key: string; label: string; permissions: P
     key: "console", label: "Console",
     permissions: [Permission.ConsoleUse],
   },
+  {
+    /*
+     * Its own category, and the one the Developer section is gated on: this is the switch that decides
+     * whether the section appears in the navigation for a role. Two entries rather than one because
+     * looking and destroying are different decisions — a role may be trusted with the deployment
+     * checklist and the environment inspector without being trusted to empty the database.
+     */
+    key: "developer", label: "Developer",
+    permissions: [Permission.DeveloperView, Permission.DeveloperPurge],
+  },
 ];
+
+/**
+ * The permissions that only a Super Admin and the Developer Admin role hold.
+ *
+ * Named here rather than written twice, because they are subtracted from the Admin blanket grant and
+ * added to exactly two roles — and a permission added to the developer surface later must not silently
+ * be inherited by everybody who can administer the instance.
+ *
+ * **Super Admin keeps them; Admin does not.** That asymmetry is the decision in this section. A Super
+ * Admin is the break-glass role and sees everything, including the Developer section and the
+ * administration of the Developer Admin role itself. Every other kind of administrator — Admin, Client
+ * Admin, Manager, and anybody else — sees no Developer rail row, no Developer permission in a picker,
+ * no Developer page behind a typed URL and no Developer walkthrough in the Help. Read the note on
+ * `DeveloperView` for the reasoning.
+ */
+const DEVELOPER_PERMISSIONS: Permission[] = [Permission.DeveloperView, Permission.DeveloperPurge];
 
 /** Default role → permission mapping */
 export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
+  /*
+   * Super Admin and Admin are **not** the same thing here, and this is the one place in the product
+   * where they are deliberately different. A Super Admin holds everything, including the developer
+   * surface; **Admin** holds everything except it. So the Developer section is invisible to an ordinary
+   * administrator — no rail row, no permission in a picker, no route behind a typed URL — while the two
+   * roles that are meant to have it (Super Admin and Developer Admin) do. `Developer Admin` is the
+   * narrower of the two: it can operate the section, but it cannot administer its own role.
+   */
   [SystemRole.SuperAdmin]: Object.values(Permission),
-  [SystemRole.Admin]: Object.values(Permission),
+  [SystemRole.Admin]: Object.values(Permission).filter(p => !DEVELOPER_PERMISSIONS.includes(p)),
+  [SystemRole.DeveloperAdmin]: Object.values(Permission),
   [SystemRole.Manager]: [
     Permission.TicketViewAll, Permission.TicketView, Permission.TicketCreate,
     Permission.TicketEdit, Permission.TicketAssign, Permission.TicketClose, Permission.TicketDelete,

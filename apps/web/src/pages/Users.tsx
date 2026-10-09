@@ -7,7 +7,10 @@ import {
   ChevronLeft, ChevronDown, Copy, Key,
   ExternalLink, UserCog, Lock, Unlock, Download, RotateCw, Eraser, ShieldCheck,
 } from "lucide-react";
-import { SystemRole, Permission, PERMISSION_CATEGORIES, ROLE_PERMISSIONS } from "@C7NTAX/shared";
+import {
+  SystemRole, Permission, PERMISSION_CATEGORIES, ROLE_PERMISSIONS,
+  DEVELOPER_PERMISSION_KEYS, DEVELOPER_ROLE_REFUSAL, isDeveloperRole, withoutDeveloperPermissions,
+} from "@C7NTAX/shared";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { copyText, viewMenuEntries } from "../lib/menuActions";
@@ -18,6 +21,7 @@ import { useAuth } from "../hooks/useAuth";
 import { timezoneOptions } from "../lib/timezones";
 import { PageHeader, Tabs, ListViews, ListFooter } from "../components/ui";
 import { useRedesign } from "../hooks/useNavigationStyle";
+import { useSuperAdmin } from "../hooks/useSuperAdmin";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-green-600/20 text-green-400",
@@ -87,6 +91,7 @@ export function UsersPage() {
   const [selected, setSelected] = useState<UserFull | null>(null);
   const [tab, setTab] = useState<"profile" | "permissions" | "security">("profile");
   const redesign = useRedesign();
+  const superAdmin = useSuperAdmin();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Record<string, any>>({});
   const [permSet, setPermSet] = useState<Set<string>>(new Set());
@@ -103,6 +108,30 @@ export function UsersPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const menu = useContextMenu();
   const searchRef = useRef<HTMLInputElement>(null);
+
+  /*
+   * What only a Super Admin is offered: the Developer permission category, the Developer Admin role in
+   * the role pickers, and the two permissions themselves in "Select all", in a role template and in the
+   * count the template row prints. `PERMISSION_CATEGORIES` and `SystemRole` are compiled into the
+   * bundle, so nothing else removes them — while the accounts wearing the role are removed by the API,
+   * which is why this screen needs no filter over the user rows themselves.
+   */
+  const visibleCategories = useMemo(
+    () => (superAdmin ? PERMISSION_CATEGORIES : PERMISSION_CATEGORIES.filter(cat => !cat.permissions.some(p => DEVELOPER_PERMISSION_KEYS.includes(p)))),
+    [superAdmin],
+  );
+  const assignableRoles = useMemo(
+    () => (superAdmin ? roles : roles.filter(r => !isDeveloperRole(r.systemRole))),
+    [roles, superAdmin],
+  );
+  const roleTemplates = useMemo(
+    () => Object.values(SystemRole).filter(sr => superAdmin || !isDeveloperRole(sr)),
+    [superAdmin],
+  );
+  const selectablePermissions = useMemo(
+    () => (superAdmin ? Object.values(Permission) : withoutDeveloperPermissions(Object.values(Permission))),
+    [superAdmin],
+  );
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -436,7 +465,7 @@ export function UsersPage() {
         </div>
         <select className="input-field text-sm py-1.5 w-auto" value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
           <option value="">{redesign ? "Role: any" : "All Roles"}</option>
-          {roles.map(r => <option key={r.id} value={r.systemRole}>{r.name}</option>)}
+          {assignableRoles.map(r => <option key={r.id} value={r.systemRole}>{r.name}</option>)}
         </select>
         {redesign && <span className="text-xs text-gray-500">{viewRows.length} user{viewRows.length === 1 ? "" : "s"}{withoutMfa > 0 ? ` · ${withoutMfa} without two-factor` : ""}</span>}
       </div>
@@ -530,7 +559,9 @@ export function UsersPage() {
                   key={u.id}
                   onClick={() => {
                     setCreateDefaults({
-                      roleId: u.role?.id,
+                      // The role travels with the rest only when the caller may hold it — the same rule
+                      // the dialog itself applies, so the two copy paths cannot disagree.
+                      roleId: superAdmin || !isDeveloperRole(u.role?.systemRole) ? u.role?.id : undefined,
                       companyId: u.company?.id,
                       department: u.department ?? undefined,
                       timezone: u.timezone ?? undefined,
@@ -568,6 +599,7 @@ export function UsersPage() {
         clients={clients}
         users={users}
         defaults={createDefaults}
+        showDeveloperRoles={superAdmin}
       />
 
       {/* ── Reset Password Dialog ── */}
@@ -667,7 +699,7 @@ export function UsersPage() {
                         {editing && canManageRoles ? (
                           <select className="input-field text-sm py-1.5" value={String(form.roleId || selected.role?.id || "")}
                             onChange={e => setForm({ ...form, roleId: e.target.value })}>
-                            {roles.map(r => <option key={r.id} value={r.id}>{r.name} ({r.systemRole.replace(/_/g, " ")})</option>)}
+                            {assignableRoles.map(r => <option key={r.id} value={r.id}>{r.name} ({r.systemRole.replace(/_/g, " ")})</option>)}
                           </select>
                         ) : (
                           <p className="text-sm text-white">{selected.role?.name || selected.role?.systemRole?.replace(/_/g, " ") || "—"}</p>
@@ -735,7 +767,7 @@ export function UsersPage() {
                       <div className="flex gap-2">
                         <button onClick={() => setPermSet(new Set(selected.role?.permissions || []))}
                           className="btn-secondary text-xs py-1 px-2">Reset to Role</button>
-                        <button onClick={() => setPermSet(new Set(Object.values(Permission)))}
+                        <button onClick={() => setPermSet(new Set(selectablePermissions))}
                           className="btn-secondary text-xs py-1 px-2">Select All</button>
                       </div>
                     )}
@@ -758,7 +790,7 @@ export function UsersPage() {
                         }}
                       >
                         <option value="">— Select a role template —</option>
-                        {Object.values(SystemRole).map(sr => (
+                        {roleTemplates.map(sr => (
                           <option key={sr} value={sr}>
                             {sr.replace(/_/g, " ")} ({ (ROLE_PERMISSIONS[sr] || []).length } perms)
                           </option>
@@ -805,7 +837,7 @@ export function UsersPage() {
                     API refuses the commands.
                   </p>
 
-                  {PERMISSION_CATEGORIES.map(cat => (
+                  {visibleCategories.map(cat => (
                     <div key={cat.key} className="card py-3 px-4">
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">

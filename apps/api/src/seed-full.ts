@@ -67,7 +67,11 @@ async function main() {
   const techRole = await prisma.role.create({ data: { name: "Technician", systemRole: "technician", permissions: rolePerms(SystemRole.Technician) } });
   const clientRole = await prisma.role.create({ data: { name: "Client Admin", systemRole: "client_admin", permissions: rolePerms(SystemRole.ClientAdmin) } });
   const readOnlyRole = await prisma.role.create({ data: { name: "Read Only", systemRole: "read_only", permissions: rolePerms(SystemRole.ReadOnly) } });
-  console.log("  ✓ Created 5 roles");
+  // The Developer section's role. It holds every permission, including the two that are *not* part of
+  // the Super Admin blanket — see the note on `DeveloperView`. A fresh database needs it to exist, or
+  // the section has no role that can see it.
+  const developerRole = await prisma.role.create({ data: { name: "Developer Admin", systemRole: "developer_admin", permissions: rolePerms(SystemRole.DeveloperAdmin) } });
+  console.log("  ✓ Created 6 roles");
 
   // ── Users ──
   const adminUser = await prisma.user.create({ data: { email: "admin@C7NTAX.com", username: "admin", passwordHash: hash("admin"), firstName: "Admin", lastName: "User", roleId: adminRole.id, isActive: true, emailVerified: true } });
