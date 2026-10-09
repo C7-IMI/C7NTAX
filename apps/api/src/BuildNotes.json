@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.9.016",
+    "date": "2026-10-09",
+    "title": "One Microsoft 365 app, many mailboxes, each filing to its own board",
+    "changes": [
+      {
+        "text": "**`GET /api/email-connectors/m365-apps`** is the map: the registrations this instance",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`reuseAppFromConnectorId`** on create. Naming a connector to copy the app from moves the",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The connector list reads as the mapping it is**: `alerts@cyber7group.com → NOC Alerts`,",
+        "type": "Update"
+      },
+      {
+        "text": "**The panel grew an app section** listing each registration with its addresses and their",
+        "type": "Update"
+      },
+      {
+        "text": "**A reused app no longer skips the mailbox check.** The reuse path passed the app to the",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.015",
     "date": "2026-10-09",
     "title": "The settings domain is called Administration",

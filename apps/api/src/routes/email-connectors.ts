@@ -47,6 +47,7 @@ import {
   exchangeGraphCode,
   normalizeEwsFolder,
 } from "@C7NTAX/email";
+import { scopingCommands } from "../services/oauthAppDeploy";
 
 export const emailConnectorsRouter = Router();
 
@@ -123,17 +124,22 @@ function toPublic(row: ConnectorRow & { enabled: boolean; lastPollAt: Date | nul
 }
 
 /**
- * Validate a create/update body. `existing` is the stored row on update, so a
- * secret already saved can stay while the rest of the config changes.
+ * Validate a create/update body.
+ *
+ * `existing` is the stored row on update, so a secret already saved can stay while the rest of the
+ * config changes. `isUpdate` is separate from it on purpose: a create can pass something in `existing`
+ * — the app it was told to reuse — and still be a create, where the fields that are always new (the
+ * board, the mailbox) have no row behind them to fall back on.
  */
 function validateConfig(
   body: Record<string, unknown>,
   transport: Transport,
   authType: AuthType,
   existing: { passwordEncrypted?: string; clientSecretEncrypted?: string | null; oauthRefreshTokenEncrypted?: string | null } | null,
+  isUpdate = false,
 ): void {
   const missing: string[] = [];
-  if (!body.boardId && !existing) missing.push("boardId");
+  if (!body.boardId && !isUpdate) missing.push("boardId");
 
   if (transport === "graph") {
     if (!body.tenantId) missing.push("tenantId");
@@ -142,8 +148,9 @@ function validateConfig(
       if (!body.clientSecret && !existing?.clientSecretEncrypted) {
         missing.push("clientSecret (or switch to Connect to Microsoft for a delegated sign-in)");
       }
-      // An app-only token is minted for a mailbox, so it has to be named.
-      if (!body.user && !existing) missing.push("user (mailbox)");
+      // An app-only token is minted for a mailbox, so it has to be named — every time, including when
+      // the app is reused: a second mailbox is the whole point of reusing one.
+      if (!body.user && !isUpdate) missing.push("user (mailbox)");
     }
   } else {
     if (!body.host) missing.push("host");
@@ -287,6 +294,64 @@ async function assertCompany(id: unknown): Promise<void> {
   if (!company) throw new AppError("Default company not found", 404);
 }
 
+/**
+ * The Microsoft 365 apps this instance watches mailboxes with, and the mailboxes on each.
+ *
+ * One registration usually serves several addresses — `alerts@` to the NOC board, `servicedesk@` to the
+ * service desk — and Exchange scopes it per mailbox rather than per app, so the person who has to scope
+ * the *next* mailbox needs two things the connector rows alone do not say: which app it belongs to, and
+ * every address already on it. The scoping commands come with it, covering all of them, because the
+ * alternative is running them one connector at a time and hoping none was missed.
+ *
+ * The service principal's object id is not stored (it exists only in the deployment flow), so the
+ * commands say so rather than inventing one.
+ */
+emailConnectorsRouter.get("/m365-apps", requirePermission(Permission.IntegrationView), async (_req: AuthRequest, res, next) => {
+  try {
+    const rows = await prisma.emailConnector.findMany({
+      where: { transport: "graph", authType: "clientSecret" },
+      orderBy: { createdAt: "asc" },
+      include: { board: { select: { name: true } } },
+    });
+    const apps = new Map<string, {
+      tenantId: string | null;
+      clientId: string | null;
+      displayName: string;
+      mailboxes: Array<{ id: string; mailbox: string; boardId: string; boardName: string; folder: string; enabled: boolean }>;
+    }>();
+    for (const row of rows) {
+      const key = `${row.tenantId ?? ""}|${row.clientId ?? ""}`;
+      const app = apps.get(key) ?? {
+        tenantId: row.tenantId,
+        clientId: row.clientId,
+        // The connector is not told the registration's name; the deployment uses this one, and reusing it
+        // is what makes the app the same app across rows.
+        displayName: "C7NTAX Email Connector",
+        mailboxes: [],
+      };
+      app.mailboxes.push({
+        id: row.id,
+        mailbox: row.user || row.oauthAccount || "",
+        boardId: row.boardId,
+        boardName: row.board.name,
+        folder: row.folder,
+        enabled: row.enabled,
+      });
+      apps.set(key, app);
+    }
+    res.json({
+      data: [...apps.values()].map((app) => ({
+        ...app,
+        // A row is the app to reuse for another mailbox; the picker needs an id, not just an address.
+        reuseFromConnectorId: app.mailboxes[0]?.id ?? null,
+        scopingCommands: app.clientId
+          ? scopingCommands(app.clientId, null, app.displayName, app.mailboxes.map((m) => m.mailbox))
+          : null,
+      })),
+    });
+  } catch (e) { next(e); }
+});
+
 // ── Create ──
 emailConnectorsRouter.post("/", requirePermission(Permission.IntegrationManage), async (req: AuthRequest, res, next) => {
   try {
@@ -294,7 +359,36 @@ emailConnectorsRouter.post("/", requirePermission(Permission.IntegrationManage),
     const transport = normalizeTransport(body.transport);
     const authType = normalizeAuthType(body.authType, transport);
     assertTransportAuthPair(transport, authType);
-    validateConfig(body, transport, authType, null);
+
+    /*
+     * Another mailbox on the app this instance already has.
+     *
+     * Registering the app, consenting to Mail.ReadWrite and minting the secret happen once; watching a
+     * second address on the same registration is a different job, and asking for the tenant, client id
+     * and secret again — a secret Entra will not show twice — is how a second mailbox becomes a support
+     * ticket. So the caller names the connector to copy the app from and supplies the two fields that
+     * are actually new: the address and the board it files into.
+     */
+    const reuseFrom = body.reuseAppFromConnectorId ? String(body.reuseAppFromConnectorId) : "";
+    let app: { tenantId: string | null; clientId: string | null; clientSecretEncrypted: string | null } | null = null;
+    if (reuseFrom) {
+      const source = await prisma.emailConnector.findUnique({ where: { id: reuseFrom } });
+      if (!source) throw new AppError("The Microsoft 365 app to reuse was not found", 404);
+      if (connectorTransport(source) !== "graph" || isDelegated(source)) {
+        throw new AppError("That connector is not a Microsoft 365 app-only connector, so it has no app to reuse", 400);
+      }
+      app = { tenantId: source.tenantId, clientId: source.clientId, clientSecretEncrypted: source.clientSecretEncrypted };
+      if (!app.clientSecretEncrypted) {
+        throw new AppError("That connector has no stored client secret to reuse — add the app's secret on this connector instead", 400);
+      }
+    }
+
+    // What the app contributes is validated as if the caller had supplied it, so "reuse" and "type it in"
+    // reach the same checks and the same messages.
+    const config: Record<string, unknown> = app
+      ? { ...body, tenantId: body.tenantId || app.tenantId, clientId: body.clientId || app.clientId }
+      : body;
+    validateConfig(config, transport, authType, app ? { clientSecretEncrypted: app.clientSecretEncrypted } : null);
     await assertCompany(body.defaultCompanyId);
     const board = await prisma.serviceBoard.findUnique({ where: { id: String(body.boardId) } });
     if (!board) throw new AppError("Service board not found", 404);
@@ -310,9 +404,14 @@ emailConnectorsRouter.post("/", requirePermission(Permission.IntegrationManage),
         secure: body.secure !== false,
         user: String(body.user ?? ""),
         passwordEncrypted: body.password ? encryptPassword(String(body.password)) : "",
-        clientId: isGraph ? String(body.clientId) : null,
-        clientSecretEncrypted: isGraph && body.clientSecret ? encryptPassword(String(body.clientSecret)) : null,
-        tenantId: isGraph ? String(body.tenantId) : null,
+        clientId: isGraph ? (app ? app.clientId : String(body.clientId)) : null,
+        // Reused as stored: the ciphertext moves between rows of the same instance, and a secret that is
+        // never decrypted is a secret that cannot be logged on the way past. A reused row never takes the
+        // caller's string — `clientSecret` alongside a reuse would store something nobody meant.
+        clientSecretEncrypted: isGraph
+          ? (app ? app.clientSecretEncrypted : body.clientSecret ? encryptPassword(String(body.clientSecret)) : null)
+          : null,
+        tenantId: isGraph ? (app ? app.tenantId : String(body.tenantId)) : null,
         folder: body.folder ? String(body.folder) : isGraph ? "Inbox" : "INBOX",
         pollIntervalSec: Math.max(30, Number(body.pollIntervalSec ?? body.pollIntervalSeconds) || 300),
         ...rulesData(body),
@@ -366,7 +465,7 @@ emailConnectorsRouter.patch("/:id", requirePermission(Permission.IntegrationMana
         passwordEncrypted: String(pending.passwordEncrypted ?? ""),
         clientSecretEncrypted: (pending.clientSecretEncrypted as string | null) ?? null,
         oauthRefreshTokenEncrypted: (pending.oauthRefreshTokenEncrypted as string | null) ?? null,
-      });
+      }, true);
     }
     if (body.enabled !== undefined) data.enabled = Boolean(body.enabled);
 

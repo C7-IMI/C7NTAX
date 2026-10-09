@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.015 | Last Updated: 2026-10-09
+## Version: 2026.10.9.016 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,45 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.016 — One Microsoft 365 app, many mailboxes, each filing to its own board
+
+The email connector watched **one** mailbox per row, and the row did not say the one thing an operator
+needs when adding the next address: which app it belongs to, and which addresses that app already reads.
+Scoping in Exchange is **per mailbox**, not per app, so the second address was never a copy of the first
+either — and the client secret, which Entra will not show twice, had to be pasted again for every row.
+
+- **[New]** **`GET /api/email-connectors/m365-apps`** is the map: the registrations this instance
+  watches with, every address on each, the board each one files into, and the **Exchange Online**
+  commands covering all of them at once — one management scope and one role assignment per address,
+  which is how Exchange scopes an application.
+- **[New]** **`reuseAppFromConnectorId`** on create. Naming a connector to copy the app from moves the
+  tenant, application id and **stored** secret to the new row, so a second mailbox is two fields — the
+  address and the board — instead of four values, one of which cannot be recovered. The ciphertext
+  travels as it is; a `clientSecret` sent alongside a reuse is ignored rather than stored.
+- **[Update]** **The connector list reads as the mapping it is**: `alerts@cyber7group.com → NOC Alerts`,
+  rather than an address with *"Board: NOC Alerts"* underneath it. The health line keeps the folder, the
+  poll interval, the last poll and the last error.
+- **[Update]** **The panel grew an app section** listing each registration with its addresses and their
+  boards, an **Exchange scoping** button that shows the commands for all of them, and a copy button. The
+  add form gained **Which Microsoft 365 app** — *Reuse …* copies the app already configured and hides
+  the credential fields, so the deploy wizard is only needed for the first mailbox.
+- **[Fix]** **A reused app no longer skips the mailbox check.** The reuse path passed the app to the
+  validator in place of the row, which made "the row exists" true and let a Graph connector be created
+  with **no mailbox at all** — a connector that can never read anything. Validation now distinguishes
+  "the row exists" from "a secret is stored", and the refusal is the normal one: `user (mailbox)`.
+
+**Verification:** against the running API, not by reading the branch — a second mailbox was created on an
+existing app with only `user` + `boardId`, and the stored `tenantId`, `clientId` and **secret ciphertext**
+matched the first row exactly; the apps endpoint then reported **one app with two mailboxes**, each on
+its board, with two `New-ManagementScope` commands named `C7NTAX-…` and `C7NTAX-…-2`. The refusals were
+exercised too: an unknown `reuseAppFromConnectorId` answers **404**, and a reuse with no mailbox answers
+**400 … needs: user (mailbox)**. Every probe row was deleted afterwards (5 connectors, including the one
+the bug had let through). In the browser: the rows read *address → board*, *Reuse …* hides the
+credential fields, and the scoping panel prints both addresses' commands. `tsc` clean in web and API;
+`generate-openapi` + `check-api-docs` (433 operations, 72 curated) and `check-help-links` pass.
 
 ---
 

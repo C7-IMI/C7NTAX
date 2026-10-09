@@ -8314,3 +8314,66 @@ Both are in the reply and in the briefing's pre-deployment list, and neither was
   reader a translation.
 - **Renaming a navigation label is not renaming its key.** Ids in `navModel.ts` are persisted (row order,
   favorites, usage counts), so a "clean" rename would quietly reset people's panes.
+- **I repeated a mistake this repository had already written down, in the service of this very entry.**
+  Reading `BuildNotes.md` with `Get-Content -Raw` and writing it back with `WriteAllText` picked up
+  PowerShell 5.1's ANSI reading of a UTF-8 file: every em dash in the file came back as the three
+  characters it looks like when UTF-8 is misread. Nothing looked wrong in the console — PowerShell prints
+  UTF-8 as mojibake anyway, which is exactly why the corruption was invisible. It surfaced from the
+  generator: `[generate-buildnotes] parsed 1 versions`, because its version pattern requires a real em
+  dash, so the other 307 headings stopped matching. Retrace line 6297 is a note from an earlier session
+  about this same trap. **The lesson is not "be careful with PowerShell" — it is "do not rewrite a UTF-8
+  file from PowerShell at all": use the edit tool, or read and write bytes.** Repaired in `cadffec` by
+  restoring the file from the previous commit and re-applying the entry, after which the generator parsed
+  308 versions again.
+
+---
+
+### Prompt 342 — One Microsoft 365 app, several mailboxes, each mapped to a board
+
+**Timestamp:** 2026-10-09 08:05 | **Status:** Complete | **Duration:** ~75 min
+
+**BuildNotes IDs:** **2026.10.9.016**.
+
+**Prompt**
+
+> For the Microsoft 365 connector or somewhere in the setup/configuration that you think makes sense: I need to be able to setup/configure/map multiple email addresses to watch/listen to and then map them to the board of my choice. For instance: alerts@domain.com will let me watch and route tickets to the NOC Alerts board, servicedesk@domain.com will let me route tickets to MSP Service Desk
+
+**What I did**
+- **Found out first how much already existed, because most of the mapping did.** `EmailConnector` was
+  already one row per mailbox with its own `boardId`, so "several addresses to several boards" was
+  possible; what was missing was everything around it — the row did not name the app, the app's other
+  addresses were invisible, and adding the second mailbox meant pasting the client secret again (Entra
+  will not show it twice), which was the real cost.
+- **Added the app as a first-class thing to look at** rather than a new table: `GET
+  /api/email-connectors/m365-apps` groups the existing rows by (tenant, client id) and returns each app
+  with its addresses, their boards, and the Exchange commands that cover all of them. One registration
+  consenting once is the model; the endpoint just says it out loud.
+- **Made the second mailbox two fields.** `reuseAppFromConnectorId` copies the tenant, client id and
+  *stored ciphertext* to the new row, so the secret moves without ever being decrypted or re-typed, and
+  a `clientSecret` sent alongside a reuse is ignored rather than stored. The form hides the credential
+  fields behind a **Which Microsoft 365 app** picker for the same reason.
+- **Generalised the scoping commands to several mailboxes**, numbered per address (`C7NTAX-…` then
+  `C7NTAX-…-2`), because Exchange scopes an application per mailbox — a single-mailbox call reads exactly
+  as it always did, so the wizard's output is unchanged.
+- **Rewrote the row headline as the mapping**: `alerts@cyber7group.com → NOC Alerts`, with the transport,
+  folder, poll interval and health underneath. "Board: NOC Alerts" was the same fact written as
+  configuration.
+- **Caught a bug I introduced, by testing the refusal path.** Reuse passed the app to the validator in the
+  place of the existing row, which made "the row exists" true and let a Graph connector be created with
+  **no mailbox**. The probe asserted the failure case and got **201**; splitting "the row exists" from "a
+  secret is stored" in the validator fixed it, and the case now answers the ordinary
+  `400 … needs: user (mailbox)`.
+- **Cleaned up after the probes** — five connector rows, including the one the bug let through — and
+  reverted the snapshot files the poller had captured them into, which is the trap that left the last set
+  of probe tickets visible in the product.
+- Documented it in `docs/API.md` (a new §9 subsection), the OpenAPI curated entries for both endpoints
+  and the Help walkthrough, configuration table and FAQ — with the two screenshots that show the mapping.
+
+**Notes for next time**
+- **Ask what a feature already does before designing the missing part.** Half the ask was already
+  implemented; the work was in the friction around it, and a new data model would have duplicated the
+  connector rows the runtime already polls.
+- **Probe the refusal, not just the happy path.** The empty-mailbox connector was invisible in the
+  success case — it required asserting what *should* fail to surface at all.
+- **A secret that can never be read back should move as ciphertext.** Re-encrypting it means decrypting
+  it, and a value that is never decrypted is one that cannot leak into a log on the way past.

@@ -410,6 +410,25 @@
     "summary": "Where a deployment got to, without contacting Microsoft",
     "description": "The session's own state: pending, authorized, declined, expired or failed, plus the tenant, mode, mailbox and display name it was started with."
   },
+  "GET /api/email-connectors": {
+    "summary": "Every watched mailbox, and the board it files into",
+    "description": "One row per watched address, which is the mapping: `alerts@` files to the NOC board, `servicedesk@` to the service desk. Each row carries its transport and health — last poll, messages processed, last error — so a mailbox that has stopped working is visible without opening it. Secrets are never returned: `hasPassword`, `hasClientSecret` and `hasRefreshToken` say whether one is set."
+  },
+  "GET /api/email-connectors/m365-apps": {
+    "summary": "The Microsoft 365 apps, the addresses on each, and how to scope them",
+    "description": "Connector rows grouped by registration, because one app usually watches several addresses and Exchange scopes it per mailbox rather than per app. Each app comes back with every address on it, the board each one files into, and `scopingCommands`: the Exchange Online commands that cover all of those addresses at once — one management scope and one role assignment each. The service principal's object id is not stored (it belongs to the deployment), so the commands say so rather than inventing one. Requires `integration:view`."
+  },
+  "POST /api/email-connectors": {
+    "summary": "Watch another mailbox, and choose the board it files into",
+    "description": "Takes the Microsoft 365 app inline (`tenantId`, `clientId`, `clientSecret`) or names an existing connector to copy it from with `reuseAppFromConnectorId` — the tenant, application id and secret are copied from that row, so a second mailbox on the same app needs only `user` and `boardId`. The secret moves as stored ciphertext and is never shown again; a `clientSecret` sent alongside a reuse is ignored rather than stored. `boardId` and, for an app-only Graph connector, `user` are required; a new connector is created **disabled** so it can be tested before it starts turning mail into tickets. Requires `integration:manage`.",
+    "requestExample": {
+      "transport": "graph",
+      "authType": "clientSecret",
+      "boardId": "…",
+      "user": "alerts@cyber7group.com",
+      "reuseAppFromConnectorId": "…"
+    }
+  },
   "POST /api/tickets/batch": {
     "summary": "Apply one change to many tickets",
     "description": "Status and priority only. `notifyCustomer: false` closes a batch without emailing anybody, which is usually what housekeeping wants; `closeNotes` is recorded on every ticket in the batch. Note that closing a batch *does* email each ticket's contact, one ticket at a time — there is no digest.\n\nOmit `notifyCustomer` and the board decides **per ticket**, because a single selection can span boards: a NOC ticket stays quiet while the ones beside it are told. Send `true` or `false` and that answer is used for all of them.\n\nIn the application, a batch that includes **Close** stops and asks first (email the client, or close in silence) rather than closing in the background: the request below is what that dialog sends, not what a ticked checkbox sends on its own."

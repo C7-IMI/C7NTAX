@@ -371,28 +371,51 @@ export interface DeploymentResult {
   warnings: string[];
 }
 
-/** The Exchange Online half, which Graph has no route to — printed for a person to run. */
-export function scopingCommands(clientId: string, servicePrincipalId: string, displayName: string, mailbox: string): string {
-  const scopeName = `C7NTAX-${clientId.slice(0, 8)}`;
-  const address = mailbox || "<service-desk-mailbox>";
-  return [
+/**
+ * The Exchange Online half, which Graph has no route to — printed for a person to run.
+ *
+ * It takes **one or several** mailboxes because one registration usually watches several: `alerts@`
+ * files to the NOC board and `servicedesk@` to the service desk, and Exchange scopes an application
+ * per mailbox rather than per app. Each address gets its own management scope and its own role
+ * assignment, numbered from 2 so the app's identity (step 1) is still created once. A single address
+ * reads exactly as it always did.
+ */
+export function scopingCommands(clientId: string, servicePrincipalId: string | null, displayName: string, mailbox: string | string[]): string {
+  const short = clientId.slice(0, 8);
+  const addresses = (Array.isArray(mailbox) ? mailbox : [mailbox])
+    .map((address) => String(address || "").trim())
+    .filter((address, index, all) => address.length > 0 && all.indexOf(address) === index);
+  if (addresses.length === 0) addresses.push("<service-desk-mailbox>");
+
+  const lines = [
     "Install-Module ExchangeOnlineManagement -Scope CurrentUser",
     "Connect-ExchangeOnline",
     "",
-    "# 1. The app's identity inside Exchange Online",
-    `New-ServicePrincipal -AppId ${clientId} -ObjectId ${servicePrincipalId} -DisplayName "${displayName}"`,
-    "",
-    "# 2. A management scope bound to the one mailbox",
-    `New-ManagementScope -Name "${scopeName}" -RecipientRestrictionFilter "PrimarySmtpAddress -eq '${address}'"`,
-    "",
-    "# 3. The mailbox role, restricted to that scope",
-    `New-ManagementRoleAssignment -Name "${scopeName}-Assignment" -App "${displayName}" \``,
-    `  -Role "Application Mail.ReadWrite" -CustomResourceScope "${scopeName}"`,
+    "# 1. The app's identity inside Exchange Online — once per registration",
+    servicePrincipalId
+      ? `New-ServicePrincipal -AppId ${clientId} -ObjectId ${servicePrincipalId} -DisplayName "${displayName}"`
+      : `#    Already created when "${displayName}" was deployed. If it is missing:\n#    New-ServicePrincipal -AppId ${clientId} -ObjectId <enterprise application object id> -DisplayName "${displayName}"`,
+  ];
+
+  addresses.forEach((address, index) => {
+    // One scope per mailbox: the first keeps the name the deployment used, the rest are numbered.
+    const scopeName = index === 0 ? `C7NTAX-${short}` : `C7NTAX-${short}-${index + 1}`;
+    lines.push(
+      "",
+      `# ${index + 2}. ${address} — its own scope, and the mailbox role restricted to it`,
+      `New-ManagementScope -Name "${scopeName}" -RecipientRestrictionFilter "PrimarySmtpAddress -eq '${address}'"`,
+      `New-ManagementRoleAssignment -Name "${scopeName}-Assignment" -App "${displayName}" \``,
+      `  -Role "Application Mail.ReadWrite" -CustomResourceScope "${scopeName}"`,
+    );
+  });
+
+  lines.push(
     "",
     "# Verify both halves — the first proves access, the second proves it is scoped",
-    `Test-ServicePrincipalAuthorization -Identity ${clientId} -Resource ${address}`,
+    ...addresses.map((address) => `Test-ServicePrincipalAuthorization -Identity ${clientId} -Resource ${address}`),
     `Get-ManagementRoleAssignment -RoleAssignee "${displayName}" | Format-Table Name, Role, CustomResourceScope`,
-  ].join("\n");
+  );
+  return lines.join("\n");
 }
 
 /**

@@ -34,7 +34,8 @@ type HelpBlock =
   | { kind: "note"; text: string }
   | { kind: "tip"; text: string }
   | { kind: "warn"; text: string }
-  | { kind: "table"; headers: string[]; rows: string[][] };
+  | { kind: "table"; headers: string[]; rows: string[][] }
+  | { kind: "figure"; src: string; alt: string; caption: string };
 
 export const HELP_SECTIONS: HelpSection[] = [
   // ════════════════════════════ CORE ════════════════════════════
@@ -129,6 +130,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "p", text: "Q: Can I change a ticket's status without opening the Edit form? — A: Yes. In the redesigned screens the ticket's states are **pills beside its title** — status, priority, assignee, source and the SLA clock. Press one and pick a value; it saves immediately, through the same route the Edit form uses, and everything it affects (the queue, the SLA, the audit trail) is updated the same way it always was. Use **Edit** when you want to change several fields at once or work with the full form." },
       { kind: "p", text: "Q: Can emails create tickets automatically? — A: Yes. Configure a monitored mailbox or M365 Graph connector under Administration → Service Boards → Email connectors." },
       { kind: "p", text: "Q: How do I set up the Microsoft 365 app the connector needs? — A: Open the connector, choose **Microsoft 365 / Exchange Online** and **App-only (client secret)**, then press **Deploy OAuth app**. The wizard signs you in with a code, creates or reuses the registration, grants the Mail.ReadWrite application permission with admin consent, mints the secret, prints the Exchange Online scoping commands, and fills the connector's fields. You need Application Administrator (or Global Administrator) on the tenant, and you must run the Exchange commands — until they are run the app can read every mailbox in the tenant." },
+      { kind: "p", text: "Q: Can one Microsoft 365 app watch several mailboxes? — A: Yes, and that is the normal shape: one registration consenting once, with an address per board (`alerts@` → NOC Alerts, `servicedesk@` → MSP Service Desk). Add the first one through **Deploy OAuth app**, then add each further address by choosing **Reuse …** under **Which Microsoft 365 app** and supplying only the mailbox and its board. Exchange has to be told about each address separately — open **Exchange scoping** on the app and run the commands it prints, which cover every address on it, or the new mailbox stays unreadable to the app." },
       { kind: "p", text: "Q: Why does the app need Mail.ReadWrite and not Mail.Read? — A: Because the connector marks a message read once it has become a ticket. A read-only registration connects happily, reads the mailbox, and then fails on the first message it tries to mark — which is why the wizard refuses a registration that was granted Mail.Read." },
       { kind: "p", text: "Q: Consent was granted but the connector still says AccessDenied — A: Consent takes 30–60 minutes to reach the mailbox layer. An immediate `ErrorAccessDenied` is expected rather than a misconfiguration; wait and test again before changing anything." },
       { kind: "p", text: "Q: Can I use the script instead of the wizard? — A: Yes, and both are supported. `O365/New-C7NTAXMailboxApp.ps1` does the same work from a terminal and writes `out/c7ntax-m365-app.json`; paste that file into the wizard and it fills the same fields. The script is the reference if you want to see exactly which Graph calls are made." },
@@ -226,7 +228,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "table", headers: ["Setting", "What it decides"], rows: [
         ["Registration name", "The key an existing registration is matched on. `C7NTAX Email Connector` is reused rather than duplicated — it is consented again and given a further secret."],
         ["Which identity", "App-only (a shared mailbox, needs the Exchange scoping), delegated (the mailbox of whoever signs in, no scoping, no secret), or both on one registration."],
-        ["Mailbox to watch", "Used to print the Exchange scoping commands and to fill the connector's mailbox field."],
+        ["Mailbox to watch", "The address this connector reads, and the board it files into. One registration can watch **several**: add the first here, then add the rest by reusing the app, and scope each in Exchange — the app's panel lists the addresses and prints the commands for all of them."],
         ["Client secret", "Created for 12 months on an app-only deployment, with the expiry shown at the end so it can be diarised; never created for delegated, which uses PKCE."],
         ["Redirect URI", "Registered automatically on a delegated deployment, from this instance's own callback — it must match exactly or sign-in fails with AADSTS500113."],
       ] },
@@ -470,6 +472,17 @@ export const HELP_SECTIONS: HelpSection[] = [
         "Back in the connector, the tenant id, client id, secret and mailbox are already filled in — press **Add Email Connector**, then **Test connection**, then switch it on.",
       ] },
       { kind: "note", text: "Prefer a terminal, or already have the app? The wizard's second path takes the output of `O365/New-C7NTAXMailboxApp.ps1` (or the four values typed by hand) and fills the same fields. Either way the mailbox is polled for unread mail and messages are marked read once they have become tickets." },
+      { kind: "h", text: "Watching several addresses on one app" },
+      { kind: "p", text: "One registration usually watches **several addresses** — `alerts@` filing to the NOC board, `servicedesk@` to the service desk — and each watched address is one row in this list. The row is the mapping: the address, an arrow, the board it files into. Exchange scopes an application **per mailbox** rather than per app, so a second address needs its own scope even though it uses the app that already exists." },
+      { kind: "figure", src: "/help/email-connectors.png", alt: "The Email tab under C7NC, listing four watched mailboxes each with an arrow to the service board it files into", caption: "**C7NC → Email.** Each row is one watched address and the board it files into — `support@example.com → Infrastructure Desk`, `alerts@cyber7group.com → NOC Alerts`. The buttons on the right are the row's own: stop or start watching, test the connection, poll now, delete." },
+      { kind: "steps", items: [
+        "Choose **Microsoft 365 / Exchange Online** and **App-only (client secret)**, then pick the app under **Which Microsoft 365 app**: **Reuse …** copies the tenant, application id and client secret from the app already configured, so a second address needs one click rather than the secret typed again — which matters, because Entra will not show it twice.",
+        "Fill in the two things that are new: **the mailbox to watch** and the **service board** it files into. Press **Add Email Connector**.",
+        "Open **Exchange scoping** on the app and run the commands it prints — one management scope and one role assignment **per address**, so the app can read the mailboxes listed and no others.",
+        "Press **Test connection** on the new row, then switch it on.",
+      ] },
+      { kind: "figure", src: "/help/email-apps.png", alt: "The Microsoft 365 apps panel showing one app, two mailboxes and the Exchange Online scoping commands", caption: "**One app, several addresses.** The panel lists every address on the app and the board each files into, and **Exchange scoping** prints the commands that cover all of them at once — numbered per address, because that is how Exchange scopes an application. The app's addresses are also why the picker can offer *Reuse* for the next one." },
+      { kind: "note", text: "**Which app does a mailbox belong to?** Two rows belong to the same app when the tenant and the client id match, which is what the grouping above uses. Nothing else is shared: each address has its own folder, poll interval, board and ingestion rules, so `alerts@` can be polled every minute into the NOC board while `servicedesk@` is polled every five into the service desk." },
       { kind: "h", text: "Connect to Microsoft (delegated)" },
       { kind: "p", text: "The delegated flow reads the mailbox of whoever signs in, so no shared-mailbox scoping is needed and no client secret is created (it is a public client using PKCE). Register the app with the **delegated** permissions Mail.ReadWrite and User.Read plus offline_access, save the tenant and client id, then press the link button on the connector to sign in." },
       { kind: "note", text: "Both transports share the same dedup store, so switching a mailbox from IMAP to Graph will not re-create old tickets." },
@@ -1841,6 +1854,27 @@ function Block({ block }: { block: HelpBlock }) {
           </tbody>
         </table>
       </div>
+    );
+    /*
+     * A picture of the screen a step is talking about. The caption carries the pointing — "the switch is
+     * the second row" — because a screenshot without an arrow is a second rendering of the same
+     * paragraph; the picture shows where to look and the caption says what to look at.
+     *
+     * Captured dark, at 1440 wide, from the running application: see `apps/web/public/help/README.md`
+     * for how they were taken and when to take them again.
+     */
+    case "figure": return (
+      <figure className="my-4">
+        <img
+          src={block.src}
+          alt={block.alt}
+          loading="lazy"
+          className="w-full rounded-lg border border-surface-border bg-surface-lighter"
+        />
+        <figcaption className="mt-2 text-xs text-gray-400 leading-relaxed">
+          <span className="font-semibold text-gray-300">Screenshot: </span>{inline(block.caption)}
+        </figcaption>
+      </figure>
     );
     default: return null;
   }

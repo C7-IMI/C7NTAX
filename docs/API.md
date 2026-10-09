@@ -494,11 +494,39 @@ application never holds a credential for the tenant: the administrator approves 
 browser and the token that comes back is used for one task. Deployment is idempotent **by display
 name** — an existing `C7NTAX Email Connector` registration is reused, consented again, and given a
 further secret rather than a duplicate being created — and it returns the **Exchange Online** commands
-that scope an app-only registration to one mailbox, because Graph has no route to those and an unscoped
+that scope an app-only registration to a mailbox, because Graph has no route to those and an unscoped
 app-only app can read every mailbox in the tenant. `POST /api/oauth-app/import` is the path for a
 tenant this instance cannot reach Microsoft from: paste the script's JSON and the four values come back.
 Everything is gated on `integration:manage`, and each deployment or import writes an audit row
 (`entity: "oauth_app"`) naming the tenant, the client id and the secret's expiry — never the secret.
+
+### Watching several mailboxes, each filing to its own board
+
+One registration normally watches **several** addresses — `alerts@` files to the NOC board and
+`servicedesk@` to the service desk — and each watched address is one **email connector** row: a mailbox
+and the board it files into, with its own folder and poll interval. Exchange scopes an application per
+mailbox rather than per app, so the second address needs its own `New-ManagementScope` and role
+assignment even though it uses the app that already exists.
+
+```bash
+GET  /api/email-connectors              # every watched mailbox, and its board
+GET  /api/email-connectors/m365-apps    # the apps, the addresses on each, and the scoping commands
+POST /api/email-connectors              # watch another address
+```
+
+`POST /api/email-connectors` takes the app inline (`tenantId`, `clientId`, `clientSecret`) **or** names
+a connector whose app to copy — `reuseAppFromConnectorId` — in which case the tenant, application id and
+secret are copied from that row and the only new fields are `user` (the address) and `boardId` (where it
+files). The secret is copied as stored ciphertext, so a second mailbox never needs the secret typed
+again — which matters because Entra will not show it twice. A request that reuses an app and sends a
+secret as well has the secret ignored rather than stored.
+
+`GET /api/email-connectors/m365-apps` is the map: each app with every address on it and the board each
+one files into, plus the **Exchange Online** commands covering all of them at once (one scope and one
+role assignment per address). The service principal's object id is not stored — it belongs to the
+deployment — so the commands say that rather than inventing one. Both endpoints need
+`integration:view`; creating a connector needs `integration:manage`, and a new connector is created
+**disabled**, so it can be tested before it starts turning mail into tickets.
 
 ---
 

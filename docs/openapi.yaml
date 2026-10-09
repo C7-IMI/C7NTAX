@@ -55,7 +55,7 @@ tags:
   - name: "Dashboard"
     description: "3 operations"
   - name: "Email connectors"
-    description: "10 operations"
+    description: "11 operations"
   - name: "Events"
     description: "3 operations"
   - name: "Flexpoint"
@@ -2779,7 +2779,8 @@ paths:
     get:
       tags: ["Email connectors"]
       operationId: "getEmailConnectors"
-      summary: "Read email-connectors"
+      summary: "Every watched mailbox, and the board it files into"
+      description: "One row per watched address, which is the mapping: `alerts@` files to the NOC board, `servicedesk@` to the service desk. Each row carries its transport and health — last poll, messages processed, last error — so a mailbox that has stopped working is visible without opening it. Secrets are never returned: `hasPassword`, `hasClientSecret` and `hasRefreshToken` say whether one is set."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["integration:view"]
       x-source: "email-connectors.ts · emailConnectorsRouter.get"
@@ -2792,7 +2793,12 @@ paths:
     post:
       tags: ["Email connectors"]
       operationId: "postEmailConnectors"
-      summary: "Create or act on email-connectors"
+      summary: "Watch another mailbox, and choose the board it files into"
+      description: "Takes the Microsoft 365 app inline (`tenantId`, `clientId`, `clientSecret`) or names an existing connector to copy it from with `reuseAppFromConnectorId` — the tenant, application id and secret are copied from that row, so a second mailbox on the same app needs only `user` and `boardId`. The secret moves as stored ciphertext and is never shown again; a `clientSecret` sent alongside a reuse is ignored rather than stored. `boardId` and, for an app-only Graph connector, `user` are required; a new connector is created **disabled** so it can be tested before it starts turning mail into tickets. Requires `integration:manage`."
+      requestBody:
+        content:
+          application/json:
+            example: {"transport":"graph","authType":"clientSecret","boardId":"…","user":"alerts@cyber7group.com","reuseAppFromConnectorId":"…"}
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["integration:manage"]
       x-source: "email-connectors.ts · emailConnectorsRouter.post"
@@ -2928,6 +2934,21 @@ paths:
           in: path
           required: true
           schema: { type: "string" }
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/email-connectors/m365-apps":
+    get:
+      tags: ["Email connectors"]
+      operationId: "getEmailConnectorsm365Apps"
+      summary: "The Microsoft 365 apps, the addresses on each, and how to scope them"
+      description: "Connector rows grouped by registration, because one app usually watches several addresses and Exchange scopes it per mailbox rather than per app. Each app comes back with every address on it, the board each one files into, and `scopingCommands`: the Exchange Online commands that cover all of those addresses at once — one management scope and one role assignment each. The service principal's object id is not stored (it belongs to the deployment), so the commands say so rather than inventing one. Requires `integration:view`."
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["integration:view"]
+      x-source: "email-connectors.ts · emailConnectorsRouter.get"
       responses:
         "200": { description: "OK" }
         "400": { $ref: "#/components/responses/BadRequest" }
@@ -7303,5 +7324,5 @@ components:
         occurredAt: { type: string, format: date-time }
         data: { type: object, description: "Kept as it arrived, on the ticket." }
 
-# 69 of 432 operations carry a curated summary from docs/api-operations.json;
+# 72 of 433 operations carry a curated summary from docs/api-operations.json;
 # the rest are described from their own path, which is still enough to call them correctly.

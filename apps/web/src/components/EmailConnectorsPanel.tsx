@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Mail, Plus, PlugZap, Trash2, Power, ShieldCheck, Info, AlertTriangle, Link2, Unlink, Wand2 } from "lucide-react";
+import { Mail, Plus, PlugZap, Trash2, Power, ShieldCheck, Info, AlertTriangle, Link2, Unlink, Wand2, ArrowRight, Copy, Terminal } from "lucide-react";
 import { OAuthAppWizard, type WizardValues } from "./OAuthAppWizard";
 
 interface Connector {
@@ -45,6 +45,22 @@ interface Company {
   name: string;
 }
 
+/**
+ * A Microsoft 365 registration this instance watches mailboxes with, and the mailboxes on it.
+ *
+ * One app carries several addresses — that is the point of it — and each address files to its own board.
+ * The API groups the connector rows by app and hands back the Exchange scoping commands for all of them,
+ * because scoping is per mailbox: the next address needs its own scope and its own role assignment.
+ */
+interface M365App {
+  tenantId: string | null;
+  clientId: string | null;
+  displayName: string;
+  reuseFromConnectorId: string | null;
+  scopingCommands: string | null;
+  mailboxes: Array<{ id: string; mailbox: string; boardId: string; boardName: string; folder: string; enabled: boolean }>;
+}
+
 type Transport = "graph" | "ews" | "imap";
 type GraphAuth = "clientSecret" | "delegated";
 
@@ -57,6 +73,8 @@ const emptyForm = {
   clientId: "",
   clientSecret: "",
   mailbox: "",
+  /** Another mailbox on the app already configured: the connector whose app is copied. */
+  reuseApp: "",
   // EWS / IMAP
   host: "",
   port: "993",
@@ -91,6 +109,8 @@ export function EmailConnectorsPanel() {
   const [connectors, setConnectors] = useState<Connector[]>([]);
   const [boards, setBoards] = useState<Board[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
+  const [apps, setApps] = useState<M365App[]>([]);
+  const [showCommands, setShowCommands] = useState<string | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [busy, setBusy] = useState<string | null>(null);
   const [wizard, setWizard] = useState(false);
@@ -110,6 +130,9 @@ export function EmailConnectorsPanel() {
       ...f,
       transport: "graph",
       graphAuth: meta.mode === "Delegated" || !values.clientSecret ? "delegated" : "clientSecret",
+      // The wizard just produced (or re-used) an app, so the form uses what it filled in rather than
+      // copying from another connector.
+      reuseApp: "",
       tenantId: values.tenantId || f.tenantId,
       clientId: values.clientId || f.clientId,
       clientSecret: values.clientSecret,
@@ -123,6 +146,7 @@ export function EmailConnectorsPanel() {
   const load = () => {
     api.get("/email-connectors").then((r) => setConnectors(r.data.data || [])).catch(() => {});
     api.get("/boards").then((r) => setBoards(r.data || [])).catch(() => {});
+    api.get("/email-connectors/m365-apps").then((r) => setApps(r.data.data || [])).catch(() => {});
     api.get("/clients", { params: { limit: 200, sort: "name" } })
       .then((r) => setCompanies(r.data?.data || []))
       .catch(() => {});
@@ -197,9 +221,11 @@ export function EmailConnectorsPanel() {
             authType: form.graphAuth,
             boardId: form.boardId,
             user: form.mailbox,
-            tenantId: form.tenantId,
-            clientId: form.clientId,
-            clientSecret: form.clientSecret,
+            // A reused app sends no credentials at all: the server copies them from the connector named,
+            // and sending a blank secret alongside would only invite it to store one.
+            ...(form.graphAuth === "clientSecret" && form.reuseApp
+              ? { reuseAppFromConnectorId: form.reuseApp }
+              : { tenantId: form.tenantId, clientId: form.clientId, clientSecret: form.clientSecret }),
             folder: form.folder || graphDefaults.folder,
             ...rules,
           }
@@ -291,6 +317,12 @@ export function EmailConnectorsPanel() {
   const boardName = (id: string) => boards.find((b) => b.id === id)?.name || id;
   const companyName = (id: string | null) => (id ? companies.find((c) => c.id === id)?.name || "Unknown client" : "");
 
+  /** The app a chosen reuse id belongs to, for the line that says what will be copied. */
+  const reuseApp = apps.find((a) => a.reuseFromConnectorId === form.reuseApp) || null;
+  const copyText = (text: string, what: string) => {
+    navigator.clipboard.writeText(text).then(() => toast.success(`${what} copied`)).catch(() => toast.error("Could not copy"));
+  };
+
   return (
     <div className="card space-y-4">
       <div className="flex items-center gap-2">
@@ -298,16 +330,24 @@ export function EmailConnectorsPanel() {
         <h3 className="text-sm font-semibold text-white">Email Connectors (mailbox → Service Tickets)</h3>
       </div>
 
+      {/*
+        One row per watched address, and the row reads as the mapping it is: the address, an arrow, the
+        board it files into. "Board: Infrastructure Desk" on a second line was the same fact written as
+        configuration; the arrow is the sentence.
+      */}
       {connectors.length === 0 && <p className="text-sm text-gray-500">No email connectors yet. Add a mailbox to turn incoming emails into tickets.</p>}
       {connectors.map((c) => (
         <div key={c.id} className="border border-surface-border rounded-lg p-3 space-y-1">
           <div className="flex items-center justify-between">
             <div className="min-w-0">
-              <p className="text-white font-medium text-sm truncate">
-                {c.user || c.oauthAccount || "(no mailbox)"} <span className="text-gray-500 font-normal">{transportLabel(c)}</span>
+              <p className="text-sm font-medium truncate flex items-center gap-1.5 flex-wrap">
+                <span className="text-white">{c.user || c.oauthAccount || "(no mailbox)"}</span>
+                <ArrowRight size={13} className="text-gray-500 shrink-0" />
+                <span className="text-cyber-300">{boardName(c.boardId)}</span>
+                <span className="text-gray-500 font-normal">{transportLabel(c)}</span>
               </p>
               <p className="text-xs text-gray-500">
-                Board: {boardName(c.boardId)} · Folder: {c.folder || (c.transport === "graph" ? "Inbox" : "INBOX")} · Poll: {c.pollIntervalSec}s
+                Folder: {c.folder || (c.transport === "graph" ? "Inbox" : "INBOX")} · Poll: {c.pollIntervalSec}s
                 {c.lastPollAt ? ` · Last poll: ${new Date(c.lastPollAt).toLocaleString()}` : ""}
                 {c.processedCount > 0 ? ` · ${c.processedCount} message(s) processed` : ""}
                 {c.defaultCompanyId ? ` · Unmatched senders → ${companyName(c.defaultCompanyId)}` : c.autoCreateCompany ? " · Unmatched senders → new client per domain" : ""}
@@ -348,6 +388,74 @@ export function EmailConnectorsPanel() {
         </div>
       ))}
 
+      {/*
+        The apps, and every address on each.
+        
+        The connector list above already shows each row, but it cannot answer the two questions an
+        administrator has when they add the *next* address: which app does it belong to, and which
+        addresses does that app already read? Exchange scopes an application per mailbox, so the third
+        question — what do I run to let it read one more? — is per address too, and it is answered here,
+        for the whole app, rather than one connector at a time.
+      */}
+      {apps.length > 0 && (
+        <div className="rounded-lg border border-surface-border p-3 space-y-3">
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={14} className="text-cyber-400" />
+            <p className="text-xs font-medium text-gray-300">Microsoft 365 apps this instance watches with</p>
+          </div>
+          {apps.map((app) => (
+            <div key={`${app.tenantId}:${app.clientId}`} className="rounded-lg bg-surface-lighter p-3 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs font-mono text-gray-400">
+                  {app.clientId || "(no client id)"}
+                  <span className="text-gray-600"> · tenant {app.tenantId || "—"}</span>
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="badge text-gray-400">
+                    {app.mailboxes.length} mailbox{app.mailboxes.length === 1 ? "" : "es"}
+                  </span>
+                  {app.scopingCommands && (
+                    <button
+                      type="button"
+                      className="btn-secondary text-xs inline-flex items-center gap-1.5"
+                      onClick={() => setShowCommands(showCommands === app.clientId ? null : app.clientId)}
+                    >
+                      <Terminal size={12} /> Exchange scoping
+                    </button>
+                  )}
+                </div>
+              </div>
+              <ul className="space-y-1">
+                {app.mailboxes.map((m) => (
+                  <li key={m.id} className="text-xs text-gray-400 flex items-center gap-1.5 flex-wrap">
+                    <span className="text-gray-300">{m.mailbox || "(no mailbox)"}</span>
+                    <ArrowRight size={11} className="text-gray-600 shrink-0" />
+                    <span className="text-cyber-300">{m.boardName}</span>
+                    {!m.enabled && <span className="text-amber-300">· not watching yet</span>}
+                  </li>
+                ))}
+              </ul>
+              {showCommands === app.clientId && app.scopingCommands && (
+                <div className="space-y-2">
+                  <p className="text-[11px] text-gray-500">
+                    Run these in Exchange Online PowerShell as an administrator. One management scope and one
+                    role assignment per address, so the app can read the mailboxes listed above and no others.
+                  </p>
+                  <pre className="text-[11px] font-mono text-gray-300 bg-surface rounded-lg border border-surface-border p-2 overflow-x-auto">{app.scopingCommands}</pre>
+                  <button
+                    type="button"
+                    className="btn-secondary text-xs inline-flex items-center gap-1.5"
+                    onClick={() => copyText(app.scopingCommands!, "Exchange commands")}
+                  >
+                    <Copy size={12} /> Copy commands
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
       <form ref={formRef} onSubmit={create} className="border-t border-surface-border pt-3 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => setTransport("graph")}
@@ -384,19 +492,23 @@ export function EmailConnectorsPanel() {
               <p className="text-xs text-gray-300">
                 Microsoft has disabled Basic authentication for Exchange Online in every tenant, so a mailbox on Microsoft 365 can only be read with an
                 OAuth app. It needs the <strong>application</strong> permission <strong>Mail.ReadWrite</strong> with admin consent (write is needed to mark
-                messages processed), and its access scoped to this one mailbox with Exchange Online RBAC for Applications.
+                messages processed), and its access scoped, mailbox by mailbox, with Exchange Online RBAC for Applications — one app can watch several
+                addresses, which is why the app and its addresses are listed above.
               </p>
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <button
                   type="button"
                   className="btn-primary text-xs inline-flex items-center gap-1.5"
                   onClick={() => setWizard(true)}
+                  disabled={Boolean(form.reuseApp)}
                   title="Create or reuse the Entra app, consent to it, and fill this form"
                 >
                   <Wand2 size={13} /> Deploy OAuth app
                 </button>
                 <span className="text-[11px] text-gray-500">
-                  Walk through it — or paste the four values below if the app already exists.
+                  {form.reuseApp
+                    ? "Not needed — this connector uses the app already configured above."
+                    : "Walk through it — or paste the four values below if the app already exists."}
                 </span>
               </div>
             </div>
@@ -448,6 +560,28 @@ export function EmailConnectorsPanel() {
           </div>
         )}
 
+        {form.transport === "graph" && form.graphAuth === "clientSecret" && apps.some((a) => a.reuseFromConnectorId) && (
+          <label className="block">
+            <span className="block text-xs font-medium text-gray-300 mb-1">Which Microsoft 365 app</span>
+            <select className="input-field" value={form.reuseApp} onChange={(e) => setForm({ ...form, reuseApp: e.target.value })}>
+              <option value="">A new app — deploy or enter one below</option>
+              {apps.filter((a) => a.reuseFromConnectorId).map((a) => (
+                <option key={a.reuseFromConnectorId} value={a.reuseFromConnectorId!}>
+                  Reuse {a.clientId?.slice(0, 8)}… — {a.mailboxes.length} mailbox{a.mailboxes.length === 1 ? "" : "es"} already watched
+                </option>
+              ))}
+            </select>
+            {reuseApp && (
+              <span className="mt-1 block text-[11px] text-gray-500">
+                The tenant, application id and client secret are copied from the app
+                {reuseApp.mailboxes[0]?.mailbox ? ` that reads ${reuseApp.mailboxes[0].mailbox}` : ""} — the address and
+                the board below are the only new things. Run the Exchange scoping commands for the new address, under
+                the app above.
+              </span>
+            )}
+          </label>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <select className="input-field" value={form.boardId} onChange={(e) => setForm({ ...form, boardId: e.target.value })} required>
             <option value="">Target service board *</option>
@@ -459,9 +593,13 @@ export function EmailConnectorsPanel() {
               {form.graphAuth === "clientSecret" && (
                 <input className="input-field" placeholder="Mailbox to watch * (servicedesk@cyber7group.com)" value={form.mailbox} onChange={(e) => setForm({ ...form, mailbox: e.target.value })} required />
               )}
-              <input className="input-field" placeholder="Directory (tenant) ID *" value={form.tenantId} onChange={(e) => setForm({ ...form, tenantId: e.target.value })} required />
-              <input className="input-field" placeholder="Application (client) ID *" value={form.clientId} onChange={(e) => setForm({ ...form, clientId: e.target.value })} required />
-              <input className="input-field" type="password" placeholder={form.graphAuth === "delegated" ? "Client secret (optional for a public client)" : "Client secret *"} value={form.clientSecret} onChange={(e) => setForm({ ...form, clientSecret: e.target.value })} required={form.graphAuth === "clientSecret"} />
+              {!form.reuseApp && (
+                <>
+                  <input className="input-field" placeholder="Directory (tenant) ID *" value={form.tenantId} onChange={(e) => setForm({ ...form, tenantId: e.target.value })} required />
+                  <input className="input-field" placeholder="Application (client) ID *" value={form.clientId} onChange={(e) => setForm({ ...form, clientId: e.target.value })} required />
+                  <input className="input-field" type="password" placeholder={form.graphAuth === "delegated" ? "Client secret (optional for a public client)" : "Client secret *"} value={form.clientSecret} onChange={(e) => setForm({ ...form, clientSecret: e.target.value })} required={form.graphAuth === "clientSecret"} />
+                </>
+              )}
               <input className="input-field" placeholder="Folder (Inbox)" value={form.folder} onChange={(e) => setForm({ ...form, folder: e.target.value })} />
             </>
           ) : (
