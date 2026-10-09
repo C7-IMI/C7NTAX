@@ -7,11 +7,17 @@
  * it; an **additional** contact is only emailed notes, and only while their
  * "email this contact notes" switch is on.
  *
+ * A status that *ends* the ticket is written as a closure rather than as a field changing
+ * (`notifyTicketClosure`): it carries the closing note and it tells the contact that a reply brings the
+ * ticket back. Every caller that settles a ticket — the route, the batch action, the auto-close
+ * worker — goes through that one function so the invitation to reply cannot go missing.
+ *
  * Delivery is best-effort — failures are logged and never thrown, so callers
  * (route handlers, background workers) are never blocked or broken by SMTP.
  */
 import { prisma } from "../index";
 import { EmailService } from "@C7NTAX/email";
+import { isSettledTicketStatus, TicketStatus } from "@C7NTAX/shared";
 import { logger } from "./logger";
 import { ticketCcEmails, ticketNoteRecipients } from "./ticketContacts";
 
@@ -102,9 +108,50 @@ export async function notifyTicketStatusChange(
   newStatus: string,
 ): Promise<void> {
   if (oldStatus === newStatus) return;
+  // A ticket that is finished with says so as closing, not as a status field changing: the same
+  // event, written for the person it happens to, with the one instruction that matters afterwards.
+  if (isSettledTicketStatus(newStatus)) {
+    await notifyTicketClosure(ticketId, { status: newStatus });
+    return;
+  }
   await notifyTicketContact(ticketId, {
     eventLabel: "Status updated",
     details: `Status changed from "${ticketStatusLabel(oldStatus)}" to "${ticketStatusLabel(newStatus)}".`,
+  });
+}
+
+/** The wording for a status that ends the ticket, and how to get it back. */
+function closureLabel(status: string): string {
+  switch (status) {
+    case TicketStatus.Resolved: return "Ticket resolved";
+    case TicketStatus.Cancelled: return "Ticket cancelled";
+    default: return "Ticket closed";
+  }
+}
+
+/**
+ * Tell the contact the ticket is finished with — the one notification that carries an instruction
+ * rather than a report.
+ *
+ * `notes` is the closing note (the reason it is being closed, whatever the technician typed), and it
+ * is the whole body of the email when it is there. The last line is not decoration: the reply it
+ * invites is what reopens the ticket (see `appendEmailToTicket`), so an email without it would be a
+ * closed door with no handle on it.
+ */
+export async function notifyTicketClosure(
+  ticketId: string | undefined,
+  options: { status: string; notes?: string; includePrimary?: boolean; extraTo?: string[] },
+): Promise<void> {
+  const notes = options.notes?.trim();
+  const details = [
+    notes ? `Closing note: ${notes}` : "Your ticket has been closed and the work is finished.",
+    "If this is not resolved, reply to this email — the reply reopens the ticket and puts it back in the queue.",
+  ].join("\n\n");
+  await notifyTicketContact(ticketId, {
+    eventLabel: closureLabel(options.status),
+    details,
+    includePrimary: options.includePrimary,
+    extraTo: options.extraTo,
   });
 }
 

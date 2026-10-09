@@ -326,6 +326,10 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
 
     if (updates.status && updates.status !== oldStatus) {
       await onTicketStatusChange(routeParam(req, "id"), updates.status as TicketStatus, oldStatus);
+      // Stamp when the ticket was finished with, so "closed and reopened" is legible afterwards.
+      if (updates.status === TicketStatus.Closed) await prisma.ticket.update({ where: { id: ticket.id }, data: { closedAt: new Date() } });
+      if (updates.status === TicketStatus.Resolved) await prisma.ticket.update({ where: { id: ticket.id }, data: { resolvedAt: new Date() } });
+      if (updates.status === TicketStatus.CustomerReopened) await prisma.ticket.update({ where: { id: ticket.id }, data: { closedAt: null, resolvedAt: null } });
       // A solved ticket is the raw material for a knowledge base article. It is drafted in the
       // background: a draft is a nice-to-have and must not hold up the status change.
       if (updates.status === TicketStatus.Resolved || updates.status === TicketStatus.Closed) {
@@ -340,8 +344,25 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
       });
     }
 
+    /*
+     * Closing, out loud or in silence.
+     *
+     * `closeNotes` is the reason the ticket is being closed. It is a customer-visible comment, because
+     * the client's copy of "this is finished" and the record of why are the same sentence, and it is
+     * what the closure email carries. `notifyCustomer: false` is the deliberate silence — the ticket
+     * ends and nothing is sent — which is what a close on a ticket whose contact bounced, or one
+     * closed by mistake, needs to be able to do.
+     */
+    const closeNotes = typeof req.body?.closeNotes === "string" ? req.body.closeNotes.trim().slice(0, 4000) : "";
+    const notifyCustomer = req.body?.notifyCustomer !== false;
+    if (closeNotes && updates.status && updates.status !== oldStatus) {
+      await prisma.ticketComment.create({
+        data: { ticketId: ticket.id, body: closeNotes, authorId: req.user!.userId, isInternal: false },
+      });
+    }
+
     // Email the ticket contact about customer-visible changes (internal notes excluded)
-    await notifyTicketStatusChange(ticket.id, oldStatus, updated.status);
+    if (notifyCustomer) await notifyTicketStatusChange(ticket.id, oldStatus, updated.status);
     if (req.body.note && !req.body.noteInternal) {
       await notifyTicketContact(ticket.id, { eventLabel: "New note added", details: String(req.body.note) });
     }

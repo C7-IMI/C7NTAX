@@ -10,7 +10,34 @@ export enum TicketStatus {
   PendingApproval = "pending_approval",
   Resolved = "resolved",
   Closed = "closed",
+  /**
+   * The client answered a ticket that had been closed, and it is back in the queue.
+   *
+   * A status of its own rather than a return to `in_progress`: the difference between work that was
+   * never finished and work that was declared finished and came back is the thing anybody reading a
+   * queue wants to know, and folding the two together hides exactly the tickets that were closed too
+   * early.
+   */
+  CustomerReopened = "customer_reopened",
   Cancelled = "cancelled",
+}
+
+/**
+ * The statuses that mean the ticket is finished with — the ones a client reply brings back.
+ *
+ * Resolved counts as settled even though it is not closed: a client reading an email that says the
+ * work is done is replying to the same finished conversation, and waiting for a separate "closed"
+ * would mean the reply either silently vanishes or raises a duplicate ticket.
+ */
+export const SETTLED_TICKET_STATUSES: readonly string[] = [
+  TicketStatus.Resolved,
+  TicketStatus.Closed,
+  TicketStatus.Cancelled,
+];
+
+/** Whether `status` is one a client reply should reopen. */
+export function isSettledTicketStatus(status: string | null | undefined): boolean {
+  return !!status && SETTLED_TICKET_STATUSES.includes(status);
 }
 
 /** Ticket priority levels */
