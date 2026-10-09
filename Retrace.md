@@ -7539,3 +7539,39 @@ reported failure and the script nevertheless ended with *"All checks passed. App
   BuildNotes rather than applied blanket.
 - **A non-ASCII dash does not survive a pipe.** Em dashes written through `node -` arrive as question
   marks in a later read; use `\u2014` in the script when the file has to keep them.
+
+
+### Prompt 323 — The three things left on the table: batch close, the reopen notice, the receipt
+
+**Timestamp:** 2026-10-09 01:05 | **Status:** Complete | **Duration:** ~45 min
+
+**BuildNotes IDs:** **2026.10.8.080**.
+
+**Prompt**
+
+> Add the same option/checkbox on whether to email the client: [the three items listed as not changed].
+> It should notify the tech that the ticket was reopened. received POs should auto create asset records
+
+**What I did**
+- **Gave the bulk bar the same question the dialog asks.** The non-close actions run, then the closure
+  hands the selection to the dialog, so there is no path left that closes a ticket without asking.
+- **Emailed the reopened ticket's owner** (assignee, else the person who raised it) with who replied and
+  what they said — and chose email deliberately, having checked that nothing in the interface consumes a
+  WebSocket notification, so an in-app push would have notified nobody.
+- **Made receiving an order write the inventory**: one asset per unit, capped at 25 per line with the
+  remainder noted rather than dropped, idempotent by order number, best-effort so a failed inventory
+  write cannot undo a receipt somebody asked for.
+- **Verified the notification by ending it**: a throwaway SMTP sink on a local port captured the owner's
+  email — recipient, subject and quoted reply — which is the only way to prove a send rather than an
+  attempt.
+
+**Notes for next time**
+- **"Notify" needs a channel that exists.** The obvious implementation (a Notification row, or a
+  WebSocket push) would have looked finished and delivered nothing: nothing reads the table and nothing
+  listens to the socket. Checking the consumer before writing the producer is the whole difference.
+- **A cap is part of the design, not a limitation.** A thousand-unit line is stock, not a thousand
+  serial-numbered assets; recording 25 and saying so in the order's notes is honest, and it keeps the
+  inventory usable.
+- **Test data has to be put back.** Twelve assets, a cleared line, a ticket status and a set of test
+  comments were all restored in the same session, so the demo instance is exactly as it was — which is
+  also the only way to re-read this change later without wondering which parts were real.

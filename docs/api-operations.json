@@ -412,7 +412,7 @@
   },
   "POST /api/tickets/batch": {
     "summary": "Apply one change to many tickets",
-    "description": "Status and priority only. `notifyCustomer: false` closes a batch without emailing anybody, which is usually what housekeeping wants; `closeNotes` is recorded on every ticket in the batch. Note that closing a batch *does* email each ticket's contact, one ticket at a time — there is no digest."
+    "description": "Status and priority only. `notifyCustomer: false` closes a batch without emailing anybody, which is usually what housekeeping wants; `closeNotes` is recorded on every ticket in the batch. Note that closing a batch *does* email each ticket's contact, one ticket at a time — there is no digest.\n\nIn the application, a batch that includes **Close** stops and asks first (email the client, or close in silence) rather than closing in the background: the request below is what that dialog sends, not what a ticked checkbox sends on its own."
   },
   "GET /api/procurement/orders": {
     "summary": "List purchase orders",
@@ -439,7 +439,7 @@
   },
   "PATCH /api/procurement/orders/:id": {
     "summary": "Move a purchase order along, or re-price it before it arrives",
-    "description": "`status` is one of `draft`, `ordered`, `shipped`, `received`; moving to `ordered` stamps `orderedAt` and moving to `received` stamps `receivedAt` unless a date is sent, so a late delivery can be recorded as the day it actually arrived. `expectedAt` and `notes` are editable at any point.\n\n`lineItems` replaces the lines and recomputes `subtotal` and `total` from them — refused once the order is `received`, because a receipt is a record of what arrived and a line list that can change afterwards is not one. A status moved back from `received` clears `receivedAt`."
+    "description": "`status` is one of `draft`, `ordered`, `shipped`, `received`; moving to `ordered` stamps `orderedAt` and moving to `received` stamps `receivedAt` unless a date is sent, so a late delivery can be recorded as the day it actually arrived. `expectedAt` and `notes` are editable at any point.\n\n**Receiving an order writes the asset inventory**: one asset per unit, named from the line, tagged `{poNumber}-{line}-{unit}`, priced at the line's cost and carrying the order number, unassigned until somebody puts it at a client. The reply's `assets.created` says how many were written; one line is capped at 25 records and the remainder is added to the order's notes rather than dropped; re-receiving the same order writes nothing twice.\n\n`lineItems` replaces the lines and recomputes `subtotal` and `total` from them — refused once the order is `received`, because a receipt is a record of what arrived and a line list that can change afterwards is not one. A status moved back from `received` clears `receivedAt`."
   },
   "PATCH /api/procurement/vendors/:id": {
     "summary": "Edit a vendor",

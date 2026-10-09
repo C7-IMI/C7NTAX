@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.079 | Last Updated: 2026-10-08
+## Version: 2026.10.8.080 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,48 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.080 — Every close asks, the owner hears about a reopen, and receiving fills the inventory
+
+Three answers to "the rest of the ticket-and-purchase-order story": one gap in the closing dialog, one
+notification nobody was sending, and one thing a receipt should have been doing all along.
+
+- **[New]** **A batch that closes tickets asks too.** Ticking **Close** in the bulk bar used to close in
+  the background and email every contact on the way past. The other ticked actions still run immediately,
+  but the closure now waits for the same dialog with the selection on screen — one question, one list of
+  names, one answer, whether it is one ticket or thirty.
+- **[New]** **A reopened ticket emails its owner.** The client's reply was recorded and the status changed,
+  and then nothing happened: a ticket that had come back sat in a queue nobody was told to look at. The
+  assignee (or whoever raised it, when nobody owns it) now gets an internal email — who replied, what
+  they said, and a link to the ticket rather than an invitation to reply by email. Email, because it is
+  the only staff channel that delivers: the WebSocket push in `ws.ts` has no consumer in the interface,
+  so a notification that only pushed would reach nobody. New `EmailService.sendTicketReopened` and
+  `notifyTicketReopenedByClient`, best-effort like the customer notifications — the client's words are
+  already on the ticket and must not be lost over a relay.
+- **[New]** **Receiving a purchase order writes the asset inventory.** One asset per unit, named from the
+  line and tagged `{poNumber}-{line}-{unit}`, priced at what the line cost, dated the day it arrived,
+  carrying the order number and the vendor, and unassigned (`companyId` null, `status` available) until
+  somebody puts it at a client. The line's own `assetId` records the first asset it produced. Idempotent
+  by order number — receiving an order twice does not double the inventory — and a line of more than 25
+  units records 25 and says so in the order's notes rather than inventing a thousand tags nobody will
+  ever scan. The response carries `assets.created`, and the whole step is best-effort: the receipt is the
+  fact somebody asked for and an inventory that failed to write must not undo it.
+- **[Update]** `docs/API.md` §8 and the curated specification say both things an integrator needs to know:
+  receiving an order changes the asset inventory even though `asset:create` was never involved, and the
+  batch close endpoint is what the dialog sends rather than what a ticked checkbox sends on its own.
+  `HelpDoc.tsx` gained the two lines in *Batch actions* and *Closing a ticket*, and a step in the
+  Procurement walkthrough.
+
+**Verification:** API, web and email package `tsc --noEmit` clean, `pnpm build` clean, `check-help-links`
+and `check-api-docs` green. Driven for real: ticking **Close** in the bulk bar opened the dialog for the
+two selected tickets; `PO-1001` was received and produced **12** assets (`PO-1001-01-01`…`-12`, correct
+price, vendor, date and order number, line `assetId` set), re-receiving it left the count at 12, and the
+12 records were then deleted with the line and the order put back; and a client reply on a closed ticket
+reopened it as `customer_reopened` and sent the owner's email — captured by pointing SMTP at a local sink
+for one run, which received it addressed to the ticket's owner with the subject
+`[INF-1004-1005] Reopened by the client — …` and the client's reply quoted in the body.
 
 ---
 

@@ -1053,6 +1053,7 @@ export const HELP_SECTIONS: HelpSection[] = [
         "Open Tickets and tick the checkboxes on the left of the rows.",
         "Choose the batch action (acknowledge, close, and more) from the bulk bar.",
         "Confirm — results are applied to all selected tickets with a summary toast. A failed row is reported rather than silently skipped.",
+        "If **Close** is one of the ticked actions, the other actions run and the same closing dialog opens for the selection: closing always asks whether the client is told, whether it is one ticket or thirty.",
       ] },
       { kind: "h", text: "Closing a ticket" },
       { kind: "p", text: "Closing is two actions in one — the ticket settles, and somebody tells the client — so it asks which of the two you mean rather than assuming. The same dialog appears from the list's right-click **Close ticket**, the row's own menu, the bulk **Quick Actions** choice, and the record's **Status** pill, in both interfaces." },
@@ -1063,7 +1064,7 @@ export const HELP_SECTIONS: HelpSection[] = [
         "Write the **closing note** — the reason it is being closed. It is the body of the email and it is recorded in the thread the client can see, so it is one sentence asked for once rather than a memo nobody reads.",
         "The button says what will happen (**Close and email the client**, or **Close silently**), so the last thing before the action is what the action does.",
       ] },
-      { kind: "note", text: "The closing email ends by telling the client that a reply reopens the ticket, and the email connector acts on it: a reply from one of that client's contacts restores the ticket to **Customer reopened** and it reappears in the queue with the reply on it. Ticket closed by mistake, contact has left, duplicate — those are the cases **Close silently** exists for." },
+      { kind: "note", text: "The closing email ends by telling the client that a reply reopens the ticket, and the email connector acts on it: a reply from one of that client's contacts restores the ticket to **Customer reopened** and it reappears in the queue with the reply on it. The ticket's **owner is emailed** at the same time — the assignee, or whoever raised the ticket when nobody owns it — with who replied and what they said, because a ticket that has come back is work again and a queue is not something everybody watches. Ticket closed by mistake, contact has left, duplicate — those are the cases **Close silently** exists for." },
       { kind: "h", text: "Ticket list columns" },
       { kind: "steps", items: [
         "Select Choose Columns above the ticket card to open the column picker.",
@@ -1607,6 +1608,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "steps", items: [
         "Marking an order **ordered** stamps the ordered date; marking it **received** stamps the received date. Sending a date explicitly wins, so a delivery that arrived on Tuesday is recorded as Tuesday rather than as the day somebody typed it in.",
         "**Received** is final in one respect: the lines lock. Everything else on the order — the expected date, the notes, the vendor — can still be edited.",
+        "**Receiving an order writes the asset inventory.** One record per unit, named from the line and tagged with the order, priced at what the line cost and dated the day it arrived, sitting unassigned until somebody puts it at a client — so the hardware stops being an intention and becomes something you can hand out. A line of more than 25 units records 25 and says so in the order's notes rather than inventing a thousand tags; receiving the same order twice does not double it.",
       ] },
       { kind: "h", text: "Fixing the lines" },
       { kind: "p", text: "**Edit lines** turns the table into inputs: change a quantity or a price, add a line, remove one, then **Save lines**. The subtotal and the total are recomputed from the lines rather than typed, so a header can never disagree with the body. A received order refuses this, because a receipt is a record of what actually arrived." },

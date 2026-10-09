@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.8.080",
+    "date": "2026-10-08",
+    "title": "Every close asks, the owner hears about a reopen, and receiving fills the inventory",
+    "changes": [
+      {
+        "text": "**A batch that closes tickets asks too.** Ticking **Close** in the bulk bar used to close in",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A reopened ticket emails its owner.** The client's reply was recorded and the status changed,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Receiving a purchase order writes the asset inventory.** One asset per unit, named from the",
+        "type": "New Feature"
+      },
+      {
+        "text": "`docs/API.md` §8 and the curated specification say both things an integrator needs to know:",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.079",
     "date": "2026-10-08",
     "title": "The same names, spelled the same way, in both interfaces",

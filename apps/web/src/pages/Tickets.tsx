@@ -732,7 +732,6 @@ export function TicketsPage() {
       let status: string | undefined;
       let priority: string | undefined;
       if (action === "acknowledge") status = "in_progress";
-      else if (action === "close") status = "closed";
       else if (action.startsWith("status_")) status = action.replace("status_", "");
       else if (action.startsWith("priority_")) priority = action.replace("priority_", "");
 
@@ -747,18 +746,36 @@ export function TicketsPage() {
 
   const batchApplyChecked = async () => {
     if (selectedIds.size === 0 || checkedActions.size === 0) return;
+    /*
+     * Closing is handed to the dialog rather than run as a field change.
+     *
+     * A batch of statuses has nothing to ask, but a batch of closures has exactly the question every
+     * closure asks — is the client told — and answering it in the background is how two hundred clients
+     * get an email nobody meant to send. So the other checked actions run now, and the closure waits for
+     * the dialog with the selection still on screen; the dialog's own confirmation clears it.
+     */
+    const closing = checkedActions.has("close");
+    const others = [...checkedActions].filter(action => action !== "close");
     setBatchApplying(true);
     let success = 0;
     let fail = 0;
-    for (const action of checkedActions) {
+    for (const action of others) {
       const ok = await applyBatchAction(action);
       if (ok) success++; else fail++;
     }
     setBatchApplying(false);
     if (success > 0) toast.success(`Applied ${success} action${success!==1?"s":""} to ${selectedIds.size} ticket${selectedIds.size!==1?"s":""}`);
     if (fail > 0) toast.error(`${fail} action${fail!==1?"s":""} failed`);
-    setSelectedIds(new Set());
     setCheckedActions(new Set());
+    if (closing) {
+      openCloseDialog(
+        tickets
+          .filter((row: any) => selectedIds.has(row.id))
+          .map((row: any) => ({ id: row.id, ticketNumber: row.ticketNumber, title: row.title })),
+      );
+      return;
+    }
+    setSelectedIds(new Set());
     fetchTickets();
   };
 

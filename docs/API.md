@@ -374,6 +374,14 @@ you do:
 * **Ticket creation needs `title` and `boardId`**; `companyId`, `priority`, `source`, `contactId`,
   `assignedToId` and `additionalContactIds` are optional, and `POST /api/tickets/:id/time` adds the
   time entry that a status change alone does not.
+* **Receiving a purchase order writes the inventory.** `PATCH /api/procurement/orders/{id}` with
+  `status: "received"` creates one asset per unit on the order — named from the line, tagged
+  `{poNumber}-{line}-{unit}`, priced at what the line cost, dated the day it arrived and carrying the
+  order number — unassigned (`companyId` null, `status` available) until somebody puts it at a client.
+  The response says how many were written (`assets.created`), one line is capped at 25 records and the
+  remainder is noted on the order rather than silently dropped, and re-receiving the same order writes
+  nothing a second time. A PO is the one place an integration can add to the asset inventory without
+  the `asset:create` permission, so a script that receives orders is a script that changes it.
 
 Everything available is in the specification. The five endpoints that cover most integration work:
 

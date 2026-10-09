@@ -220,7 +220,6 @@ procurementRouter.patch("/orders/:id", requirePermission(Permission.BillingManag
     if (updates.status && updates.status !== "received" && existing.receivedAt && (updates.status === "ordered" || updates.status === "shipped")) {
       updates.receivedAt = null;
     }
-
     /*
      * Editing the lines rewrites the order.
      *
@@ -262,6 +261,41 @@ procurementRouter.patch("/orders/:id", requirePermission(Permission.BillingManag
       return res.json(updated);
     }
 
-    res.json(await prisma.purchaseOrder.update({ where: { id: req.params.id }, data: updates }));
+    const updated = await prisma.purchaseOrder.update({ where: { id: req.params.id }, data: updates });
+
+    /*
+     * Receiving an order is what puts the hardware in the inventory.
+     *
+     * Done after the status is stored, and best-effort: the receipt is the fact somebody asked for,
+     * and an inventory that failed to write must not undo it — the failure is logged, the order stays
+     * received, and receiving it again (or the same order number arriving twice) will not duplicate
+     * the records, because the assets carry the order number.
+     */
+    let assets: { created: number; skipped: number } = { created: 0, skipped: 0 };
+    if (updates.status === "received" && existing.status !== "received") {
+      try {
+        const [lines, vendor] = await Promise.all([
+          prisma.pOLineItem.findMany({ where: { poId: existing.id } }),
+          prisma.vendor.findUnique({ where: { id: existing.vendorId }, select: { name: true } }),
+        ]);
+        const result = await createAssetsForReceivedOrder(
+          { id: existing.id, poNumber: existing.poNumber, receivedAt: (updates.receivedAt as Date) ?? updated.receivedAt, vendorId: existing.vendorId },
+          lines,
+          vendor?.name ?? null,
+        );
+        assets = { created: result.created, skipped: result.skipped };
+        if (result.capped.length) {
+          const note = result.capped
+            .map((line) => `${line.recorded} asset record(s) created for ${line.quantity} × ${line.description} — the rest was not itemised.`)
+            .join("\n");
+          const merged = [updated.notes?.trim(), `Received: ${note}`].filter(Boolean).join("\n\n");
+          await prisma.purchaseOrder.update({ where: { id: existing.id }, data: { notes: merged } });
+        }
+      } catch (error) {
+        console.error(`[Procurement] Order ${existing.poNumber} was received but its assets could not be created:`, error instanceof Error ? error.message : error);
+      }
+    }
+
+    res.json({ ...updated, ...(assets.created || assets.skipped ? { assets } : {}) });
   } catch (e) { next(e); }
 });
