@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.9.074",
+    "date": "2026-10-09",
+    "title": "PLAN-030 applied: the Azure deployment package, hardened",
+    "changes": [
+      {
+        "text": "Deployment blockers: a **Consumption workload profile** on the Container Apps environment",
+        "type": "Fix"
+      },
+      {
+        "text": "**Bicep no longer owns the running image.** `imageTag` is required with no default,",
+        "type": "Fix"
+      },
+      {
+        "text": "The migration job uses the user-assigned identity (`--mi-user-assigned`,",
+        "type": "Fix"
+      },
+      {
+        "text": "Security: `@minLength` on the three secrets and `readEnvironmentVariable` in the parameter",
+        "type": "Fix"
+      },
+      {
+        "text": "`infra/README.md` gained the **secret rotation runbook**, the ingress checklist",
+        "type": "New Feature"
+      },
+      {
+        "text": "`PlanDocs/PLAN-030` records what landed, the four deviations, and a new **§8",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.073",
     "date": "2026-10-08",
     "title": "The designer in its own window, and autosave",

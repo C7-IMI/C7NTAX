@@ -8,7 +8,8 @@
     leaves the environment serving a revision whose schema was not applied:
 
       1. preflight            repository, guards, migrations, environment contract
-      2. infrastructure       az deployment group create (Bicep)
+      2. infrastructure       az deployment group create (Bicep); the template is given the image
+                              the app is *already* running, so it cannot move it
       3. image                docker build + push to ACR (or az acr build)
       4. migration job        same image, overridden command: prisma migrate deploy
       5. revision             new Container App revision, 0% traffic
@@ -32,6 +33,11 @@
     -PromoteFrom dev is what makes step 3 a promotion rather than a second build: the tag is
     read back from the running dev app, so the artifact production runs is byte-for-byte the
     one dev verified. Nothing is rebuilt, and no commit that dev has not run can reach prod.
+
+    The Bicep step never decides which image runs (PLAN-030 §1.3). It is given the image the app
+    is already serving — or a public bootstrap image on the very first run of an environment —
+    and the template carries no traffic rule at all, so applying infrastructure cannot promote
+    anything. Only the revision step below, after the health gate, moves the image and the traffic.
 
 .PARAMETER Environment
     dev or prod. dev is deployed automatically by CI; prod only on an explicit push.
@@ -115,6 +121,17 @@ $sourceRegistry = ''
 $sourceImageTag = ''
 if ($PromoteFrom) { $SkipBuild = $true }
 
+# The .bicepparam files read the secrets out of the environment (PLAN-030 §2.2), so a deployment
+# that is missing one fails while it is being compiled instead of writing an empty signing key into
+# Key Vault. The names below are the ones they read; PG_ADMIN_PASSWORD is still accepted as the
+# alias an existing shell has exported.
+$postgresPassword = [System.Environment]::GetEnvironmentVariable('POSTGRES_ADMIN_PASSWORD')
+if (-not $postgresPassword) { $postgresPassword = [System.Environment]::GetEnvironmentVariable('PG_ADMIN_PASSWORD') }
+# The image the Bicep step is given: the one the app is already running, so applying infrastructure
+# cannot move it (PLAN-030 §1.3). Replaced below, once the Azure context is known, with the real
+# value — this is only the answer for a dry run or a first deployment.
+$bicepImage = 'mcr.microsoft.com/k8se/quickstart:latest'
+
 # The promotion path, printed the way the operator said it: sync, dev, prod. Seeing which step
 # this run is makes "did I push that to production or only to dev?" a question the output answers.
 Write-Host "`nC7NTAX deploy — $Environment" -ForegroundColor White
@@ -156,13 +173,18 @@ else {
 }
 
 # Secrets come from the environment of the deploying shell (or the pipeline's secret store)
-# and are written straight into Key Vault by the Bicep deployment — never into a file.
+# and are written straight into Key Vault by the Bicep deployment — never into a file. The names
+# are the ones infra/params/<env>.bicepparam reads, so the parameter file compiles as well.
 if (-not $SkipInfrastructure -and -not $WhatIf) {
-    foreach ($required in @('PG_ADMIN_PASSWORD', 'JWT_SECRET_VALUE', 'KUMO_MASTER_KEY_VALUE')) {
-        if (-not (Get-Item "env:$required" -ErrorAction SilentlyContinue)) {
-            throw "Environment variable $required is not set. Export it for this shell (or set it as a pipeline secret) and re-run; secrets are never read from a file in the repository."
-        }
+    $missing = @()
+    if (-not $postgresPassword) { $missing += 'POSTGRES_ADMIN_PASSWORD (or PG_ADMIN_PASSWORD)' }
+    foreach ($required in @('JWT_SECRET_VALUE', 'KUMO_MASTER_KEY_VALUE')) {
+        if (-not [System.Environment]::GetEnvironmentVariable($required)) { $missing += $required }
     }
+    if ($missing.Count) {
+        throw "Environment variable(s) $($missing -join ', ') not set. Export them for this shell (or set them as pipeline secrets) and re-run; secrets are never read from a file in the repository."
+    }
+    $env:POSTGRES_ADMIN_PASSWORD = $postgresPassword
 }
 
 Write-Step 'Azure context'
@@ -226,20 +248,46 @@ if ($PromoteFrom) {
 
 if (-not $SkipInfrastructure) {
     Write-Step 'Infrastructure (Bicep)'
+
+    # Bicep must not own the running image (PLAN-030 §1.3). The template is given the image the app
+    # is already serving, so applying infrastructure restates the live revision rather than pointing
+    # it at a tag that does not exist yet — the build below, and the update after it, are still the
+    # only things that move the image. On the first run of an environment there is nothing to
+    # restate, so it is given a public image that pulls without credentials; that revision exists
+    # only until this script promotes the real one.
+    if ($WhatIf) {
+        Write-Info "would pass the image $appName is running as the Bicep imageTag (or $bicepImage when nothing is running yet)"
+    } elseif ($azAvailable) {
+        $runningImage = (& az containerapp show --name $appName --resource-group $ResourceGroup --query "properties.template.containers[0].image" -o tsv 2>$null)
+        if ($runningImage -and $runningImage -notlike 'mcr.microsoft.com/*') {
+            $bicepImage = ($runningImage -split ':')[-1]
+            Write-Info "the app is running $runningImage; Bicep gets imageTag=$bicepImage and does not move it"
+        } else {
+            Write-Info "nothing of ours is running yet; Bicep gets the bootstrap image $bicepImage"
+        }
+    }
+
+    # Exported as well as passed, because the parameter file reads IMAGE_TAG out of the environment
+    # the same way it reads the secrets.
+    $env:IMAGE_TAG = $bicepImage
+
     $paramsFile = Join-Path $repoRoot "infra\params\$Environment.bicepparam"
-    Invoke-Az @('deployment', 'group', 'what-if',
-        '--resource-group', $ResourceGroup,
-        '--template-file', (Join-Path $repoRoot 'infra\main.bicep'),
+    $bicepParameters = @(
         '--parameters', $paramsFile,
-        '--parameters', "imageTag=$ImageTag", "postgresAdminPassword=$env:PG_ADMIN_PASSWORD", "jwtSecret=$env:JWT_SECRET_VALUE", "kumoMasterKey=$env:KUMO_MASTER_KEY_VALUE") | Out-Null
+        '--parameters', "imageTag=$bicepImage",
+        "postgresAdminPassword=$postgresPassword",
+        "jwtSecret=$([System.Environment]::GetEnvironmentVariable('JWT_SECRET_VALUE'))",
+        "kumoMasterKey=$([System.Environment]::GetEnvironmentVariable('KUMO_MASTER_KEY_VALUE'))"
+    )
+    Invoke-Az (@('deployment', 'group', 'what-if',
+        '--resource-group', $ResourceGroup,
+        '--template-file', (Join-Path $repoRoot 'infra\main.bicep')) + $bicepParameters) | Out-Null
     if (-not $WhatIf) {
         Write-Info 'what-if reviewed; applying (set -WhatIf to only preview)'
     }
-    Invoke-Az @('deployment', 'group', 'create',
+    Invoke-Az (@('deployment', 'group', 'create',
         '--resource-group', $ResourceGroup,
-        '--template-file', (Join-Path $repoRoot 'infra\main.bicep'),
-        '--parameters', $paramsFile,
-        '--parameters', "imageTag=$ImageTag", "postgresAdminPassword=$env:PG_ADMIN_PASSWORD", "jwtSecret=$env:JWT_SECRET_VALUE", "kumoMasterKey=$env:KUMO_MASTER_KEY_VALUE") | Out-Null
+        '--template-file', (Join-Path $repoRoot 'infra\main.bicep')) + $bicepParameters) | Out-Null
 }
 
 Write-Step 'Registry'
@@ -298,15 +346,59 @@ if ($SkipBuild) {
 
 if (-not $SkipMigrations) {
     Write-Step 'Database migration'
-    # A one-shot job from the same image, so the schema moves with the exact code that
-    # expects it. --command overrides the app's CMD.
+    # A one-shot job from the same image, so the schema moves with the exact code that expects it.
+    # --command overrides the app's CMD. The job stays this script's to own: declaring it in the
+    # Bicep is a larger change than PLAN-030 §1.8, and it is reviewed separately.
     $jobName = "$appName-migrate"
     $rg = $ResourceGroup
-    Invoke-Az @('containerapp', 'job', 'create',
-        '--name', $jobName, '--resource-group', $rg, '--environment', "aca-$appName",
-        '--image', $image, '--command', 'npx prisma migrate deploy',
-        '--cpu', '0.5', '--memory', '1.0Gi', '--replica-timeout', '900', '--replica-retry-limit', '1',
-        '--registry-server', "$Registry.azurecr.io", '--mi-system-assigned') | Out-Null
+
+    # The job pulls its image and reads DATABASE_URL as the *user-assigned* identity the Bicep
+    # deployment attached to the app (PLAN-030 §1.8). --mi-system-assigned used to give the job an
+    # identity of its own, which holds neither AcrPull nor Key Vault Secrets User, so the pull
+    # failed on the first run of an environment.
+    $jobIdentity = ''
+    $vaultUri = ''
+    if ($WhatIf) {
+        $jobIdentity = '<user-assigned-identity-resource-id>'
+        $vaultUri = '<key-vault-uri>/'
+        Write-Info 'would read the app''s user-assigned identity and the vault URI from Azure'
+    } else {
+        # keys(@) rather than ConvertFrom-Json: the property is absent on an app with only a
+        # system-assigned identity, and reading it back as JSON throws under Set-StrictMode.
+        $jobIdentity = @(& az containerapp show --name $appName --resource-group $rg --query "identity.userAssignedIdentities | keys(@)" -o tsv 2>$null) |
+            Where-Object { $_ } | Select-Object -First 1
+        if (-not $jobIdentity) {
+            throw "$appName has no user-assigned identity, so a migration job cannot pull its image or read DATABASE_URL. Run the infrastructure step (drop -SkipInfrastructure) first."
+        }
+        $vaultName = (& az keyvault list --resource-group $rg --query "[0].name" -o tsv 2>$null)
+        if ($vaultName) { $vaultUri = (& az keyvault show --name $vaultName --query "properties.vaultUri" -o tsv 2>$null) }
+        if (-not $vaultUri) { throw "Could not find a Key Vault in $rg to read DATABASE-URL from; the migration job needs it." }
+        Write-Info "job identity: $jobIdentity"
+    }
+
+    # Idempotent (PLAN-030 §1.8): create the job the first time, otherwise move its image. A second
+    # run used to re-create it, and `job start` on a job that does not exist fails.
+    $jobExists = ''
+    if (-not $WhatIf) {
+        $jobExists = (& az containerapp job show --name $jobName --resource-group $rg --query "name" -o tsv 2>$null)
+    }
+    if ($jobExists) {
+        Invoke-Az @('containerapp', 'job', 'update',
+            '--name', $jobName, '--resource-group', $rg,
+            '--image', $image,
+            '--mi-user-assigned', $jobIdentity, '--registry-identity', $jobIdentity) | Out-Null
+        Write-Info "updated $jobName to $image"
+    } else {
+        Invoke-Az @('containerapp', 'job', 'create',
+            '--name', $jobName, '--resource-group', $rg, '--environment', "aca-$appName",
+            '--image', $image, '--command', 'npx prisma migrate deploy',
+            '--cpu', '0.5', '--memory', '1.0Gi', '--replica-timeout', '900', '--replica-retry-limit', '1',
+            '--registry-server', "$Registry.azurecr.io",
+            '--mi-user-assigned', $jobIdentity, '--registry-identity', $jobIdentity,
+            '--secrets', "database-url=keyvaultref:${vaultUri}secrets/DATABASE-URL,identityref:$jobIdentity",
+            '--env-vars', 'DATABASE_URL=secretref:database-url') | Out-Null
+        Write-Info "created $jobName"
+    }
     Invoke-Az @('containerapp', 'job', 'start', '--name', $jobName, '--resource-group', $rg) | Out-Null
     if (-not $WhatIf) {
         Write-Info 'waiting for the migration job…'
@@ -322,9 +414,13 @@ if (-not $SkipMigrations) {
 
 Write-Step 'Revision'
 $revisionSuffix = "$Environment-$ImageTag".ToLowerInvariant() -replace '[^a-z0-9-]', '-'
+# Multiple mode *first* (PLAN-030 §1.3). In Single mode the update below would replace the serving
+# revision on the spot, and the health gate further down would be inspecting a revision that was
+# already taking traffic. The template declares Multiple as well, so this is a restatement — but
+# the script must not depend on the template having been applied.
+Invoke-Az @('containerapp', 'revision', 'set-mode', '--name', $appName, '--resource-group', $ResourceGroup, '--mode', 'multiple') | Out-Null
 Invoke-Az @('containerapp', 'update', '--name', $appName, '--resource-group', $ResourceGroup,
     '--image', $image, '--revision-suffix', $revisionSuffix) | Out-Null
-Invoke-Az @('containerapp', 'revision', 'set-mode', '--name', $appName, '--resource-group', $ResourceGroup, '--mode', 'multiple') | Out-Null
 if (-not $WhatIf) {
     Write-Info 'waiting for the new revision to become healthy…'
     for ($i = 0; $i -lt 60; $i++) {

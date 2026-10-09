@@ -7,10 +7,17 @@
  * the same check `az bicep build` performs. Uses the Bicep CLI from PATH, or from
  * BICEP_PATH, and explains how to get it when neither is available.
  *
+ * A `.bicepparam` file reads its deploy-time values out of the environment
+ * (`readEnvironmentVariable`, PLAN-030 §2.2), which is what makes a deployment that is
+ * missing a secret fail before it starts — but it also means `build-params` fails when they
+ * are not exported here. The variables the files ask for are filled in with obvious
+ * placeholders for the length of this check, so the gate still tests the templates rather
+ * than the operator's shell. Nothing is deployed; the values never leave this process.
+ *
  *   node scripts/azure/validate-bicep.mjs
  */
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -40,10 +47,29 @@ if (!bicep) {
 const version = execFileSync(bicep, ["--version"], { encoding: "utf8" }).trim();
 console.log(`bicep: ${version.split("\n")[0]}`);
 
+const paramDir = path.join(root, "infra", "params");
+const paramFiles = readdirSync(paramDir).map(f => path.join(paramDir, f));
+
+// Every variable the parameter files expect, filled in only when it is not already exported.
+const placeholders = new Set();
+for (const file of paramFiles) {
+  if (!file.endsWith(".bicepparam")) continue;
+  for (const match of readFileSync(file, "utf8").matchAll(/readEnvironmentVariable\(\s*'([^']+)'/g)) {
+    if (process.env[match[1]] === undefined) {
+      // Long enough for the templates' @minLength constraints, and obviously not a secret.
+      process.env[match[1]] = "validation-placeholder-not-a-secret-0123456789";
+      placeholders.add(match[1]);
+    }
+  }
+}
+if (placeholders.size) {
+  console.log(`note: filled in for this check only: ${[...placeholders].sort().join(", ")}`);
+}
+
 const outDir = mkdtempSync(path.join(tmpdir(), "bicep-out-"));
 const targets = [
   path.join(root, "infra", "main.bicep"),
-  ...readdirSync(path.join(root, "infra", "params")).map(f => path.join(root, "infra", "params", f)),
+  ...paramFiles,
 ];
 
 let failures = 0;

@@ -4,9 +4,12 @@
 > monthly cost, and also check for any security issues before we go live"*, then *"make a plan"*.
 > **What it is:** the fixes PLAN-016's deployment package (`infra/main.bicep`, `infra/params/*.bicepparam`,
 > `scripts/azure/deploy-env.ps1`) needs before its first real run, in the order they have to land.
-> **Status:** 📋 plan only, **nothing applied**. Found by reading; `az` and the Bicep CLI are not available
-> in the review environment, so every item marked *(verify)* is confirmed or dropped by the first
-> `what-if` against a subscription.
+> **Status:** ✅ **applied and revised** — Phase 1 (1.1–1.8) and the safe Phase 2 items (2.1, 2.2, 2.4,
+> 2.5, 2.6, 2.7, 2.10, 2.11) landed in `infra/`, `scripts/azure/` and `.bicepparam`, and the templates
+> **compile** against the real Bicep CLI (0.48.1, no warnings). Four items were deliberately **not**
+> applied and six decisions are still the operator's: see *§7 What landed, and what did not* below.
+> Everything marked *(verify)* is still confirmed or dropped by the first `what-if` against a
+> subscription — compiling is not deploying.
 > **Depends on:** nothing. **Gates:** PLAN-016's first deployment of dev and prod.
 
 **Read first:** §1 (it will not deploy as written) and §2.1 (the app is internet-facing with no WAF).
@@ -97,3 +100,238 @@ These are East US 2 pay-as-you-go list prices in USD, from memory rather than a 
 2. Phase 2 High items (2.2, 2.3, 2.4 in the same change; 2.1 lands with the ingress module).
 3. Phase 2 Medium/Low items.
 4. Phase 3 checklist, then PLAN-016's first production deployment.
+
+## 7. What landed, and what did not
+
+**Applied** — the templates compile with Bicep CLI 0.48.1 (`node scripts/azure/validate-bicep.mjs`, exit
+0, no warnings), and `scripts/azure/preflight.mjs` gained a regression guard for the two items most
+likely to come back:
+
+| Item | Where |
+|---|---|
+| 1.1 workload profile, delegation kept | `infra/main.bicep` |
+| 1.2 user-assigned identity, both role grants, attached to the app and the app's `secretRef`s | `infra/main.bicep` |
+| 1.3 `imageTag` required with no default; `activeRevisionsMode: Multiple`; **the `traffic` block deleted**; the script reads the running tag (or the public placeholder) and sets the mode before it updates | `infra/main.bicep`, `scripts/azure/deploy-env.ps1` |
+| 1.4 ACR policies prod-only | `infra/main.bicep` |
+| 1.5 every subnet inline, one VNet PUT, no duplicate subnet resource | `infra/main.bicep` |
+| 1.6 `postgres` depends on the DNS link | `infra/main.bicep` |
+| 1.8 migration job on the user-assigned identity, create-or-update, `DATABASE_URL` from Key Vault | `scripts/azure/deploy-env.ps1` |
+| 2.1 Front Door restriction behind a switch + the `X-Azure-FDID` checklist item | `infra/main.bicep`, `infra/README.md` §4 |
+| 2.2 `@minLength` on the three secrets; params read `readEnvironmentVariable` | `infra/main.bicep`, both `.bicepparam` |
+| 2.4 Key Vault private endpoint + zone group; `publicNetworkAccess: Disabled` **prod only** | `infra/main.bicep` |
+| 2.5 NSG: 5432 from `snet-aca`, intra-subnet allowed, `VirtualNetwork` denied at 4000 | `infra/main.bicep` |
+| 2.6 Key Vault and ACR audit to Log Analytics; `pgaudit` enabled | `infra/main.bicep` |
+| 2.10 Postgres `2024-08-01`, ACR `2023-07-01` | `infra/main.bicep` |
+| 2.11 zone redundancy on the Container Apps environment in prod (the server already has zone-redundant HA) | `infra/main.bicep` |
+| 2.12's documentation half: the secret rotation runbook | `infra/README.md` |
+
+**Four deliberate deviations** from this plan, each decided during review and recorded in the
+templates or the README:
+
+1. **The `traffic` block is removed, not merely complemented.** `latestRevision: true` hands a new
+   revision 100% the moment it exists and every Bicep run re-applies it, so the script's 0%-traffic
+   health gate would be fiction on *every* deploy. Traffic is now owned by the promotion path alone.
+2. **The Postgres private DNS zone keeps its name** (1.7). For a VNet-injected server the zone must
+   match the server's own `*.postgres.database.azure.com`; renaming it risks a server that resolves
+   nowhere. The collision this plan feared is avoided by giving Key Vault its own
+   `privatelink.vaultcore.azure.net` zone instead — and no ACR zone, because 2.8 defers that endpoint.
+3. **The Key Vault private endpoint is created in dev too**, with public access left on there, so the
+   zone-group wiring is exercised before prod depends on it.
+4. **No `priority` or `ipSecurityRestrictionsDefaultAction` on the ingress rule** — neither exists in
+   a GA API version, and this plan's own 2.10 is about getting off previews.
+
+**Not applied, for the operator to decide** (each is written up in `infra/README.md` as an open item):
+
+| Not applied | Why |
+|---|---|
+| 2.3 least-privilege Postgres role and Entra database auth | Needs a SQL role script and a token path in the Prisma connection. The app still connects as the server administrator — the highest-value open item in this plan. |
+| 2.8 private ACR in prod | D3 defers it: an ACR agent pool or a VNet runner is ~$40+/mo. Prod's registry stays public, which is why no ACR private DNS zone is created. |
+| 2.9 `sslmode=verify-full` | An application change, not an infrastructure one: it needs the CA bundle in the image. |
+| 2.12 secret expiry (`attributes.exp`) | Expiry without a rotation process is a scheduled outage. The runbook landed instead; expiry is now a decision with a process behind it. |
+| NSGs on `snet-aca`, `snet-appgw`, `snet-pe` (the rest of 2.5) | Deferred as riskier than the Postgres rules; README §4 records the `GatewayManager` 65200–65535 and `AzureLoadBalancer` rules App Gateway will need. |
+| The migration job declared in Bicep (1.8's second half) | The script remains its owner for now; the identity, image and update path are fixed. |
+| §4's cost estimate and §5's D1–D4 | The operator's, unchanged. Dev now carries one extra private endpoint (~$7/mo), recorded in the README cost table. |
+| A pre-existing defect in `.github/workflows/deploy-azure.yml` (~line 178): the workflow still creates the migration job with `--mi-system-assigned` and no `DATABASE_URL` — the same bug 1.8 fixes in the script | Outside the reviewed file set. Recorded in `infra/README.md` so it is not lost. |
+
+## 8. Recommendations on the open items
+
+Written after applying §7. Each is a recommendation with the reasoning, the cost, the trigger that
+should make it happen, and what "done" looks like — so the decision can be taken without re-reading
+this plan.
+
+### 8.1 — 2.3: a least-privilege database role, before there is production data
+
+**Recommendation: create `app_c7ntax` and switch the app to it now. Treat passwordless Entra auth as a
+spike, not a go-live blocker.**
+
+Today the API connects as `c7ntaxadmin`, a member of `azure_pg_admin`. That means one bug in any query
+path — a string-built `ORDER BY`, a future raw SQL endpoint, a dependency compromise — has
+server-level rights: create or drop databases, read every schema, `COPY … TO PROGRAM`. Nothing about
+this application needs that. It needs one schema and the tables in it.
+
+- **Do:** `CREATE ROLE app_c7ntax LOGIN PASSWORD …` with `NOINHERIT`; `CREATE SCHEMA c7_overwatch
+  AUTHORIZATION app_c7ntax`; `GRANT CONNECT ON DATABASE`; `REVOKE CREATE ON SCHEMA public FROM PUBLIC`;
+  run `prisma migrate deploy` as that role (it needs `CREATE` only inside the schema it owns, which it
+  has). Keep the admin credential in Key Vault behind a policy that the *operator* holds and the app
+  does not. Write the password like the other secrets, from `deploy-env.ps1`.
+- **Why now:** before data exists this is a five-minute ownership change. After it exists it is a
+  migration: every object the admin created must be reassigned (`REASSIGN OWNED BY c7ntaxadmin TO
+  app_c7ntax`) and the schema owner changed, in the right order, with a rehearsal.
+- **Entra (passwordless) auth:** worth having — it removes a password from the whole system — but it is
+  not free: tokens last about an hour, so the API needs a connection wrapper that fetches a token with
+  `DefaultAzureCredential` and recycles the Prisma connection before expiry. That is a self-contained
+  piece of work and a good spike, not a prerequisite for going live.
+- **Cost:** about half a day, plus a rehearsal against a scratch database using `migrate deploy` (no
+  shadow database is needed in CI, which is why this is cheaper than it looks).
+- **Done when:** `\du` shows the app connecting as `app_c7ntax`; the API's environment holds no
+  administrator credential; a migration run as the app role succeeds; and `SELECT rolsuper FROM
+  pg_roles WHERE rolname = 'app_c7ntax'` is `false`.
+
+### 8.2 — 2.8: keep the registry public, and spend the money elsewhere
+
+**Recommendation: defer the prod ACR private endpoint (D3 stands). Do three cheaper things instead —
+and revisit when the build itself moves into the VNet.**
+
+The risk a private endpoint removes is *reachability of the registry endpoint*. With the admin user
+disabled and `AcrPull` held only by the user-assigned identity applied in §7, the exposure is not
+anonymous pulls; it is credential theft, and a private endpoint does not stop that. Meanwhile it costs
+an ACR agent pool (~$40+/mo) or a VNet-connected runner, and it breaks the simplest build path
+(`az acr build` from a laptop).
+
+- **Do instead:** disable the ACR admin user and delete any registry password from the environment;
+  keep the ACR on the audit path §2.6 added and alert on pushes and pulls from unexpected identities or
+  addresses; and consider content signing, which is the control that actually protects an image.
+- **Revisit when:** a contract or a SOC 2 commitment demands no public registry endpoint, or the build
+  moves into the VNet for its own reasons — at that point the endpoint is nearly free to add. The plan's
+  own §2.8 notes the same thing; this is just the ordering.
+- **Note:** because 2.8 stays deferred, no `privatelink.azurecr.io` zone was created. Creating one now
+  would be an unused zone and an unnecessary bill.
+
+### 8.3 — 2.12: expiry for the secret that has a rotation path, and none for the two that do not
+
+**Recommendation: set `exp` on the database credential only. Leave `JWT_SECRET_VALUE` and
+`KUMO_MASTER_KEY` without expiry until rotation exists for them — and say so in the vault, in words.**
+
+An expiring secret is a promise that somebody will rotate it before the date. Where that promise
+cannot be kept, expiry converts a security nicety into a production outage with a calendar entry.
+
+- **Database credential — expire it (12 months).** Rotation is mechanical, the runbook now exists
+  (§2.12's documentation half), and the blast radius of a rotation is one restart.
+- **`JWT_SECRET_VALUE` — no expiry yet.** Rotating a signing key invalidates every token signed with
+  the old one: it is a user-visible event (every session re-authenticates). Doing it well needs a
+  **key ring** — sign with the new key, keep *verifying* with the previous one for one token lifetime,
+  then retire it. That is an API feature, and it is the right precondition for expiry.
+- **`KUMO_MASTER_KEY` — no expiry.** Rotation re-encrypts the vault (PLAN-015): a batch operation with
+  a half-re-encrypted state as its failure mode. It belongs on a maintenance window with a backup of
+  the encrypted column taken first, not on a date the platform enforces.
+- **Also do:** label the two unexpiring secrets in Key Vault with the reason (a tag such as
+  `rotation=manual, reason=key-ring-not-implemented`) so the next reviewer sees a decision rather than
+  an oversight.
+
+### 8.4 — 2.9: do `verify-full`, as an image change, and keep `require` behind a flag for one release
+
+**Recommendation: implement it before go-live. It is the cheapest item left on the list and it closes a
+real hole.**
+
+`sslmode=require` encrypts the connection but does not verify *who* is on the other end. Anyone who can
+influence routing or DNS for `*.postgres.database.azure.com` from inside the VNet can present their own
+certificate, take the credential and read the traffic. `verify-full` makes that fail.
+
+- **Do:** vendor the Azure Postgres CA chain (or fetch it in the Dockerfile with a pinned SHA-256) to
+  `/etc/ssl/certs/azure-postgres.pem`, and set the connection URL to
+  `sslmode=verify-full&sslrootcert=/etc/ssl/certs/azure-postgres.pem`. With `pg-connection-string`,
+  that maps to Node's `ssl.ca` correctly.
+- **Why the flag:** if the bundle is wrong the API cannot connect at all, so ship `require` as a
+  fallback for one release and flip the default in the next. Verify in dev first, where a broken
+  connection costs nothing.
+- **Cost:** about an hour plus a container build. **Done when:** the API boots with `verify-full`
+  against dev, and a deliberately wrong `sslrootcert` refuses to connect (which is the test that proves
+  it is doing something).
+
+### 8.5 — §4: treat the estimate as an envelope, and let Cost Management police it
+
+**Recommendation: adopt the plan's numbers as a budget range, replace the guesswork with a calculator
+export and a budget alert, and make two decisions the table cannot.**
+
+The table is honest that it is from memory, and its own ranges show where the uncertainty is: prod
+Container Apps spans $95–310 — a factor of three, and the largest single variance in the template.
+
+- **Do:** resolve the template's parameters (the emitted ARM from §7 has every concrete SKU), price
+  those exact SKUs in the Azure Pricing Calculator, save the export next to this plan, and set a Cost
+  Management **budget alert at 80%** on the subscription. The alert is the mechanism that catches a
+  wrong estimate; another table is not.
+- **Two decisions worth an hour each:** (a) Postgres HA mode — `ZoneRedundant` doubles compute, and
+  `SameZone` halves it, so the RTO you actually need decides ~$130/mo; (b) Front Door **Standard vs
+  Premium** — see 8.6, where Premium is recommended for a non-cost reason.
+- **Reservations:** a 1-year reservation on the Postgres compute is the single biggest saving (~35–40%),
+  and Container Apps has savings plans. Buy after 30 days of real usage, never before.
+- **New in §7:** dev now carries one extra private endpoint (~$7/mo), already reflected in
+  `infra/README.md`'s table.
+
+### 8.6 — D1: Front Door **Premium alone**, and the reason is not only cost
+
+**Recommendation: Front Door Premium alone, in Blocking mode, with a Private Link origin — and drop App
+Gateway from the production path.**
+
+This agrees with the plan's cost argument (~$325+/mo saved) but adds the reason that matters more:
+**Premium is what gives you Private Link origins**, which is the difference between an origin that is
+*restricted* by a service tag (what 2.1 can do today) and one that is **not reachable from the internet
+at all**. That is the property this plan actually wants. Standard DNS-fronting plus a firewall rule is
+a weaker control for a smaller saving.
+
+- **Do:** Front Door Premium, WAF in Blocking (not Detection), origin via Private Link, `allowInsecure`
+  off, health probe on `/api/health`, and set `lockIngressToFrontDoor = true` once the origin is private
+  — at which point the `AzureFrontDoor.Backend` rule and the `X-Azure-FDID` check become belt and
+  braces rather than the control.
+- **Condition:** the `:3010`/`:3011` verification story must work through Front Door alone (route by
+  port where possible, otherwise verify on the revision's own FQDN with the script's existing health
+  gate). If that turns out to be impossible, say so explicitly and keep App Gateway for the port
+  listeners — but then budget it as a deliberate cost, not an accident.
+- **Cost:** ~$330/mo before traffic, plus per-request and WAF charges. This is the largest single line
+  in the go-live budget and belongs in the plan on purpose.
+
+### 8.7 — D2: the password role now, Entra later — with one clause that applies either way
+
+**Recommendation: 8.1's role now, Entra as a planned follow-up. In both cases, the application never
+holds the administrator credential, and the admin's vault access is narrower than the app's.**
+
+The migration path is the point: if the app starts on a least-privilege role, adopting Entra later is a
+connection-string change (plus the token wrapper). If it starts as the admin, adopting Entra later
+still leaves the ownership problem from 8.1 to solve.
+
+### 8.8 — D3: deferred, with a trigger
+
+**Recommendation: defer, as §8.2 argues, and record the trigger rather than a date** — a contract that
+requires no public registry endpoint, or a VNet-integrated build. A date would only create pressure to
+spend $40/mo on the wrong control.
+
+### 8.9 — D4: closed
+
+**Recommendation: closed as decided and implemented, in the stronger form.** The template no longer
+owns the running image *and* no longer declares traffic at all — `latestRevision: true` re-applied on
+every Bicep run would have made the script's 0%-traffic health gate fiction. Traffic now belongs to the
+promotion path alone, and `preflight.mjs` fails if a `traffic` rule or an `imageTag` default reappears.
+
+### 8.10 — One more thing this plan found: fix the workflow in the same change as the next infra commit
+
+`.github/workflows/deploy-azure.yml` (~line 178) still creates the migration job with
+`--mi-system-assigned` and no `DATABASE_URL`, which is exactly the defect 1.8 fixes in the script. The
+workflow is the path a production deploy actually takes, so leaving it means the fix is not in the
+route that matters.
+
+**Recommendation: fix it in the next infrastructure change, not as a follow-up**, and while there, add
+the job's `identityref` secret form so the workflow matches `deploy-env.ps1` line for line.
+
+### 8.11 — The go-live bar I would hold
+
+Minimum before a production deployment, in this order, leaving 2.8 and secret expiry to follow:
+
+1. **2.3** — the least-privilege role (8.1).
+2. **2.9** — `verify-full` with the bundle in the image (8.4).
+3. **2.1 + D1** — the ingress decided (8.6) and the origin not publicly reachable, with the
+   `X-Azure-FDID` check in the API.
+4. **The workflow fix** (8.10).
+5. **The four §3 checks** that only a subscription can confirm, run against dev first, then prod with a
+   saved `what-if`.
+
+

@@ -16,14 +16,21 @@ built again. PLAN-016 §16 is the full description of that model.
 > has been deployed**: there is no Azure subscription attached yet (`az` is not installed
 > here), so the first run is a bootstrap that must be done interactively and reviewed with
 > `what-if`.
+>
+> **PLAN-030 (go-live hardening) is applied to the templates.** The deployment blockers and the
+> security items that do not need an application change are in `infra/main.bicep`,
+> `scripts/azure/deploy-env.ps1` and this file. Three things the first `what-if` has to confirm are
+> called out where they land: the Consumption workload profile on a delegated subnet, a
+> zone-redundant Container Apps environment in prod, and the Postgres server parameters. What was
+> deliberately *not* changed is in **Notes and known gaps**.
 
 ## What is in the package
 
 | Path | What it is |
 |---|---|
 | `Dockerfile`, `.dockerignore` | One image: the API on port 4000 **and** the built SPA from the same origin. Non-root, healthcheck, locked install. |
-| `infra/main.bicep` | VNet, subnets and NSG, Log Analytics, Key Vault (+ the three secrets), ACR, PostgreSQL Flexible Server (VNet-injected, no public endpoint), Container Apps environment and app, and the app's `AcrPull` / `Key Vault Secrets User` role assignments. |
-| `infra/params/dev.bicepparam`, `prod.bicepparam` | Per-environment sizing: dev is Burstable, single-zone, 7-day backup; prod is General Purpose, zone-redundant HA, 35-day backup with geo-redundant copies. |
+| `infra/main.bicep` | VNet, subnets and NSG, Log Analytics, Key Vault (+ the three secrets, a private endpoint and a private DNS zone), ACR, PostgreSQL Flexible Server (VNet-injected, no public endpoint, pgaudit on), Container Apps environment and app, and the *user-assigned* identity with its `AcrPull` and `Key Vault Secrets User` grants. |
+| `infra/params/dev.bicepparam`, `prod.bicepparam` | Per-environment sizing: dev is Burstable, single-zone, 7-day backup; prod is General Purpose, zone-redundant HA, 35-day backup with geo-redundant copies. The secret values are read from the deploying shell's environment (`readEnvironmentVariable`), so a run that is missing one fails while the deployment is compiled rather than writing an empty secret into Key Vault. |
 | `infra/env/.env.production.example` | Every environment variable the API reads, with the ones that must be set in Key Vault called out. |
 | `scripts/azure/preflight.mjs` | Fails before a deploy does: stale lockfile, missing migration, undocumented env var, unguarded route, new advisory, non-root image. |
 | `scripts/azure/deploy-env.ps1` | The local push tool: preflight → infrastructure → image → schema → 0%-traffic revision → health gate → traffic shift, with `-WhatIf`, `-Create` and `-PromoteFrom`. |
@@ -97,10 +104,11 @@ each environment's first run is the only one that needs `-Create`:
 # 1. Preview what will be created — read this list before applying it.
 ./scripts/azure/deploy-env.ps1 -Environment dev -WhatIf
 
-# 2. Export the secrets for this shell (they go into Key Vault, never into a file)
-$env:PG_ADMIN_PASSWORD   = '<generated>'
-$env:JWT_SECRET_VALUE    = '<openssl rand -base64 48>'
-$env:KUMO_MASTER_KEY_VALUE = '<32 random bytes, base64>'
+# 2. Export the secrets for this shell (they go into Key Vault, never into a file). The names are
+#    the ones the parameter file reads; PG_ADMIN_PASSWORD is still accepted as an alias.
+$env:POSTGRES_ADMIN_PASSWORD = '<generated>'
+$env:JWT_SECRET_VALUE        = '<openssl rand -base64 48>'
+$env:KUMO_MASTER_KEY_VALUE   = '<32 random bytes, base64>'
 
 # 3. Create dev: the resource group (-Create) and everything inside it
 ./scripts/azure/deploy-env.ps1 -Environment dev -Create
@@ -109,10 +117,12 @@ $env:KUMO_MASTER_KEY_VALUE = '<32 random bytes, base64>'
 ./scripts/azure/deploy-env.ps1 -Environment prod -Create
 ```
 
-The first run of an environment creates its registry, then builds into it. If the
-Container App starts before the image exists it will be unhealthy for a minute; the
-deploy finishes by updating the revision to the freshly built tag and shifting traffic
-to it.
+The first run of an environment creates its registry, then builds into it. Until that build lands,
+the Container App runs a public placeholder image (`mcr.microsoft.com/k8se/quickstart:latest`):
+`deploy-env.ps1` gives Bicep the image the app is *already* running — the placeholder when there is
+none — so applying infrastructure can never point the app at a tag that does not exist, and the
+template carries no traffic rule, so infrastructure can never promote anything either. The
+deploy finishes by updating the revision to the freshly built tag and shifting traffic to it.
 
 After that, `-Create` is never needed again — leave it off, and the script will stop
 with a clear message rather than create a resource group by mistake if one is missing.
@@ -124,11 +134,32 @@ until the ingress layer is added:
 
 1. **Application Gateway v2 (WAF_v2)** in `snet-appgw`, with the TLS certificate and the
    two listeners the plan calls for (dev :3010, prod :3011) so prod can be verified on its
-   own port by refreshing the browser.
+   own port by refreshing the browser. Its NSG needs `GatewayManager` (65200–65535) and
+   `AzureLoadBalancer` inbound; the subnet has no NSG today (see **Notes and known gaps**).
 2. **Front Door Premium** in front of it for the 80/443 entry point, edge cache, WAF
    policies and DDoS absorption, with the App Gateway locked to Front Door's ranges.
-3. **Private endpoint + private DNS for Key Vault and Storage**, and diagnostic settings
-   from both into the immutable log container.
+3. **Private endpoint + private DNS for Storage**, and diagnostic settings from both into
+   the immutable log container. Key Vault's private endpoint and zone are already in the
+   template (`privatelink.vaultcore.azure.net`, in `snet-pe`), and Key Vault's public data
+   plane is closed in prod.
+
+**The origin is still reachable directly** on `*.azurecontainerapps.io` with no WAF. That is the one
+High item PLAN-030 could not close from the infrastructure it was allowed to change — an origin rule
+without the Front Door in front of it would only make the app unreachable. Both halves land with
+this module, and both are go-live checklist items:
+
+- [ ] **Lock the origin to Front Door.** Set `lockIngressToFrontDoor = true` in
+      `infra/params/prod.bicepparam` (the switch is declared in `infra/main.bicep`; it is off by
+      default because it is only correct once Front Door exists). It adds an ingress rule matching
+      the `AzureFrontDoor.Backend` service tag. Do this *after* Front Door is serving, and then
+      confirm from outside that `https://<app>.azurecontainerapps.io/api/health` is **refused**
+      while the same call through Front Door returns 200 — that is the exit condition in PLAN-030 §2.
+- [ ] **Reject requests that did not come through Front Door, in the API.** Front Door sends
+      `X-Azure-FDID` with the profile's id; any request whose header does not match this Front
+      Door's id must be rejected. This is an application change (`apps/api`), not an infrastructure
+      one, so it is not in this package: a rule that pretended to do it would be worse than none.
+- [ ] **Turn the App Gateway's own WAF policy to Prevention** and review the logs in Log Analytics
+      before production traffic arrives.
 
 ## Day-to-day
 
@@ -179,20 +210,54 @@ run as their own step **before** the new revision takes traffic: the schema is a
 while the old revision still serves, so a bad release is always reversible by shifting
 traffic back.
 
+The migration job (`c7ntax-<env>-migrate`) is created and updated by `deploy-env.ps1`, not by
+Bicep: it is created on the first run and only has its image moved afterwards, so re-running a
+deploy does not delete and recreate it. It pulls the image and reads `DATABASE_URL` through the
+same user-assigned identity the app uses.
+
+## Rotating the secrets
+
+Each secret has a different blast radius, and two of them have an order that matters. Every
+rotation ends the same way: deploy, then check `/api/health`.
+
+| Secret | How to rotate | What to expect |
+|---|---|---|
+| `JWT-SECRET` | New value in `JWT_SECRET_VALUE`, deploy, restart the revision. | Every signed-in session is invalidated — people sign in again. Do it in a quiet hour. |
+| `KUMO-MASTER-KEY` | **Never rotate without re-encrypting.** The vault's stored credentials are encrypted under it (PLAN-015): a new key without a re-encryption pass makes every stored credential unreadable. | Treat it as a data migration, not a config change. |
+| `DATABASE-URL` | Rotate the Postgres password in Azure, then deploy with the new `POSTGRES_ADMIN_PASSWORD` **in the same step** — the connection string in Key Vault is rebuilt from it — and restart the revision. | Between the two the app cannot connect. Keep the break-glass connection open. |
+| `SMTP_PASS`, `X_BEARER_TOKEN`, `SSO_CLIENT_SECRET` | Set them in Key Vault, then restart the revision (`az containerapp revision restart`). | They are read from the environment, not from this template. |
+
+`secretRef`s are resolved into the revision when it starts, so every rotation ends with a restart
+(or a deploy, which creates a revision anyway) — changing the value in Key Vault alone changes
+nothing that is running. Secrets have no expiry date in the templates on purpose: an expiring secret
+with no rotation runbook is an outage with a date on it. Calendar the rotations above instead.
+
 ## Verification checklist for the first production deployment
 
 - [ ] `node scripts/azure/preflight.mjs` passes
-- [ ] `az bicep build --file infra/main.bicep` reports no warnings
+- [ ] `node scripts/azure/validate-bicep.mjs` (or `az bicep build --file infra/main.bicep`) reports no warnings
 - [ ] `deploy-env.ps1 -Environment dev -WhatIf` output reviewed
+- [ ] `what-if` for **both** environments reviewed and saved alongside the change
 - [ ] Dev deploys from `main` and the pipeline goes green end to end
 - [ ] Login, tickets, billing, service alerts and the invoice PDF work in dev
 - [ ] `prisma migrate status` reports "up to date" against the dev database
 - [ ] Secret values are present in Key Vault and **absent** from the Container App's
       environment (they are `secretRef`s)
 - [ ] `az containerapp show` lists exactly one revision at 100% traffic
-- [ ] Diagnostic settings for Postgres and the Container App point at Log Analytics
+- [ ] Diagnostic settings for Postgres, Key Vault **and the registry** point at Log Analytics,
+      and an audit event appears in the workspace after reading a secret and pulling an image
 - [ ] Prod postgres has no public endpoint: `publicNetworkAccess: Disabled`
+- [ ] Prod Key Vault has no public data plane: `publicNetworkAccess: Disabled`, and
+      `az keyvault secret show` from a laptop fails (control-plane reads still work)
 - [ ] Rollback rehearsed in dev (shift traffic back, confirm the old revision serves)
+- [ ] **A redeploy with no changes reports no subnet or NSG churn** — the subnets are declared
+      once, inline, with their NSG (§1.5)
+- [ ] **A Bicep-only run does not change the running image, the revision or the traffic weights**
+      (§1.3) — run `deploy-env.ps1 -SkipBuild -WhatIf` against a deployed environment, then apply
+      and compare `az containerapp show`
+- [ ] Bring dev up, tear it down and rebuild it to prove the template is repeatable. Purge
+      protection means vault **names** are reserved for 90 days, so rebuild with a fresh
+      `uniqueSuffix`
 
 ## Cost shape
 
@@ -200,16 +265,48 @@ traffic back.
 |---|---|---|
 | PostgreSQL Flexible Server | Burstable B1ms, 32 GB, single-zone | D2ds_v5, 128 GB, zone-redundant HA, geo-backup |
 | Container Apps | 1–3 replicas, 1 CPU / 2 GiB | 2–10 replicas, 2 CPU / 4 GiB |
-| ACR | Basic | Premium (geo-replication, retention) |
+| Container Apps environment | Consumption workload profile, single-zone | Consumption workload profile, zone-redundant |
+| ACR | Basic | Premium (geo-replication, retention policy) |
 | Log Analytics | 30-day retention | 365-day retention |
+| Key Vault private endpoint | ~$7/mo (created in dev too, so the private path is proven) | ~$7/mo |
 | Front Door + WAF, App Gateway, DDoS Standard | — | added with the ingress layer; these dominate the bill |
 
 ## Notes and known gaps
 
 - **Ingress is not in the Bicep yet.** It is a separate module because it is validated
   against a live subscription, and because production should not depend on it being right
-  on the first attempt.
-- **The `what-if` in `deploy-env.ps1` is informational**, not an approval step: the script
+  on the first attempt. Until it exists, §4's checklist is what stands between the app and the
+  internet.
+- **Deliberately not changed by PLAN-030**, each because it is bigger than the infrastructure
+  template or needs an application change:
+  - **The app still connects as the Postgres administrator** (`postgresAdminLogin`, a member of
+    `azure_pg_admin`). The least-privilege role, or passwordless Entra authentication, needs a SQL
+    role script and a token path in the Prisma connection — a change of its own.
+  - **`sslmode=require`, not `verify-full`.** Verifying the server certificate needs the CA bundle
+    in the image.
+  - **No private endpoint for the registry**, even in prod (it needs an ACR agent pool or a VNet
+    runner, ~$40+/mo). Prod's ACR stays public; Key Vault's endpoint is the one that matters.
+  - **No `privatelink.azurecr.io` zone**, because there is no ACR private endpoint to go with it.
+  - **Secrets do not expire.** Rotation is a runbook (above), not a field.
+  - **Only `snet-postgres` has an NSG.** Adding one to `snet-aca`, `snet-appgw` and `snet-pe` is a
+    separate change with real risk — `snet-aca` carries the running environment — so it was not
+    bundled with this one. The App Gateway's required rules are written down in §4.
+- **The Postgres private DNS zone keeps its default name** (`privatelink.postgres.database.azure.com`).
+  A VNet-injected flexible server only registers its A record in the zone that matches its own
+  namespace; renaming it risks a server that resolves nowhere. New private endpoints get their *own*
+  zones instead, which is what avoiding the collision actually needed.
+- **Dev's Key Vault stays reachable publicly**; prod's does not. Dev is exercised from a laptop that
+  cannot reach a private endpoint. The endpoint and zone exist in both, so the prod path is proven
+  before prod depends on it.
+- **The migration job belongs to `deploy-env.ps1`**, not to the template: declaring it in Bicep is a
+  larger change and is reviewed separately.
+- **The pipeline's migration step still creates its own system-assigned identity** for the job
+  (`--mi-system-assigned` in `.github/workflows/deploy-azure.yml`), which holds no `AcrPull` on the
+  registry, so the job cannot pull its image and the first pipeline deploy of an environment stops
+  at the migration step. `deploy-env.ps1` was fixed to use the app's user-assigned identity for
+  exactly this reason; the workflow needs the same two flags (`--mi-user-assigned`,
+  `--registry-identity`) before it is used for a real deploy.
+- **`what-if` in `deploy-env.ps1` is informational**, not an approval step: the script
   prints it and applies. Review it on the first run of each environment, then keep moving.
 - **`apps/web` is built inside the image**, so a UI-only change still ships a new image.
   That is deliberate: one artifact per commit.

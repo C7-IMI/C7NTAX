@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.073 | Last Updated: 2026-10-09
+## Version: 2026.10.9.074 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,60 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.074 — PLAN-030 applied: the Azure deployment package, hardened
+
+The plan was reviewed, then implemented against its own recommendations, with four deliberate
+deviations recorded in the templates. The templates now **compile** against the real Bicep CLI.
+
+- **[Fix]** Deployment blockers: a **Consumption workload profile** on the Container Apps environment
+  (its subnet is delegated, so consumption-only would be rejected); a **user-assigned identity** that
+  holds AcrPull and Key Vault Secrets User and is attached to the app and its `secretRef`s, removing an
+  ordering cycle that made the first revision unable to start; every subnet declared **inline once**,
+  so a redeploy no longer detaches and reattaches the Postgres NSG; the server now depends on its DNS
+  link; and the ACR retention policy applies **prod only**, because it is a Premium feature and dev is
+  Basic.
+- **[Fix]** **Bicep no longer owns the running image.** `imageTag` is required with no default,
+  `deploy-env.ps1` passes the tag the app is currently running (or a public placeholder when nothing
+  is), and the template declares **no traffic rule at all** — `latestRevision: true` re-applied on
+  every run would have made the script's 0%-traffic health gate fiction. Traffic belongs to the
+  promotion path alone.
+- **[Fix]** The migration job uses the user-assigned identity (`--mi-user-assigned`,
+  `--registry-identity`), creates or updates idempotently, and takes `DATABASE_URL` from Key Vault
+  through a secret reference rather than a plaintext password.
+- **[Fix]** Security: `@minLength` on the three secrets and `readEnvironmentVariable` in the parameter
+  files, so a missing value fails at compile time instead of writing an empty signing key into Key
+  Vault; a Key Vault **private endpoint** with its own zone group and `publicNetworkAccess: Disabled`
+  **in prod only**; the Postgres NSG admitting 5432 from the app subnet, allowing intra-subnet traffic
+  and then denying `VirtualNetwork`; Key Vault and ACR audit events to Log Analytics with `pgaudit`
+  enabled; Postgres and ACR on current API versions; zone redundancy on the prod environment; and a
+  Front Door ingress restriction behind a switch.
+- **[New]** `infra/README.md` gained the **secret rotation runbook**, the ingress checklist
+  (`X-Azure-FDID`, the `GatewayManager` and `AzureLoadBalancer` rules App Gateway will need), and the
+  cost line for the new dev private endpoint. `preflight.mjs` gained a regression guard for the two
+  items most likely to come back: it fails if `imageTag` regains a default, if a `traffic` rule
+  reappears, if `activeRevisionsMode` is not `Multiple`, or if a parameter file carries an empty
+  secret.
+- **[Update]** `PlanDocs/PLAN-030` records what landed, the four deviations, and a new **§8
+  recommendations** section for the open items — the least-privilege database role, the deferred ACR
+  endpoint, which secrets should expire, `verify-full`, the cost envelope, the ingress decision and the
+  go-live bar.
+
+**Deliberately not applied** (written up in the plan and the README): the least-privilege Postgres
+role and Entra database auth (an application and SQL change), the prod ACR private endpoint, secret
+expiry for the two secrets whose rotation is not automated, `sslmode=verify-full` (needs the CA bundle
+in the image), NSGs on the remaining subnets, the migration job declared in Bicep, and the cost and
+ingress decisions themselves.
+
+**Verification:** `node scripts/azure/validate-bicep.mjs` with Bicep CLI 0.48.1 →
+*all templates compile without warnings*, exit 0. `node scripts/azure/preflight.mjs` → the new
+*infrastructure contract* section is green on all five checks; its two remaining failures are
+pre-existing and environmental (undocumented variables already present at HEAD; the pnpm-dependent
+checks). `deploy-env.ps1 -WhatIf` runs end to end for dev and for a prod promotion, the emitted ARM
+shows 0 duplicate subnet resources and no traffic property, and no TypeScript was touched so the web
+and API suites are unaffected.
 
 ---
 

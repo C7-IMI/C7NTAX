@@ -11,8 +11,7 @@
  *   node scripts/azure/preflight.mjs --docker   # also build the container image
  *
  * Exits non-zero on the first category of failure it finds; every check is reported.
- */
-import { execSync } from "node:child_process";
+ */import { execSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -95,6 +94,36 @@ console.log("\ncontainer image");
     } else {
       warn("image build skipped (pass --docker to build it)");
     }
+  }
+}
+
+console.log("\ninfrastructure contract");
+{
+  // PLAN-030. These are the two properties that decide whether an infrastructure run can move
+  // something it must not: what the app is running, and where traffic goes.
+  const mainPath = path.join(root, "infra", "main.bicep");
+  if (!existsSync(mainPath)) {
+    fail("infra/main.bicep is missing");
+  } else {
+    const main = readFileSync(mainPath, "utf8");
+    /\bparam\s+imageTag\s+string\s*=/m.test(main)
+      ? fail("infra/main.bicep gives imageTag a default — deploy-env.ps1 must pass the tag the app is running (§1.3)")
+      : ok("imageTag has no default, so a Bicep run cannot introduce an image of its own");
+    /\btraffic\s*:/m.test(main)
+      ? fail("infra/main.bicep declares an ingress traffic rule — it would bypass the 0%-traffic health gate (§1.3)")
+      : ok("no ingress traffic rule in the template: the promotion path owns traffic");
+    main.includes("activeRevisionsMode: 'Multiple'")
+      ? ok("activeRevisionsMode is Multiple")
+      : fail("activeRevisionsMode is not Multiple — a Bicep run would flip back the mode the script sets (§1.3)");
+  }
+  const paramsDir = path.join(root, "infra", "params");
+  for (const file of existsSync(paramsDir) ? readdirSync(paramsDir) : []) {
+    if (!file.endsWith(".bicepparam")) continue;
+    const body = readFileSync(path.join(paramsDir, file), "utf8");
+    const empty = [...body.matchAll(/^param\s+(jwtSecret|kumoMasterKey|postgresAdminPassword)\s*=\s*''/gm)].map(m => m[1]);
+    empty.length
+      ? fail(`infra/params/${file} sets ${empty.join(", ")} to an empty string — read it with readEnvironmentVariable instead (§2.2)`)
+      : ok(`infra/params/${file}: no empty secret values`);
   }
 }
 

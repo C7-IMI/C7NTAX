@@ -7258,3 +7258,50 @@ reported failure and the script nevertheless ended with *"All checks passed. App
   files forced the re-transform; `pnpm install` restored resolution in five seconds.
 - **Login and two-factor setup are deliberately not redesigned** — they are not part of the working
   interface, and Help says so.
+
+### Prompt 316 — PLAN-030: review it, apply what makes sense, recommend on the rest
+
+**Timestamp:** 2026-10-09 10:35 | **Status:** Complete | **Duration:** ~50 min
+
+**BuildNotes IDs:** **2026.10.9.074**.
+
+**Prompt**
+
+> After you are done, review plan 030 that Claude wrote and tell me what your opinion is and implement
+> things that make sense. List what you didn't so we can review and decide how to proceed
+> > commit that branch to the main as well
+> > What are your recommendations for these: 2.3 … 2.8 … 2.12 … 2.9, and §4/§5's D1–D4. list them and
+> > make/update plan doc only, no changes
+
+**What I did**
+- **Found the plan where it was: `claude/plan-030-bicep-go-live`.** It was not on `main`, not in a
+  `Claude` folder and not findable by content search; the answer was the branch name. **Merged it into
+  `main`** (`39110e7`) so the plan ships with the code it describes.
+- **Reviewed it and agreed with its shape** — it separates "will not deploy" from "should not go live",
+  and its sharpest finding is that Bicep owning the running image makes the script's 0%-traffic health
+  gate *fiction*, which is a lost control rather than a failure.
+- **Implemented Phase 1 and the safe Phase 2 items** in `infra/main.bicep`,
+  `infra/params/*.bicepparam`, `scripts/azure/deploy-env.ps1`, `preflight.mjs`, `validate-bicep.mjs`,
+  `infra/README.md` and `infra/env/.env.production.example`, verified with the **real Bicep CLI
+  0.48.1** — *all templates compile without warnings*.
+- **Made four deliberate deviations** and wrote them into the plan: the `traffic` block **removed**
+  rather than complemented; the Postgres private DNS zone **not renamed** (the zone must match the
+  server's own FQDN, so the collision is avoided with a separate Key Vault zone instead); the Key Vault
+  private endpoint created **in dev too** with public access left on there, so the zone-group wiring is
+  exercised before prod depends on it; and no `priority` or `ipSecurityRestrictionsDefaultAction` on the
+  ingress rule because neither exists in a GA API version.
+- **Wrote §8 of the plan**: recommendations with reasoning, cost, trigger and definition of done for
+  the least-privilege database role, the deferred ACR endpoint, which secrets should expire, `verify-full`,
+  the cost envelope, the ingress decision, D2/D3/D4, the workflow defect, and the go-live bar I would hold.
+
+**Notes for next time**
+- **A plan's status line is part of the deliverable.** It said *nothing applied*; leaving that stale
+  after applying §1 and most of §2 would have made the document lie to the next reader. It now says what
+  landed, what was deviated from and what is open — and the four deviations are in the template comments
+  where the next person will be looking.
+- **The strongest fixes are the ones that remove a control's fiction.** Deleting the `traffic` block,
+  switching to a user-assigned identity, and failing the build on an empty secret all do the same thing:
+  they make it impossible for a deploy to *appear* safe while being unsafe.
+- **Two reviews found more than one pass would have**: the plan's author found the deploy blockers by
+  reading; driving the mockup found three bugs in it; and applying the plan found a pre-existing defect
+  in the deploy workflow that the plan itself had not seen.
