@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.060 | Last Updated: 2026-10-08
+## Version: 2026.10.8.061 | Last Updated: 2026-10-08
 
 ---
 
@@ -13,6 +13,35 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.8.061 — The modern theme, and the ticket record as the mockup lays it out
+
+Two things landed together: the mechanism that carries the redesign to **every remaining page at
+once**, and the rest of the ticket detail's structure.
+
+- **[New]** **A modern theme, scoped to one attribute.** The redesigned interface is not only a
+  different arrangement of pages, it is a *denser and flatter* one — 34px table rows, 13px card
+  padding, 11px uppercase column headers, one type step down, controls sized to the new row height.
+  All of that is now a stylesheet scoped to `html[data-ui-redesign="true"]`, which `Layout.tsx` sets
+  from the same switch as everything else. **Every page in the application picks it up**, and the
+  classic interface keeps the styling it has always had, down to the rule.
+- **[Update]** **The palette is deliberately not part of it.** The mockup is a blue-accented design,
+  and copying its colours would have thrown away the colour schemes this application ships — Brand
+  Crimson, Crimson Rose, Deep Maroon, Plum Noir, True Black. The app's own Brand Crimson is already
+  the near-black the mockup asks for, so the theme takes the mockup's *structure, density and type*
+  and leaves colour where it belongs: with the person using it.
+- **[Update]** **KPI tiles lead with the number.** The shared `StatCard` put a 40px icon where the
+  figure belongs, which slows down the one thing a dashboard is read for. The redesigned tile leads
+  with the figure and moves the glyph to the corner, as a label rather than an ornament. One
+  component, so every dashboard, report and summary strip in the product follows.
+- **[New]** **The ticket detail's record column is the mockup's.** *The record* is the ticket's facts
+  in one list — Board, Status, Priority, Assigned to, Contact, Source, Category, Opened, Updated, the
+  target — read top to bottom, with the dates folded into it rather than taking a card of their own.
+  *What the client said* is the description on its own, because it is the one thing on a ticket that
+  is the customer's words rather than ours. *The client's other open work* and the composer follow it.
+  The classic interface still draws General, Dates & Times and Notes exactly as it did.
+- **[New]** **Tabs carry counts** — Activity 1, and whatever Work and Files & Links hold — so the
+  strip says how much is behind a tab rather than only where to look.
 
 ## 2026.10.8.060 — The ticket screens proper: a record header you press, a context rail, and a composer
 

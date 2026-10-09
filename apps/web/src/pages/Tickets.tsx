@@ -2019,7 +2019,8 @@ export function TicketDetailPage() {
   const assigneeName = ticket.assignedTo ? `${(ticket.assignedTo as { firstName?: string; lastName?: string }).firstName || ""} ${(ticket.assignedTo as { firstName?: string; lastName?: string }).lastName || ""}`.trim() : "";
   const agreementName = (ticket.serviceAgreement as { name?: string } | null)?.name || "";
   const otherOpen = clientTickets.filter(t => t.id !== id && !["closed", "cancelled", "resolved"].includes(t.status));
-  // What is behind each group of tabs, from the payload the page already holds.
+  // What is behind each group of tabs, and the record's own list of facts. Both read the payload,
+  // so both belong after the guard that says there is one.
   const tabCounts: Record<string, number> = {
     activity: ((ticket.comments as unknown[]) || []).length,
     work: ((ticket.timeEntries as unknown[]) || []).length,
@@ -2044,6 +2045,24 @@ export function TicketDetailPage() {
       title: `${what} ${new Date(slaTargetRaw).toLocaleString()}`,
     };
   })();
+
+  /*
+   * The record, as the mockup lays it out: the ticket's facts in one list rather than scattered
+   * through cards, because that is how they are read — top to bottom, while something else is going
+   * on. The dates are part of it rather than a card of their own.
+   */
+  const recordRows: Array<[string, string]> = [
+    ["Board", (ticket.board as { name?: string })?.name || "—"],
+    ["Status", statusLabel(ticket.status as string)],
+    ["Priority", priorityLabel(ticket.priority as string)],
+    ["Assigned to", assigneeName || "Unassigned"],
+    ["Contact", ticket.contact ? `${(ticket.contact as { firstName?: string }).firstName || ""} ${(ticket.contact as { lastName?: string }).lastName || ""}`.trim() || "—" : "—"],
+    ["Source", String(ticket.source || "—").replace(/_/g, " ")],
+    ["Category", (ticket.category as { name?: string } | null)?.name || "—"],
+    ["Opened", ticket.createdAt ? new Date(ticket.createdAt as string).toLocaleDateString() : "—"],
+    ["Updated", ticket.updatedAt ? new Date(ticket.updatedAt as string).toLocaleDateString() : "—"],
+    [ticket.slaResolutionDue ? "Target" : "Due", slaTargetRaw ? new Date(slaTargetRaw).toLocaleDateString() : "—"],
+  ];
 
   return (
     <div
@@ -2252,9 +2271,19 @@ export function TicketDetailPage() {
           {activeTab === "ticket" && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-5">
-          {/* General */}
+          {/* General / The record */}
           <div className="card space-y-3">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">General</h3>
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{redesign ? "The record" : "General"}</h3>
+            {redesign && !editing ? (
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+                {recordRows.map(([label, value]) => (
+                  <div key={label} className="flex items-baseline justify-between gap-3 border-b border-surface-border/50 py-1.5">
+                    <dt className="shrink-0 text-xs text-gray-500">{label}</dt>
+                    <dd className="min-w-0 truncate text-right text-xs text-gray-200" title={value}>{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
             <div className="grid grid-cols-2 gap-3">
               {editing ? (<>
                 <div><label className="text-xs text-gray-500 block mb-1">Summary</label><input className="input-field text-sm" value={editForm.title||""} onChange={e=>setEditForm({...editForm,title:e.target.value})}/></div>
@@ -2264,9 +2293,21 @@ export function TicketDetailPage() {
                 {ticket.description ? <div className="col-span-2"><label className="text-xs text-gray-500 block mb-1">Description</label><p className="text-gray-300 text-sm whitespace-pre-wrap">{(ticket.description as string)}</p></div> : null}
               </>)}
             </div>
+            )}
           </div>
 
-          {/* Dates & Times */}
+          {/* What the client said — the description on its own, because it is the one thing on the
+              ticket that is the customer's words rather than ours. */}
+          {redesign && !editing && (
+            <div className="card space-y-2">
+              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">What the client said</h3>
+              <p className="whitespace-pre-wrap text-sm text-gray-300">{(ticket.description as string) || "Nothing was written on this ticket — it arrived without a description."}</p>
+            </div>
+          )}
+
+          {/* Dates & Times — in the redesigned screens the dates are in The record, and logging time
+              starts from the composer, so this card is the classic one. */}
+          {!redesign && (
           <div className="card space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Dates & Times</h3>
@@ -2286,6 +2327,7 @@ export function TicketDetailPage() {
               </>)}
             </div>
           </div>
+          )}
 
           {/* The client's other open work — read while this ticket is open, because the ticket that
               explains this one is usually already open beside it. */}

@@ -402,6 +402,15 @@ export function Layout({ children }: { children: ReactNode }) {
   const modernNav = navigation.style === "modern";
   // The redesigned screens compact the chrome that every page shares, which is the header here.
   const redesign = navigation.interfaceStyle === "redesign";
+  /*
+   * The modern *theme* hangs off this attribute, the way density and P2 do, so one stylesheet can
+   * restyle every page in the application and the classic interface keeps every rule it has always
+   * had. The palette is deliberately not part of it: colour schemes are the user's choice, and this
+   * is about structure, density and type rather than about replacing them.
+   */
+  useEffect(() => {
+    document.documentElement.setAttribute("data-ui-redesign", redesign ? "true" : "false");
+  }, [redesign]);
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();

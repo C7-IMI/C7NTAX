@@ -440,6 +440,77 @@ html[data-theme="light"] {
 /* Content width — stop pages stretching edge-to-edge on ultra-wide displays */
 [data-ui-p2="true"] main > * { max-width: 1600px; margin-inline: auto; }
 
+/* ── The modern theme ───────────────────────────────────────────────────────
+   The redesigned interface is not only a different arrangement of pages, it is a
+   denser and flatter one: 34px table rows, 13px cards, 11px uppercase headers, a
+   hairline where there used to be a shadow.
+
+   Every rule is scoped to `data-ui-redesign`, which `Layout.tsx` sets from the same
+   switch as everything else, so the classic interface keeps the styling it has
+   always had — down to the rule — and every page in the application picks these up
+   at once. That is the only honest way to say the whole application has been
+   redesigned rather than the pages somebody happened to visit.
+
+   The palette is deliberately absent: colour schemes are the user's choice, and the
+   app's own Brand Crimson is already the near-black the mockup asks for. This is
+   about structure, density and type. */
+html[data-ui-redesign="true"] main { padding: 1rem; }
+html[data-ui-redesign="true"] .card {
+  padding: 0.8125rem 0.9375rem;
+  border-radius: 0.75rem;
+  box-shadow: none;
+}
+/* Cards that are a table's frame carry no padding at all. */
+html[data-ui-redesign="true"] .card.p-0 { padding: 0; }
+html[data-ui-redesign="true"] .card > h3:first-child,
+html[data-ui-redesign="true"] .card > .flex:first-child > h3 {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+/* Tables: the queue's density — hairline rules, an 11px header that stays put, hover. */
+html[data-ui-redesign="true"] table { border-collapse: separate; border-spacing: 0; }
+html[data-ui-redesign="true"] table thead th {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  padding: 0.4375rem 0.75rem;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+}
+html[data-ui-redesign="true"] table tbody td { padding: 0.4375rem 0.75rem; }
+html[data-ui-redesign="true"] table tbody tr { border-color: color-mix(in srgb, var(--surface-border) 70%, transparent); }
+html[data-ui-redesign="true"] table tbody tr:hover { background: var(--surface-light); }
+
+/* One type scale down, with the tighter tracking a dense interface reads well in. */
+html[data-ui-redesign="true"] h1,
+html[data-ui-redesign="true"] h2 { letter-spacing: -0.01em; }
+html[data-ui-redesign="true"] .text-2xl { font-size: 1.375rem; line-height: 1.6rem; }
+
+/* Controls, sized to the new row height rather than to the old one. */
+html[data-ui-redesign="true"] .input-field {
+  font-size: 0.8125rem;
+  padding: 0.4375rem 0.625rem;
+  border-radius: 0.5rem;
+}
+html[data-ui-redesign="true"] .btn-primary,
+html[data-ui-redesign="true"] .btn-secondary,
+html[data-ui-redesign="true"] .btn-danger {
+  font-size: 0.8125rem;
+  padding: 0.4375rem 0.75rem;
+  border-radius: 0.5rem;
+}
+html[data-ui-redesign="true"] .badge { font-size: 10.5px; padding: 0.0625rem 0.4375rem; }
+
+/* Dialogs and popovers take the card's hairline rather than a ring. */
+html[data-ui-redesign="true"] [role="dialog"] { border-radius: 0.875rem; }
+
 /* ── Colour schemes ───────────────────────────────────────────────────────
    Optional palettes, selected with data-palette-dark / data-palette-light on
    <html> (see apps/web/src/lib/palette.ts). No attribute = "Classic", which is

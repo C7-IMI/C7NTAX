@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.8.061",
+    "date": "2026-10-08",
+    "title": "The modern theme, and the ticket record as the mockup lays it out",
+    "changes": [
+      {
+        "text": "**A modern theme, scoped to one attribute.** The redesigned interface is not only a",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The palette is deliberately not part of it.** The mockup is a blue-accented design,",
+        "type": "Update"
+      },
+      {
+        "text": "**KPI tiles lead with the number.** The shared `StatCard` put a 40px icon where the",
+        "type": "Update"
+      },
+      {
+        "text": "**The ticket detail's record column is the mockup's.** *The record* is the ticket's facts",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Tabs carry counts** — Activity 1, and whatever Work and Files & Links hold — so the",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.060",
     "date": "2026-10-08",
     "title": "The ticket screens proper: a record header you press, a context rail, and a composer",
