@@ -225152,6 +225152,18 @@
     "createdAt": "2026-10-09T05:33:43.906Z"
   },
   {
+    "id": "ad965292-fa18-45d4-b64a-c50c8fe085be",
+    "action": "tickets:update",
+    "entity": "tickets",
+    "entityId": "965edfea-ad20-456e-bc84-a85f1bafbd77",
+    "changes": {
+      "assignedToId": "d12c1ea5-4912-4c16-8bbf-65eb5a12406f"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T17:22:00.582Z"
+  },
+  {
     "id": "3a34b88c-e7fa-4d34-93e2-f01655b65907",
     "action": "configuration:update",
     "entity": "configuration",

@@ -5245,5 +5245,16 @@
     "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
     "createdAt": "2026-10-07T22:19:08.399Z",
     "updatedAt": "2026-10-07T22:19:08.399Z"
+  },
+  {
+    "id": "73e26cc9-3349-4297-9ba9-722ab3009016",
+    "body": "Assigned To: Jason Redwine → Jonathan Redwine",
+    "isInternal": true,
+    "isEmail": false,
+    "fromEmail": null,
+    "ticketId": "965edfea-ad20-456e-bc84-a85f1bafbd77",
+    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "createdAt": "2026-10-09T17:22:00.571Z",
+    "updatedAt": "2026-10-09T17:22:00.571Z"
   }
 ]
