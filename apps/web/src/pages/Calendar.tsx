@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import api from "../api";
-import { PageHeader } from "../components/ui";
+import { ListFooter, ListViews, PageHeader } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useCalendarScale } from "../hooks/useCalendarScale";
@@ -19,7 +20,9 @@ const MONTHS = ["January","February","March","April","May","June","July","August
 
 export function CalendarPage() {
   const { outerRef, innerRef, scale, scaledW, scaledH } = useCalendarScale<HTMLDivElement, HTMLDivElement>();
+  const redesign = useRedesign();
   const [entries, setEntries] = useState<ScheduleEntry[]>([]);
+  const [view, setView] = useState("all");
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ title: "", description: "", startTime: "", endTime: "", location: "", color: "#3b82d6" });
@@ -76,6 +79,31 @@ export function CalendarPage() {
 
   const dateKey = (day: number) => `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   const todayKey = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`;
+
+  /*
+   * The month you are looking at, what has not happened yet and what has. They are the slices this
+   * list can offer without inventing a grouping, and they compose with the day filter rather than
+   * replacing it — the month grid above keeps showing every event either way.
+   */
+  const entryKey = (e: ScheduleEntry) => {
+    const d = new Date(e.startTime);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+  const endsAt = (e: ScheduleEntry) => new Date(e.endTime || e.startTime).getTime();
+  const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+  const inView = (e: ScheduleEntry) => {
+    if (view === "month") return entryKey(e).slice(0, 7) === monthKey;
+    if (view === "upcoming") return endsAt(e) >= Date.now();
+    if (view === "past") return endsAt(e) < Date.now();
+    return true;
+  };
+  const calendarViews = [
+    { id: "all", label: "All", count: filteredEntries.length },
+    { id: "month", label: "This month", count: filteredEntries.filter(e => entryKey(e).slice(0, 7) === monthKey).length },
+    { id: "upcoming", label: "Upcoming", count: filteredEntries.filter(e => endsAt(e) >= Date.now()).length },
+    { id: "past", label: "Past", count: filteredEntries.filter(e => endsAt(e) < Date.now()).length },
+  ];
+  const shownEntries = filteredEntries.filter(inView);
 
   // ── Right-click menu: Calendar ──
   /** The date part of an entry's start, in the same form as a day cell's key. */
@@ -162,6 +190,16 @@ export function CalendarPage() {
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} /> Add Event</button>
       </PageHeader>
 
+      {redesign && (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews views={calendarViews} value={view} onChange={setView} label="Calendar views" />
+          <span className="text-xs text-gray-500 tabular-nums">
+            {shownEntries.length} of {filteredEntries.length} event{filteredEntries.length === 1 ? "" : "s"} shown
+            {selectedDate ? " on the selected date" : ""}
+          </span>
+        </div>
+      )}
+
       {/* ── Monthly Calendar Card — scales with the window (min: current size) ── */}
       <div className="card p-3" ref={outerRef}>
         <div style={{ width: scaledW || undefined, height: scaledH || undefined }}>
@@ -233,18 +271,19 @@ export function CalendarPage() {
       {/* ── Scheduled Events Card ── */}
       <div className="card p-4">
         <h3 className="text-sm font-semibold text-white mb-3">
-          Scheduled Events {selectedDate ? `— ${filteredEntries.length} on this date` : `— ${entries.length} total`}
+          Scheduled Events {selectedDate ? `— ${shownEntries.length} on this date` : `— ${shownEntries.length} total`}
         </h3>
         {loading ? (
           <TableSkeleton />
-        ) : filteredEntries.length === 0 ? (
+        ) : shownEntries.length === 0 ? (
           <div className="py-8 text-center text-gray-500">
             <Calendar size={36} className="text-gray-600 mx-auto mb-2" />
-            <p className="text-sm">{selectedDate ? "No events on this date" : "No scheduled events"}</p>
+            <p className="text-sm">{filteredEntries.length > 0 ? "Nothing in this view" : selectedDate ? "No events on this date" : "No scheduled events"}</p>
           </div>
         ) : (
+          <>
           <div className="space-y-2">
-            {filteredEntries.map(e => (
+            {shownEntries.map(e => (
               <div key={e.id} tabIndex={0}
                 onContextMenu={(ev) => menu.open(ev, eventMenuEntries(e), eventMenuHeader(e))}
                 onKeyDown={(ev) => menu.onKeyDown(ev, ev.currentTarget, eventMenuEntries(e), eventMenuHeader(e))}
@@ -256,13 +295,25 @@ export function CalendarPage() {
                   <p className="text-white font-medium text-sm">{e.title}</p>
                   {e.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{e.description}</p>}
                   <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                    <span className="flex items-center gap-1"><Clock size={11} />{new Date(e.startTime).toLocaleString()}</span>
+                    <span className={redesign ? "flex items-center gap-1 tabular-nums" : "flex items-center gap-1"}><Clock size={11} />{new Date(e.startTime).toLocaleString()}</span>
                     {e.location && <span className="flex items-center gap-1"><MapPin size={11} />{e.location}</span>}
                   </div>
                 </div>
               </div>
             ))}
           </div>
+          {redesign && (
+            <ListFooter
+              from={1}
+              to={shownEntries.length}
+              total={shownEntries.length}
+              page={1}
+              pages={1}
+              onPage={() => {}}
+              note={`${entries.length} event${entries.length === 1 ? "" : "s"} in total`}
+            />
+          )}
+          </>
         )}
       </div>
 

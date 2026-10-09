@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Clock, FileText } from "lucide-react";
+import { CalendarDays, Clock, FileText, History } from "lucide-react";
 import { Permission } from "@C7NTAX/shared";
 import api from "../api";
-import { EmptyState, PageHeader, TableSkeleton } from "../components/ui";
+import { EmptyState, ListFooter, ListViews, PageHeader, StatCard, TableSkeleton } from "../components/ui";
 import { activityIcon } from "../components/activityIcons";
 import { useAuth } from "../hooks/useAuth";
+import { useRedesign } from "../hooks/useNavigationStyle";
 import {
   activitiesFromAudit,
   activityHref,
@@ -87,8 +88,10 @@ const timeOfDay = (iso: string) =>
 
 export function MyActivityPage() {
   const { user, permissions } = useAuth();
+  const redesign = useRedesign();
   const userKey = user?.email ?? "anon";
 
+  const [view, setView] = useState("all");
   const [rows, setRows] = useState<AuditRow[]>([]);
   const [visits, setVisits] = useState<VisitRecord[]>(() => readVisits(userKey));
   const [loading, setLoading] = useState(true);
@@ -136,7 +139,18 @@ export function MyActivityPage() {
       ),
     [rows, visits],
   );
-  const days = useMemo(() => groupByDay(activities), [activities]);
+  const allDays = useMemo(() => groupByDay(activities), [activities]);
+
+  /*
+   * The two halves of a history — what you changed and where you were — are the slices this list can
+   * honestly offer, and the counts come from the merged list rather than a second read of the API.
+   */
+  const kindCount = (kind: string) => activities.filter((activity) => activity.kind === kind).length;
+  const shown = useMemo(
+    () => (view === "all" ? activities : activities.filter((activity) => activity.kind === view)),
+    [activities, view],
+  );
+  const days = useMemo(() => groupByDay(shown), [shown]);
 
   const canSeeAuditTrail = permissions.includes(Permission.SystemConfig);
   const truncated = rows.length >= HISTORY_LIMIT;
@@ -171,13 +185,42 @@ export function MyActivityPage() {
         </div>
       ) : (
         <div className="space-y-6">
+          {/* The figures this history already holds: its two halves, how many days it covers, and
+              how long it is — read from the list above rather than asked for again. */}
+          {redesign && (
+            <>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard label="Entries" value={activities.length} icon={<History size={13} />} tone="cyber" />
+                <StatCard label="Changes you made" value={kindCount("change")} icon={<FileText size={13} />} tone="neutral" />
+                <StatCard label="Pages visited" value={kindCount("visit")} icon={<Clock size={13} />} tone="neutral" />
+                <StatCard label="Days covered" value={allDays.length} icon={<CalendarDays size={13} />} tone="neutral" />
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <ListViews
+                  views={[
+                    { id: "all", label: "All", count: activities.length },
+                    { id: "change", label: "Changes", count: kindCount("change") },
+                    { id: "visit", label: "Visits", count: kindCount("visit") },
+                  ]}
+                  value={view}
+                  onChange={setView}
+                  label="Activity views"
+                />
+                <span className="text-xs text-gray-500 tabular-nums">
+                  {shown.length} shown
+                  {truncated ? ` · your ${HISTORY_LIMIT} most recent changes` : ""}
+                </span>
+              </div>
+            </>
+          )}
+
           {days.map((day) => (
             <section key={day.key} data-testid="activity-day">
               <div className="flex items-center gap-2 mb-2">
                 <h3 className="text-xs font-medium text-gray-400">
                   {day.label}
                 </h3>
-                <span className="text-[10px] text-gray-600">
+                <span className={redesign ? "text-[10px] text-gray-600 tabular-nums" : "text-[10px] text-gray-600"}>
                   {day.items.length}{" "}
                   {day.items.length === 1 ? "activity" : "activities"}
                 </span>
@@ -220,7 +263,7 @@ export function MyActivityPage() {
                       </span>
                       <span className="shrink-0 text-right">
                         <span
-                          className="block text-[11px] text-gray-500"
+                          className={redesign ? "block text-[11px] text-gray-500 tabular-nums" : "block text-[11px] text-gray-500"}
                           title={new Date(activity.at).toLocaleString()}
                         >
                           {timeOfDay(activity.at)}
@@ -229,12 +272,29 @@ export function MyActivityPage() {
                           {relativeTime(activity.at, now)}
                         </span>
                       </span>
+                      {redesign && <span className="chip shrink-0 text-[10px]">{activity.kind}</span>}
                     </Link>
                   );
                 })}
               </div>
             </section>
           ))}
+
+          {redesign && shown.length === 0 && (
+            <p className="text-sm text-gray-500">Nothing in this view.</p>
+          )}
+
+          {redesign && shown.length > 0 && (
+            <ListFooter
+              from={1}
+              to={shown.length}
+              total={shown.length}
+              page={1}
+              pages={1}
+              onPage={() => {}}
+              note={truncated ? `Kept to the ${HISTORY_LIMIT} most recent changes` : undefined}
+            />
+          )}
 
           <p className="text-[11px] text-gray-600 leading-relaxed">
             {truncated

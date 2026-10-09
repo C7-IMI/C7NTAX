@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { BookOpen, HelpCircle, Settings2, ListOrdered, ChevronRight, ArrowRight, Wrench } from "lucide-react";
 import { HELP_SECTIONS } from "./HelpDoc";
+import { PageHeader } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 const SECTION_ICONS: Record<string, typeof BookOpen> = {
   "getting-started": BookOpen,
@@ -10,15 +12,24 @@ const SECTION_ICONS: Record<string, typeof BookOpen> = {
 };
 
 export function HelpPage() {
+  const redesign = useRedesign();
   const core = HELP_SECTIONS.filter((s) => s.group === "core");
   const walkthroughs = HELP_SECTIONS.filter((s) => s.group === "walkthroughs");
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-xl font-bold text-white">Help</h1>
-        <p className="text-sm text-gray-400 mt-1">Documentation and reference for C7NTAX — structured like the major PSA help centers (Autotask, ConnectWise Asio, HaloPSA): guided getting-started content, a question-and-answer section, configuration reference, step-by-step feature walkthroughs, and a cross-linked index. Documentation is maintained alongside every feature change, so if something here disagrees with the product, the product is right and this is a bug.</p>
-      </div>
+      {redesign ? (
+        <PageHeader
+          variant="section"
+          title="Help"
+          subtitle="Documentation and reference for C7NTAX — structured like the major PSA help centers (Autotask, ConnectWise Asio, HaloPSA): guided getting-started content, a question-and-answer section, configuration reference, step-by-step feature walkthroughs, and a cross-linked index. Documentation is maintained alongside every feature change, so if something here disagrees with the product, the product is right and this is a bug."
+        />
+      ) : (
+        <div>
+          <h1 className="text-xl font-bold text-white">Help</h1>
+          <p className="text-sm text-gray-400 mt-1">Documentation and reference for C7NTAX — structured like the major PSA help centers (Autotask, ConnectWise Asio, HaloPSA): guided getting-started content, a question-and-answer section, configuration reference, step-by-step feature walkthroughs, and a cross-linked index. Documentation is maintained alongside every feature change, so if something here disagrees with the product, the product is right and this is a bug.</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {core.map((s) => {
@@ -71,7 +82,7 @@ export function HelpPage() {
             { label: "What's New", to: "/admin/changelog" },
             { label: "Help Index", to: "/help/index" },
           ].map((l) => (
-            <Link key={l.to} to={l.to} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-surface-lighter text-gray-300 hover:text-white hover:bg-cyber-600/20">
+            <Link key={l.to} to={l.to} className={redesign ? "chip" : "inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-surface-lighter text-gray-300 hover:text-white hover:bg-cyber-600/20"}>
               {l.label} <ArrowRight size={12} />
             </Link>
           ))}

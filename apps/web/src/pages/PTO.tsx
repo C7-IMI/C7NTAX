@@ -4,7 +4,8 @@ import toast from "react-hot-toast";
 import { useCalendarScale } from "../hooks/useCalendarScale";
 import { Calendar, Clock, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
-import { PageHeader } from "../components/ui";
+import { ListFooter, ListViews, PageHeader } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -17,7 +18,9 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function PTOPage() {
   const { outerRef, innerRef, scale, scaledW, scaledH } = useCalendarScale<HTMLDivElement, HTMLDivElement>();
+  const redesign = useRedesign();
   const [requests, setRequests] = useState<any[]>([]);
+  const [view, setView] = useState("all");
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ type: "vacation", startDate: "", endDate: "", hours: 8, reason: "" });
@@ -86,6 +89,19 @@ export function PTOPage() {
 
   const dateKey = (day: number) => `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   const todayKey = dateKeyOf(new Date());
+
+  /*
+   * The state a request is in is the slice this list can honestly offer — pending, approved or
+   * denied — and the counts are of the working set, so they agree with the date filter above.
+   */
+  const statusViews = ["all", "pending", "approved", "denied"] as const;
+  const viewOf = (r: any) => (r.status || "pending").toLowerCase();
+  const ptoViews = statusViews.map(id => ({
+    id,
+    label: id === "all" ? "All" : id,
+    count: id === "all" ? filteredRequests.length : filteredRequests.filter(r => viewOf(r) === id).length,
+  }));
+  const shownRequests = view === "all" ? filteredRequests : filteredRequests.filter(r => viewOf(r) === view);
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -163,24 +179,50 @@ export function PTOPage() {
         </div>
       </div>
 
+      {/* ── The slice of requests on screen, and what it holds ── */}
+      {redesign && (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews views={ptoViews} value={view} onChange={setView} label="Time-off views" />
+          <span className="text-xs text-gray-500 tabular-nums">
+            {shownRequests.length} of {filteredRequests.length} request{filteredRequests.length === 1 ? "" : "s"} shown
+            {selectedDate ? " on the selected date" : ""}
+          </span>
+        </div>
+      )}
+
       {/* ── PTO Requests Card ── */}
       <div className="card overflow-hidden p-0">
         <div className="px-4 py-3 border-b border-surface-border flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-white">PTO Requests {selectedDate ? `— ${filteredRequests.length} on this date` : `— ${requests.length} total`}</h3>
+          <h3 className="text-sm font-semibold text-white">PTO Requests {selectedDate ? `— ${shownRequests.length} on this date` : `— ${shownRequests.length} total`}</h3>
         </div>
         {loading ? <TableSkeleton /> :
-         filteredRequests.length === 0 ? <div className="py-8 text-center text-gray-500"><Calendar size={36} className="text-gray-600 mx-auto mb-2" /><p className="text-sm">{selectedDate ? "No requests on this date" : "No PTO requests"}</p></div> :
+         shownRequests.length === 0 ? <div className="py-8 text-center text-gray-500"><Calendar size={36} className="text-gray-600 mx-auto mb-2" /><p className="text-sm">{selectedDate ? "No requests on this date" : "No PTO requests"}</p></div> :
+        <>
         <table className="w-full text-sm">
           <thead><tr className="border-b border-surface-border text-left text-gray-400 text-xs uppercase"><th className="px-4 py-3">Type</th><th className="px-4 py-3">Dates</th><th className="px-4 py-3">Hours</th><th className="px-4 py-3">Status</th></tr></thead>
-          <tbody>{filteredRequests.map(r => (
+          <tbody>{shownRequests.map(r => (
             <tr key={r.id} className="border-b border-surface-border/50">
               <td className="px-4 py-3 text-white capitalize">{r.type}</td>
-              <td className="px-4 py-3 text-gray-400 text-xs">{new Date(r.startDate).toLocaleDateString()} - {new Date(r.endDate).toLocaleDateString()}</td>
-              <td className="px-4 py-3 text-gray-400">{r.hours}h</td>
-              <td className="px-4 py-3"><span className={`badge text-xs ${r.status === "approved" ? "bg-green-600/20 text-green-400" : r.status === "denied" ? "bg-red-600/20 text-red-400" : "bg-amber-600/20 text-amber-400"}`}>{r.status}</span></td>
+              <td className={redesign ? "px-4 py-3 text-gray-400 text-xs tabular-nums" : "px-4 py-3 text-gray-400 text-xs"}>{new Date(r.startDate).toLocaleDateString()} - {new Date(r.endDate).toLocaleDateString()}</td>
+              <td className={redesign ? "px-4 py-3 text-gray-400 tabular-nums" : "px-4 py-3 text-gray-400"}>{r.hours}h</td>
+              <td className="px-4 py-3">{redesign
+                ? <span className={`chip text-xs ${viewOf(r) === "approved" ? "chip--good" : viewOf(r) === "denied" ? "chip--bad" : "chip--warn"}`}>{r.status}</span>
+                : <span className={`badge text-xs ${r.status === "approved" ? "bg-green-600/20 text-green-400" : r.status === "denied" ? "bg-red-600/20 text-red-400" : "bg-amber-600/20 text-amber-400"}`}>{r.status}</span>}</td>
             </tr>
           ))}</tbody>
-        </table>}
+        </table>
+        {redesign && (
+          <ListFooter
+            from={1}
+            to={shownRequests.length}
+            total={shownRequests.length}
+            page={1}
+            pages={1}
+            onPage={() => {}}
+            note={`${requests.length} request${requests.length === 1 ? "" : "s"} in total`}
+          />
+        )}
+        </>}
       </div>
 
       {showCreate && (

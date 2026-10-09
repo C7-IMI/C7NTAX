@@ -9,7 +9,8 @@ import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
-import { PageHeader } from "../components/ui";
+import { ListFooter, ListViews, PageHeader, StatCard } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 
 interface DomainRow {
@@ -38,6 +39,7 @@ function expiryTone(row: DomainRow): string {
 }
 
 export function KumoDomainsPage() {
+  const redesign = useRedesign();
   const [searchParams, setSearchParams] = useSearchParams();
   const [rows, setRows] = useState<DomainRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -113,6 +115,31 @@ export function KumoDomainsPage() {
 
   const companyName = visible[0]?.companyName ?? null;
   const expiredCount = visible.filter((r) => r.expiryDate && daysUntil(r.expiryDate).overdue).length;
+
+  /*
+   * The figures the tracker can state from the rows already loaded, and the two slices it can
+   * honestly offer: a domain and a certificate are different records on the same list. The client
+   * scope is applied first so the counts describe the estate on screen.
+   */
+  const scopedRows = companyId ? rows.filter((r) => r.companyId === companyId) : rows;
+  const kindCount = (k: DomainRow["kind"]) => scopedRows.filter((r) => r.kind === k).length;
+  const domainCount = kindCount("Domain");
+  const certificateCount = kindCount("Certificate");
+  const expiringSoonCount = visible.filter((r) => r.expiryDate && !daysUntil(r.expiryDate).overdue && daysUntil(r.expiryDate).days <= 30).length;
+  const autoRenewCount = visible.filter((r) => r.autoRenew).length;
+  const domainViews = [
+    { id: "", label: "All", count: domainCount + certificateCount },
+    { id: "Domain", label: "Domains", count: domainCount },
+    { id: "Certificate", label: "Certificates", count: certificateCount },
+  ];
+
+  /** The redesigned views strip sets the same ?kind= the rail, the menu and the breadcrumbs use. */
+  const setKind = (id: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (id) next.set("kind", id); else next.delete("kind");
+    next.delete("select");
+    setSearchParams(next, { replace: true });
+  };
 
   // ── Right-click menu: Kumo Domains & Certs ──
   const menu = useContextMenu();
@@ -229,6 +256,26 @@ export function KumoDomainsPage() {
         </div>
       </div>
 
+      {/* Figures — the state of the estate this tracker is holding. */}
+      {redesign && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatCard label="Tracked" value={visible.length} icon={<Globe size={13} />} />
+          <StatCard label="Expired" value={expiredCount} icon={<CalendarX size={13} />} tone={expiredCount > 0 ? "red" : "neutral"} />
+          <StatCard label="Expiring in 30 days" value={expiringSoonCount} icon={<CalendarClock size={13} />} tone={expiringSoonCount > 0 ? "amber" : "neutral"} />
+          <StatCard label="Auto-renew" value={autoRenewCount} icon={<RefreshCw size={13} />} tone="neutral" />
+        </div>
+      )}
+
+      {/* Views — domains and certificates are different records, so the list names both. */}
+      {redesign && (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews views={domainViews} value={kind} onChange={setKind} label="Domains and certificates" />
+          <span className="text-xs text-gray-500 tabular-nums">
+            {visible.length} tracked{companyName ? ` for ${companyName}` : ""}
+          </span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-1 space-y-1">
           {loading ? (
@@ -238,7 +285,8 @@ export function KumoDomainsPage() {
               {filter === "expired" ? "Nothing has expired." : filter === "upcoming" ? "Nothing expiring in the next 90 days." : "No domains or certificates yet."}
             </div>
           ) : (
-            visible.map((row) => {
+            <>
+            {visible.map((row) => {
               const when = row.expiryDate ? daysUntil(row.expiryDate) : null;
               return (
                 <button
@@ -256,7 +304,13 @@ export function KumoDomainsPage() {
                     </div>
                     {when ? (
                       <span className="text-right shrink-0">
+                        {redesign ? (
+                          <span className={`chip ${when.overdue ? "chip--bad" : when.days <= 30 ? "chip--warn" : "chip--good"}`}>
+                            {when.overdue ? "expired" : when.label}
+                          </span>
+                        ) : (
                         <span className={`block text-[10px] ${expiryTone(row)}`}>{when.overdue ? "expired" : when.label}</span>
+                        )}
                         <span className="block text-[10px] text-gray-600 mt-0.5" title={formatDate(row.expiryDate)}>
                           {formatDateShort(row.expiryDate)}
                         </span>
@@ -268,6 +322,12 @@ export function KumoDomainsPage() {
                 </button>
               );
             })
+            }
+            {redesign && (
+              <ListFooter from={1} to={visible.length} total={visible.length} page={1} pages={1} onPage={() => {}}
+                note={filter === "expired" ? "Everything already past its date" : filter === "upcoming" ? "Due within 90 days" : "Renewals and cover in one list"} />
+            )}
+            </>
           )}
         </div>
 
@@ -291,6 +351,17 @@ export function KumoDomainsPage() {
                     <p className="text-xs text-gray-500">{selected.kind}</p>
                   </div>
                 </div>
+                {redesign ? (
+                  <span className={`chip ${
+                    selected.expiryDate && daysUntil(selected.expiryDate).overdue
+                      ? "chip--bad"
+                      : selected.expiryDate && daysUntil(selected.expiryDate).days <= 30
+                        ? "chip--warn"
+                        : selected.expiryDate ? "chip--good" : ""
+                  }`}>
+                    {selected.expiryDate ? (daysUntil(selected.expiryDate).overdue ? "Expired" : "Valid") : "No expiry tracked"}
+                  </span>
+                ) : (
                 <span className={`badge text-xs ${
                   selected.expiryDate && daysUntil(selected.expiryDate).overdue
                     ? "bg-red-600/20 text-red-400"
@@ -300,6 +371,7 @@ export function KumoDomainsPage() {
                 }`}>
                   {selected.expiryDate ? (daysUntil(selected.expiryDate).overdue ? "Expired" : "Valid") : "No expiry tracked"}
                 </span>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -12,7 +12,7 @@ import { SortableHeader, sortData, nextSort, type SortState } from "../component
 import { kumoTrail, useBreadcrumbTrail, kumoClientTrail } from "../components/Breadcrumbs";
 import { currentView, copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
-import { PageHeader, Tabs } from "../components/ui";
+import { PageHeader, ListFooter, ListViews, StatCard, Tabs } from "../components/ui";
 import { useRedesign } from "../hooks/useNavigationStyle";
 
 interface ChecklistRow {
@@ -80,6 +80,7 @@ export function ChecklistsPage() {
 
   const [tab, setTab] = useState<"checklists" | "tasks">("checklists");
   const redesign = useRedesign();
+  const [view, setView] = useState("all");
   const [checklists, setChecklists] = useState<ChecklistRow[]>([]);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -152,6 +153,35 @@ export function ChecklistsPage() {
     return tasks.filter((task) => !needle || [task.title, task.checklist?.name, task.checklist?.company?.name].some((value) => (value || "").toLowerCase().includes(needle)));
   }, [tasks, filter]);
 
+  /*
+   * The state a checklist is in, and — on the other tab — a task. Both are things the rows already
+   * say; the strip only counts them, and a view narrows what is on screen without re-reading
+   * anything. A checklist counts as done when it has tasks and every one of them is complete.
+   */
+  const isComplete = (row: ChecklistRow) => row.taskCount > 0 && row.completedCount === row.taskCount;
+  const isOverdue = (row: ChecklistRow) =>
+    Boolean(row.dueDate) && !isComplete(row) && new Date(row.dueDate as string).getTime() < new Date().setHours(0, 0, 0, 0);
+
+  const checklistViews = [
+    { id: "all", label: "All", count: checklists.length },
+    { id: "open", label: "Open", count: checklists.filter((row) => !isComplete(row)).length },
+    { id: "complete", label: "Complete", count: checklists.filter(isComplete).length },
+    { id: "overdue", label: "Overdue", count: checklists.filter(isOverdue).length },
+  ];
+  const taskViews = [
+    { id: "all", label: "All", count: tasks.length },
+    { id: "open", label: "Open", count: tasks.filter((task) => !task.completedAt).length },
+    { id: "done", label: "Done", count: tasks.filter((task) => Boolean(task.completedAt)).length },
+  ];
+  const inView = (row: ChecklistRow) =>
+    view === "open" ? !isComplete(row) : view === "complete" ? isComplete(row) : view === "overdue" ? isOverdue(row) : true;
+  const shownRows = visible.filter(inView);
+  const shownTasks = visibleTasks.filter((task) =>
+    view === "open" ? !task.completedAt : view === "done" ? Boolean(task.completedAt) : true);
+
+  /** The two tabs show different lists, so the view the strip named is let go when the tab changes. */
+  const switchTab = (next: "checklists" | "tasks") => { setTab(next); setView("all"); };
+
   const openChecklist = (id: string) => navigate(`/kumo/checklists/${id}`);
 
   const duplicate = async (row: ChecklistRow) => {
@@ -174,7 +204,7 @@ export function ChecklistsPage() {
   };
 
   const removeSelected = async () => {
-    const targets = visible.filter((row) => selected.has(row.id));
+    const targets = shownRows.filter((row) => selected.has(row.id));
     if (!targets.length) return;
     if (!window.confirm(`Delete ${targets.length} checklist${targets.length === 1 ? "" : "s"}?`)) return;
     setBusy(true);
@@ -259,7 +289,7 @@ export function ChecklistsPage() {
     { label: "Delete", icon: Trash2, danger: true, onSelect: () => void remove(row) },
   ];
 
-  const allVisibleSelected = visible.length > 0 && visible.every((row) => selected.has(row.id));
+  const allVisibleSelected = shownRows.length > 0 && shownRows.every((row) => selected.has(row.id));
 
   return (
     <div
@@ -282,6 +312,17 @@ export function ChecklistsPage() {
         </div>
       </div>
 
+      {/* The figures the page already holds, read from the two lists beneath it: how many checklists
+          there are, how many are done, how many are past their date, and the tasks waiting on you. */}
+      {redesign && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard label="Checklists" value={checklists.length} icon={<ClipboardList size={13} />} tone="cyber" />
+          <StatCard label="Complete" value={checklists.filter(isComplete).length} icon={<CheckCircle2 size={13} />} tone="green" />
+          <StatCard label="Overdue" value={checklists.filter(isOverdue).length} icon={<CalendarDays size={13} />} tone="red" />
+          <StatCard label="Tasks assigned to you" value={tasks.length} icon={<ListChecks size={13} />} tone="neutral" />
+        </div>
+      )}
+
       {redesign ? (
         <Tabs
           label="Checklist sections"
@@ -290,14 +331,14 @@ export function ChecklistsPage() {
             { id: "tasks" as const, label: "My Tasks" },
           ]}
           value={tab === "tasks" ? "tasks" : "checklists"}
-          onChange={(id) => setTab(id === "tasks" ? "tasks" : "checklists")}
+          onChange={(id) => switchTab(id === "tasks" ? "tasks" : "checklists")}
         />
       ) : (
       <div className="flex items-center gap-4 border-b border-surface-border">
         {([["checklists", "Checklists"], ["tasks", "My Tasks"]] as const).map(([key, label]) => (
           <button
             key={key}
-            onClick={() => setTab(key)}
+            onClick={() => switchTab(key)}
             className={`-mb-px border-b-2 px-1 pb-2 text-sm transition-colors ${
               tab === key ? "border-cyber-500 text-white" : "border-transparent text-gray-500 hover:text-gray-300"
             }`}
@@ -306,6 +347,22 @@ export function ChecklistsPage() {
           </button>
         ))}
       </div>
+      )}
+
+      {redesign && (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews
+            views={tab === "tasks" ? taskViews : checklistViews}
+            value={view}
+            onChange={setView}
+            label={tab === "tasks" ? "Task views" : "Checklist views"}
+          />
+          <span className="text-xs text-gray-500 tabular-nums">
+            {tab === "tasks"
+              ? `${shownTasks.length} of ${visibleTasks.length} task${visibleTasks.length === 1 ? "" : "s"} shown`
+              : `${shownRows.length} of ${visible.length} checklist${visible.length === 1 ? "" : "s"} shown`}
+          </span>
+        </div>
       )}
 
       <div className="flex flex-wrap items-center gap-2">
@@ -366,7 +423,7 @@ export function ChecklistsPage() {
                 <tr className="border-b border-surface-border text-left text-xs uppercase tracking-wider text-gray-500">
                   <th className="w-10 px-3 py-2">
                     <button
-                      onClick={() => setSelected(allVisibleSelected ? new Set() : new Set(visible.map((row) => row.id)))}
+                      onClick={() => setSelected(allVisibleSelected ? new Set() : new Set(shownRows.map((row) => row.id)))}
                       title={allVisibleSelected ? "Clear selection" : "Select all"}
                       aria-label={allVisibleSelected ? "Clear selection" : "Select all"}
                       className="text-gray-500 hover:text-white"
@@ -383,7 +440,10 @@ export function ChecklistsPage() {
                 </tr>
               </thead>
               <tbody>
-                {visible.map((row) => (
+                {redesign && shownRows.length === 0 && (
+                  <tr><td colSpan={7} className="px-3 py-8 text-center text-sm text-gray-500">Nothing in this view.</td></tr>
+                )}
+                {shownRows.map((row) => (
                   <tr
                     key={row.id}
                     className="group border-b border-surface-border/60 last:border-0 hover:bg-surface-lighter/40"
@@ -415,7 +475,7 @@ export function ChecklistsPage() {
                     )}
                     {shows("due") && (
                       <td className="px-3 py-2">
-                        <span className={`inline-flex items-center gap-1.5 ${dueLabel(row.dueDate, row.taskCount > 0 && row.completedCount === row.taskCount).tone}`}>
+                        <span className={`inline-flex items-center gap-1.5 ${dueLabel(row.dueDate, row.taskCount > 0 && row.completedCount === row.taskCount).tone}${redesign ? " tabular-nums" : ""}`}>
                           <CalendarDays size={12} /> {dueLabel(row.dueDate).text}
                         </span>
                       </td>
@@ -423,7 +483,14 @@ export function ChecklistsPage() {
                     {shows("progress") && (
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-2">
-                          <span className="tabular-nums text-gray-400">{row.completedCount} of {row.taskCount}</span>
+                          {redesign ? (
+                            <span className={`chip text-[10px] ${row.taskCount > 0 && row.completedCount === row.taskCount ? "chip--good" : ""}`}>
+                              {row.taskCount > 0 && row.completedCount === row.taskCount ? "complete" : "open"}
+                              <span className="chip__n">{row.completedCount}/{row.taskCount}</span>
+                            </span>
+                          ) : (
+                            <span className="tabular-nums text-gray-400">{row.completedCount} of {row.taskCount}</span>
+                          )}
                           <span className="h-1.5 w-16 overflow-hidden rounded-full bg-surface-lighter">
                             <span className="block h-full rounded-full bg-cyber-500" style={{ width: `${row.progress}%` }} />
                           </span>
@@ -440,6 +507,17 @@ export function ChecklistsPage() {
                 ))}
               </tbody>
             </table>
+            {redesign && (
+              <ListFooter
+                from={1}
+                to={shownRows.length}
+                total={shownRows.length}
+                page={1}
+                pages={1}
+                onPage={() => {}}
+                note={`${checklists.length} checklist${checklists.length === 1 ? "" : "s"} in total`}
+              />
+            )}
           </div>
         )
       ) : (
@@ -456,10 +534,10 @@ export function ChecklistsPage() {
               </tr>
             </thead>
             <tbody>
-              {visibleTasks.length === 0 && (
-                <tr><td colSpan={6} className="px-3 py-8 text-center text-gray-500">Nothing assigned to you{companyId ? " for this client" : ""}.</td></tr>
+              {shownTasks.length === 0 && (
+                <tr><td colSpan={6} className="px-3 py-8 text-center text-gray-500">{redesign && visibleTasks.length > 0 ? "Nothing in this view." : <>Nothing assigned to you{companyId ? " for this client" : ""}.</>}</td></tr>
               )}
-              {visibleTasks.map((task) => (
+              {shownTasks.map((task) => (
                 <tr key={task.id} className="border-b border-surface-border/60 last:border-0 hover:bg-surface-lighter/40">
                   <td className="px-3 py-2">
                     <button
@@ -476,12 +554,25 @@ export function ChecklistsPage() {
                     {task.checklist && <Link to={`/kumo/checklists/${task.checklist.id}`} className="text-cyber-300 hover:text-cyber-200">{task.checklist.name}</Link>}
                   </td>
                   <td className="px-3 py-2 text-gray-400">{task.checklist?.company?.name || "—"}</td>
-                  <td className="px-3 py-2"><span className={dueLabel(task.dueDate, Boolean(task.completedAt)).tone}>{dueLabel(task.dueDate).text}</span></td>
-                  <td className="px-3 py-2 text-xs text-gray-500">{task.completedAt ? "Done" : "Open"}</td>
+                  <td className="px-3 py-2"><span className={`${dueLabel(task.dueDate, Boolean(task.completedAt)).tone}${redesign ? " tabular-nums" : ""}`}>{dueLabel(task.dueDate).text}</span></td>
+                  <td className="px-3 py-2 text-xs text-gray-500">{redesign
+                    ? <span className={`chip text-[10px] ${task.completedAt ? "chip--good" : ""}`}>{task.completedAt ? "Done" : "Open"}</span>
+                    : task.completedAt ? "Done" : "Open"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {redesign && (
+            <ListFooter
+              from={1}
+              to={shownTasks.length}
+              total={shownTasks.length}
+              page={1}
+              pages={1}
+              onPage={() => {}}
+              note={`${tasks.length} task${tasks.length === 1 ? "" : "s"} assigned to you`}
+            />
+          )}
         </div>
       )}
 

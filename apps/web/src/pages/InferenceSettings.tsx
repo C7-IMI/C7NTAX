@@ -3,7 +3,8 @@ import api from "../api";
 import toast from "react-hot-toast";
 import { Plus, Zap, Trash2, Check, X, Cpu, TestTube } from "lucide-react";
 import { PageSkeleton } from "../components/ui/Skeleton";
-import { PageHeader } from "../components/ui";
+import { EmptyState, ListFooter, ListViews, PageHeader } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 interface Provider { id: string; name: string; provider: string; model: string; isActive: boolean; isDefault: boolean; hasApiKey: boolean; temperature: number; maxTokens: number; }
 
@@ -13,6 +14,8 @@ const PROVIDER_LABELS: Record<string, string> = {
 };
 
 export function InferenceSettingsPage() {
+  const redesign = useRedesign();
+  const [view, setView] = useState("all");
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -49,6 +52,19 @@ export function InferenceSettingsPage() {
     catch { toast.error("Test failed"); }
     finally { setTesting(null); }
   };
+
+  /*
+   * The redesigned list slices what the page already holds. In the classic interface the view is
+   * never anything but "all", so the same list is rendered in full, as it was.
+   */
+  const providerViews = [
+    { id: "all", label: "All", count: providers.length },
+    { id: "active", label: "Active", count: providers.filter(p => p.isActive).length },
+    { id: "default", label: "Default", count: providers.filter(p => p.isDefault).length },
+  ];
+  const listProviders = redesign && view !== "all"
+    ? providers.filter(p => (view === "active" ? p.isActive : p.isDefault))
+    : providers;
 
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
@@ -120,21 +136,42 @@ export function InferenceSettingsPage() {
       )}
 
       {/* Provider list */}
+      {redesign && !loading && providers.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews views={providerViews} value={view} onChange={setView} label="Provider views" />
+          <span className="text-xs text-gray-500">
+            {listProviders.length} provider{listProviders.length === 1 ? "" : "s"} · {providers.filter(p => p.isActive).length} active
+          </span>
+        </div>
+      )}
       {loading ? <PageSkeleton /> : providers.length === 0 ? (
+        redesign ? (
+          <div className="card">
+            <EmptyState
+              icon={<Zap size={40} />}
+              title="No AI providers configured"
+              description="Add a local provider (no API key needed) or connect an LLM"
+              action={<button onClick={() => setShowForm(true)} className="btn-primary text-sm">Add Provider</button>}
+            />
+          </div>
+        ) : (
         <div className="text-center py-12 card">
           <Zap size={40} className="text-gray-600 mx-auto mb-3" />
           <p className="text-gray-500">No AI providers configured</p>
           <p className="text-xs text-gray-600 mt-1">Add a local provider (no API key needed) or connect an LLM</p>
         </div>
+        )
+      ) : listProviders.length === 0 ? (
+        <div className="card text-center py-8 text-gray-500 text-sm">No provider matches that view.</div>
       ) : (
         <div className="space-y-3">
-          {providers.map(p => (
-            <div key={p.id} className="card flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex items-start gap-3">
+          {listProviders.map(p => (
+            <div key={p.id} className={`card flex flex-col sm:flex-row sm:items-center gap-3 ${redesign ? "" : "sm:justify-between"}`}>
+              <div className={`flex items-start gap-3 ${redesign ? "flex-1 min-w-0" : ""}`}>
                 <div className={`p-2 rounded-lg ${p.isActive ? "bg-green-600/10" : "bg-gray-600/10"}`}>
                   <Zap size={18} className={p.isActive ? "text-green-400" : "text-gray-500"} />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium text-white text-sm">{p.name}</h3>
                     {p.isDefault && <span className="badge bg-cyber-600/20 text-cyber-400">Default</span>}
@@ -144,7 +181,7 @@ export function InferenceSettingsPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className={`flex items-center gap-2 ${redesign ? "shrink-0" : ""}`}>
                 <span className={`badge ${p.isActive ? "bg-green-600/20 text-green-400" : "bg-gray-600/20 text-gray-400"}`}>
                   {p.isActive ? "Active" : "Inactive"}
                 </span>
@@ -174,6 +211,17 @@ export function InferenceSettingsPage() {
             </div>
           ))}
         </div>
+      )}
+      {redesign && listProviders.length > 0 && (
+        <ListFooter
+          from={1}
+          to={listProviders.length}
+          total={listProviders.length}
+          page={1}
+          pages={1}
+          onPage={() => { /* the whole list is on this page */ }}
+          note="The default provider is the one the ticket screen uses"
+        />
       )}
     </div>
   );

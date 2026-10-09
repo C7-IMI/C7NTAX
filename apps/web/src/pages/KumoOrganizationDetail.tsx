@@ -12,6 +12,7 @@ import { UI_KUMO_TYPES } from "../lib/uiFlags";
 import { OrganizationTypePanel } from "../components/OrganizationTypePanel";
 import { OrganizationTypeRail, promotedTypeLink, type AssetType } from "../components/OrganizationTypeRail";
 import { kumoClientTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
+import { StatCard } from "../components/ui";
 import { useRedesign } from "../hooks/useNavigationStyle";
 
 interface Organization {
@@ -284,7 +285,9 @@ export function KumoOrganizationDetailPage() {
             </span>
             {location && <span className="inline-flex items-center gap-1"><MapPin size={12} />{location}</span>}
             {org.industry && <span>{org.industry}</span>}
-            {org.serviceLevel && <span className="badge text-xs bg-cyber-600/20 text-cyber-400">{org.serviceLevel}</span>}
+            {org.serviceLevel && (redesign
+              ? <span className="chip chip--good">{org.serviceLevel}</span>
+              : <span className="badge text-xs bg-cyber-600/20 text-cyber-400">{org.serviceLevel}</span>)}
             <span>{org._count.contacts} contacts</span>
             <span>{org._count.tickets} tickets</span>
           </div>
@@ -333,6 +336,18 @@ export function KumoOrganizationDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Figures — everything this client holds in Kumo, taken from the counts the page already has. */}
+      {redesign && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <StatCard label="Assets" value={counts.assets} icon={<Monitor size={13} />} />
+          <StatCard label="Configurations" value={counts.configs} icon={<Server size={13} />} tone="green" />
+          <StatCard label="Credentials" value={counts.passwords} icon={<Key size={13} />} tone="amber" />
+          <StatCard label="Documents" value={counts.documents} icon={<BookOpen size={13} />} tone="neutral" />
+          <StatCard label="Domains" value={counts.domains} icon={<Globe size={13} />} tone="neutral" />
+          <StatCard label="Certificates" value={counts.certificates} icon={<Lock size={13} />} tone="neutral" />
+        </div>
+      )}
 
       {/* ── Type rail + panel, or the dashboard on its own ─────── */}
       <div className={UI_KUMO_TYPES ? "lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-4 lg:items-start" : ""}>

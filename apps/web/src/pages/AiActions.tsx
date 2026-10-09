@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api";
-import { PageHeader } from "../components/ui";
+import { PageHeader, StatCard } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 type AiAction = {
   id: string; entityType: string; title: string; summary: string; riskTier: string; status: string; createdAt: string;
@@ -21,6 +22,7 @@ function appliedSummary(result: Record<string, unknown> | null | undefined): str
 }
 
 export function AiActionsPage() {
+  const redesign = useRedesign();
   const [actions, setActions] = useState<AiAction[]>([]);
   const [message, setMessage] = useState("");
 
@@ -42,6 +44,9 @@ export function AiActionsPage() {
 
   const tierClass = (t: string) => ({ low: "text-green-400", medium: "text-yellow-400", high: "text-orange-400", critical: "text-red-400" }[t] || "text-gray-400");
   const statusClass = (s: string) => ({ executed: "text-green-400", failed: "text-red-400", rejected: "text-gray-400", blocked: "text-red-400", approved: "text-blue-300" }[s] || "text-gray-500");
+  const tierChip = (t: string) => ({ low: "chip--good", medium: "chip--warn", high: "chip--warn", critical: "chip--bad" }[t] || "");
+  const statusChip = (s: string) => ({ executed: "chip--good", failed: "chip--bad", blocked: "chip--bad" }[s] || "");
+  const countOf = (status: string) => actions.filter(a => a.status === status).length;
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -50,15 +55,34 @@ export function AiActionsPage() {
         Critical actions are blocked automatically. <strong className="text-gray-300">Approving an action carries it out</strong> — through
         the same route the screen uses, as the person who raised it — and a failure is recorded here with its reason. Decisions are audited.
       </p>
+      {redesign && actions.length > 0 && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard label="Awaiting a decision" value={countOf("pending")} tone="amber" />
+          <StatCard label="Applied" value={countOf("executed")} tone="green" />
+          <StatCard label="Failed" value={countOf("failed")} tone="red" />
+          <StatCard label="Rejected" value={countOf("rejected")} tone="neutral" />
+        </div>
+      )}
       {message && <p className="text-sm text-cyber-300">{message}</p>}
       {actions.map(a => {
         const applied = appliedSummary(a.result);
         return (
           <div key={a.id} className="card space-y-2">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className={`text-[11px] uppercase font-medium ${tierClass(a.riskTier)}`}>{a.riskTier}</span>
-              <strong className="text-sm text-white">{a.title}</strong>
-              <span className={`text-xs ${statusClass(a.status)}`}>{a.entityType} · {a.status}</span>
+              {redesign ? (
+                <>
+                  <span className={`chip text-[10px] uppercase ${tierChip(a.riskTier)}`}>{a.riskTier}</span>
+                  <strong className="text-sm text-white">{a.title}</strong>
+                  <span className={`chip text-[10px] ${statusChip(a.status)}`}>{a.status}</span>
+                  <span className="text-[11px] text-gray-500">{a.entityType}</span>
+                </>
+              ) : (
+                <>
+                  <span className={`text-[11px] uppercase font-medium ${tierClass(a.riskTier)}`}>{a.riskTier}</span>
+                  <strong className="text-sm text-white">{a.title}</strong>
+                  <span className={`text-xs ${statusClass(a.status)}`}>{a.entityType} · {a.status}</span>
+                </>
+              )}
             </div>
             <p className="text-sm text-gray-400">{a.summary}</p>
             {applied && <p className="text-xs text-green-400">{applied}</p>}

@@ -20,6 +20,8 @@ import { DataSourceNote } from "../components/DataSourceNote";
 import { Tabs } from "../components/ui/Tabs";
 import { OutlookAddInPage } from "./OutlookAddIn";
 import { PageHeader } from "../components/ui";
+import { ListViews, StatCard } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -187,6 +189,8 @@ function isSecretCred(cred: string): boolean {
  * front door and a filing system, not a rewrite.
  */
 export function C7NCPage() {
+  const redesign = useRedesign();
+  const [serviceView, setServiceView] = useState("all");
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [types, setTypes] = useState<IntegrationType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -630,6 +634,22 @@ export function C7NCPage() {
     return parts.join(" · ") + tail;
   })();
 
+  /*
+   * The service list slices itself the way the page already talks about it: how many are connected,
+   * how many need attention, and how many are switched off. Every count is read from the list on
+   * screen, and the view narrows the rows rather than asking the API again.
+   */
+  const serviceViews = [
+    { id: "all", label: "All", count: integrations.length },
+    { id: "connected", label: "Connected", count: connected.length },
+    { id: "attention", label: "Needs attention", count: attention.length },
+    { id: "off", label: "Switched off", count: integrations.filter(int => !int.enabled).length },
+  ];
+  const shownServices = serviceView === "all" ? integrations
+    : serviceView === "connected" ? connected
+    : serviceView === "attention" ? attention
+    : integrations.filter(int => !int.enabled);
+
   /** The five tabs of the section, with the counts that let somebody find the problem unopened. */
   const TABS: Array<{ id: Section; label: string; count?: number }> = [
     { id: "overview", label: "Overview", count: attention.length || undefined },
@@ -674,6 +694,16 @@ export function C7NCPage() {
           Nothing on this tab changes a connection. */}
       {tab === "overview" ? (
         <div className="space-y-6">
+          {/* Figures the page already holds: the services it reads, how many answer, how many need a
+              look, and whether anything can answer a question. */}
+          {redesign && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard label="Services" value={integrations.length} icon={<Plug size={13} />} tone="cyber" />
+              <StatCard label="Connected" value={connected.length} icon={<CheckCircle size={13} />} tone="green" />
+              <StatCard label="Needs attention" value={attention.length} icon={<AlertTriangle size={13} />} tone={attention.length ? "amber" : "neutral"} />
+              <StatCard label="AI model" value={modelStatus?.connected ? "Connected" : "None"} icon={<Bot size={13} />} tone={modelStatus?.connected ? "green" : "neutral"} />
+            </div>
+          )}
           {attention.length > 0 && (
             <div className="card space-y-3 border-l-2 border-l-amber-500">
               <p className="text-sm text-white flex items-center gap-2">
@@ -724,12 +754,12 @@ export function C7NCPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-white font-medium text-sm">{sub.label}</p>
                         {count ? (
-                          <span className="text-[11px] rounded-full bg-surface-lighter px-1.5 py-0.5 text-gray-400">
+                          <span className={`text-[11px] rounded-full bg-surface-lighter px-1.5 py-0.5 text-gray-400${redesign ? " tabular-nums" : ""}`}>
                             {sub.id === "models" ? `${count} connected` : `${count} ${sub.id === "services" ? "connected" : "installed"}`}
                           </span>
                         ) : null}
                         {sub.id === "services" && attention.length ? (
-                          <span className="text-[11px] rounded-full bg-amber-500/10 px-1.5 py-0.5 text-amber-300">
+                          <span className={`text-[11px] rounded-full bg-amber-500/10 px-1.5 py-0.5 text-amber-300${redesign ? " tabular-nums" : ""}`}>
                             {attention.length} need{attention.length === 1 ? "s" : ""} attention
                           </span>
                         ) : null}
@@ -1238,6 +1268,15 @@ export function C7NCPage() {
         </button>
       </div>
       {/* Integration List */}
+      {redesign && !loading && integrations.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews views={serviceViews} value={serviceView} onChange={setServiceView} label="Service views" />
+          <span className="text-xs text-gray-500 tabular-nums">
+            {shownServices.length} of {integrations.length} service{integrations.length === 1 ? "" : "s"} shown
+            {attention.length ? ` · ${attention.length} need${attention.length === 1 ? "s" : ""} attention` : ""}
+          </span>
+        </div>
+      )}
       {(
         loading ? <PageSkeleton /> :
         integrations.length === 0 ? (
@@ -1255,7 +1294,10 @@ export function C7NCPage() {
           </div>
         ) :
         <div className="space-y-3">
-          {integrations.map((int: any) => {
+          {redesign && shownServices.length === 0 && (
+            <div className="card text-center py-8 text-sm text-gray-500">Nothing in this view.</div>
+          )}
+          {shownServices.map((int: any) => {
             const IconComp = IconFor(int.kind);
             const tr = testResults[int.id];
             const isConnected = int.status === "connected";
@@ -1280,7 +1322,9 @@ export function C7NCPage() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-white font-medium text-sm truncate hover:text-cyber-400 transition-colors">{int.name}</p>
-                        <span className={`badge text-xs ${statusColor(int.status)}`}>
+                        <span className={redesign
+                          ? `chip text-xs ${int.status === "connected" ? "chip--good" : int.status === "error" ? "chip--bad" : ""}`
+                          : `badge text-xs ${statusColor(int.status)}`}>
                           {int.status === "connected" ? <CheckCircle size={10} className="inline mr-0.5" /> :
                            int.status === "error" ? <XCircle size={10} className="inline mr-0.5" /> : null}
                           {int.status || "disconnected"}

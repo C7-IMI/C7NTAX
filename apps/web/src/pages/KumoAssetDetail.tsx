@@ -6,9 +6,11 @@ import { Pencil } from "lucide-react";
 import { kumoClientTrail, kumoTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 import { KumoAssetDialog } from "../components/KumoAssetDialog";
 import { PageSkeleton } from "../components/ui/Skeleton";
-import { PageHeader } from "../components/ui";
+import { PageHeader, StatCard } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 export function KumoAssetDetailPage() {
+  const redesign = useRedesign();
   const { id } = useParams();
   const [asset, setAsset] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -41,14 +43,36 @@ export function KumoAssetDetailPage() {
   if (loading) return <PageSkeleton />;
   if (!asset) return <div className="text-center py-12 text-gray-500">Asset not found</div>;
 
+  // Figures the record already carries: how many fields the type defines, and how many of them this
+  // asset actually fills in. No request is made to work them out.
+  const fields: any[] = asset.template?.fields ?? [];
+  const filled = fields.filter((f: any) => {
+    const raw = asset.values?.[f.key];
+    return raw !== null && raw !== undefined && raw !== "" && !(Array.isArray(raw) && raw.length === 0);
+  }).length;
+  const required = fields.filter((f: any) => f.required).length;
+  const coverage = fields.length > 0 ? Math.round((filled / fields.length) * 100) : 0;
+
   return (
     <div className="space-y-6 animate-fade-in max-w-3xl">
       <div className="flex items-center justify-between">
-        <PageHeader variant="section" title={asset.name} subtitle={[asset.template?.name, client?.name, asset.status].filter(Boolean).join(" · ")} />
+        <PageHeader variant="section" title={asset.name} subtitle={redesign
+          ? <>{[asset.template?.name, client?.name].filter(Boolean).join(" · ")}{asset.status ? <span className={`chip ml-1.5 ${asset.status === "active" ? "chip--good" : ""}`}>{asset.status}</span> : null}</>
+          : [asset.template?.name, client?.name, asset.status].filter(Boolean).join(" · ")} />
         <button onClick={() => setEditing(true)} className="btn-primary text-sm flex items-center gap-1.5">
           <Pencil size={13} /> Edit
         </button>
       </div>
+
+      {/* Figures — what the type asks for and how much of it this record answers. */}
+      {redesign && fields.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatCard label="Fields defined" value={fields.length} />
+          <StatCard label="Populated" value={filled} tone="green" />
+          <StatCard label="Required" value={required} tone={required > filled ? "amber" : "neutral"} />
+          <StatCard label="Coverage" value={`${coverage}%`} tone={coverage >= 80 ? "green" : coverage >= 50 ? "amber" : "red"} />
+        </div>
+      )}
       <div className="card space-y-4">
         <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Fields</h3>
         {asset.template?.fields?.length ? (

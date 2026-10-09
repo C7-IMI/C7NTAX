@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import api from "../api";
-import { PageHeader } from "../components/ui";
+import { ListFooter, ListViews, PageHeader } from "../components/ui";
 import { FileText, ChevronDown, ChevronRight, Shield, Clock, User, Plus } from "lucide-react";
 import toast from "react-hot-toast";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 interface LogEntry {
   id: string; date: string;
@@ -109,6 +110,8 @@ export function AuditLogsSection() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const redesign = useRedesign();
+  const [view, setView] = useState("all");
 
   useEffect(() => {
     api.get("/system/audit-logs").then(r => {
@@ -134,12 +137,41 @@ export function AuditLogsSection() {
     }).catch(() => setLoading(false));
   }, []);
 
+  // The redesign's views slice the day groups the page has already loaded. The dates are the ones
+  // the groups are keyed by, so "today" means the same thing here as it does in a heading below.
+  const todayKey = new Date().toLocaleDateString();
+  const weekKeys = new Set(Array.from({ length: 7 }, (_, i) => {
+    const day = new Date();
+    day.setDate(day.getDate() - i);
+    return day.toLocaleDateString();
+  }));
+  const inToday = (day: LogEntry) => day.date === todayKey;
+  const inWeek = (day: LogEntry) => weekKeys.has(day.date);
+  const countEvents = (days: LogEntry[]) => days.reduce((n, day) => n + day.entries.length, 0);
+  const auditViews = [
+    { id: "all", label: "All", count: countEvents(logs) },
+    { id: "today", label: "Today", count: countEvents(logs.filter(inToday)) },
+    { id: "week", label: "This week", count: countEvents(logs.filter(inWeek)) },
+  ];
+  const totalEvents = countEvents(logs);
+  const visibleLogs = redesign && view !== "all" ? logs.filter(view === "today" ? inToday : inWeek) : logs;
+
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
       <PageHeader variant="section" title="Audit Logs" subtitle="Every change across the entire application — creation, updates, deletions, settings, and permissions" />
-      {loading ? <TableSkeleton /> : logs.length === 0 ? <div className="card text-center py-8 text-gray-500">No audit log entries yet</div> : (
+      {redesign && !loading && logs.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews views={auditViews} value={view} onChange={setView} label="Audit log views" />
+          <span className="text-xs text-gray-500 tabular-nums">
+            {totalEvents} events · {logs.length} days · newest first
+          </span>
+        </div>
+      )}
+      {loading ? <TableSkeleton /> : logs.length === 0 ? <div className="card text-center py-8 text-gray-500">No audit log entries yet</div> : visibleLogs.length === 0 ? (
+        <div className="card text-center py-8 text-gray-500 text-sm">Nothing was recorded in that period.</div>
+      ) : (
         <div className="space-y-3">
-          {logs.map(day => (
+          {visibleLogs.map(day => (
             <div key={day.id} className="card">
               <button onClick={() => {
                 setExpanded(prev => {
@@ -167,6 +199,17 @@ export function AuditLogsSection() {
           ))}
         </div>
       )}
+      {redesign && visibleLogs.length > 0 && (
+        <ListFooter
+          from={1}
+          to={visibleLogs.length}
+          total={visibleLogs.length}
+          page={1}
+          pages={1}
+          onPage={() => { /* every day group is on this page */ }}
+          note={`${countEvents(visibleLogs)} events · newest day first`}
+        />
+      )}
     </div>
   );
 }
@@ -179,6 +222,8 @@ export function ServiceBoardsSection() {
   const [newBoard, setNewBoard] = useState({ name: "", description: "" });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Record<string, any>>({});
+  const redesign = useRedesign();
+  const [view, setView] = useState("all");
 
   const fetch = () => {
     api.get("/boards").then(r => {
@@ -200,11 +245,31 @@ export function ServiceBoardsSection() {
     catch { toast.error("Failed"); }
   };
 
+  // The views slice the boards the page has already fetched, so their counts are the boards' own
+  // switches rather than a second question to the API.
+  const boardViews = [
+    { id: "all", label: "All", count: boards.length },
+    { id: "autoClose", label: "Auto-close", count: boards.filter(b => b.autoCloseEnabled).length },
+    { id: "followUp", label: "Follow-up", count: boards.filter(b => b.followUpEnabled).length },
+  ];
+  const visibleBoards = redesign && view !== "all"
+    ? boards.filter(b => (view === "autoClose" ? b.autoCloseEnabled : b.followUpEnabled))
+    : boards;
+
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
       <PageHeader title="Service Boards" subtitle="Manage board SLAs, auto-close, and follow-up settings">
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} /> New Board</button>
       </PageHeader>
+
+      {redesign && !loading && boards.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews views={boardViews} value={view} onChange={setView} label="Board views" />
+          <span className="text-xs text-gray-500 tabular-nums">
+            {visibleBoards.length} board{visibleBoards.length === 1 ? "" : "s"} · SLA, auto-close and follow-up
+          </span>
+        </div>
+      )}
 
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowCreate(false)}>
@@ -217,17 +282,29 @@ export function ServiceBoardsSection() {
         </div>
       )}
 
-      {loading ? <TableSkeleton /> : boards.length === 0 ? <div className="card text-center py-8 text-gray-500">No boards configured</div> : (
+      {loading ? <TableSkeleton /> : boards.length === 0 ? <div className="card text-center py-8 text-gray-500">No boards configured</div> : visibleBoards.length === 0 ? (
+        <div className="card text-center py-8 text-gray-500 text-sm">No board matches that view.</div>
+      ) : (
         <div className="space-y-3">
-          {boards.map((b: any) => (
+          {visibleBoards.map((b: any) => (
             <div key={b.id} className="card space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Shield size={18} className="text-cyber-400" />
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-3 min-w-0">
+                  <Shield size={18} className="text-cyber-400 shrink-0" />
                   {editingId === b.id ? (
                     <input className="input-field text-sm" value={editForm.name || ""} onChange={e => setEditForm({ ...editForm, name: e.target.value })} />
                   ) : (
-                    <h3 className="text-white font-semibold">{b.name}</h3>
+                    <div className="min-w-0">
+                      <h3 className="text-white font-semibold">{b.name}</h3>
+                      {redesign && (
+                        <p className="text-xs text-gray-500 truncate">
+                          SLA {b.slaResponseMinutes ?? "—"} / {b.slaResolutionMinutes ?? "—"} min
+                          {b.ticketCode ? ` · code ${b.ticketCode}` : ""}
+                          {b.autoCloseEnabled ? ` · auto-closes after ${b.autoCloseDays ?? 14} days` : ""}
+                          {b.followUpEnabled ? ` · follow-up every ${b.followUpIntervalMinutes ?? 120} min` : ""}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
@@ -256,6 +333,17 @@ export function ServiceBoardsSection() {
             </div>
           ))}
         </div>
+      )}
+      {redesign && visibleBoards.length > 0 && (
+        <ListFooter
+          from={1}
+          to={visibleBoards.length}
+          total={visibleBoards.length}
+          page={1}
+          pages={1}
+          onPage={() => { /* every board is on this page */ }}
+          note="SLAs, auto-close and follow-up are per board"
+        />
       )}
     </div>
   );

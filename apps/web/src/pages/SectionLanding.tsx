@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { PageHeader } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 interface SubSection {
   id: string;
@@ -22,9 +23,10 @@ interface SectionLandingProps {
  * sidebar mode.
  */
 export function SectionLanding({ sectionId, sectionLabel, subSections, descriptions }: SectionLandingProps) {
+  const redesign = useRedesign();
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
-      <PageHeader variant="section" title={sectionLabel} subtitle={<>{subSections.length} subsection{subSections.length !== 1 ? "s" : ""} — select one to get started</>} />
+      <PageHeader variant="section" title={sectionLabel} subtitle={<><span className={redesign ? "tabular-nums" : undefined}>{subSections.length}</span> subsection{subSections.length !== 1 ? "s" : ""} — select one to get started</>} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {subSections.map((sub) => {

@@ -2,14 +2,15 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
-import { Plus, Search, Monitor, Server, Laptop, Wifi, Edit3, Trash2, AlertTriangle, ExternalLink, SquareArrowOutUpRight, AppWindow, Copy, Download, RotateCw, Eraser } from "lucide-react";
+import { Plus, Search, Monitor, Server, Laptop, Wifi, Edit3, Trash2, AlertTriangle, ExternalLink, SquareArrowOutUpRight, AppWindow, Copy, Download, RotateCw, Eraser, CheckCircle, Building2 } from "lucide-react";
 import { templateIcon } from "../lib/kumoIcons";
 import { KumoAssetDialog } from "../components/KumoAssetDialog";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
-import { PageHeader } from "../components/ui";
+import { ListFooter, ListViews, PageHeader, StatCard } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 interface KumoAsset {
   id: string; name: string; templateId: string; status: string; companyId: string | null;
@@ -18,6 +19,7 @@ interface KumoAsset {
 }
 
 export function KumoAssetsPage() {
+  const redesign = useRedesign();
   const [assets, setAssets] = useState<KumoAsset[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,6 +84,21 @@ export function KumoAssetsPage() {
     if (companyScope && a.companyId !== companyScope) return false;
     return true;
   });
+
+  /*
+   * The figures and the slices this page can state from the records it has already loaded — how much
+   * of the estate is documented, and the type each record is filed under. Nothing here needs a
+   * request, and nothing is invented.
+   */
+  const activeCount = assets.filter(a => a.status === "active").length;
+  const clientsCovered = new Set(assets.map(a => a.companyId).filter(Boolean)).size;
+  const typesInUse = templates.filter((t: any) => assets.some(a => a.templateId === t.id)).length;
+  const views = [
+    { id: "", label: "All", count: assets.length },
+    ...templates
+      .map((t: any) => ({ id: String(t.id), label: String(t.name), count: assets.filter(a => a.templateId === t.id).length }))
+      .filter(v => v.count > 0 || v.id === templateFilter),
+  ];
 
   // ── Right-click menu: Kumo Assets ──
   const csvColumns: CsvColumn<KumoAsset>[] = [
@@ -179,6 +196,28 @@ export function KumoAssetsPage() {
         </button>
       </div>
 
+      {/* Figures — what the estate holds, counted from the records already on this page. */}
+      {redesign && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatCard label="Assets" value={assets.length} icon={<Monitor size={13} />} />
+          <StatCard label="Active" value={activeCount} icon={<CheckCircle size={13} />} tone="green" />
+          <StatCard label="Types in use" value={typesInUse} icon={<Server size={13} />} tone="neutral" />
+          <StatCard label="Clients covered" value={clientsCovered} icon={<Building2 size={13} />} tone="neutral" />
+        </div>
+      )}
+
+      {redesign ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews views={views} value={templateFilter} onChange={setTemplateFilter} label="Asset types" />
+          <div className="relative flex-1 min-w-[13rem] max-w-xs">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input className="input-field pl-9" placeholder="Search assets…" value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <span className="text-xs text-gray-500 tabular-nums">
+            {filtered.length} asset{filtered.length === 1 ? "" : "s"} in this view
+          </span>
+        </div>
+      ) : (
       <div className="flex gap-2 flex-wrap">
         <div className="relative flex-1 max-w-xs">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -189,6 +228,7 @@ export function KumoAssetsPage() {
           {templates.map((t: any) => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
       </div>
+      )}
 
       {/* Templates quick-create */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
@@ -221,6 +261,7 @@ export function KumoAssetsPage() {
               <th className="px-4 py-3">Asset</th>
               <th className="px-4 py-3 hidden md:table-cell">Template</th>
               <th className="px-4 py-3 hidden sm:table-cell">Status</th>
+              {redesign && <th className="px-4 py-3 w-16"></th>}
               <th className="px-4 py-3 w-20"></th>
             </tr></thead>
             <tbody>
@@ -236,10 +277,27 @@ export function KumoAssetsPage() {
                   <td className="px-4 py-3 text-white font-medium">{a.name}</td>
                   <td className="px-4 py-3 hidden md:table-cell text-gray-400 text-xs">{a.template?.name || "—"}</td>
                   <td className="px-4 py-3 hidden sm:table-cell">
+                    {redesign ? (
+                      <span className={`chip ${a.status === "active" ? "chip--good" : ""}`}>{a.status}</span>
+                    ) : (
                     <span className={`badge text-xs ${a.status === "active" ? "bg-green-600/20 text-green-400" : "bg-gray-600/20 text-gray-400"}`}>
                       {a.status}
                     </span>
+                    )}
                   </td>
+                  {redesign && (
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={e => {
+                          e.stopPropagation();
+                          navigate(`/kumo/assets/${a.id}`);
+                          api.post("/kumo/recently-viewed", { entityType: "asset", entityId: a.id, entityName: a.name, entityIcon: "monitor" }).catch(() => {});
+                        }}
+                        className="chip"
+                      >Open</button>
+                    </td>
+                  )}
                   <td className="px-4 py-3">
                     <button onClick={e => { e.stopPropagation(); handleDelete(a.id); }}
                       className="text-gray-500 hover:text-red-400"><Trash2 size={14} /></button>
@@ -249,6 +307,10 @@ export function KumoAssetsPage() {
             </tbody>
           </table>
         </div>
+        {redesign && !loading && filtered.length > 0 && (
+          <ListFooter from={1} to={filtered.length} total={filtered.length} page={1} pages={1} onPage={() => {}}
+            note={companyScope ? "Scoped to one client from the organization" : "Kumo keeps its own records apart from the service desk"} />
+        )}
       </div>}
 
       {/* Create/edit modal — one dialog for every type, driven by the template */}

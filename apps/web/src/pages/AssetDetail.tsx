@@ -4,7 +4,8 @@ import api from "../api";
 import toast from "react-hot-toast";
 import { Save, X, Monitor, ChevronLeft, Clock, User, FileText, MapPin, DollarSign, Wifi, HardDrive, Package } from "lucide-react";
 import { PageSkeleton } from "../components/ui/Skeleton";
-import { PageHeader } from "../components/ui";
+import { ListFooter, ListViews, PageHeader } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 const TYPE_COLORS: Record<string, string> = { hardware: "bg-blue-600/20 text-blue-400", software: "bg-purple-600/20 text-purple-400", license: "bg-amber-600/20 text-amber-400", server: "bg-cyber-600/20 text-cyber-400", laptop: "bg-green-600/20 text-green-400", mobile: "bg-pink-600/20 text-pink-400", network: "bg-orange-600/20 text-orange-400", other: "bg-gray-600/20 text-gray-400" };
 const STATUS_COLORS: Record<string, string> = { available: "bg-green-600/20 text-green-400", assigned: "bg-cyber-600/20 text-cyber-400", maintenance: "bg-amber-600/20 text-amber-400", retired: "bg-gray-600/20 text-gray-400", lost: "bg-red-600/20 text-red-400" };
@@ -38,11 +39,35 @@ const EDIT_FIELDS = [
   { key: "notes", label: "Notes", section: "general", type: "textarea" },
 ];
 
+/** The headings the asset's fields are grouped under, in the order the record reads. */
+const SECTIONS: Array<{ id: string; label: string }> = [
+  { id: "general", label: "General" },
+  { id: "details", label: "Hardware Details" },
+  { id: "purchase", label: "Purchase & Financial" },
+  { id: "location", label: "Location" },
+  { id: "network", label: "Network & OS" },
+];
+
+/**
+ * What the record's own field reads as, in the same words the read-only form already used: a date as
+ * a date, a price with its currency mark. A field with nothing in it is left out rather than printed
+ * as an em dash — the redesigned record shows what the asset has, not what it lacks.
+ */
+function fieldValue(f: { key: string; type?: string }, asset: Record<string, any>): string | null {
+  const value = asset[f.key];
+  if (value === null || value === undefined || value === "") return null;
+  if (f.type === "date") return new Date(value).toLocaleDateString();
+  if (f.type === "number" && (f.key.includes("Price") || f.key.includes("Value"))) return `$${Number(value).toLocaleString()}`;
+  return String(value);
+}
+
 export function AssetDetailPage() {
   const { id } = useParams();
+  const redesign = useRedesign();
   const [asset, setAsset] = useState<Record<string, any> | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [assignmentView, setAssignmentView] = useState("all");
   const [form, setForm] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
 
@@ -67,6 +92,15 @@ export function AssetDetailPage() {
 
   if (loading) return <PageSkeleton />;
   if (!asset) return <div className="text-center py-12 text-gray-500">Asset not found</div>;
+
+  const assignments: any[] = asset.assignments ?? [];
+  const assignmentViews = [
+    { id: "all", label: "All", count: assignments.length },
+    { id: "active", label: "Active", count: assignments.filter((a: any) => !a.checkedInAt).length },
+    { id: "returned", label: "Returned", count: assignments.filter((a: any) => Boolean(a.checkedInAt)).length },
+  ];
+  const shownAssignments = assignments.filter((a: any) =>
+    assignmentView === "all" ? true : assignmentView === "active" ? !a.checkedInAt : Boolean(a.checkedInAt));
 
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl">
@@ -97,6 +131,33 @@ export function AssetDetailPage() {
         {/* Left column - Details */}
         <div className="lg:col-span-2 space-y-4">
           {/* General */}
+          {redesign && !editing ? (
+            /* The record as a record: one row per field it actually holds, drawn from the same
+               field list the form is built from, so the two cannot drift. */
+            <div className="card space-y-4">
+              {SECTIONS.map((section) => {
+                const rows = EDIT_FIELDS
+                  .filter((f) => f.section === section.id)
+                  .map((f) => ({ field: f, value: fieldValue(f, asset) }))
+                  .filter((row) => row.value !== null);
+                if (!rows.length) return null;
+                return (
+                  <div key={section.id}>
+                    <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{section.label}</h3>
+                    <dl>
+                      {rows.map(({ field, value }) => (
+                        <div key={field.key} className="flex items-start justify-between gap-3 border-b border-surface-border/60 py-1.5">
+                          <dt className="text-xs text-gray-500">{field.label}</dt>
+                          <dd className="text-right text-sm text-gray-200">{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+          <>
           <div className="card space-y-3">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">General</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -136,12 +197,22 @@ export function AssetDetailPage() {
             </div>
           </div>
 
+          </>
+          )}
+
           {/* Assignment History */}
           <div className="card space-y-3">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Assignment History</h3>
-            {asset.assignments?.length > 0 ? (
+            {assignments.length > 0 ? (
+              <>
+              {redesign && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <ListViews views={assignmentViews} value={assignmentView} onChange={setAssignmentView} label="Assignment views" />
+                  <span className="text-xs text-gray-500 tabular-nums">{shownAssignments.length} of {assignments.length} shown</span>
+                </div>
+              )}
               <div className="space-y-2">
-                {asset.assignments.map((a: any) => (
+                {shownAssignments.map((a: any) => (
                   <div key={a.id} className="flex items-center justify-between text-sm py-1.5 px-2 rounded bg-surface-lighter">
                     <div className="flex items-center gap-2">
                       <User size={14} className="text-gray-500" />
@@ -149,13 +220,27 @@ export function AssetDetailPage() {
                       {a.ticket && <span className="text-xs text-gray-500">via {a.ticket.ticketNumber}</span>}
                     </div>
                     <div className="flex items-center gap-3 text-xs text-gray-500">
-                      <span>Out: {new Date(a.checkedOutAt).toLocaleDateString()}</span>
-                      {a.checkedInAt && <span>In: {new Date(a.checkedInAt).toLocaleDateString()}</span>}
-                      {!a.checkedInAt && <span className="badge bg-cyber-600/20 text-cyber-400">Active</span>}
+                      <span className={redesign ? "tabular-nums" : undefined}>Out: {new Date(a.checkedOutAt).toLocaleDateString()}</span>
+                      {a.checkedInAt && <span className={redesign ? "tabular-nums" : undefined}>In: {new Date(a.checkedInAt).toLocaleDateString()}</span>}
+                      {!a.checkedInAt && (redesign
+                        ? <span className="chip text-[10px]">Active</span>
+                        : <span className="badge bg-cyber-600/20 text-cyber-400">Active</span>)}
                     </div>
                   </div>
                 ))}
               </div>
+              {redesign && (
+                <ListFooter
+                  from={1}
+                  to={shownAssignments.length}
+                  total={shownAssignments.length}
+                  page={1}
+                  pages={1}
+                  onPage={() => {}}
+                  note={`${assignments.length} assignment${assignments.length === 1 ? "" : "s"} on this asset`}
+                />
+              )}
+              </>
             ) : <p className="text-sm text-gray-600">No assignment history</p>}
           </div>
         </div>
@@ -165,8 +250,12 @@ export function AssetDetailPage() {
           <div className="card space-y-3">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Status</h3>
             <div className="space-y-2">
-              <div className="flex justify-between text-sm"><span className="text-gray-500">Type</span><span className={`badge text-xs ${TYPE_COLORS[asset.type] || ""}`}>{asset.type}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-gray-500">Status</span><span className={`badge text-xs ${STATUS_COLORS[asset.status] || ""}`}>{asset.status}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-gray-500">Type</span>{redesign
+                ? <span className={`chip text-xs`}>{asset.type}</span>
+                : <span className={`badge text-xs ${TYPE_COLORS[asset.type] || ""}`}>{asset.type}</span>}</div>
+              <div className="flex justify-between text-sm"><span className="text-gray-500">Status</span>{redesign
+                ? <span className={`chip text-xs ${asset.status === "available" ? "chip--good" : asset.status === "lost" ? "chip--bad" : asset.status === "maintenance" ? "chip--warn" : ""}`}>{asset.status}</span>
+                : <span className={`badge text-xs ${STATUS_COLORS[asset.status] || ""}`}>{asset.status}</span>}</div>
               {asset.category && <div className="flex justify-between text-sm"><span className="text-gray-500">Category</span><span className="text-white">{asset.category}</span></div>}
               {asset.department && <div className="flex justify-between text-sm"><span className="text-gray-500">Department</span><span className="text-white">{asset.department}</span></div>}
             </div>
@@ -178,8 +267,8 @@ export function AssetDetailPage() {
               {asset.manufacturer && <div className="flex items-center gap-2"><Package size={13} className="text-gray-500" /><span className="text-gray-400">{asset.manufacturer} {asset.model || ""}</span></div>}
               {asset.serialNumber && <div className="flex items-center gap-2"><HardDrive size={13} className="text-gray-500" /><span className="text-gray-400">S/N: {asset.serialNumber}</span></div>}
               {asset.ipAddress && <div className="flex items-center gap-2"><Wifi size={13} className="text-gray-500" /><span className="text-gray-400">{asset.ipAddress}</span></div>}
-              {asset.purchasePrice != null && <div className="flex items-center gap-2"><DollarSign size={13} className="text-gray-500" /><span className="text-gray-400">${Number(asset.purchasePrice).toLocaleString()}</span></div>}
-              {asset.createdAt && <div className="flex items-center gap-2"><Clock size={13} className="text-gray-500" /><span className="text-gray-400">Created {new Date(asset.createdAt).toLocaleDateString()}</span></div>}
+              {asset.purchasePrice != null && <div className="flex items-center gap-2"><DollarSign size={13} className="text-gray-500" /><span className={redesign ? "text-gray-400 tabular-nums" : "text-gray-400"}>${Number(asset.purchasePrice).toLocaleString()}</span></div>}
+              {asset.createdAt && <div className="flex items-center gap-2"><Clock size={13} className="text-gray-500" /><span className={redesign ? "text-gray-400 tabular-nums" : "text-gray-400"}>Created {new Date(asset.createdAt).toLocaleDateString()}</span></div>}
             </div>
           </div>
 

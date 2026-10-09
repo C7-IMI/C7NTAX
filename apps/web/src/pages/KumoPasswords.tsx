@@ -10,9 +10,11 @@ import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "
 import { copyText, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
-import { PageHeader } from "../components/ui";
+import { ListFooter, ListViews, PageHeader, StatCard } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 export function KumoPasswordsPage() {
+  const redesign = useRedesign();
   const [passwords, setPasswords] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +37,7 @@ export function KumoPasswordsPage() {
   const [auditTrail, setAuditTrail] = useState<any[] | null>(null);
   const [auditError, setAuditError] = useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [totpView, setTotpView] = useState("");
   const menu = useContextMenu();
 
   // Set by the organization screen, e.g. /kumo/passwords?select=<id>&strength=Very+Strong
@@ -80,7 +83,14 @@ export function KumoPasswordsPage() {
     return () => clearInterval(timer);
   }, [manualTotpCode?.enabled, selected?.id]);
 
+  /*
+   * The redesigned views strip narrows the vault further than the client filter can, so its slice is
+   * applied only while it is on screen — the classic list still answers to exactly the same rows.
+   */
+  const viewSlice = (p: any) => !redesign || totpView === "" || (totpView === "totp" ? !!p.totpEnabled : !p.totpEnabled);
+
   const filtered = passwords.filter(p => {
+    if (!viewSlice(p)) return false;
     if (companyFilter && p.companyId !== companyFilter) return false;
     if (search) {
       const haystack = [p.label, p.username, p.email, p.url, p.category]
@@ -89,6 +99,19 @@ export function KumoPasswordsPage() {
     }
     return true;
   });
+
+  /*
+   * The figures the vault can state from the entries it has already loaded, and the one slice worth
+   * pressing: which credentials carry a second factor and which do not. Nothing here is asked for.
+   */
+  const totpCount = passwords.filter((p: any) => p.totpEnabled).length;
+  const vaultClients = new Set(passwords.map((p: any) => p.companyId).filter(Boolean)).size;
+  const vaultCategories = new Set(passwords.map((p: any) => p.category).filter(Boolean)).size;
+  const passwordViews = [
+    { id: "", label: "All", count: passwords.length },
+    { id: "totp", label: "TOTP", count: totpCount },
+    { id: "nototp", label: "No TOTP", count: passwords.length - totpCount },
+  ];
 
   const selectPassword = (p: any) => { 
     setSelected(p); setEditing(false); setEditForm({ ...p }); setRevealData(null); setShowEditPwd(false);
@@ -313,6 +336,24 @@ export function KumoPasswordsPage() {
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} /> Add Password</button>
       </div>
 
+      {/* Figures — what the vault holds, counted from the entries already on this page. */}
+      {redesign && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatCard label="Credentials" value={passwords.length} icon={<Shield size={13} />} />
+          <StatCard label="TOTP enabled" value={totpCount} icon={<ShieldCheck size={13} />} tone={totpCount > 0 ? "green" : "neutral"} />
+          <StatCard label="Clients" value={vaultClients} icon={<Building2 size={13} />} tone="neutral" />
+          <StatCard label="Categories" value={vaultCategories} icon={<Key size={13} />} tone="neutral" />
+        </div>
+      )}
+
+      {/* Views — the second-factor state of the vault, as chips you press. */}
+      {redesign && (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews views={passwordViews} value={totpView} onChange={setTotpView} label="Vault views" />
+          <span className="text-xs text-gray-500 tabular-nums">{filtered.length} of {passwords.length} credential{passwords.length === 1 ? "" : "s"}</span>
+        </div>
+      )}
+
       <div className="flex gap-2 flex-wrap">
         <div className="relative flex-1 max-w-xs"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input ref={searchRef} className="input-field pl-9" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} /></div>
         <select className="input-field text-sm py-1.5 w-auto" value={companyFilter} onChange={e => setCompanyFilter(e.target.value)}>
@@ -335,7 +376,8 @@ export function KumoPasswordsPage() {
         <div className="lg:col-span-1 space-y-1">
           {loading ? <TableSkeleton /> :
            filtered.length === 0 ? <div className="card py-8 text-center text-gray-500 text-sm">No passwords</div> :
-           filtered.map(p => (
+           <>
+           {filtered.map(p => (
             <button key={p.id} onClick={() => selectPassword(p)}
               onContextMenu={(e) => menu.open(e, passwordMenuEntries(p), passwordMenuHeader(p))}
               onKeyDown={(e) => menu.onKeyDown(e, e.currentTarget, passwordMenuEntries(p), passwordMenuHeader(p))}
@@ -346,10 +388,23 @@ export function KumoPasswordsPage() {
                   <p className="text-sm text-white truncate">{p.label}</p>
                   <p className="text-xs text-gray-500">{p.username || "—"}</p>
                 </div>
+                {redesign ? (
+                  <span className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-xs text-gray-600">{p.category}</span>
+                    {p.totpEnabled && <span className="chip chip--good">TOTP</span>}
+                  </span>
+                ) : (
                 <span className="text-xs text-gray-600">{p.category}</span>
+                )}
               </div>
             </button>
           ))}
+           {redesign && (
+             <ListFooter from={1} to={filtered.length} total={filtered.length} page={1} pages={1} onPage={() => {}}
+               note="Secrets stay hidden until revealed" />
+           )}
+           </>
+          }
         </div>
 
         {/* Detail panel */}
@@ -368,7 +423,9 @@ export function KumoPasswordsPage() {
                       <input className="input-field text-sm py-1" value={editForm.label || ""} onChange={e => setEditForm({ ...editForm, label: e.target.value })} />
                     ) : (
                       <>
-                        <h3 className="text-white font-semibold">{selected.label}</h3>
+                        <h3 className="text-white font-semibold flex items-center gap-2">{selected.label}
+                          {redesign && <span className={`chip ${selected.totpEnabled ? "chip--good" : ""}`}>{selected.totpEnabled ? "TOTP" : "No TOTP"}</span>}
+                        </h3>
                         <p className="text-xs text-gray-500">{selected.username || "—"} · {selected.category || "general"}</p>
                       </>
                     )}

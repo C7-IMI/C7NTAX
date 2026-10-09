@@ -19,13 +19,13 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   Activity, AlertTriangle, CheckCircle2, ChevronRight, Cloud, Globe, Info, Monitor, Receipt,
-  RotateCcw, Shield, Sparkles, Wrench, type LucideIcon,
+  RotateCcw, Search, Shield, Sparkles, Wrench, type LucideIcon,
 } from "lucide-react";
 import api from "../api";
-import { PageHeader } from "../components/ui";
+import { ListFooter, PageHeader, StatCard } from "../components/ui";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { primeContextMenusSetting } from "../hooks/useContextMenusEnabled";
-import { refreshNavigationSettings } from "../hooks/useNavigationStyle";
+import { refreshNavigationSettings, useRedesign } from "../hooks/useNavigationStyle";
 import { ACCENT_COLOUR_HINT, DEFAULT_ACCENT_COLOUR, HEX_COLOUR_PATTERN } from "../lib/colourTokens";
 
 // ── Types mirroring the API's rendered registry ─────────────────────
@@ -174,6 +174,10 @@ export function FieldCard({ field, onSave, onClear, busy }: {
   useEffect(() => { setDraft(String(field.value ?? "")); }, [field.value]);
 
   const disabled = !field.editable || field.locked || busy;
+  const redesign = useRedesign();
+  /** Whether the control edits a draft, and so can be applied with a button rather than on change. */
+  const savesFromDraft = field.type !== "boolean" && field.type !== "select";
+  const dirty = String(field.value ?? "") !== draft;
 
   const commit = async (value: boolean | number | string) => {
     setError("");
@@ -262,6 +266,68 @@ export function FieldCard({ field, onSave, onClear, busy }: {
 
   return (
     <div className="border-b border-surface-border last:border-b-0 py-4 first:pt-0 last:pb-0" data-hl={`field:${field.id}`}>
+      {redesign ? (
+        <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h4 className="text-sm font-medium text-white">{field.label}</h4>
+              {field.source === "environment" && <Chip tone="info">Set by {field.env}</Chip>}
+              {field.source === "setting" && field.fromEnvironment && !field.overridden && (
+                <Chip tone="info">Deployment default ({field.env})</Chip>
+              )}
+              {field.overridden && <Chip tone="warn">Overrides {field.env}</Chip>}
+              {field.restartRequired && <Chip tone="warn">Needs a restart</Chip>}
+              {field.locked && <Chip tone="good">Required</Chip>}
+              {field.secret && <Chip>{field.value ? "Configured" : "Not configured"}</Chip>}
+            </div>
+            <p className="text-xs text-gray-400 mt-1">{field.summary}</p>
+            {field.detail && <p className="text-xs text-gray-500 mt-1 leading-relaxed">{field.detail}</p>}
+            {field.source === "environment" && !field.secret && (
+              <p className="text-[11px] text-gray-500 mt-1.5 font-mono">
+                {field.env} = {String(field.value || "(empty)")}
+              </p>
+            )}
+            {field.overridden && (
+              <p className="text-[11px] text-amber-300/80 mt-1.5">
+                The deployment sets this to <span className="font-mono">{JSON.stringify(field.fallback)}</span>.
+              </p>
+            )}
+            {field.affects.length > 0 && (
+              <p className="text-[11px] text-gray-600 mt-1.5">Changes: {field.affects.join(" · ")}</p>
+            )}
+            <p className="text-[11px] text-gray-600 mt-1.5">
+              Default when nothing is saved: <span className="font-mono">{JSON.stringify(field.default)}</span>
+            </p>
+            {error && <p className="text-xs text-red-400 mt-1.5">{error}</p>}
+          </div>
+          <div className="shrink-0 w-[16rem] max-w-full sm:max-w-[45%]">{control}</div>
+          <div className="shrink-0 flex items-center gap-2">
+            {savesFromDraft ? (
+              <button
+                type="button"
+                disabled={!dirty || disabled}
+                onMouseDown={e => e.preventDefault()}
+                onClick={() => void commit(field.type === "number" ? Number(draft) : draft)}
+                className="btn-primary text-xs py-1.5 px-3"
+              >
+                Save
+              </button>
+            ) : null}
+            {field.saved !== null && field.editable && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void onClear(field)}
+                className="inline-flex items-center gap-1 text-[11px] text-gray-400 hover:text-white disabled:opacity-40"
+                title="Remove the saved value so the deployment's own applies again"
+              >
+                <RotateCcw size={11} /> Use {field.fromEnvironment || field.env ? "the deployment's value" : "the default"}
+              </button>
+            )}
+          </div>
+        </div>
+      ) : (
+      <>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -313,6 +379,8 @@ export function FieldCard({ field, onSave, onClear, busy }: {
           </button>
         )}
       </div>
+      </>
+      )}
     </div>
   );
 }
@@ -398,8 +466,50 @@ export function useConfigurationSection(sectionId: string) {
 
 // ── Hub ─────────────────────────────────────────────────────────────
 
+/**
+ * The area rail the redesigned hub and the section editor share. Each entry is the address of the
+ * area's own screen, which is the deep link Recent activity and Help already use — so the rail
+ * moves a person between screens rather than re-implementing the screens it names.
+ */
+function AreaNav({ sections, current, onSelect, showAll = false }: {
+  sections: RenderedSection[];
+  current: string;
+  onSelect: (id: string) => void;
+  showAll?: boolean;
+}) {
+  const item = (id: string, label: string, count: number, Icon: LucideIcon | null) => (
+    <button
+      key={id}
+      type="button"
+      onClick={() => onSelect(id)}
+      aria-current={current === id ? "true" : undefined}
+      className={`shrink-0 flex items-center gap-1.5 text-left text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${
+        current === id
+          ? "bg-cyber-600/15 text-cyber-300 border-cyber-600/30"
+          : "text-gray-400 hover:text-white hover:bg-surface-lighter border-transparent"
+      }`}
+    >
+      {Icon ? <Icon size={13} /> : null} {label}
+      <span className="text-gray-600 tabular-nums">{count}</span>
+    </button>
+  );
+
+  return (
+    <nav
+      aria-label="Configuration areas"
+      className="flex lg:flex-col gap-1 overflow-x-auto pb-1 lg:pb-0 lg:pr-3 lg:border-r lg:border-surface-border"
+    >
+      {showAll ? item("all", "All areas", sections.length, null) : null}
+      {sections.map(section => item(section.id, section.label, section.fields.length, iconFor(section.icon)))}
+    </nav>
+  );
+}
+
 export function ConfigurationHub() {
   const { sections, loaded, loading, error } = useConfiguration();
+  const redesign = useRedesign();
+  const [query, setQuery] = useState("");
+  const [area, setArea] = useState("all");
 
   const editableTotal = useMemo(
     () => sections.reduce((n, s) => n + s.fields.filter(f => f.editable).length, 0),
@@ -409,6 +519,147 @@ export function ConfigurationHub() {
     () => sections.reduce((n, s) => n + s.fields.filter(f => f.overridden).length, 0),
     [sections],
   );
+  const restartTotal = useMemo(
+    () => sections.reduce((n, s) => n + s.fields.filter(f => f.restartRequired).length, 0),
+    [sections],
+  );
+
+  const settingMatches = (field: RenderedField, q: string) =>
+    field.label.toLowerCase().includes(q) || field.summary.toLowerCase().includes(q);
+
+  const shownSections = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return sections.filter(section => {
+      if (area !== "all" && section.id !== area) return false;
+      if (!q) return true;
+      return section.label.toLowerCase().includes(q)
+        || section.summary.toLowerCase().includes(q)
+        || section.fields.some(field => settingMatches(field, q));
+    });
+  }, [sections, area, query]);
+
+  const shownSettings = shownSections.reduce((n, section) => n + section.fields.length, 0);
+
+  if (redesign) {
+    const q = query.trim().toLowerCase();
+    return (
+      <div className="space-y-4 animate-fade-in">
+        <PageHeader
+          title="Configuration"
+          subtitle="Every setting the application reads, where its value comes from, and what changing it affects."
+        />
+
+        {error && <div className="card border-red-500/30 text-sm text-red-300">{error}</div>}
+        {!loaded && !loading && (
+          <div className="card border-amber-500/30 text-sm text-amber-200 flex items-start gap-2">
+            <AlertTriangle size={16} className="mt-0.5 shrink-0" />
+            <span>
+              The saved settings have not been read yet, so the values below are the deployment's own.
+              This resolves itself within half a minute.
+            </span>
+          </div>
+        )}
+
+        {loading ? <TableSkeleton /> : (
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative flex-1 min-w-[200px] max-w-sm">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                <input
+                  className="input-field pl-9"
+                  placeholder="Search every setting…"
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  aria-label="Search every setting"
+                />
+              </div>
+              <span className="chip">{shownSettings} settings · each one says where its value comes from</span>
+              {q ? <span className="text-xs text-gray-500 tabular-nums">{shownSections.length} areas shown</span> : null}
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[236px_minmax(0,1fr)]">
+              <AreaNav sections={sections} current={area} onSelect={setArea} showAll />
+
+              <div className="space-y-4 min-w-0">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <StatCard label="Areas your role can read" value={sections.length} icon={<Wrench size={13} />} />
+                  <StatCard label="Settings you can change here" value={editableTotal} tone="green" icon={<Sparkles size={13} />} />
+                  <StatCard
+                    label="Overriding the deployment"
+                    value={overriddenTotal}
+                    tone={overriddenTotal > 0 ? "amber" : "neutral"}
+                    icon={<AlertTriangle size={13} />}
+                  />
+                </div>
+
+                {shownSections.length === 0 ? (
+                  <div className="card text-sm text-gray-500">No setting matches “{query.trim()}”.</div>
+                ) : (
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {shownSections.map(section => {
+                      const Icon = iconFor(section.icon);
+                      const unused = section.requirements.filter(r => r.applies && !r.met);
+                      return (
+                        <Link
+                          key={section.id}
+                          to={`/admin/configuration/${section.id}`}
+                          className="card card--interactive group flex items-start gap-3.5"
+                        >
+                          <div className="p-2 rounded-lg bg-cyber-600/10 shrink-0">
+                            <Icon size={18} className="text-cyber-400" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <h3 className="text-sm font-semibold text-white">{section.label}</h3>
+                              <ChevronRight size={16} className="text-gray-600 group-hover:text-gray-400 shrink-0" />
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1">{section.summary}</p>
+                            {q ? (
+                              <p className="text-[11px] text-cyber-300/80 mt-1.5">
+                                {section.fields.filter(field => settingMatches(field, q)).map(field => field.label).slice(0, 3).join(" · ")}
+                              </p>
+                            ) : null}
+                            <div className="flex flex-wrap items-center gap-2 mt-2.5">
+                              <Chip>{section.fields.length} {section.fields.length === 1 ? "setting" : "settings"}</Chip>
+                              {section.fields.some(f => f.restartRequired) && <Chip tone="warn">restart required</Chip>}
+                              {unused.length > 0 && <Chip tone="warn">{unused.length} unmet requirement{unused.length === 1 ? "" : "s"}</Chip>}
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {restartTotal > 0 && (
+                  <p className="text-xs text-gray-500">
+                    <span className="text-amber-300">{restartTotal}</span>{" "}
+                    {restartTotal === 1 ? "setting is" : "settings are"} applied when the API restarts.
+                  </p>
+                )}
+
+                <div className="card">
+                  <div className="flex items-start gap-3">
+                    <Info size={16} className="mt-0.5 shrink-0 text-gray-500" />
+                    <div className="text-xs text-gray-400 space-y-1.5">
+                      <p className="text-sm text-gray-300 font-medium">How a value is decided</p>
+                      <p>
+                        A saved setting wins. With nothing saved, the deployment's own environment variable is
+                        used, and failing that the documented default. Settings marked
+                        <span className="mx-1 text-cyber-300">Set by …</span> belong to the deployment — an
+                        outbound credential, or a switch that decides whether authentication is enforced — and
+                        are shown so they can be confirmed rather than changed from a browser session.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -543,6 +794,7 @@ export function ConfigurationSectionPage() {
   const navigate = useNavigate();
   const { section, sections, loaded, loading, error, save, clear } = useConfigurationSection(sectionId ?? "");
   const [busy, setBusy] = useState(false);
+  const redesign = useRedesign();
 
   useEffect(() => {
     if (!loading && sections.length > 0 && !section) navigate("/admin/configuration", { replace: true });
@@ -576,6 +828,96 @@ export function ConfigurationSectionPage() {
   const changeable = section.fields.filter(f => f.editable && !f.locked);
   const deployment = section.fields.filter(f => !f.editable || f.locked);
   const addinEnabled = section.fields.find(f => f.id === "outlookAddin")?.value !== false;
+
+  if (redesign) {
+    return (
+      <div className="space-y-4 animate-fade-in">
+        <PageHeader
+          title={section.label}
+          subtitle={section.governs}
+          actions={<Link to="/admin/configuration" className="btn-secondary text-sm">All areas</Link>}
+        />
+
+        {!loaded && (
+          <div className="card border-amber-500/30 text-sm text-amber-200">
+            The saved settings have not been read yet, so these are the deployment's own values.
+          </div>
+        )}
+
+        <div className="grid gap-4 lg:grid-cols-[236px_minmax(0,1fr)]">
+          <AreaNav
+            sections={sections}
+            current={section.id}
+            onSelect={id => navigate(`/admin/configuration/${id}`)}
+          />
+
+          <div className="space-y-4 min-w-0">
+            {section.requirements.map(requirement => (
+              <RequirementBanner key={requirement.label} requirement={requirement} />
+            ))}
+
+            <section className="card">
+              <div className="flex items-center gap-2 mb-1">
+                <Icon size={16} className="text-cyber-400" />
+                <h3 className="text-sm font-semibold text-white">
+                  {changeable.length > 0 ? "Settings" : "Deployment settings"}
+                </h3>
+                {!section.writable && <Chip tone="warn">read only for your role</Chip>}
+              </div>
+              <p className="text-xs text-gray-500 mb-2">
+                {section.summary} A value saved here wins over the deployment's own environment variable.
+              </p>
+              {changeable.map(field => (
+                <FieldCard key={field.id} field={field} onSave={saveField} onClear={clearField} busy={busy} />
+              ))}
+              {changeable.length === 0 && (
+                <p className="text-xs text-gray-500">
+                  Nothing in this area is changed from here — these values belong to the deployment.
+                </p>
+              )}
+              {changeable.length > 0 && (
+                <ListFooter
+                  from={1}
+                  to={changeable.length}
+                  total={changeable.length}
+                  page={1}
+                  pages={1}
+                  onPage={() => { /* every row is on this page */ }}
+                  note="Saved as each value changes"
+                />
+              )}
+            </section>
+
+            {deployment.length > 0 && changeable.length > 0 && (
+              <section className="card">
+                <h3 className="text-sm font-semibold text-white mb-4">Set by the deployment</h3>
+                {deployment.map(field => (
+                  <FieldCard key={field.id} field={field} onSave={saveField} onClear={clearField} busy={busy} />
+                ))}
+                <ListFooter
+                  from={1}
+                  to={deployment.length}
+                  total={deployment.length}
+                  page={1}
+                  pages={1}
+                  onPage={() => { /* every row is on this page */ }}
+                  note="Each one names the environment variable that owns it"
+                />
+              </section>
+            )}
+
+            {section.id === "apps" && <AddinSimulatorCard enabled={addinEnabled} />}
+
+            <p className="text-xs text-gray-500">
+              A change is saved immediately and takes effect on the next action that reads it. Settings
+              marked <span className="text-amber-300">Needs a restart</span> are sampled once by the service
+              that uses them, so they apply when the API next starts.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl">

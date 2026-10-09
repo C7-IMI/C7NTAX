@@ -15,7 +15,8 @@ import { layoutReport, type ReportTemplateDocument } from "@C7NTAX/shared";
 import { measureTextMm } from "../lib/reportMeasure";
 import { exportTemplateCsv, exportTemplateExcel, exportTemplatePdf, printTemplateReport } from "../lib/reportOutput";
 import { LaidOutPageView } from "../components/reports/designer/PageRenderer";
-import { PageHeader } from "../components/ui";
+import { PageHeader, ListViews, ListFooter } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 interface Schedule { id: string; frequency: string; timeOfDay: string; recipients: string[]; format: string; isActive: boolean; lastSentAt: string | null }
 interface SavedReport {
@@ -178,6 +179,7 @@ export function CustomReportsPage() {
   const [scheduling, setScheduling] = useState<SavedReport | null>(null);
   const [deleting, setDeleting] = useState<SavedReport | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const redesign = useRedesign();
 
   const load = useCallback(() => {
     setLoading(true);
@@ -364,7 +366,24 @@ export function CustomReportsPage() {
             <X size={12} /> Clear
           </button>
         )}
+        {redesign && <span className="ml-auto text-xs text-gray-500">{visible.length} shown · {totals.scheduled} scheduled</span>}
       </div>
+
+      {/* The "Scheduled only" checkbox is one of these views, so the strip and the checkbox are the
+          same state read two ways — the chips set it, the checkbox still works, neither drifts. */}
+      {redesign && (
+        <ListViews
+          views={[
+            { id: "all", label: "All", count: totals.reports },
+            { id: "scheduled", label: "Scheduled", count: totals.scheduled },
+            { id: "designed", label: "Designed", count: reports.filter(r => r.type === "template").length },
+            { id: "config", label: "Config-driven", count: totals.configDriven },
+          ]}
+          value={scheduleOnly ? "scheduled" : "all"}
+          onChange={(id) => setScheduleOnly(id === "scheduled")}
+          label="Saved report views"
+        />
+      )}
 
       {loading ? <TableSkeleton /> : error ? (
         <div className="card border-red-600/40 text-sm text-red-400 flex items-center gap-2"><AlertTriangle size={14} /> {error}</div>
@@ -428,6 +447,9 @@ export function CustomReportsPage() {
               </tbody>
             </table>
           </div>
+          {redesign && visible.length > 0 && (
+            <ListFooter from={1} to={visible.length} total={visible.length} page={1} pages={1} onPage={() => {}} note={`${totals.types} distinct types · ${totals.configDriven} config-driven`} />
+          )}
         </div>
       )}
 

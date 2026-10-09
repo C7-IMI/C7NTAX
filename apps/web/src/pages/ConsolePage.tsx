@@ -10,6 +10,7 @@ import { ConsolePanel } from "../components/ConsoleDialog";
 import { useAuth } from "../hooks/useAuth";
 import { useConsoleEnabled } from "../hooks/useConsoleEnabled";
 import { useRedesign } from "../hooks/useNavigationStyle";
+import { PageHeader } from "../components/ui";
 
 /**
  * `/console` — the console as a page rather than a popup (PLAN-028 §10).
@@ -99,43 +100,68 @@ export function ConsolePage() {
     );
   }
 
+  /*
+   * The sentence and the copy-link button are shared by both interfaces — the classic header draws
+   * them itself and the redesigned one hands them to the shared PageHeader — so they are built once
+   * here. Only the number inside the sentence is dressed differently, which is why it comes from a
+   * helper rather than a duplicated paragraph (a fragment adds no element in the classic interface).
+   */
+  const count = (n: number) => (redesign ? <span className="tabular-nums">{n}</span> : <>{n}</>);
+
+  const consoleHelp = (
+    <>
+      {count(permitted.length)} read command{permitted.length === 1 ? "" : "s"}{" "}
+      available to you, grouped the way{" "}
+      <span className="text-gray-400">help</span> prints them. This page
+      runs the same commands as the popup and adds a URL: a link like{" "}
+      <span className="font-mono text-gray-400">/console?c=ticket+list</span>{" "}
+      opens with that command already run. Writes arrive with PLAN-026's
+      action manifest — until then the console reads.
+    </>
+  );
+
+  const copyButton = (
+    <button
+      type="button"
+      onClick={() => void copyLink()}
+      disabled={!params.get("c")}
+      className="ml-auto shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] text-gray-400 hover:text-white hover:bg-surface-lighter disabled:opacity-40 disabled:hover:text-gray-400 disabled:hover:bg-transparent transition-colors"
+      title={
+        params.get("c")
+          ? "Copy a link that opens the console with this command"
+          : "Run a command first"
+      }
+      data-testid="console-copy-link"
+    >
+      {copied ? (
+        <Check size={12} className="text-alert-green" />
+      ) : (
+        <Link2 size={12} />
+      )}
+      {copied ? "Link copied" : "Copy link"}
+    </button>
+  );
+
   return (
     <div className="h-[calc(100vh-11rem)] min-h-[24rem] flex flex-col gap-3">
-      <div className="flex items-start gap-3 shrink-0">
-        <div className="min-w-0">
-          <h1 className={redesign ? "text-base font-semibold text-white" : "text-lg font-semibold text-white"}>Console</h1>
-          <p className="text-xs text-gray-500">
-            {permitted.length} read command{permitted.length === 1 ? "" : "s"}{" "}
-            available to you, grouped the way{" "}
-            <span className="text-gray-400">help</span> prints them. This page
-            runs the same commands as the popup and adds a URL: a link like{" "}
-            <span className="font-mono text-gray-400">
-              /console?c=ticket+list
-            </span>{" "}
-            opens with that command already run. Writes arrive with PLAN-026's
-            action manifest — until then the console reads.
-          </p>
+      {redesign ? (
+        <PageHeader
+          variant="section"
+          title="Console"
+          subtitle={consoleHelp}
+          actions={copyButton}
+        />
+      ) : (
+        <div className="flex items-start gap-3 shrink-0">
+          <div className="min-w-0">
+            <h1 className={redesign ? "text-base font-semibold text-white" : "text-lg font-semibold text-white"}>Console</h1>
+            <p className="text-xs text-gray-500">
+              {consoleHelp}
+            </p>
+          </div>
+          {copyButton}
         </div>
-        <button
-          type="button"
-          onClick={() => void copyLink()}
-          disabled={!params.get("c")}
-          className="ml-auto shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] text-gray-400 hover:text-white hover:bg-surface-lighter disabled:opacity-40 disabled:hover:text-gray-400 disabled:hover:bg-transparent transition-colors"
-          title={
-            params.get("c")
-              ? "Copy a link that opens the console with this command"
-              : "Run a command first"
-          }
-          data-testid="console-copy-link"
-        >
-          {copied ? (
-            <Check size={12} className="text-alert-green" />
-          ) : (
-            <Link2 size={12} />
-          )}
-          {copied ? "Link copied" : "Copy link"}
-        </button>
-      </div>
+      )}
 
       <div className="flex-1 min-h-0">
         <ConsolePanel
@@ -147,7 +173,7 @@ export function ConsolePage() {
 
       {/* The catalogue in a form you can read without typing anything: the same groups `help` prints. */}
       <details className="shrink-0 rounded-lg border border-surface-border bg-surface">
-        <summary className="px-3.5 py-2 text-xs text-gray-400 cursor-pointer hover:text-white">
+        <summary className={redesign ? "px-3.5 py-2 text-xs text-gray-400 cursor-pointer hover:text-white tabular-nums" : "px-3.5 py-2 text-xs text-gray-400 cursor-pointer hover:text-white"}>
           What is available ({permitted.length} commands,{" "}
           {CONSOLE_OWN_VERBS.length} console verbs)
         </summary>

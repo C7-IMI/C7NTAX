@@ -9,7 +9,8 @@ import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
-import { PageHeader } from "../components/ui";
+import { ListFooter, ListViews, PageHeader, StatCard } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 interface Organization {
   id: string;
@@ -39,11 +40,12 @@ const TYPE_COLORS: Record<string, string> = {
   Partner: "bg-green-600/20 text-green-400",
 };
 
-function CountCell({ value, className = "" }: { value: number; className?: string }) {
-  return <td className={`px-4 py-3 ${className} ${value > 0 ? "text-gray-300" : "text-gray-600"}`}>{value}</td>;
+function CountCell({ value, className = "", redesign = false }: { value: number; className?: string; redesign?: boolean }) {
+  return <td className={`px-4 py-3 ${className} ${redesign ? "tabular-nums" : ""} ${value > 0 ? "text-gray-300" : "text-gray-600"}`}>{value}</td>;
 }
 
 export function KumoOrganizationsPage() {
+  const redesign = useRedesign();
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [recent, setRecent] = useState<RecentItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -52,6 +54,7 @@ export function KumoOrganizationsPage() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortState | null>({ field: "name", direction: "asc" });
   const [searchParams, setSearchParams] = useSearchParams();
+  const [orgView, setOrgView] = useState("");
   const navigate = useNavigate();
 
   // Set by the organization rail's Vendors entry, e.g. ?companyType=Vendor
@@ -89,6 +92,31 @@ export function KumoOrganizationsPage() {
   }, []);
 
   const rows = useMemo(() => (sort ? sortData(orgs, sort.field, sort.direction) : orgs), [orgs, sort])
+
+  /*
+   * The figures and the coverage slice this page can state from the organizations it has already
+   * loaded: how much documentation each client holds, and how many of them hold none at all. The
+   * slice only applies while the redesigned interface is on, so the classic table is unchanged.
+   */
+  const documented = (o: Organization) =>
+    (o.kumo?.assets ?? 0) + (o.kumo?.passwords ?? 0) + (o.kumo?.documents ?? 0) + (o.kumo?.domains ?? 0) + (o.kumo?.certificates ?? 0) > 0;
+  const activeOrgs = rows.filter((o) => o.isActive).length;
+  const totalAssets = rows.reduce((n, o) => n + (o.kumo?.assets ?? 0), 0);
+  const totalCredentials = rows.reduce((n, o) => n + (o.kumo?.passwords ?? 0), 0);
+  const totalDocuments = rows.reduce((n, o) => n + (o.kumo?.documents ?? 0), 0);
+  const orgViews = [
+    { id: "", label: "All", count: rows.length },
+    { id: "active", label: "Active", count: activeOrgs },
+    { id: "inactive", label: "Inactive", count: rows.length - activeOrgs },
+    { id: "undocumented", label: "Undocumented", count: rows.filter((o) => !documented(o)).length },
+  ];
+  const matchesOrgView = (o: Organization) =>
+    !redesign || orgView === "" ||
+    (orgView === "active" ? o.isActive
+      : orgView === "inactive" ? !o.isActive
+        : orgView === "undocumented" ? !documented(o)
+          : true);
+  const viewRows = rows.filter(matchesOrgView);
 
   // ── Right-click menu: Kumo Organizations ──
   const menu = useContextMenu();
@@ -211,6 +239,16 @@ export function KumoOrganizationsPage() {
         </Link>
       </div>
 
+      {/* Figures — what the client estate holds in Kumo, totalled from the rows already loaded. */}
+      {redesign && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatCard label="Organizations" value={rows.length} icon={<Building2 size={13} />} />
+          <StatCard label="Assets documented" value={totalAssets} icon={<Server size={13} />} tone="neutral" />
+          <StatCard label="Credentials" value={totalCredentials} icon={<KeyRound size={13} />} tone="amber" />
+          <StatCard label="Documents" value={totalDocuments} icon={<FileText size={13} />} tone="neutral" />
+        </div>
+      )}
+
       {recent.length > 0 && (
         <div className="card">
           <div className="flex items-center gap-2 mb-3">
@@ -236,6 +274,14 @@ export function KumoOrganizationsPage() {
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Views — who is documented and who is not, which is the coverage question this page answers. */}
+      {redesign && (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews views={orgViews} value={orgView} onChange={setOrgView} label="Organization views" />
+          <span className="text-xs text-gray-500 tabular-nums">{viewRows.length} of {total} organizations</span>
         </div>
       )}
 
@@ -285,6 +331,8 @@ export function KumoOrganizationsPage() {
                 ? `No ${companyType.toLowerCase()} organizations yet.`
                 : "No organizations yet."}
           </div>
+        ) : redesign && viewRows.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">No organizations in this view.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -303,7 +351,7 @@ export function KumoOrganizationsPage() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((org) => (
+                {viewRows.map((org) => (
                   <tr
                     key={org.id}
                     tabIndex={0}
@@ -332,15 +380,21 @@ export function KumoOrganizationsPage() {
                         </span>
                       )}
                     </td>
-                    <CountCell value={org._count?.contacts ?? 0} className="hidden lg:table-cell" />
-                    <CountCell value={org.kumo?.assets ?? 0} />
-                    <CountCell value={org.kumo?.passwords ?? 0} className="hidden md:table-cell" />
-                    <CountCell value={org.kumo?.documents ?? 0} className="hidden md:table-cell" />
-                    <CountCell value={org.kumo?.domains ?? 0} className="hidden xl:table-cell" />
-                    <CountCell value={org.kumo?.certificates ?? 0} className="hidden xl:table-cell" />
+                    <CountCell value={org._count?.contacts ?? 0} className="hidden lg:table-cell" redesign={redesign} />
+                    <CountCell value={org.kumo?.assets ?? 0} redesign={redesign} />
+                    <CountCell value={org.kumo?.passwords ?? 0} className="hidden md:table-cell" redesign={redesign} />
+                    <CountCell value={org.kumo?.documents ?? 0} className="hidden md:table-cell" redesign={redesign} />
+                    <CountCell value={org.kumo?.domains ?? 0} className="hidden xl:table-cell" redesign={redesign} />
+                    <CountCell value={org.kumo?.certificates ?? 0} className="hidden xl:table-cell" redesign={redesign} />
                     <td className="px-4 py-3 hidden lg:table-cell">
+                      {redesign ? (
+                        <span className={`chip ${org.isActive ? "chip--good" : ""}`}>{org.isActive ? "Active" : "Inactive"}</span>
+                      ) : (
+                      <>
                       <span className={`w-2 h-2 rounded-full inline-block mr-1.5 ${org.isActive ? "bg-green-400" : "bg-gray-600"}`} />
                       <span className="text-xs text-gray-400">{org.isActive ? "Active" : "Inactive"}</span>
+                      </>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-gray-600">
                       <ChevronRight size={15} />
@@ -350,6 +404,10 @@ export function KumoOrganizationsPage() {
               </tbody>
             </table>
           </div>
+        )}
+        {redesign && !loading && !error && viewRows.length > 0 && (
+          <ListFooter from={1} to={viewRows.length} total={viewRows.length} page={1} pages={1} onPage={() => {}}
+            note={total > rows.length ? `${total - rows.length} more not loaded · counts are Kumo records` : "Counts are Kumo records, not service-desk ones"} />
         )}
       </div>
     </div>

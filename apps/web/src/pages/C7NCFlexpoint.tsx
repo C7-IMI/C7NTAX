@@ -23,6 +23,8 @@ import {
   AlertTriangle, CheckCircle2, CreditCard, Link2, Loader2, RefreshCw, Send, Unlink, Wallet, XCircle,
 } from "lucide-react";
 import { PageSkeleton } from "../components/ui/Skeleton";
+import { ListFooter, ListViews } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 import { DataSourceNote } from "../components/DataSourceNote";
 
 interface FlexpointOptions {
@@ -93,6 +95,9 @@ function when(iso: string | null): string {
 }
 
 export function C7NCFlexpointPage() {
+  const redesign = useRedesign();
+  const [clientView, setClientView] = useState("all");
+  const [invoiceView, setInvoiceView] = useState("all");
   const [overview, setOverview] = useState<Overview | null>(null);
   const [invoices, setInvoices] = useState<LocalInvoice[]>([]);
   const [pushEnabled, setPushEnabled] = useState(false);
@@ -195,6 +200,28 @@ export function C7NCFlexpointPage() {
 
   const { connection, counts, totals, lastSync } = overview;
 
+  /*
+   * Two lists here can be sliced without inventing anything: a client by whether it owes money past
+   * its due date, and an invoice by whether FlexPoint has it yet. The counts are read from what the
+   * page already holds, and the views narrow the rows rather than asking the API again.
+   */
+  const clientViews = [
+    { id: "all", label: "All", count: overview.clients.length },
+    { id: "overdue", label: "Overdue", count: overview.clients.filter(c => c.overdueAmount > 0).length },
+    { id: "clear", label: "Clear", count: overview.clients.filter(c => c.overdueAmount <= 0).length },
+  ];
+  const shownClients = clientView === "all" ? overview.clients
+    : clientView === "overdue" ? overview.clients.filter(c => c.overdueAmount > 0)
+    : overview.clients.filter(c => c.overdueAmount <= 0);
+  const invoiceViews = [
+    { id: "all", label: "All", count: invoices.length },
+    { id: "pushed", label: "In FlexPoint", count: invoices.filter(i => i.flexpointInvoiceId).length },
+    { id: "unpushed", label: "Not pushed", count: invoices.filter(i => !i.flexpointInvoiceId).length },
+  ];
+  const shownInvoices = invoiceView === "all" ? invoices
+    : invoiceView === "pushed" ? invoices.filter(i => i.flexpointInvoiceId)
+    : invoices.filter(i => !i.flexpointInvoiceId);
+
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl">
       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -231,9 +258,11 @@ export function C7NCFlexpointPage() {
         <div className="card space-y-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3 min-w-0">
-              <span className={`inline-flex items-center gap-1.5 text-xs rounded-md px-2 py-1 ${
-                connection.status === "connected" ? "bg-emerald-600/10 text-emerald-300"
-                : connection.status === "error" ? "bg-red-600/10 text-red-300" : "bg-surface-lighter text-gray-400"}`}>
+              <span className={redesign
+                ? `chip text-xs ${connection.status === "connected" ? "chip--good" : connection.status === "error" ? "chip--bad" : ""}`
+                : `inline-flex items-center gap-1.5 text-xs rounded-md px-2 py-1 ${
+                  connection.status === "connected" ? "bg-emerald-600/10 text-emerald-300"
+                  : connection.status === "error" ? "bg-red-600/10 text-red-300" : "bg-surface-lighter text-gray-400"}`}>
                 {connection.status === "connected" ? <CheckCircle2 size={12} /> : connection.status === "error" ? <XCircle size={12} /> : null}
                 {connection.status}
               </span>
@@ -346,6 +375,13 @@ export function C7NCFlexpointPage() {
             </div>
           </div>
 
+          {redesign && (
+            <div className="flex flex-wrap items-center gap-2">
+              <ListViews views={clientViews} value={clientView} onChange={setClientView} label="Client views" />
+              <span className="text-xs text-gray-500 tabular-nums">{shownClients.length} of {overview.clients.length} clients shown</span>
+            </div>
+          )}
+
           {overview.clients.length === 0 ? (
             <p className="text-xs text-gray-500">
               No clients are linked yet. Run a sync, then link a FlexPoint customer below.
@@ -364,7 +400,10 @@ export function C7NCFlexpointPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {overview.clients.map(client => (
+                  {redesign && shownClients.length === 0 && (
+                    <tr><td colSpan={6} className="py-6 text-center text-xs text-gray-500">Nothing in this view.</td></tr>
+                  )}
+                  {shownClients.map(client => (
                     <tr key={client.companyId} className="border-t border-surface-border">
                       <td className="py-2">
                         <Link to={`/clients/${client.companyId}`} className="text-white hover:text-cyber-400">{client.companyName}</Link>
@@ -389,6 +428,17 @@ export function C7NCFlexpointPage() {
                   ))}
                 </tbody>
               </table>
+              {redesign && (
+                <ListFooter
+                  from={1}
+                  to={shownClients.length}
+                  total={shownClients.length}
+                  page={1}
+                  pages={1}
+                  onPage={() => {}}
+                  note={`${overview.clients.length} linked client${overview.clients.length === 1 ? "" : "s"}`}
+                />
+              )}
             </div>
           )}
 
@@ -436,6 +486,12 @@ export function C7NCFlexpointPage() {
               </p>
             </div>
           </div>
+          {redesign && (
+            <div className="flex flex-wrap items-center gap-2">
+              <ListViews views={invoiceViews} value={invoiceView} onChange={setInvoiceView} label="Invoice views" />
+              <span className="text-xs text-gray-500 tabular-nums">{shownInvoices.length} of {invoices.length} invoices shown</span>
+            </div>
+          )}
           {invoices.length === 0 ? (
             <p className="text-xs text-gray-500">No invoices to show.</p>
           ) : (
@@ -451,16 +507,32 @@ export function C7NCFlexpointPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {invoices.map(invoice => (
+                  {redesign && shownInvoices.length === 0 && (
+                    <tr><td colSpan={5} className="py-6 text-center text-xs text-gray-500">Nothing in this view.</td></tr>
+                  )}
+                  {shownInvoices.map(invoice => (
                     <tr key={invoice.id} className="border-t border-surface-border">
                       <td className="py-2">
-                        <span className="text-white">{invoice.invoiceNumber}</span>
-                        <span className="text-gray-600"> · {invoice.status}</span>
+                        {redesign ? (
+                          <>
+                            <span className="text-white tabular-nums">{invoice.invoiceNumber}</span>
+                            <span className="chip ml-1.5 text-[10px]">{invoice.status}</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-white">{invoice.invoiceNumber}</span>
+                            <span className="text-gray-600"> · {invoice.status}</span>
+                          </>
+                        )}
                       </td>
                       <td className="py-2 text-gray-400 truncate">{invoice.companyName}</td>
                       <td className="py-2 text-right tabular-nums text-white">{money(invoice.total)}</td>
                       <td className="py-2 text-xs">
-                        {invoice.flexpointInvoiceId ? (
+                        {redesign ? (
+                          invoice.flexpointInvoiceId
+                            ? <span className="chip chip--good text-[10px]">#{invoice.flexpointInvoiceId}{invoice.flexpointPaid > 0 && <span className="text-gray-400"> · {money(invoice.flexpointPaid)} received</span>}</span>
+                            : <span className="chip text-[10px]">not pushed</span>
+                        ) : invoice.flexpointInvoiceId ? (
                           <span className="text-emerald-300">
                             #{invoice.flexpointInvoiceId}
                             {invoice.flexpointPaid > 0 && <span className="text-gray-400"> · {money(invoice.flexpointPaid)} received</span>}
@@ -479,6 +551,17 @@ export function C7NCFlexpointPage() {
                   ))}
                 </tbody>
               </table>
+              {redesign && (
+                <ListFooter
+                  from={1}
+                  to={shownInvoices.length}
+                  total={shownInvoices.length}
+                  page={1}
+                  pages={1}
+                  onPage={() => {}}
+                  note={`${invoices.length} invoice${invoices.length === 1 ? "" : "s"} shown`}
+                />
+              )}
             </div>
           )}
         </div>

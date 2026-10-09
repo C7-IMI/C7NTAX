@@ -8,9 +8,20 @@ import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
-import { PageHeader } from "../components/ui";
+import { ListFooter, ListViews, PageHeader, StatCard } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
+
+/** Redesigned state chip for a document: published reads good, a draft is still in flight. */
+function docStateChip(state: string): string {
+  const s = (state || "").toLowerCase();
+  if (s === "published" || s === "current" || s === "approved" || s === "active") return "chip--good";
+  if (s === "draft" || s === "review" || s === "pending" || s === "in review") return "chip--warn";
+  if (s === "archived" || s === "obsolete" || s === "retired") return "chip--bad";
+  return "";
+}
 
 export function KumoDocumentsPage() {
+  const redesign = useRedesign();
   const [folders, setFolders] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,6 +122,18 @@ export function KumoDocumentsPage() {
   // The organization rail opens the document list scoped to one client.
   const visibleDocuments = companyParam ? byFilter.filter((d: any) => d.companyId === companyParam) : byFilter;
 
+  /*
+   * The figures the folder in hand already answers: how many documents it holds, how many have gone
+   * stale, and how many nobody has opened. Every one is a fact about a row already loaded.
+   */
+  const staleCount = documents.filter((d: any) => new Date(d.updatedAt).getTime() < staleBefore).length;
+  const unviewedCount = documents.filter((d: any) => (d.viewCount ?? 0) === 0).length;
+  const docViews = [
+    { id: "", label: "All", count: documents.length },
+    { id: "stale", label: "Stale", count: staleCount },
+    { id: "unviewed", label: "Never viewed", count: unviewedCount },
+  ];
+
   const docFilterLabel = docFilter === "unviewed" ? "Not viewed" : docFilter === "stale" ? "Stale" : "";
   useBreadcrumbTrail(
     companyParam
@@ -134,6 +157,13 @@ export function KumoDocumentsPage() {
   const clearDocFilter = () => {
     const next = new URLSearchParams(searchParams);
     next.delete("filter");
+    setSearchParams(next, { replace: true });
+  };
+
+  /** The redesigned views strip writes the same ?filter= the rail and breadcrumbs already use. */
+  const setDocFilter = (id: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (id) next.set("filter", id); else next.delete("filter");
     setSearchParams(next, { replace: true });
   };
 
@@ -228,6 +258,26 @@ export function KumoDocumentsPage() {
         </div>
       </div>
 
+      {/* Figures — what the folder in hand holds, and how much of it has drifted. */}
+      {redesign && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <StatCard label="Documents" value={documents.length} icon={<FileText size={13} />} />
+          <StatCard label="Folders" value={folders.length} icon={<Folder size={13} />} tone="neutral" />
+          <StatCard label="Stale" value={staleCount} icon={<Clock size={13} />} tone={staleCount > 0 ? "amber" : "neutral"} />
+          <StatCard label="Never viewed" value={unviewedCount} icon={<History size={13} />} tone={unviewedCount > 0 ? "red" : "neutral"} />
+        </div>
+      )}
+
+      {/* Views — the states a document drifts into, as chips you press rather than a filter to fill in. */}
+      {redesign && (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews views={docViews} value={docFilter} onChange={setDocFilter} label="Document views" />
+          <span className="text-xs text-gray-500 tabular-nums">
+            {visibleDocuments.length} of {documents.length} document{documents.length === 1 ? "" : "s"}
+          </span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         <div className="lg:col-span-1 space-y-1">
           <button onClick={() => setSelectedFolder(null)}
@@ -248,6 +298,7 @@ export function KumoDocumentsPage() {
         <div className="lg:col-span-3">
           {loading ? <TableSkeleton /> :
            visibleDocuments.length === 0 ? <div className="text-center py-12 card"><FileText size={40} className="text-gray-600 mx-auto mb-3" /><p className="text-gray-500">{docFilter ? "No documents match this filter" : "No documents"}</p></div> :
+           <>
            <div className="space-y-2">
             {visibleDocuments.map(d => (
               <div key={d.id} tabIndex={0} className="card hover:border-cyber-500/30 transition-colors cursor-pointer p-4 focus:outline-none focus:border-cyber-500/50" onClick={() => openDoc(d.id)}
@@ -259,16 +310,30 @@ export function KumoDocumentsPage() {
                     <FileText size={18} className="text-cyber-400 shrink-0" />
                     <div>
                       <p className="text-white font-medium text-sm">{d.title}</p>
+                      {redesign ? (
+                        <p className="text-xs text-gray-500 mt-0.5 flex flex-wrap items-center gap-1.5">
+                          <span className="tabular-nums">v{d.currentVersion}</span>
+                          {d.status ? <span className={`chip ${docStateChip(d.status)}`}>{d.status}</span> : null}
+                          <span>{d.visibility}</span>
+                          {new Date(d.updatedAt).getTime() < staleBefore && <span className="chip chip--warn">stale</span>}
+                        </p>
+                      ) : (
                       <p className="text-xs text-gray-500 mt-0.5">
                         v{d.currentVersion} · {d.status} · {d.visibility}
                       </p>
+                      )}
                     </div>
                   </div>
                   <ChevronRight size={14} className="text-gray-600" />
                 </div>
               </div>
             ))}
-          </div>}
+           </div>
+           {redesign && (
+             <ListFooter from={1} to={visibleDocuments.length} total={visibleDocuments.length} page={1} pages={1} onPage={() => {}}
+               note={`${folders.length} folder${folders.length === 1 ? "" : "s"} · a document is stale after 90 days`} />
+           )}
+           </>}
         </div>
       </div>
 
@@ -321,7 +386,9 @@ export function KumoDocumentsPage() {
             <div className="flex items-center gap-3 text-xs text-gray-500">
               <span>v{viewDoc.currentVersion}</span>
               <span>·</span>
-              <span className="badge bg-cyber-600/20 text-cyber-400">{viewDoc.status}</span>
+              {redesign
+                ? <span className={`chip ${docStateChip(viewDoc.status)}`}>{viewDoc.status}</span>
+                : <span className="badge bg-cyber-600/20 text-cyber-400">{viewDoc.status}</span>}
               <span>·</span>
               <span>{viewDoc.visibility}</span>
             </div>

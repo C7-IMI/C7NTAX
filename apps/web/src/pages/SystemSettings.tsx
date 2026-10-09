@@ -21,11 +21,25 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
-import { PageHeader } from "../components/ui";
+import { ListFooter, PageHeader, StatCard } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 import {
   Activity, AlertTriangle, ArrowRight, CheckCircle, Clock, Database, Mail,
-  Monitor, RotateCw, Server, XCircle, type LucideIcon,
+  Monitor, RotateCw, Search, Server, XCircle, type LucideIcon,
 } from "lucide-react";
+
+/**
+ * The settings people come here looking for, named up front rather than buried in whichever area
+ * happens to own them. Shared by both interfaces so the two list the same destinations.
+ */
+const AREA_SHORTCUTS = [
+  { label: "Outlook add-in", to: "/admin/configuration/apps" },
+  { label: "Customer portal", to: "/admin/portal" },
+  { label: "Service alerts & monitors", to: "/admin/configuration/monitoring" },
+  { label: "Email connectors", to: "/admin/configuration/integrations" },
+  { label: "Sessions & security", to: "/admin/configuration/sessions" },
+  { label: "Billing & invoicing", to: "/admin/configuration/billing" },
+];
 
 interface PollerStatus {
   paused: boolean;
@@ -78,6 +92,43 @@ function StatusCard({ icon: Icon, label, value, tone }: {
 function DeploymentRow({ icon: Icon, label, env, note, state, action }: {
   icon: LucideIcon; label: string; env: string; note: ReactNode; state: "good" | "warn" | "info"; action?: ReactNode;
 }) {
+  const redesign = useRedesign();
+
+  if (redesign) {
+    /* A row, the way the mockup draws a setting: what it is on the left, where its value comes from
+       underneath, the state in the middle and the action — when there is one — on the right. */
+    return (
+      <div className="flex flex-wrap items-start gap-x-4 gap-y-2 border-b border-surface-border last:border-b-0 py-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Icon size={14} className="shrink-0 text-gray-500" />
+            <p className="text-sm text-white">{label}</p>
+          </div>
+          <p className="text-xs text-gray-400 mt-1">{note}</p>
+          <p className="text-[11px] text-gray-500 mt-1 font-mono">{env}</p>
+        </div>
+        <div className="shrink-0">
+          {state === "good" && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border bg-emerald-500/10 text-emerald-300 border-emerald-500/30">
+              <CheckCircle size={11} /> configured
+            </span>
+          )}
+          {state === "warn" && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border bg-amber-500/10 text-amber-300 border-amber-500/30">
+              <AlertTriangle size={11} /> not set
+            </span>
+          )}
+          {state === "info" && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border bg-surface-lighter text-gray-400 border-surface-border">
+              off
+            </span>
+          )}
+        </div>
+        {action ? <div className="shrink-0">{action}</div> : null}
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-start gap-3 rounded-lg border border-surface-border px-3.5 py-3">
       <Icon size={16} className="mt-0.5 shrink-0 text-gray-500" />
@@ -114,6 +165,9 @@ export function SystemSettingsPage() {
   const [areas, setAreas] = useState<AreaSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const redesign = useRedesign();
+  const [query, setQuery] = useState("");
+  const [areaId, setAreaId] = useState("all");
 
   const load = useCallback(async () => {
     const [pollerRes, deploymentRes, configRes] = await Promise.allSettled([
@@ -137,6 +191,14 @@ export function SystemSettingsPage() {
     await load();
   };
 
+  // Search and the area rail are the redesign's hub. Both read what the page has already loaded —
+  // the registry of areas — so nothing here asks the API a second question.
+  const q = query.trim().toLowerCase();
+  const shownShortcuts = q ? AREA_SHORTCUTS.filter(shortcut => shortcut.label.toLowerCase().includes(q)) : AREA_SHORTCUTS;
+  const shownAreas = areas.filter(candidate =>
+    (areaId === "all" || candidate.id === areaId) &&
+    (!q || candidate.label.toLowerCase().includes(q) || candidate.summary.toLowerCase().includes(q)));
+
   return (
     <div className="space-y-6 animate-fade-in max-w-5xl">
       <PageHeader
@@ -146,6 +208,25 @@ export function SystemSettingsPage() {
       />
 
       {error && <div className="card border-red-500/30 text-sm text-red-300">{error}</div>}
+
+      {redesign && (
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input
+              className="input-field pl-9"
+              placeholder="Search every setting…"
+              value={query}
+              onChange={e => setQuery(e.target.value)}
+              aria-label="Search every configuration area"
+            />
+          </div>
+          <span className="chip">
+            {areas.length} areas · each one names the variable that owns its settings
+          </span>
+          {q ? <span className="text-xs text-gray-500 tabular-nums">{shownAreas.length} shown</span> : null}
+        </div>
+      )}
 
       <div className="card">
         <h3 className="text-sm font-semibold text-white mb-1">Configuration</h3>
@@ -160,41 +241,107 @@ export function SystemSettingsPage() {
           <p className="text-xs text-gray-500">Your role cannot read any configuration area.</p>
         ) : (
           <>
-            {/* Devices and mail clients are the settings people come here looking for, so they are
-                named up front rather than buried in whichever area happens to own them. */}
-            <div className="flex flex-wrap gap-2 mb-3">
-              {[
-                { label: "Outlook add-in", to: "/admin/configuration/apps" },
-                { label: "Customer portal", to: "/admin/portal" },
-                { label: "Service alerts & monitors", to: "/admin/configuration/monitoring" },
-                { label: "Email connectors", to: "/admin/configuration/integrations" },
-                { label: "Sessions & security", to: "/admin/configuration/sessions" },
-                { label: "Billing & invoicing", to: "/admin/configuration/billing" },
-              ].map(shortcut => (
-                <Link
-                  key={shortcut.to + shortcut.label}
-                  to={shortcut.to}
-                  className="rounded-full border border-surface-border px-3 py-1 text-[11px] text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"
+            {redesign ? (
+              <div className="grid gap-4 lg:grid-cols-[236px_minmax(0,1fr)]">
+                <nav
+                  aria-label="Configuration areas"
+                  className="flex lg:flex-col gap-1 overflow-x-auto pb-1 lg:pb-0 lg:pr-3 lg:border-r lg:border-surface-border"
                 >
-                  {shortcut.label}
-                </Link>
-              ))}
-            </div>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {areas.map(area => (
-                <Link
-                  key={area.id}
-                  to={`/admin/configuration/${area.id}`}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-surface-border px-3.5 py-2.5 hover:bg-surface-lighter transition-colors group"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm text-white">{area.label}</p>
-                    <p className="text-[11px] text-gray-500 truncate">{area.summary}</p>
-                  </div>
-                  <ArrowRight size={14} className="text-gray-600 group-hover:text-gray-400 shrink-0" />
-                </Link>
-              ))}
-            </div>
+                  <button
+                    type="button"
+                    onClick={() => setAreaId("all")}
+                    aria-current={areaId === "all" ? "true" : undefined}
+                    className={`shrink-0 text-left text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${
+                      areaId === "all"
+                        ? "bg-cyber-600/15 text-cyber-300 border-cyber-600/30"
+                        : "text-gray-400 hover:text-white hover:bg-surface-lighter border-transparent"
+                    }`}
+                  >
+                    All areas <span className="text-gray-600 tabular-nums">{areas.length}</span>
+                  </button>
+                  {areas.map(candidate => (
+                    <button
+                      key={candidate.id}
+                      type="button"
+                      onClick={() => setAreaId(candidate.id)}
+                      aria-current={areaId === candidate.id ? "true" : undefined}
+                      className={`shrink-0 flex items-center gap-1.5 text-left text-xs px-2.5 py-1.5 rounded-lg border transition-colors ${
+                        areaId === candidate.id
+                          ? "bg-cyber-600/15 text-cyber-300 border-cyber-600/30"
+                          : "text-gray-400 hover:text-white hover:bg-surface-lighter border-transparent"
+                      }`}
+                    >
+                      {candidate.label} <span className="text-gray-600 tabular-nums">{candidate.fields.length}</span>
+                    </button>
+                  ))}
+                </nav>
+                <div className="space-y-3 min-w-0">
+                  {shownShortcuts.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {shownShortcuts.map(shortcut => (
+                        <Link
+                          key={shortcut.to + shortcut.label}
+                          to={shortcut.to}
+                          className="rounded-full border border-surface-border px-3 py-1 text-[11px] text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"
+                        >
+                          {shortcut.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                  {shownAreas.length === 0 ? (
+                    <p className="text-xs text-gray-500">No area matches “{query.trim()}”.</p>
+                  ) : (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {shownAreas.map(area => (
+                        <Link
+                          key={area.id}
+                          to={`/admin/configuration/${area.id}`}
+                          className="flex items-center justify-between gap-3 rounded-lg border border-surface-border px-3.5 py-2.5 hover:bg-surface-lighter transition-colors group"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm text-white">{area.label}</p>
+                            <p className="text-[11px] text-gray-500 truncate">{area.summary}</p>
+                          </div>
+                          <ArrowRight size={14} className="text-gray-600 group-hover:text-gray-400 shrink-0" />
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Devices and mail clients are the settings people come here looking for, so they are
+                    named up front rather than buried in whichever area happens to own them. */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {AREA_SHORTCUTS.map(shortcut => (
+                    <Link
+                      key={shortcut.to + shortcut.label}
+                      to={shortcut.to}
+                      className="rounded-full border border-surface-border px-3 py-1 text-[11px] text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"
+                    >
+                      {shortcut.label}
+                    </Link>
+                  ))}
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {areas.map(area => (
+                    <Link
+                      key={area.id}
+                      to={`/admin/configuration/${area.id}`}
+                      className="flex items-center justify-between gap-3 rounded-lg border border-surface-border px-3.5 py-2.5 hover:bg-surface-lighter transition-colors group"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm text-white">{area.label}</p>
+                        <p className="text-[11px] text-gray-500 truncate">{area.summary}</p>
+                      </div>
+                      <ArrowRight size={14} className="text-gray-600 group-hover:text-gray-400 shrink-0" />
+                    </Link>
+                  ))}
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
@@ -203,6 +350,28 @@ export function SystemSettingsPage() {
         <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
           <Activity size={15} className="text-cyber-400" /> Instance health
         </h3>
+        {redesign ? (
+          <div className="grid gap-3 sm:grid-cols-3">
+            <StatCard
+              icon={poller && !poller.paused ? <CheckCircle size={13} /> : <XCircle size={13} />}
+              label="Self-healing poller"
+              value={loading ? "…" : poller ? (poller.paused ? "Paused" : "Running") : "Unknown"}
+              tone={!poller ? "amber" : poller.paused ? "red" : "green"}
+            />
+            <StatCard
+              icon={<RotateCw size={13} />}
+              label="Recovery retries used"
+              value={poller ? `${poller.retryCount} / ${poller.maxRetries}` : "…"}
+              tone={poller && poller.retryCount >= poller.maxRetries ? "amber" : "cyber"}
+            />
+            <StatCard
+              icon={deployment ? <Server size={13} /> : <AlertTriangle size={13} />}
+              label="Serving"
+              value={deployment ? `API on ${deployment.runtime.port}${deployment.runtime.servesWeb ? " + web" : ""}` : "…"}
+              tone={deployment ? "cyber" : "amber"}
+            />
+          </div>
+        ) : (
         <div className="grid gap-3 sm:grid-cols-3">
           <StatusCard
             icon={poller && !poller.paused ? CheckCircle : XCircle}
@@ -223,6 +392,7 @@ export function SystemSettingsPage() {
             tone={deployment ? "info" : "warn"}
           />
         </div>
+        )}
 
         <div className="flex items-center gap-2 mt-4">
           <button onClick={() => void resetRetries()} className="btn-secondary text-sm flex items-center gap-2">
@@ -251,6 +421,17 @@ export function SystemSettingsPage() {
               ))
             )}
           </div>
+          {redesign && (poller?.recoveryLog?.length ?? 0) > 0 && (
+            <ListFooter
+              from={1}
+              to={poller?.recoveryLog?.length ?? 0}
+              total={poller?.recoveryLog?.length ?? 0}
+              page={1}
+              pages={1}
+              onPage={() => { /* the whole log is on this page */ }}
+              note="Read from the running process, not stored"
+            />
+          )}
         </div>
       </div>
 

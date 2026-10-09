@@ -6,7 +6,8 @@ import {
   AlertTriangle, Plus, Pencil, Trash2, RefreshCw, Globe, Rss, TrendingDown,
   Power, EyeOff, Activity, TerminalSquare,
 } from "lucide-react";
-import { PageHeader } from "../components/ui";
+import { PageHeader, StatCard, ListViews, ListFooter } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 const VERDICT_DOT: Record<string, string> = {
   clear: "bg-emerald-500",
@@ -82,6 +83,8 @@ export function ServiceAlertsSettingsPage() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [manual, setManual] = useState({ serviceId: "", title: "", severity: "degraded" });
+  const redesign = useRedesign();
+  const [svcView, setSvcView] = useState("all");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -216,6 +219,16 @@ export function ServiceAlertsSettingsPage() {
           </span>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 text-sm">
+          {redesign ? (
+            <>
+              <StatCard label="Last check" value={monitor?.lastCheckAt ? new Date(monitor.lastCheckAt).toLocaleTimeString() : "Never"} tone="neutral" />
+              <StatCard label="Services polled" value={monitor?.checkedServices ?? 0} tone="neutral" />
+              <StatCard label="Alerts created" value={monitor?.created ?? 0} tone="neutral" />
+              <StatCard label="Alerts refreshed" value={monitor?.updated ?? 0} tone="neutral" />
+              <StatCard label="Auto-resolved" value={(monitor?.resolved ?? 0) + (monitor?.staleResolved ?? 0)} tone="green" />
+              <StatCard label="Active alerts" value={activeAlerts} tone={activeAlerts > 0 ? "red" : "green"} />
+            </>
+          ) : (<>
           <div className="bg-surface-light rounded-lg p-3 border border-surface-border">
             <p className="text-gray-500 text-xs">Last check</p>
             <p className="text-white font-medium">{monitor?.lastCheckAt ? new Date(monitor.lastCheckAt).toLocaleString() : "Not run yet"}</p>
@@ -243,6 +256,7 @@ export function ServiceAlertsSettingsPage() {
             <p className="text-gray-500 text-xs">Active alerts</p>
             <p className={`font-medium ${activeAlerts > 0 ? "text-red-400" : "text-emerald-400"}`}>{activeAlerts}</p>
           </div>
+          </>)}
         </div>
         <p className="text-xs text-gray-500 mt-3">
           A service is polled from every source it has configured. An alert is retired once the readable sources agree nothing is wrong — a source that
@@ -294,6 +308,24 @@ export function ServiceAlertsSettingsPage() {
           <h3 className="text-sm font-semibold text-white flex items-center gap-2"><Globe size={16} className="text-cyber-400" /> Monitored Services ({services.length})</h3>
           <button onClick={openNew} className="btn-primary text-sm flex items-center gap-1.5"><Plus size={14} /> Add Service</button>
         </div>
+        {/* Enabled, disabled and actively alerting are the three questions anybody opens this table
+            with, so they are views with counts rather than a scroll. */}
+        {redesign && services.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 border-b border-surface-border px-5 py-2">
+            <ListViews
+              views={[
+                { id: "all", label: "All", count: services.length },
+                { id: "enabled", label: "Enabled", count: services.filter(s => s.enabled).length },
+                { id: "disabled", label: "Disabled", count: services.filter(s => !s.enabled).length },
+                { id: "alerting", label: "Alerting", count: services.filter(s => (s.alerts?.length ?? 0) > 0).length },
+              ]}
+              value={svcView}
+              onChange={setSvcView}
+              label="Service views"
+            />
+            <span className="ml-auto text-xs text-gray-500">{services.length} services · {activeAlerts} active alert{activeAlerts === 1 ? "" : "s"}</span>
+          </div>
+        )}
         {loading ? (
           <div className="p-8 text-center text-gray-500">Loading services…</div>
         ) : (
@@ -311,7 +343,7 @@ export function ServiceAlertsSettingsPage() {
                 </tr>
               </thead>
               <tbody>
-                {services.map(s => (
+                {services.filter(s => svcView === "all" || (svcView === "enabled" ? s.enabled : svcView === "disabled" ? !s.enabled : (s.alerts?.length ?? 0) > 0)).map(s => (
                   <tr key={s.id} className={`border-b border-surface-border ${s.enabled ? "" : "opacity-50"}`}>
                     <td className="px-5 py-3">
                       <p className="text-white font-medium">{s.name}</p>

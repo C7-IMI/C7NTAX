@@ -29,8 +29,22 @@ export interface FilterOptions { clients: Array<{ id: string; name: string }>; b
 
 const EMPTY_FILTERS: ReportFilters = { from: "", to: "", clientId: "", boardId: "" };
 
-const filterQuery = (filters: ReportFilters): Record<string, string> =>
-  Object.fromEntries(Object.entries(filters).filter(([, value]) => value)) as Record<string, string>;
+/*
+ * The periods a report is usually read over, as a strip rather than two date fields. They write the
+ * same `from`/`to` the fields do, so a period is a shortcut and never a second kind of filter.
+ */
+const isoDate = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const monthStart = (offset: number) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + offset); return d; };
+const monthEnd = (offset: number) => { const d = monthStart(offset + 1); d.setDate(0); return d; };
+const quarterStart = (offset: number) => { const d = new Date(); d.setMonth(Math.floor(d.getMonth() / 3) * 3 + offset * 3, 1); return d; };
+const REPORT_PERIODS = [
+  { id: "this-month", label: "This month", from: () => isoDate(monthStart(0)), to: () => isoDate(monthEnd(0)) },
+  { id: "last-month", label: "Last month", from: () => isoDate(monthStart(-1)), to: () => isoDate(monthEnd(-1)) },
+  { id: "this-quarter", label: "This quarter", from: () => isoDate(quarterStart(0)), to: () => isoDate(new Date()) },
+  { id: "last-quarter", label: "Last quarter", from: () => isoDate(quarterStart(-1)), to: () => isoDate(new Date(quarterStart(0).getTime() - 86400000)) },
+];
+
+const filterQuery = (filters: ReportFilters): Record<string, string> => Object.fromEntries(Object.entries(filters).filter(([, value]) => value)) as Record<string, string>;
 
 /** A report's own options, as the query parameters its endpoint reads. */
 type ReportOptionValues = Record<string, string | number | boolean>;
@@ -256,6 +270,7 @@ function ReportViewer({
   onValue: (key: string, value: string | number | boolean) => void;
 }) {
   const [payload, setPayload] = useState<unknown>(null);
+  const redesign = useRedesign();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showExport, setShowExport] = useState(false);
@@ -272,6 +287,10 @@ function ReportViewer({
   useEffect(() => { load(); }, [load]);
 
   const sections: Section[] = useMemo(() => (payload ? report.build(payload as Record<string, unknown>) : []), [payload, report]);
+  const rowCount = useMemo(
+    () => sections.reduce((n, s) => n + (s.kind === "table" || s.kind === "bars" ? s.rows.length : 0), 0),
+    [sections],
+  );
   const document_ = useMemo(
     () => ({ title: report.title, subtitle: report.description, period: periodLabel(payload), sections }),
     [report, payload, sections],
@@ -296,7 +315,33 @@ function ReportViewer({
 
       <FilterBar report={report} filters={filters} onChange={onFilters} options={options} onRefresh={load} busy={loading} quarterPicker={quarterPicker} values={values} onValue={onValue} />
 
-      {payload != null && (
+      {/* The redesigned viewer states what it is showing and offers the two things the mockup's
+          reporting page offers: the period as a strip rather than two date fields, and the way into
+          the designer for the pack this report is not. */}
+      {redesign && (
+        <div className="flex flex-wrap items-center gap-2">
+          {report.filters.period && !quarterPicker && (
+            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Report period">
+              {REPORT_PERIODS.map(period => (
+                <button
+                  key={period.id}
+                  type="button"
+                  aria-pressed={filters.from === period.from() && filters.to === period.to()}
+                  onClick={() => onFilters({ ...filters, from: period.from(), to: period.to() })}
+                  className={`chip ${filters.from === period.from() && filters.to === period.to() ? "chip--on" : ""}`}
+                >{period.label}</button>
+              ))}
+              <button type="button" onClick={() => onFilters({ ...EMPTY_FILTERS })} aria-pressed={!filters.from && !filters.to} className={`chip ${!filters.from && !filters.to ? "chip--on" : ""}`}>All time</button>
+            </div>
+          )}
+          <a href="/reports/custom/design" className="chip">Open the designer</a>
+          <span className="text-xs text-gray-500">
+            Live · refreshes with the queue{periodLabel(payload) ? ` · ${periodLabel(payload)}` : ""} · {rowCount} row{rowCount === 1 ? "" : "s"}
+          </span>
+        </div>
+      )}
+
+      {payload != null && !redesign && (
         <p className="text-xs text-gray-500">
           {periodLabel(payload) ? `Period: ${periodLabel(payload)} · ` : ""}
           Generated {new Date().toLocaleString()} · {sections.length} section{sections.length === 1 ? "" : "s"}

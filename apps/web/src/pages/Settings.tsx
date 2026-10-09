@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { useRedesign } from "../hooks/useNavigationStyle";
 import { PasskeyManager } from "../components/PasskeyManager";
-import { Cpu, LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Target, FolderKanban, Monitor, BookOpen } from "lucide-react";
+import { Cpu, LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Target, FolderKanban, Monitor, BookOpen, Search } from "lucide-react";
 import api from "../api";
 import toast from "react-hot-toast";
 import { Permission, LANDING_PAGES, resolveLandingPagePath } from "@C7NTAX/shared";
@@ -22,8 +23,40 @@ const LANDING_OPTIONS = [
   { path: "/users", label: "Users", icon: Users },
 ];
 
+/*
+ * The redesigned hub's left-hand navigation. The count is the number of rows the group renders,
+ * so the chip above the page can state how many settings there are without a number that drifts.
+ */
+const SETTING_GROUPS = [
+  { id: "profile", label: "Profile", count: 3 },
+  { id: "landing", label: "Landing page", count: 1 },
+  { id: "security", label: "Security", count: 1 },
+  { id: "session", label: "Session timeout", count: 1 },
+  { id: "ai-inference", label: "AI inference", count: 1 },
+  { id: "system", label: "System", count: 3 },
+] as const;
+
+/** One setting in the redesigned hub: its name and note, its control, and its apply action. */
+function SettingRow({ label, note, control, action }: {
+  label: string; note?: ReactNode; control?: ReactNode; action?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-surface-border/60 py-3 first:pt-0 last:border-b-0 last:pb-0">
+      <div className="min-w-0 flex-1">
+        <p className="text-sm text-white">{label}</p>
+        {note ? <p className="text-xs text-gray-500 mt-0.5">{note}</p> : null}
+      </div>
+      {control ? <div className="shrink-0 flex items-center gap-2">{control}</div> : null}
+      {action ? <div className="shrink-0 flex items-center gap-3">{action}</div> : null}
+    </div>
+  );
+}
+
 export function SettingsPage() {
   const { user, landingPage, setLandingPage, permissions } = useAuth();
+  const redesign = useRedesign();
+  const [settingQuery, setSettingQuery] = useState("");
+  const [activeGroup, setActiveGroup] = useState(() => window.location.hash.slice(1) || "profile");
   /*
    * A landing page is stored as a path, and one of the stored paths moved when CloudConnect became
    * C7NC. The shared resolver applies the alias so somebody who chose that page sees it still
@@ -82,6 +115,218 @@ export function SettingsPage() {
       toast.error("Failed to save your landing page");
     }
   };
+
+  if (redesign) {
+    const query = settingQuery.trim().toLowerCase();
+    const matches = (...terms: string[]) => !query || terms.some(term => term.toLowerCase().includes(query));
+    const showName = matches("profile name account", "name");
+    const showEmail = matches("profile email account", "email");
+    const showRole = matches("profile role account", "role");
+    const showLanding = matches("landing page default start home", "landing");
+    const showMfa = matches("security multi-factor authentication mfa", "mfa");
+    const showPasskeys = matches("security passkey passkeys", "passkey");
+    const showSession = matches("session timeout idle inactivity minutes", "timeout");
+    const showAi = matches("ai inference engine provider ticket analysis", "inference");
+    const showVersion = matches("system version", "version");
+    const showApi = matches("system api endpoint", "endpoint");
+    const showDatabase = matches("system database", "database");
+    const showProfile = showName || showEmail || showRole;
+    const showSecurity = showMfa || showPasskeys;
+    const showSystem = showVersion || showApi || showDatabase;
+    const shownCount = [showName, showEmail, showRole, showLanding, showMfa, showPasskeys, showSession, showAi, showVersion, showApi, showDatabase].filter(Boolean).length;
+    const roleLabel = typeof user?.role === "object" ? (user?.role as any)?.systemRole?.replace(/_/g, " ") : user?.role;
+    const goto = (id: string) => {
+      setActiveGroup(id);
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    const totalSettings = SETTING_GROUPS.reduce((n, group) => n + group.count, 0);
+
+    return (
+      <div className="space-y-4 animate-fade-in max-w-5xl">
+        <PageHeader variant="section" title="Settings" subtitle="Account and system configuration" />
+
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input
+              className="input-field pl-9"
+              placeholder="Search every setting…"
+              value={settingQuery}
+              onChange={e => setSettingQuery(e.target.value)}
+              aria-label="Search every setting"
+            />
+          </div>
+          <span className="chip">
+            {totalSettings} settings · each one says where its value comes from
+          </span>
+          {query ? <span className="text-xs text-gray-500 tabular-nums">{shownCount} shown</span> : null}
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[210px_minmax(0,1fr)]">
+          <nav aria-label="Setting groups" className="flex lg:flex-col gap-1 overflow-x-auto pb-1 lg:pb-0">
+            {SETTING_GROUPS.map(group => (
+              <button
+                key={group.id}
+                type="button"
+                onClick={() => goto(group.id)}
+                aria-current={activeGroup === group.id ? "true" : undefined}
+                className={`shrink-0 text-left text-xs px-2.5 py-1.5 rounded-lg transition-colors border ${
+                  activeGroup === group.id
+                    ? "bg-cyber-600/15 text-cyber-300 border-cyber-600/30"
+                    : "text-gray-400 hover:text-white hover:bg-surface-lighter border-transparent"
+                }`}
+              >
+                {group.label}
+                <span className="text-gray-600 ml-1.5 tabular-nums">{group.count}</span>
+              </button>
+            ))}
+          </nav>
+
+          <div className="space-y-4 min-w-0">
+            {shownCount === 0 && (
+              <div className="card text-sm text-gray-500">No setting matches “{settingQuery.trim()}”.</div>
+            )}
+
+            {showProfile && (
+              <section className="card scroll-mt-6" id="profile">
+                <h3 className="font-semibold text-white">Profile</h3>
+                <p className="text-xs text-gray-500 mt-0.5 mb-2">
+                  Read from the account you signed in with. These are shown rather than saved here.
+                </p>
+                {showName && (
+                  <SettingRow label="Name" control={<input className="input-field w-64 max-w-full" defaultValue={`${user?.firstName || ""} ${user?.lastName || ""}`} readOnly />} />
+                )}
+                {showEmail && (
+                  <SettingRow label="Email" control={<input className="input-field w-64 max-w-full" defaultValue={user?.email} readOnly />} />
+                )}
+                {showRole && (
+                  <SettingRow label="Role" control={<input className="input-field w-64 max-w-full" defaultValue={roleLabel} readOnly />} />
+                )}
+              </section>
+            )}
+
+            {showLanding && (
+              <section className="card scroll-mt-6" id="landing">
+                <h3 className="font-semibold text-white">My Default Landing Page</h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Which section opens for you after signing in. This is your own preference — it does not
+                  affect anyone else. The instance-wide default is set under Administration → Configuration → Workspace.
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
+                  {LANDING_OPTIONS.map((opt) => {
+                    const Icon = opt.icon;
+                    return (
+                      <button
+                        key={opt.path}
+                        onClick={() => handleChange(opt.path)}
+                        aria-pressed={selectedPath === opt.path}
+                        className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm transition-colors border ${
+                          selectedPath === opt.path
+                            ? "bg-cyber-600/15 border-cyber-500/40 text-cyber-400"
+                            : "border-surface-border text-gray-400 hover:text-white hover:bg-surface-lighter"
+                        }`}
+                      >
+                        <Icon size={15} />
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {showSecurity && (
+              <section className="card scroll-mt-6" id="security">
+                <h3 className="font-semibold text-white">Security</h3>
+                <p className="text-xs text-gray-500 mt-0.5 mb-2">How this account proves it is you.</p>
+                {showMfa && (
+                  <SettingRow
+                    label="Multi-Factor Authentication"
+                    note="Add an extra layer of security"
+                    control={
+                      <span className={`badge ${user?.mfaEnabled ? "bg-green-600/20 text-green-400" : "bg-gray-600/20 text-gray-400"}`}>
+                        {user?.mfaEnabled ? "Enabled" : "Disabled"}
+                      </span>
+                    }
+                  />
+                )}
+              </section>
+            )}
+
+            {showPasskeys && <PasskeyManager />}
+
+            {showSession && (
+              <section className="card scroll-mt-6" id="session">
+                <h3 className="font-semibold text-white">Session Timeout</h3>
+                <p className="text-xs text-gray-500 mt-0.5 mb-2">
+                  Inactivity in minutes before users are signed out. Applies to everyone in the organisation, so it is
+                  an administrative setting rather than a personal one — it is the same value as
+                  Administration → Configuration → Sessions &amp; Security. Default 30 minutes, range 5–480 minutes (8 hours).
+                </p>
+                {canConfigureSystem ? (
+                  <SettingRow
+                    label="Idle timeout"
+                    note="Saved for everyone through the configuration API."
+                    control={
+                      <>
+                        <input
+                          type="number"
+                          className="input-field w-24"
+                          min={5} max={480}
+                          value={sessionTimeout}
+                          onChange={e => setSessionTimeout(Number(e.target.value))}
+                        />
+                        <span className="text-sm text-gray-400">minutes</span>
+                      </>
+                    }
+                    action={
+                      <>
+                        <button onClick={saveSessionTimeout} disabled={savingTimeout} className="btn-primary text-xs py-1.5 px-3">
+                          {savingTimeout ? "Saving..." : "Save for everyone"}
+                        </button>
+                        <Link to="/admin/configuration/sessions" className="text-xs text-cyber-300 hover:text-cyber-200">
+                          All session settings
+                        </Link>
+                      </>
+                    }
+                  />
+                ) : (
+                  <p className="text-sm text-gray-400">
+                    Currently <span className="text-white font-medium">{sessionTimeout} minutes</span> of inactivity.
+                    Administrators and Super Admins are never timed out.
+                  </p>
+                )}
+              </section>
+            )}
+
+            {showAi && (
+              <section className="card scroll-mt-6" id="ai-inference">
+                <h3 className="font-semibold text-white">AI Inference</h3>
+                <p className="text-xs text-gray-500 mt-0.5 mb-2">
+                  The engine the ticket screen reads for analysis and pattern detection.
+                </p>
+                <SettingRow
+                  label="AI Inference Engine"
+                  note="Configure AI provider for ticket analysis and pattern detection"
+                  action={<Link to="/settings/ai" className="text-cyber-400 text-sm">Configure →</Link>}
+                />
+              </section>
+            )}
+
+            {showSystem && (
+              <section className="card scroll-mt-6" id="system">
+                <h3 className="font-semibold text-white">System</h3>
+                <p className="text-xs text-gray-500 mt-0.5 mb-2">What this build is running on, for reference.</p>
+                {showVersion && <SettingRow label="Version" control={<span className="text-white text-sm">1.0.0</span>} />}
+                {showApi && <SettingRow label="API Endpoint" control={<span className="text-white font-mono text-xs">/api</span>} />}
+                {showDatabase && <SettingRow label="Database" control={<span className="text-white text-sm">PostgreSQL 16</span>} />}
+              </section>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in max-w-2xl">

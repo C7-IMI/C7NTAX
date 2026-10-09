@@ -392,6 +392,22 @@ export function ReportDesignerPage() {
 
   const issueColour = errorCount ? "text-red-400" : warningCount ? "text-amber-400" : "text-green-400";
 
+  /*
+   * The status line the redesigned designer carries: what is selected, how tall the band is, what
+   * the last run returned and how the page is set up — the four questions a designer answers with a
+   * tooltip everywhere else. The mockup's argument is that a banded tool should say where you are.
+   */
+  const statusBand = selection.kind === "report" ? null : document.bands.find(band => band.id === selection.bandId) ?? null;
+  const statusElement = selection.kind === "element" && statusBand
+    ? statusBand.elements.find(element => element.id === selection.elementId) ?? null
+    : null;
+  const elementKinds: Record<string, string> = { text: "text", field: "field", expression: "expression", image: "image", line: "rule", box: "box", chart: "chart", pageNumber: "page number" };
+  const selectionLabel = statusElement
+    ? `${statusBand?.kind ?? "element"} › ${statusElement.type === "field" ? labelFor(String((statusElement as { fieldKey?: string }).fieldKey ?? "")) : elementKinds[statusElement.type] ?? statusElement.type}`
+    : statusBand ? statusBand.kind : "the report";
+  const bandHeightLabel = statusBand ? `${statusBand.height} mm` : `${document.bands.reduce((total, band) => total + band.height, 0)} mm total`;
+  const pageSetupLabel = `${document.page.size === "custom" ? "Custom" : document.page.size.toUpperCase()} ${document.page.orientation} · grid 10 mm · snap 1 mm`;
+
   return (
     <div className="flex flex-col gap-3 h-[calc(100vh-9rem)] min-h-[560px]">
       {/* Toolbar */}
@@ -569,7 +585,6 @@ export function ReportDesignerPage() {
           <Inspector
             document={document}
             catalog={catalog}
-            templates={catalog?.templates ?? []}
             selection={selection}
             issues={issues}
             onSelect={select}

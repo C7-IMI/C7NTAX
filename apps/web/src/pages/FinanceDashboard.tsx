@@ -4,9 +4,11 @@ import { apiErrorMessage } from "../lib/apiError";
 import { DollarSign, TrendingUp, Clock, AlertTriangle, Receipt, CreditCard } from "lucide-react";
 import toast from "react-hot-toast";
 import { TableSkeleton } from "../components/ui/Skeleton";
-import { PageHeader } from "../components/ui";
+import { PageHeader, StatCard as KpiCard } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 export function FinanceDashboardPage() {
+  const redesign = useRedesign();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [genCompanyId, setGenCompanyId] = useState("");
@@ -28,12 +30,21 @@ export function FinanceDashboardPage() {
         subtitle="Billing overview and financial health"
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={Receipt} label="Total Invoiced" value={`$${data.totalInvoiced.toLocaleString()}`} color="cyber" />
-        <StatCard icon={CreditCard} label="Total Paid" value={`$${data.totalPaid.toLocaleString()}`} color="green" />
-        <StatCard icon={Clock} label="Outstanding" value={`$${data.totalOutstanding.toLocaleString()}`} color="amber" />
-        <StatCard icon={AlertTriangle} label="Overdue" value={`$${data.totalOverdue.toLocaleString()}`} color="red" />
-      </div>
+      {redesign ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard label="Total Invoiced" value={`$${data.totalInvoiced.toLocaleString()}`} icon={<Receipt size={13} />} tone="cyber" />
+          <KpiCard label="Total Paid" value={`$${data.totalPaid.toLocaleString()}`} icon={<CreditCard size={13} />} tone="green" />
+          <KpiCard label="Outstanding" value={`$${data.totalOutstanding.toLocaleString()}`} icon={<Clock size={13} />} tone="amber" />
+          <KpiCard label="Overdue" value={`$${data.totalOverdue.toLocaleString()}`} icon={<AlertTriangle size={13} />} tone="red" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard icon={Receipt} label="Total Invoiced" value={`$${data.totalInvoiced.toLocaleString()}`} color="cyber" />
+          <StatCard icon={CreditCard} label="Total Paid" value={`$${data.totalPaid.toLocaleString()}`} color="green" />
+          <StatCard icon={Clock} label="Outstanding" value={`$${data.totalOutstanding.toLocaleString()}`} color="amber" />
+          <StatCard icon={AlertTriangle} label="Overdue" value={`$${data.totalOverdue.toLocaleString()}`} color="red" />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="card">
@@ -91,7 +102,8 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any; label: strin
 }
 
 function Bar({ label, value }: { label: string; value: any }) {
-  return <div className="flex items-center justify-between text-sm"><span className="text-gray-400">{label}</span><span className="text-white font-medium">{value}</span></div>;
+  const redesign = useRedesign();
+  return <div className="flex items-center justify-between text-sm"><span className="text-gray-400">{label}</span><span className={redesign ? "text-white font-medium tabular-nums" : "text-white font-medium"}>{value}</span></div>;
 }
 
 function StatusBadge({ label, status }: { label: string; status: string }) {

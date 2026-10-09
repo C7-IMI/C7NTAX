@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import api from "../api";
 import { Shield, Monitor, FileText, Link2, Server, Database, Clock, Key, BookOpen, Globe, ShieldCheck, Building2 } from "lucide-react";
 import { UI_KUMO_ORGS } from "../lib/uiFlags";
-import { PageHeader } from "../components/ui";
+import { PageHeader, StatCard } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 interface RecentItem {
   id: string;
@@ -14,6 +15,7 @@ interface RecentItem {
 }
 
 export function KumoDashboardPage() {
+  const redesign = useRedesign();
   const [stats, setStats] = useState({ assets: 0, passwords: 0, configs: 0, documents: 0, links: 0 });
   const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
   const [orgCount, setOrgCount] = useState<number | null>(null);
@@ -45,6 +47,19 @@ export function KumoDashboardPage() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader variant="section" title="Kumo — IT Documentation" subtitle="Assets, passwords, configurations, and SOPs in one place." />
 
+      {/* Entry tiles — the redesigned tiles lead with the figure the dashboard has already
+          loaded, matching Kumo's own figure cards; the classic tiles keep their descriptions. */}
+      {redesign ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <a href="/kumo/assets" className="block" title="Open Flexible Assets"><StatCard label="Assets" value={stats.assets} icon={<Monitor size={13} />} /></a>
+          <a href="/kumo/passwords" className="block" title="Open the Password Vault"><StatCard label="Credentials" value={stats.passwords} icon={<Key size={13} />} tone="amber" /></a>
+          <a href="/kumo/configs" className="block" title="Open Configurations"><StatCard label="Configurations" value={stats.configs} icon={<Server size={13} />} tone="green" /></a>
+          <a href="/kumo/documents" className="block" title="Open Documents &amp; SOPs"><StatCard label="Documents" value={stats.documents} icon={<FileText size={13} />} tone="neutral" /></a>
+          {UI_KUMO_ORGS
+            ? <a href="/kumo/organizations" className="block" title="Open Organizations"><StatCard label="Organizations" value={orgCount ?? "All"} icon={<Building2 size={13} />} tone="neutral" /></a>
+            : <a href="/kumo" className="block" title="Open Universal Links"><StatCard label="Universal links" value={stats.links} icon={<Link2 size={13} />} tone="neutral" /></a>}
+        </div>
+      ) : (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Card icon={Monitor} title="Flexible Assets" description={`${stats.assets} assets • Dynamic templates & custom fields`} to="/kumo/assets" color="cyber" />
         <Card icon={Shield} title="Password Vault" description={`${stats.passwords} passwords • AES-256 encrypted`} to="/kumo/passwords" color="amber" />
@@ -54,9 +69,10 @@ export function KumoDashboardPage() {
           ? <Card icon={Building2} title="Organizations" description={`${orgCount ?? "All"} organizations • Client documentation coverage`} to="/kumo/organizations" color="blue" />
           : <Card icon={Link2} title="Universal Links" description={`${stats.links} links • Universal relationship mapping`} to="/kumo" color="blue" />}
       </div>
+      )}
 
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Recently Viewed</h3>
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Recently Viewed{redesign && <span className="ml-2 text-xs font-normal normal-case tracking-normal text-gray-500 tabular-nums">{recentItems.length} item{recentItems.length === 1 ? "" : "s"}</span>}</h3>
         {recentItems.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-6">No recently viewed items. Browse your assets, passwords, or configurations to populate this list.</p>
         ) : (
