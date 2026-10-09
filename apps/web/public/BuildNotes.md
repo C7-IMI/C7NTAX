@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.012 | Last Updated: 2026-10-09
+## Version: 2026.10.9.013 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,33 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.013 — The Workable tile is outlined again, and a pin is a ring rather than a border
+
+The orange outline around **Workable** on the board cards had disappeared from every board. It was not a
+styling accident and not a data problem: the outline had been *reassigned*.
+
+- **[Fix]** **Workable has its outline back.** The tile arrangement feature — pins, so a tile can lead the
+  card — changed that tile's border to `pinned ? orange : transparent`, which removes it from every board
+  that has not pinned Workable, which is every board, because a pin only exists once somebody has saved an
+  arrangement. **Escalated kept its unconditional outline**, so the page had also become inconsistent with
+  itself: two queues that were outlined on purpose, one of them now outlined only by coincidence.
+- **[Fix]** **A pin is a ring, and the border means something again.** The two statements are different —
+  the border says *what the tile is* (an urgent queue is outlined), the ring says *this one is yours* (you
+  pinned it to lead the card) — so they no longer compete for the same pixel. The ring style had been
+  written at the time for exactly this and then never used: it was computed on every render and passed
+  nowhere, which is what the original code looked like when this was diagnosed.
+- **[Update]** **The pinned marker now works on every tile**, including **Avg Age**, which could always be
+  pinned and never showed anything for it.
+
+**Verification:** measured on the rendered page rather than read off the class — all four boards report
+`border: 1px rgb(234, 88, 12)`, the same as Escalated, where before the change all four were
+`1px rgba(0, 0, 0, 0)`. The pin was exercised too: with a tile pinned, the element carries both
+`border-orange-600` and `ring-1 ring-orange-500/40` (`box-shadow: rgba(249, 115, 22, 0.4) 0px 0px 0px 1px`).
+The diagnostic pin was then removed through **Reset arrangement**, so the database is as it was found —
+no board carries a saved layout, and every Workable tile is outlined without one.
 
 ---
 

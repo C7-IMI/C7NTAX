@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.9.013",
+    "date": "2026-10-09",
+    "title": "The Workable tile is outlined again, and a pin is a ring rather than a border",
+    "changes": [
+      {
+        "text": "**Workable has its outline back.** The tile arrangement feature — pins, so a tile can lead the",
+        "type": "Fix"
+      },
+      {
+        "text": "**A pin is a ring, and the border means something again.** The two statements are different —",
+        "type": "Fix"
+      },
+      {
+        "text": "**The pinned marker now works on every tile**, including **Avg Age**, which could always be",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.012",
     "date": "2026-10-09",
     "title": "The first deployment from empty can finish, and the database is named for the product",

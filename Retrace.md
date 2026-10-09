@@ -8175,3 +8175,47 @@ Both are in the reply and in the briefing's pre-deployment list, and neither was
   references *including hidden files* first (one live one, in `.env`), check nothing creates it, stop the
   clients, and remember `ALTER DATABASE ... RENAME` is metadata-only — the failure mode is a refusal, never
   data loss.
+
+### Prompt 339 — The missing outline on the Workable tile
+
+**Timestamp:** 2026-10-09 07:00 | **Status:** Complete | **Duration:** ~25 min
+
+**BuildNotes IDs:** **2026.10.9.013**.
+
+**Prompt**
+
+> The border around the Workable card disappeared
+
+**What I did**
+- **Refused to guess, and the first three explanations were all wrong.** I looked for a styling regression
+  in today's changes (none of them touch Boards), then for data: `BoardLayout` turned out to be **empty**,
+  and the audit trail showed no board-arrangement save had ever happened. Then I read the tile out of a
+  live browser: every Workable tile measured `1px rgba(0, 0, 0, 0)` - transparent - including the two that
+  look outlined in the screenshot, which turned out to be the hover colour caught in a transition.
+- **Found the cause in the file's own history.** `2c087d5 "style(boards): outlined Workable and Escalated
+  in orange, plain Avg Age"` was the decision that gave Workable its outline; a later commit swept in by
+  auto-sync turned that same border into `pinned ? orange : transparent` for the tile-arrangement feature.
+  The outline became conditional on a pin, pins only exist once saved, and nothing had saved one - so the
+  border was gone from every board while **Escalated kept its unconditional one**, leaving two queues that
+  were outlined on purpose looking like one that was and one that was not.
+- **Separated the two statements rather than reverting.** The border says what a tile means; the ring says
+  the tile is yours. The code already had the ring written for the pin - computed on every render and
+  passed to nothing - so the pin now uses it and Workable has its border back. Reverting alone would have
+  left pins invisible.
+- **Checked the save path rather than assuming it**, since a disappeared pin could equally have been a save
+  that never persisted: a direct `PUT /boards/:id/layout` worked and came back `personalised: true`, so the
+  permission and the endpoint were fine and the data really had never been written.
+- **Left the data as I found it.** My diagnostic pin was removed through Reset arrangement; all four boards
+  report no saved layout, and the outline is now there without one - which is the point of the fix.
+- Verified on the rendered page, and checked the Help for drift: it never described the tile outline, so
+  nothing there needed changing.
+
+**Notes for next time**
+- **A style decision can be silently overwritten by a later feature that reuses its class.** The border was
+  a deliberate request from the operator; four days later a different feature made it mean something else,
+  and nothing connected the two. When a feature needs a new state, it needs a new signal.
+- **"Empty table" was the strongest clue and the easiest to skip.** If a visual state depends on saved data
+  and the table is empty, the question is not "why is this tile wrong" but "why has nothing ever saved".
+- **A computed-but-unused variable is a fingerprint.** `const pinned = tile.pinned ? "ring-1 ..." : ""` sat
+  there passed to nothing: the pin was *meant* to be a ring, and the border was the casualty of it not
+  being wired up.

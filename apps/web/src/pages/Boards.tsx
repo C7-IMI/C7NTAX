@@ -120,14 +120,27 @@ export function BoardsPage() {
       : avgAge <= 14
         ? { color: "text-amber-300", bg: "bg-amber-500/15", note: "one to two weeks" }
         : { color: "text-red-300", bg: "bg-red-600/15", note: "over two weeks" };
-    const pinned = tile.pinned ? "ring-1 ring-orange-500/40" : "";
+    /*
+     * Two different statements, two different signals.
+     *
+     * The **border** says what the tile means: an urgent queue is outlined in orange (Workable and
+     * Escalated, which is what this page looked like before the arrangement feature existed). The
+     * **ring** says the tile is *yours*: you pinned it so it leads the card.
+     *
+     * They used to be the same thing — the arrangement work changed Workable's border to
+     * `pinned ? orange : transparent`, which silently removed the outline from every board that had not
+     * pinned it, which is every board, because a pin has to be saved before it exists. The ring was
+     * written for the pin at the time and then never used, so this wires it up and hands the border back
+     * to the meaning it had.
+     */
+    const pinRing = tile.pinned ? "ring-1 ring-orange-500/40" : "";
     switch (tile.id) {
-      case "new": return <StatusBadge key={tile.id} to={`${boardUrl}&status=new`} icon={Inbox} label="New" value={m.new} color="text-blue-400" bg="bg-blue-600/15" border={pinned ? "border-orange-600" : "border-transparent"} hover="hover:border-orange-500" />;
-      case "workable": return <StatusBadge key={tile.id} to={`${boardUrl}&status=in_progress`} icon={Clock} label="Workable" value={m.workable} color="text-cyber-400" border={pinned ? "border-orange-600" : "border-transparent"} hover="hover:border-orange-500" />;
-      case "on_hold": return <StatusBadge key={tile.id} to={`${boardUrl}&status=on_hold`} icon={Pause} label="On Hold" value={m.onHold} color="text-purple-400" bg="bg-purple-600/15" border={pinned ? "border-orange-600" : "border-transparent"} />;
-      case "waiting": return <StatusBadge key={tile.id} to={`${boardUrl}&status=waiting_on_client,waiting_on_third_party`} icon={MessageSquare} label="Waiting" value={m.waitingOnResponse} color="text-amber-400" bg="bg-amber-600/15" border={pinned ? "border-orange-600" : "border-transparent"} />;
-      case "escalated": return <StatusBadge key={tile.id} to={`${boardUrl}&status=open&priority=critical`} icon={AlertTriangle} label="Escalated" value={m.escalations} color="text-red-400" bg="bg-red-600/15" border="border-orange-600" hover="hover:border-orange-500" />;
-      case "avg_age": return <MetricBadge key={tile.id} icon={TrendingUp} label="Avg Age" value={`${m.averageAgeDays}d`} color={tone.color} bg={tone.bg} title={`Average age of open tickets on this board: ${m.averageAgeDays} day${m.averageAgeDays === 1 ? "" : "s"} (${tone.note})`} />;
+      case "new": return <StatusBadge key={tile.id} to={`${boardUrl}&status=new`} icon={Inbox} label="New" value={m.new} color="text-blue-400" bg="bg-blue-600/15" hover="hover:border-orange-500" ring={pinRing} />;
+      case "workable": return <StatusBadge key={tile.id} to={`${boardUrl}&status=in_progress`} icon={Clock} label="Workable" value={m.workable} color="text-cyber-400" border="border-orange-600" hover="hover:border-orange-500" ring={pinRing} />;
+      case "on_hold": return <StatusBadge key={tile.id} to={`${boardUrl}&status=on_hold`} icon={Pause} label="On Hold" value={m.onHold} color="text-purple-400" bg="bg-purple-600/15" ring={pinRing} />;
+      case "waiting": return <StatusBadge key={tile.id} to={`${boardUrl}&status=waiting_on_client,waiting_on_third_party`} icon={MessageSquare} label="Waiting" value={m.waitingOnResponse} color="text-amber-400" bg="bg-amber-600/15" ring={pinRing} />;
+      case "escalated": return <StatusBadge key={tile.id} to={`${boardUrl}&status=open&priority=critical`} icon={AlertTriangle} label="Escalated" value={m.escalations} color="text-red-400" bg="bg-red-600/15" border="border-orange-600" hover="hover:border-orange-500" ring={pinRing} />;
+      case "avg_age": return <MetricBadge key={tile.id} icon={TrendingUp} label="Avg Age" value={`${m.averageAgeDays}d`} color={tone.color} bg={tone.bg} ring={pinRing} title={`Average age of open tickets on this board: ${m.averageAgeDays} day${m.averageAgeDays === 1 ? "" : "s"} (${tone.note})`} />;
       default: return null;
     }
   };
@@ -276,14 +289,15 @@ export function BoardsPage() {
   );
 }
 
-// Clickable status metric — navigates to tickets filtered by that status for this board.
+// Clickable status metric — navigates to tickets filtered by status for this board.
 // `bg` is optional: a tile can be an outlined card instead of a filled one.
-function StatusBadge({ to, icon: Icon, label, value, color, bg = "", border = "border-transparent", hover = "hover:border-cyber-600/50" }: { to: string; icon: LucideIcon; label: string; value: number | string; color: string; bg?: string; border?: string; hover?: string }) {
+// `ring` is the pinned marker, kept separate from `border` — see the note in renderTile.
+function StatusBadge({ to, icon: Icon, label, value, color, bg = "", border = "border-transparent", hover = "hover:border-cyber-600/50", ring = "" }: { to: string; icon: LucideIcon; label: string; value: number | string; color: string; bg?: string; border?: string; hover?: string; ring?: string }) {
   return (
     <Link
       to={to}
       title={`View ${label} tickets on this board`}
-      className={`${bg} rounded-lg px-2.5 py-2 flex flex-col gap-0.5 cursor-pointer transition-all border ${border} ${hover} hover:ring-1 hover:ring-cyber-500/30 group/badge`}
+      className={`${bg} rounded-lg px-2.5 py-2 flex flex-col gap-0.5 cursor-pointer transition-all border ${border} ${ring} ${hover} hover:ring-1 hover:ring-cyber-500/30 group/badge`}
     >
       <div className="flex items-center gap-1">
         <Icon size={11} className={color} />
@@ -294,9 +308,9 @@ function StatusBadge({ to, icon: Icon, label, value, color, bg = "", border = "b
   );
 }
 
-function MetricBadge({ icon: Icon, label, value, color, bg, title }: { icon: LucideIcon; label: string; value: number | string; color: string; bg: string; title?: string }) {
+function MetricBadge({ icon: Icon, label, value, color, bg, title, ring = "" }: { icon: LucideIcon; label: string; value: number | string; color: string; bg: string; title?: string; ring?: string }) {
   return (
-    <div title={title} className={`${bg} rounded-lg px-2.5 py-2 flex flex-col gap-0.5 border border-transparent`}>
+    <div title={title} className={`${bg} rounded-lg px-2.5 py-2 flex flex-col gap-0.5 border border-transparent ${ring}`}>
       <div className="flex items-center gap-1">
         <Icon size={11} className={color} />
         <span className={`text-[10px] font-semibold ${color}`}>{label}</span>
