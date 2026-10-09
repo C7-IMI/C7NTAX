@@ -7597,3 +7597,40 @@ with `2026.10.8.080`, so no version applies.
   untracked temporary files live.
 - **Delete temporary scripts before the commit, and confirm the deletion**, rather than trusting one
   `Remove-Item` against a file a Node process may still hold.
+
+
+### Prompt 324 — Ticket numbering: what the octets really are, and six ways to shorten them
+
+**Timestamp:** 2026-10-09 01:20 | **Status:** Complete | **Duration:** ~20 min
+
+**BuildNotes IDs:** none — analysis only: the numbering ideas are listed for a decision and nothing was
+changed, so no version applies.
+
+**Prompt**
+
+> Suggest alternative numbering schemes for the tickets that makes sense to easily identify the board,
+> client, and ticket number but are shorter to display. Here's my idea: I want to modify the ticket
+> numbering scheme. Instead of INF-1004-1005 I only want the last two digit of the second octet:
+> INF-04-1005. As the client list grows, then you can increment that first digit. The 10th client would
+> be INF-10-1005 and so on. If it gets to 100, then it would be INF-100-1005, etc. We just chopping off
+> the first two digits of that second octet. I just want to compress it a little bit. Do this for all
+> boards and tickets. Just list the alternative ideas for now, dont change anything just yet
+
+**What I did**
+- Read `generateTicketNumber`, the `Company` model and the inbound tag matchers before answering, and
+  found the first octet is the **client's type** (`Company.clientType`), not the board — the boards in the
+  seed only look like they come from it.
+- Made the proposal exact (`clientId - 1000`, which is not the same as "the last two digits"), and listed
+  six alternatives with the width each one buys.
+- Named the two code changes any of them needs: the reply lookup resolves a tag with
+  `ticketNumber: { contains }` (a short number is a substring of a long one), and the generator counts
+  existing numbers by `startsWith(prefix)` (a new prefix restarts a client's sequence).
+- Nothing was changed. The ideas are in the answer, not in the repository.
+
+**Notes for next time**
+- **"What does this number mean" is a code question, not a design question.** The octets are assigned by
+  `generateTicketNumber` and `Company.clientId`; the assumption that the first octet is the board would
+  have produced a scheme that reads well and says something untrue.
+- **Compression has to be checked against the regexes that read it.** The inbound tag pattern tolerates
+  1–8 digits per octet, so shorter numbers thread fine — but a scheme without the separators would not
+  match at all, and the reply path would start raising duplicate tickets instead of appending.
