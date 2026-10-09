@@ -48,6 +48,21 @@ function relativeAge(iso?: string | null): string {
 }
 
 /**
+ * A date in the queue's two date columns, to the minute.
+ *
+ * Nobody triages a ticket by the second, and the four characters they cost are four characters the
+ * Summary column can use — with two dates side by side, that room is the difference between the
+ * queue fitting and not. The seconds are not lost, they are moved: hovering either column shows the
+ * exact timestamp, and every *record* of a change (the audit trail, the activity list, a ticket's own
+ * history) still carries them, because that is where a second decides which of two edits came first.
+ */
+function minuteStamp(iso?: string | null): string {
+  const d = iso ? new Date(iso) : null;
+  if (!d || Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString(undefined, { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+/**
  * The clock on a ticket as a chip: how long is left, or how long ago it went.
  *
  * It reads the board's SLA resolution target, or the due date when that is what the instance set —
@@ -214,21 +229,29 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 // ── Configurable ticket list columns (PSA-style: Autotask / ConnectWise / HaloPSA reference) ──
-// Priority is available but unchecked by default. `w` is the starting width in px: the queue is read
-// by scanning, and a column narrow enough to fold a ticket number over three lines cannot be scanned.
-// Summary has no width of its own, because it is the one column that wants whatever is left.
+// Priority, Board and SLA are available but unchecked by default. `w` is the starting width in px:
+// the queue is read by scanning, and a column narrow enough to fold a ticket number over three lines
+// cannot be scanned. Summary has no width of its own, because it is the one column that wants
+// whatever is left. Both date columns are read to the minute — `9/30/2026, 12:59 PM` measures 126px
+// here, and the longest plausible one (`12/31/2026, 11:59 PM`) 133px, plus the cell's 24px of
+// padding — which is where their 162 comes from and is 14px narrower each than the seconds they
+// replaced. That width is what makes room for the Summary beside them; the fitter re-measures and
+// widens a column the moment real data needs it.
+// The id "timestamp" is kept from when the column showed whichever timestamp was newer; it is the key
+// a saved column list and a saved width are stored under, so renaming it would silently drop both.
 type TicketColumnDef = { id: string; label: string; defaultVisible: boolean; sortField?: string; w: number };
 const TICKET_COLUMNS: TicketColumnDef[] = [
   { id: "number", label: "Ticket #", defaultVisible: true, sortField: "ticketNumber", w: 104 },
   { id: "title", label: "Summary", defaultVisible: true, sortField: "title", w: 0 },
   { id: "status", label: "Status", defaultVisible: true, sortField: "status", w: 110 },
-  { id: "board", label: "Board", defaultVisible: true, sortField: "board.name", w: 120 },
+  { id: "board", label: "Board", defaultVisible: false, sortField: "board.name", w: 120 },
   { id: "client", label: "Client", defaultVisible: true, sortField: "company.name", w: 126 },
   { id: "technician", label: "Technician", defaultVisible: true, w: 126 },
   { id: "age", label: "Age", defaultVisible: true, sortField: "createdAt", w: 52 },
-  { id: "sla", label: "SLA", defaultVisible: true, w: 152 },
+  { id: "sla", label: "SLA", defaultVisible: false, w: 152 },
   { id: "priority", label: "Priority", defaultVisible: false, w: 92 },
-  { id: "timestamp", label: "Timestamp", defaultVisible: true, sortField: "updatedAt", w: 138 },
+  { id: "timestamp", label: "Date Created", defaultVisible: true, sortField: "createdAt", w: 162 },
+  { id: "updated", label: "Last Updated", defaultVisible: true, sortField: "updatedAt", w: 162 },
 ];
 
 // ── Column widths (dragged on the header edge, persisted per user) ──
@@ -262,6 +285,17 @@ function loadTicketColumns(): string[] {
         for (const id of ["age", "sla"]) if (!cols.includes(id)) cols.push(id);
         localStorage.setItem("c7_ticket_columns", JSON.stringify(cols));
         localStorage.setItem("c7_ticket_columns_v2", "1");
+      }
+      // One-time: the column that used to be called Timestamp is now Date Created, with Last Updated
+      // beside it, and Board and SLA ship hidden. A list saved before that has no `updated` and still
+      // carries Board and SLA, so it would show neither half of the change — and the user has nothing
+      // on screen to explain why. Corrected once; Board and SLA stay removed afterwards, because
+      // hiding them is the new default and re-adding them on every load would be the opposite.
+      if (!localStorage.getItem("c7_ticket_columns_v3")) {
+        for (const id of ["board", "sla"]) { const i = cols.indexOf(id); if (i >= 0) cols.splice(i, 1); }
+        if (!cols.includes("updated")) cols.push("updated");
+        localStorage.setItem("c7_ticket_columns", JSON.stringify(cols));
+        localStorage.setItem("c7_ticket_columns_v3", "1");
       }
       return cols;
     }
@@ -529,14 +563,24 @@ export function TicketsPage() {
           </td>
         );
       }
+      // Date Created never moves: a ticket's creation time is what it is, and the last-updated time
+      // has a column of its own rather than sharing this one.
       case "timestamp": {
         const created = t.createdAt ? new Date(t.createdAt) : null;
-        const updated = t.updatedAt ? new Date(t.updatedAt) : null;
-        const changed = created && updated && updated.getTime() > created.getTime();
         return (
-          <td key={colId} className={`px-2 py-2 ${clip} text-gray-500`}
-            title={changed ? `Created ${created!.toLocaleString()} · Last updated ${updated!.toLocaleString()}` : `Created ${created?.toLocaleString() || "-"}`}>
-            {changed ? updated!.toLocaleString() : (created?.toLocaleString() || "-")}
+          <td key={colId} className={`px-2 py-2 ${clip} text-gray-500 tabular-nums`}
+            title={created ? `Created ${created.toLocaleString()}` : ""}>
+            {minuteStamp(t.createdAt) || "-"}
+          </td>
+        );
+      }
+      case "updated": {
+        const updated = t.updatedAt ? new Date(t.updatedAt) : null;
+        const age = relativeAge(t.updatedAt);
+        return (
+          <td key={colId} className={`px-2 py-2 ${clip} text-gray-500 tabular-nums`}
+            title={updated ? `Last updated ${updated.toLocaleString()}${age ? ` · ${age} ago` : ""}` : ""}>
+            {minuteStamp(t.updatedAt) || "-"}
           </td>
         );
       }
@@ -859,12 +903,8 @@ export function TicketsPage() {
       case "priority": return String(t.priority ?? "");
       case "age": return relativeAge(t.createdAt as string);
       case "sla": return slaChipFor(t)?.label ?? "";
-      case "timestamp": {
-        const created = t.createdAt ? new Date(t.createdAt as string) : null;
-        const updated = t.updatedAt ? new Date(t.updatedAt as string) : null;
-        const shown = created && updated && updated.getTime() > created.getTime() ? updated : created;
-        return shown ? shown.toISOString() : "";
-      }
+      case "timestamp": return t.createdAt ? new Date(t.createdAt as string).toISOString() : "";
+      case "updated": return t.updatedAt ? new Date(t.updatedAt as string).toISOString() : "";
       default: return "";
     }
   };

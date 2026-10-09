@@ -10,7 +10,7 @@ import { Permission, LANDING_PAGES, resolveLandingPagePath } from "@C7NTAX/share
 import { PageHeader } from "../components/ui";
 
 const LANDING_OPTIONS = [
-  { path: "/", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/", label: "Today", icon: LayoutDashboard },
   { path: "/tickets", label: "Tickets", icon: Ticket },
   { path: "/boards", label: "Service Boards", icon: Columns3 },
   { path: "/opportunities", label: "Sales Pipeline", icon: Target },

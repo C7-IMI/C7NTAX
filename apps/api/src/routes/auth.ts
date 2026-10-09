@@ -95,7 +95,7 @@ async function resolveLandingPage(user: { landingPage?: string | null }): Promis
       }
     } catch { /* an unreadable default is not worth failing a sign-in over */ }
   }
-  return { path: "/", label: "Dashboard" };
+  return { path: "/", label: "Today" };
 }
 
 // â”€â”€ POST /api/auth/login â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  AlignJustify, HelpCircle, LayoutPanelLeft, ListTree, LogOut, Moon, PanelRight, Rows3, Settings2, Shield, Sparkles, Sun, UserCircle,
+  AlignJustify, HelpCircle, History, LayoutPanelLeft, ListTree, LogOut, Moon, PanelRight, Rows3, Settings2, Shield, Sparkles, Sun, UserCircle,
 } from "lucide-react";
 import { useAppVersion } from "../hooks/useAppVersion";
 import { useAuth } from "../hooks/useAuth";
@@ -178,6 +178,21 @@ export function MyAccountMenu() {
               <span className="min-w-0 flex-1">
                 <span className="block text-xs font-medium">Preferences</span>
                 <span className="block text-[10px] text-gray-500 truncate">Default landing page after sign-in</span>
+              </span>
+            </button>
+            {/*
+              * My Activity sits here rather than on the navigation rail.
+              *
+              * It is one person's own history — what *you* did, not part of the product's shape — so it
+              * belongs beside the other things that are about this account. It kept its route, its page
+              * title and its breadcrumb trail, so every existing link to /activity still works; only the
+              * route to it from the chrome changed.
+              */}
+            <button role="menuitem" className={rowClass} onClick={() => go("/activity")}>
+              <History size={14} className="shrink-0" />
+              <span className="min-w-0 flex-1">
+                <span className="block text-xs font-medium">My Activity</span>
+                <span className="block text-[10px] text-gray-500 truncate">Everything you have done in this instance</span>
               </span>
             </button>
           </div>

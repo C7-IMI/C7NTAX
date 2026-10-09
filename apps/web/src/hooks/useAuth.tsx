@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [landingPage, setLandingPage] = useState<LandingPage>({
     path: "/",
-    label: "Dashboard",
+    label: "Today",
   });
   const [session, setSession] = useState<SessionInfo>(DEFAULT_SESSION);
   const cookieModeRef = useRef(false);

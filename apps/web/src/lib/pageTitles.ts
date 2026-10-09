@@ -3,8 +3,8 @@
  * menu, the header toolbar, or a link inside another page.
  *
  * They still need a name. The navigation cannot supply one, and the fallbacks are worse than they look:
- * the header falls back to `Dashboard` for any path it cannot place, and the breadcrumb trail used to
- * inherit the same word through the Dashboard node's `to: "/"`, which matches every path. So a page gets
+ * the header falls back to `Today` for any path it cannot place, and the breadcrumb trail used to
+ * inherit the same word through the Today node's `to: "/"`, which matches every path. So a page gets
  * its title here — one place, read by the header (`getPageTitle`), the trail (`buildBreadcrumbs`) and
  * therefore by the Recent menu's visit labels, which are built from the trail.
  */

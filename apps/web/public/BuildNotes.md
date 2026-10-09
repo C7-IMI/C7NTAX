@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.003 | Last Updated: 2026-10-09
+## Version: 2026.10.9.005 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,82 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.005 — The queue counts in minutes, and the ticket has two dates
+
+One column called **Timestamp** was doing two jobs badly: it showed whichever time was newer, so a
+ticket's creation date moved every time the ticket was touched, and the fact that it had been touched
+at all was invisible. It is now two columns — **Date Created**, which never changes, and **Last
+Updated**, which is the one that moves — both on by default.
+
+- **[Update]** **Timestamp is now Date Created**, reading the ticket's own creation time.
+- **[New]** **A Last Updated column beside it**, showing when the ticket was last touched, with the
+  relative age in its tooltip beside the exact time (`3d ago`). The CSV export gains the same column.
+- **[Update]** **Board and SLA start hidden.** They are still in **Choose Columns**, and the queue's
+  columns are the ones a person triages by: who it is, what it is, where it has got to, who has it, how
+  long it has waited, and when it was raised and last touched.
+- **[Update]** **Both date columns read to the minute** — `9/30/2026, 12:59 PM`. Nobody triages a queue
+  by the second, and with two dates side by side the four characters the seconds cost are four
+  characters the Summary column can use: the columns narrowed from 176px to 162px each, giving 28px of
+  the table back to the summary beside them, with no cell clipped or wrapped at either width. The
+  **exact** time is still one hover away — the tooltip keeps the seconds — and **the audit trail is
+  untouched**: `Administration → Audit Logs` still records every entry to the second, because that is
+  what decides which of two changes to the same field came first.
+- **[Update]** **A saved column choice is corrected once, not reset.** A list saved before this change
+  has no Last Updated and still carries Board and SLA, so a one-time migration appends the new column
+  and removes the two — after which the choice is the reader's again, including putting them back.
+
+**Verification:** `tsc --noEmit` clean in `apps/web`; `node scripts/check-help-links.mjs` passes with the
+Help updated. Measured in the browser at the table's own font: `9/30/2026, 12:59 PM` is 126px of text and
+the longest plausible stamp (`12/31/2026, 11:59 PM`) 133px, against a 163px cell — **zero cells with
+`scrollWidth > clientWidth`** across the visible rows, in **both** interfaces. The migration was run
+against a seeded list in both shapes (a default list, and one reordered by hand): the reader's order is
+kept, Board and SLA are removed once, Last Updated is appended, and a second load changes nothing. The
+audit trail was opened and read back: `12:33:43 AM`, `11:55:05 PM` — seconds intact.
+
+---
+
+## 2026.10.9.004 — Home and Today stand on their own, and the alerts stop whispering
+
+The navigation had a section called **Today** whose contents were Home, the dashboard and My Activity —
+three unrelated things held together only by being personal. Home is the landing page, Today is the day's
+work, and My Activity is a history rather than a place, so the group was a wrapper around nothing. It is
+gone. **Home** and **Today** are now rows on the rail that go straight to their page, and My Activity lives
+where the rest of your own things live.
+
+- **[Update]** **Home and Today are sibling rows, and clicking either one navigates.** They are pages rather
+  than groups of pages, so their rail rows are links that carry `aria-current="page"` instead of buttons
+  that expand a panel — a list of one was a click nobody should have had to make. This is a new shape for a
+  rail row (`NavDomain.to`) rather than a special case for two rows: a domain that *is* a page is described
+  as one, and the row is drawn and behaves accordingly.
+- **[Update]** **Dashboard is now Today**, everywhere it is named: the rail row, the page header, the
+  breadcrumb, the page title, the classic tree, and the navigation's own Help. The product already called it
+  Today in the places people read most; the rename removes the second name rather than adding one. Its
+  settings, references and walkthrough follow the same name.
+- **[Update]** **My Activity moved to My Account → My Activity**, under Preferences. It is a person's own
+  history rather than a section of the product, so it belongs with your profile and your settings. Its route
+  (`/activity`), its page title and its breadcrumb are unchanged, the account menu is one click from
+  anywhere, and the header's **Recent** menu still opens it at length with **Show All**.
+- **[Fix]** **A rail row that is a page no longer leaves its node unclaimed.** Today stands for the
+  *dashboard* node, and the pane's honest-by-default rule ("anything no domain claims turns up under
+  *Other*") was dutifully reporting that node — so the rail grew an **Other** row whose single destination
+  was the page you were already on, and it took the active highlight while it was there. A page-domain now
+  claims the node behind its route, and keeps that node's id so the row's right-click menu — the one that
+  pins it — has something to offer.
+- **[Update]** **Service Alerts is the loudest thing on Today.** The panel takes the colour of its worst
+  alert in its header rather than a neutral one, states **how many services are reporting a problem** in
+  words beside the count, carries each alert's severity as a stripe and a tint down its rows, and offers
+  **All alerts** at the top. With nothing wrong it goes quiet rather than shouting a zero — the point is
+  that an outage is noticed while you are reading the figures, not after you have finished.
+
+**Verification:** the rail was driven in a browser and read back from the DOM — `home` and `today` render as
+anchors with `aria-current="page"` on the right one, **Other** is gone entirely (`unsorted` is empty), and
+right-clicking the Today row opens its menu as *Today — /*. `/home` highlights Home and nothing else.
+Checked in **both** interfaces: the classic tree shows Home and Today with no *Dashboard* and no My Activity,
+and the account menu lists My Activity directly under Preferences. `tsc --noEmit` clean, and
+`node scripts/check-help-links.mjs` passes with the Help rewritten for all four changes.
 
 ---
 

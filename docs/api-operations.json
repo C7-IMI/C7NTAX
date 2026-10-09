@@ -198,7 +198,7 @@
   },
   "POST /api/tickets": {
     "summary": "Open a ticket",
-    "description": "The same ticket a person would open, with the fields an integrator needs: board, client, contact, priority, assignee. Prefer POST /api/events for monitoring traffic — it is idempotent, and this is not.",
+    "description": "The same ticket a person would open, with the fields an integrator needs: board, client, contact, priority, assignee. The response carries the `ticketNumber` it was given — `{boardCode}-{client}-{count}`, e.g. `MSP-04-1005`, where the middle part is the client id minus 1000 and the last is that client's ticket count, so it is not a global series and not something to build on: read it back, do not predict it. Prefer POST /api/events for monitoring traffic — it is idempotent, and this is not.",
     "requestExample": {
       "title": "Printer offline",
       "boardId": "…",

@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
 import {
   Ticket, Clock, DollarSign, AlertTriangle, TrendingUp, Users, Columns3, Building2, FolderKanban,
-  Monitor, BookOpen, Target, Cloud, GripVertical, Eye, EyeOff, RotateCcw, Save, SlidersHorizontal, ArrowUp, ArrowDown, ArrowRight, Bell,
+  Monitor, BookOpen, Target, Cloud, GripVertical, Eye, EyeOff, RotateCcw, Save, SlidersHorizontal, ArrowUp, ArrowDown, ArrowRight, Bell, ShieldAlert,
 } from "lucide-react";
 import { timeAgo } from "../lib/format";
 import { ticketStatusBadge, ticketStatusLabel } from "../lib/ticketStatus";
@@ -188,7 +188,7 @@ export function DashboardPage() {  const { user } = useAuth();
       const r = await api.put("/dashboard/layout", { widgets: draft });
       setLayout(r.data.widgets || []);
       setCatalogue(r.data.catalogue || catalogue);
-      toast.success("Dashboard saved");
+      toast.success("Today saved");
       setEditing(false);
     } catch (e: any) {
       toast.error(e?.response?.data?.error?.message || "Could not save the layout");
@@ -326,10 +326,54 @@ export function DashboardPage() {  const { user } = useAuth();
   const visible = layout.filter(w => w.visible);
   const hiddenCount = layout.length - visible.length;
 
+  /** The worst thing in the panel, which is what decides how loud the panel is. */
+  const hasCriticalAlert = alerts.some((a: any) => a.severity === "critical");
+
+  /*
+   * Per-row severity, from the one field everything else reads.
+   *
+   * The stripe carries the colour, the row carries a tint only when it is genuinely bad, and `info`
+   * rows stay untinted — otherwise a page of informational rows reads as urgently as a page of outages.
+   */
+  const severityOf = (alert: any) => {
+    const severity = String(alert?.severity || "").toLowerCase();
+    if (severity === "critical") {
+      return { stripe: "bg-alert-red", row: "bg-alert-red/[0.07]", age: "text-red-300/90" };
+    }
+    if (severity === "warning" || severity === "degraded" || severity === "major") {
+      return { stripe: "bg-amber-500", row: "bg-amber-500/[0.05]", age: "text-amber-300/80" };
+    }
+    return { stripe: "bg-emerald-500", row: "", age: "text-gray-600" };
+  };
+
+  /*
+   * How loud the Service Alerts panel is allowed to be, decided from the worst thing in it.
+   *
+   * One critical alert outweighs any number of warnings, because the panel's job is to make the worst
+   * thing on the page impossible to skim past. With nothing to report every class is neutral, so the
+   * panel looks exactly as plain as it did before — see the note on the panel itself.
+   */
+  const alertTone = stats.alerts === 0
+    ? {
+        panel: "", header: "border-surface-border", icon: "text-emerald-400", title: "text-gray-500",
+        badge: "", subtitle: "text-gray-600", link: "text-cyber-400 hover:bg-surface-lighter",
+      }
+    : hasCriticalAlert
+      ? {
+          panel: "border-alert-red/45 shadow-[0_0_0_1px_rgba(239,68,68,0.12)]", header: "border-alert-red/35 bg-alert-red/10",
+          icon: "text-alert-red", title: "text-alert-red", badge: "text-alert-red bg-alert-red/15",
+          subtitle: "text-red-200/80", link: "text-white bg-alert-red/20 hover:bg-alert-red/30",
+        }
+      : {
+          panel: "border-amber-500/40", header: "border-amber-500/30 bg-amber-500/10",
+          icon: "text-amber-400", title: "text-amber-400", badge: "text-amber-300 bg-amber-500/15",
+          subtitle: "text-amber-200/75", link: "text-white bg-amber-500/20 hover:bg-amber-500/30",
+        };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-start justify-between gap-3 flex-wrap">
-        <PageHeader variant="section" title="Dashboard" subtitle={<>Overview of your service operations
+        <PageHeader variant="section" title="Today" subtitle={<>What your day looks like: the figures, what needs a person, and what is broken
             {hiddenCount > 0 && <span className="text-gray-600"> · {hiddenCount} widget{hiddenCount === 1 ? "" : "s"} hidden</span>}</>} />
         <div className="flex items-center gap-2">
           {!editing && loaded && catalogue.length > 0 && (
@@ -428,19 +472,55 @@ export function DashboardPage() {  const { user } = useAuth();
                 <p className="pt-1 text-[11px] text-gray-600">Stale work is the amber and red part: {boardLoad.reduce((n: number, b: any) => n + (b.metrics?.stale7Days || 0), 0)} tickets open longer than a week.</p>
               </div>
             </div>
-            <div className="card p-0">
-              <div className="flex items-baseline justify-between border-b border-surface-border px-3.5 py-2">
-                <h3 className="text-[11px] uppercase tracking-wide text-gray-500">Service alerts</h3>
-                <Link to="/service-alerts" className="text-[11px] text-cyber-400 hover:underline">All alerts</Link>
+            {/*
+              * Service alerts, dressed for what it is.
+              *
+              * This is the only panel on the page that reports something already wrong, and it used to
+              * read like the panel beside it: a grey uppercase caption over rows of 1.5-pixel dots. The
+              * size and position are deliberately unchanged — it is already in the right place — but it
+              * now carries its weight: a tinted header stating the count in words, a severity stripe down
+              * each row instead of a dot, and a tint on the rows that are genuinely bad.
+              *
+              * It stays quiet when there is nothing to report. A panel that shouts on a good day is a
+              * panel nobody reads on a bad one, so "nothing is reporting a problem" looks exactly as
+              * plain as it did.
+              */}
+            <div className={`card p-0 overflow-hidden ${alertTone.panel}`}>
+              <div className={`flex items-center gap-2 border-b px-3.5 py-2 ${alertTone.header}`}>
+                <ShieldAlert size={13} className={alertTone.icon} />
+                <h3 className={`text-[11px] font-semibold uppercase tracking-wide ${alertTone.title}`}>Service alerts</h3>
+                {alerts.length > 0 && (
+                  <span className={`badge-status shrink-0 ${alertTone.badge}`}>{alerts.length}</span>
+                )}
+                <span className={`min-w-0 flex-1 truncate text-[11px] ${alertTone.subtitle}`}>
+                  {alerts.length === 0
+                    ? "Everything we watch is up"
+                    : `${alerts.length} service${alerts.length === 1 ? "" : "s"} reporting a problem`}
+                </span>
+                <Link
+                  to="/service-alerts"
+                  className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors ${alertTone.link}`}
+                >
+                  All alerts
+                </Link>
               </div>
               <div className="divide-y divide-surface-border/60">
-                {alerts.length === 0 ? <p className="p-3.5 text-sm text-gray-500">Nothing is reporting a problem.</p> : alerts.map((a: any) => (
-                  <Link key={a.id} to="/service-alerts" className="flex items-center gap-2.5 px-3.5 py-2 text-sm hover:bg-surface-lighter">
-                    <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${a.severity === "critical" ? "bg-alert-red" : a.severity === "warning" ? "bg-amber-500" : "bg-emerald-500"}`} />
-                    <span className="min-w-0 flex-1 truncate text-gray-300">{[a.service?.name, a.title].filter(Boolean).join(" — ")}</span>
-                    <span className="shrink-0 text-[11px] text-gray-600">{timeAgo(a.startedAt || a.createdAt)}</span>
-                  </Link>
-                ))}
+                {alerts.length === 0 ? <p className="p-3.5 text-sm text-gray-500">Nothing is reporting a problem.</p> : alerts.map((a: any) => {
+                  const severity = severityOf(a);
+                  return (
+                    <Link
+                      key={a.id}
+                      to="/service-alerts"
+                      className={`flex items-stretch gap-2.5 pr-3.5 text-sm transition-colors hover:bg-surface-lighter ${severity.row}`}
+                    >
+                      {/* A stripe rather than a dot: at this size a 1.5px dot is decoration, and the
+                          colour of the row is what actually tells you how bad it is. */}
+                      <span className={`w-[3px] shrink-0 ${severity.stripe}`} aria-hidden="true" />
+                      <span className="min-w-0 flex-1 truncate py-2 text-gray-300">{[a.service?.name, a.title].filter(Boolean).join(" — ")}</span>
+                      <span className={`shrink-0 py-2 text-[11px] ${severity.age}`}>{timeAgo(a.startedAt || a.createdAt)}</span>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           </div>

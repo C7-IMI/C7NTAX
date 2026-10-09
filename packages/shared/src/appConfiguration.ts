@@ -149,7 +149,7 @@ export function configSectionKey(sectionId: string): string {
  * quietly stop being reachable.
  */
 export const LANDING_PAGES: ReadonlyArray<{ path: string; label: string }> = [
-  { path: "/", label: "Dashboard" },
+  { path: "/", label: "Today" },
   { path: "/tickets", label: "Tickets" },
   { path: "/boards", label: "Service Boards" },
   { path: "/opportunities", label: "Sales Pipeline" },
@@ -166,7 +166,7 @@ export const LANDING_PAGES: ReadonlyArray<{ path: string; label: string }> = [
  * Pages that have moved, so a preference saved before the move still lands where it meant.
  *
  * A landing page is stored as a *path*, and paths are validated against `LANDING_PAGES` — so a page
- * that is renamed silently drops the preference and sends somebody to the Dashboard instead of the
+ * that is renamed silently drops the preference and sends somebody to Today instead of the
  * page they chose. `/cloudconnect` became `/c7nc` when CloudConnect merged into C7NC (PLAN-027), and
  * this mapping lives here rather than in the two callers that need it (the API that resolves a
  * stored value and the screen that shows which one is chosen), so they cannot disagree.

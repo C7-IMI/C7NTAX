@@ -197,10 +197,17 @@ export function NavPaneModern({
         .sort((a, b) => b.to.length - a.to.length)[0] ?? null,
     [allItems, pathname],
   );
-  const activeId = useMemo(
-    () => everything.find((domain) => domain.items.some((item) => item.id === activeItem?.id))?.id ?? null,
-    [everything, activeItem],
-  );
+  const activeId = useMemo(() => {
+    const owner = everything.find((domain) => domain.items.some((item) => item.id === activeItem?.id))?.id;
+    if (owner) return owner;
+    // A domain that is a page has no rows to look through, so it is matched by its own route instead —
+    // without this the rail forgets where you are the moment you land on Today.
+    return everything.find(
+      (domain) =>
+        domain.to &&
+        (domain.to === "/" ? pathname === "/" : pathname === domain.to || pathname.startsWith(`${domain.to}/`)),
+    )?.id ?? null;
+  }, [everything, activeItem, pathname]);
 
   // Navigating anywhere closes the panel: it was opened to choose a destination, and the choice is made.
   useEffect(() => { setOpenId(null); setFilter(""); }, [pathname]);
@@ -324,29 +331,24 @@ export function NavPaneModern({
   /* ── The rail ─────────────────────────────────────────────────────────────────────────── */
 
   const railItem = (domain: NavDomain) => {
-    const isActive = domain.id === activeId;
+    // A domain that is a page claims its own row; a domain of destinations claims the one holding the
+    // page in the tree. Both tests are needed, because Home and Today have no rows to look through.
+    const isActive = domain.id === activeId || (domain.to ? isPathIn(domain.to) : false);
     const isOpen = domain.id === openId;
     const isKumo = domain.id === KUMO_DOMAIN_ID;
     const badge = domain.items.reduce((n, item) => n + badgeFor(item.id), 0);
-    const node = nodeById.get(domain.id);
-    return (
-      <button
-        key={domain.id}
-        type="button"
-        onClick={() => toggleDomain(domain)}
-        onContextMenu={node && onNodeContextMenu ? (e) => onNodeContextMenu(e, node, { favorite: favorites.includes(domain.id) }) : undefined}
-        aria-expanded={isOpen}
-        aria-current={isActive ? "true" : undefined}
-        title={`${domain.label} — ${domain.what}`}
-        data-nav-domain={domain.id}
-        className={`nav-item w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
-          isOpen
-            ? "bg-surface-lighter text-white"
-            : isActive
-              ? "nav-item--active text-white"
-              : "text-gray-400 hover:text-white hover:bg-surface-lighter"
-        }`}
-      >
+    // A domain that is a page stands for the tree node behind that page rather than for a node named
+    // after itself, so the row's own menu — where pinning lives — has something to open.
+    const node = nodeById.get(domain.nodeId ?? domain.id);
+    const rowClass = `nav-item w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
+      isOpen
+        ? "bg-surface-lighter text-white"
+        : isActive
+          ? "nav-item--active text-white"
+          : "text-gray-400 hover:text-white hover:bg-surface-lighter"
+    }`;
+    const rowContents = (
+      <>
         {isKumo && !collapsed ? (
           /* Kumo is branded rather than labelled — the logotype replaces its icon *and* its
              name — but it is still a *row*, so the mark is set at the height of the labels beside
@@ -364,9 +366,59 @@ export function NavPaneModern({
             title={`${badge} active service alert${badge === 1 ? "" : "s"}`}
           >{badge}</span>
         )}
+      </>
+    );
+
+    /*
+     * A domain that is a page is a link, not a button.
+     *
+     * Everything else on this rail opens a panel; these rows *are* destinations, so they navigate and
+     * carry no `aria-expanded` — a link that claims to expand something is a lie to a screen reader.
+     * It is still a row: same height, same active tint, right-click menu and all.
+     */
+    if (domain.to) {
+      return (
+        <Link
+          key={domain.id}
+          to={domain.to}
+          onContextMenu={node && onNodeContextMenu ? (e) => onNodeContextMenu(e, node, { favorite: favorites.includes(domain.id) }) : undefined}
+          aria-current={isActive ? "page" : undefined}
+          title={domain.what}
+          data-nav-domain={domain.id}
+          className={rowClass}
+        >
+          {rowContents}
+        </Link>
+      );
+    }
+
+    return (
+      <button
+        key={domain.id}
+        type="button"
+        onClick={() => toggleDomain(domain)}
+        onContextMenu={node && onNodeContextMenu ? (e) => onNodeContextMenu(e, node, { favorite: favorites.includes(domain.id) }) : undefined}
+        aria-expanded={isOpen}
+        aria-current={isActive ? "true" : undefined}
+        title={`${domain.label} — ${domain.what}`}
+        data-nav-domain={domain.id}
+        className={rowClass}
+      >
+        {rowContents}
       </button>
     );
   };
+
+  /**
+   * Is the browser on this destination? Exact for the root, since every path starts with `/`.
+   *
+   * Shared by the rail and the panel rows so a row and the page it opens cannot disagree about
+   * whether they are the current place.
+   */
+  const isPathIn = useCallback(
+    (to: string) => (to === "/" ? pathname === "/" : pathname === to || pathname.startsWith(`${to}/`)),
+    [pathname],
+  );
 
   /**
    * The rail row that opens the pins, above the domains.

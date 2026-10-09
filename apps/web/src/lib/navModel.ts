@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle, BarChart3, Bot, Building2, Clock, Database, DollarSign, FolderKanban,
-  HelpCircle, Home, Settings2, Shield, SquareTerminal, Ticket,
+  HelpCircle, Home, LayoutDashboard, Settings2, Shield, SquareTerminal, Ticket,
 } from "lucide-react";
 import type { NavNode } from "../components/Layout";
 
@@ -42,6 +42,21 @@ export interface NavDomain {
   /** One line saying what the domain is for. Shown above its rows. */
   what: string;
   items: NavDestination[];
+  /**
+   * Set on a domain that **is a page** rather than a container: the rail row navigates instead of
+   * opening a panel. Only for a domain whose contents have been deliberately collapsed into one
+   * destination — the row and the page are then the same thing, and a panel listing a single row that
+   * repeats the domain's own name is a click nobody should have to make.
+   */
+  to?: string;
+  /**
+   * The tree node behind a domain that is a page.
+   *
+   * The domain's own id is not the node's: **Today** is the dashboard node under a newer name, so the
+   * row has to be told which node it stands for or its right-click menu — the one that pins it — would
+   * have nothing to offer.
+   */
+  nodeId?: string;
 }
 
 interface DomainSpec {
@@ -51,6 +66,8 @@ interface DomainSpec {
   what: string;
   /** Nodes, in reading order. `children` are rendered indented under the node that owns them. */
   rows: Array<{ id: string; children?: string[]; note?: string }>;
+  /** See `NavDomain.to` — a domain that navigates rather than opens. */
+  to?: string;
 }
 
 /** Routes that exist but are not in `NAV_TREE`, placed explicitly so the pane can show them. */
@@ -70,6 +87,18 @@ const EXTRA_NODES: Record<string, { to: string; label: string; icon: LucideIcon 
 export const FAVORITES_NODE_ID = "favorites";
 
 /**
+ * Nodes that are deliberately **not** in this pane, with the reason.
+ *
+ * The pane has a habit of being honest: anything in the tree that no domain claims turns up under
+ * "Other" so that a navigation which gains a section is not silently missing it. That is the right
+ * default, and it means a section can only leave the pane by being named here — otherwise "I meant to
+ * remove this" and "I forgot where it goes" look identical.
+ */
+const NOT_IN_PANE: Record<string, string> = {
+  activity: "My Activity is a person's own history rather than a place in the product, so it lives in the account menu under Preferences. It keeps its route, its page title and its breadcrumb.",
+};
+
+/**
  * Rows renamed for the pane, with the reason. Every one of them is either the second use of the same
  * words in the tree or a label that only works when you already know where you are.
  */
@@ -83,11 +112,32 @@ const LABEL_OVERRIDES: Record<string, string> = {
 
 const DOMAIN_SPECS: DomainSpec[] = [
   {
+    /**
+     * Home and Today are two rail rows rather than one domain.
+     *
+     * They were a domain called Today holding Home, Dashboard and My Activity, which meant the pane
+     * had a section whose contents were: two other places to start from, and a personal history.
+     * Home is the landing page, Today is the day's work, and neither is a category the other belongs
+     * to — so they are siblings on the rail, and the rail stops one click short of everything.
+     *
+     * Both navigate rather than open. Home is a single page and always was; Today was called Dashboard
+     * and has been merged into the name the rest of the product already used for it, which is why its
+     * icon is the dashboard grid rather than the house Home kept.
+     */
+    id: "home",
+    label: "Home",
+    icon: Home,
+    what: "The landing page: what this instance is and where to start.",
+    rows: [],
+    to: "/home",
+  },
+  {
     id: "today",
     label: "Today",
-    icon: Home,
-    what: "Where you are, and what you have just done.",
-    rows: [{ id: "home" }, { id: "dashboard" }, { id: "activity" }],
+    icon: LayoutDashboard,
+    what: "Your day, at a glance: the figures, what needs a person, what is broken, and what changed.",
+    rows: [],
+    to: "/",
   },
   {
     id: "desk",
@@ -332,7 +382,27 @@ export function buildNavPane(
         if (child) items.push(child);
       }
     }
-    return { id: spec.id, label: spec.label, icon: spec.icon, what: spec.what, items };
+    // A domain that is a page claims the tree node behind it — the one whose route is the same page —
+    // so the page it navigates to is not also reported as unsorted, and cannot turn up a second time
+    // under "Other" as a row that duplicates the one you just clicked.
+    let nodeId: string | undefined;
+    if (spec.to) {
+      claimed.add(spec.id);
+      for (const [id, node] of byId) {
+        if (node.children || !node.to || node.to !== spec.to) continue;
+        claimed.add(id);
+        nodeId ??= id;
+      }
+    }
+    return {
+      id: spec.id,
+      label: spec.label,
+      icon: spec.icon,
+      what: spec.what,
+      items,
+      ...(spec.to ? { to: spec.to } : {}),
+      ...(nodeId ? { nodeId } : {}),
+    };
   };
 
   const spineSpecs = [...DOMAIN_SPECS];
@@ -347,8 +417,11 @@ export function buildNavPane(
   }
 
   // A group with nothing in it is not a group: a permission can empty a whole domain, and an empty
-  // rail row that opens an empty column is worse than no row.
-  const domains = spineSpecs.map(buildDomain).filter((domain) => domain.items.length > 0);
+  // rail row that opens an empty column is worse than no row. A domain that *is* a page is kept even
+  // with no rows, because the row is the page.
+  const domains = spineSpecs
+    .map(buildDomain)
+    .filter((domain) => domain.items.length > 0 || domain.to);
 
   const utilityIds = options.assistantInRail
     ? ["help", "prefs", "console"]
@@ -357,11 +430,12 @@ export function buildNavPane(
     .map((id) => UTILITY_SPECS[id])
     .filter((spec): spec is DomainSpec => !!spec)
     .map(buildDomain)
-    .filter((domain) => domain.items.length > 0);
+    .filter((domain) => domain.items.length > 0 || domain.to);
 
   const unsorted: NavDestination[] = [];
   for (const node of byId.values()) {
     if (node.children || !node.to || claimed.has(node.id)) continue;
+    if (NOT_IN_PANE[node.id]) continue;
     unsorted.push({ id: node.id, to: node.to, label: node.label, icon: node.icon });
   }
 

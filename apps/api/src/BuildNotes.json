@@ -1,5 +1,59 @@
 [
   {
+    "version": "2026.10.9.005",
+    "date": "2026-10-09",
+    "title": "The queue counts in minutes, and the ticket has two dates",
+    "changes": [
+      {
+        "text": "**Timestamp is now Date Created**, reading the ticket's own creation time.",
+        "type": "Update"
+      },
+      {
+        "text": "**A Last Updated column beside it**, showing when the ticket was last touched, with the",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Board and SLA start hidden.** They are still in **Choose Columns**, and the queue's",
+        "type": "Update"
+      },
+      {
+        "text": "**Both date columns read to the minute** — `9/30/2026, 12:59 PM`. Nobody triages a queue",
+        "type": "Update"
+      },
+      {
+        "text": "**A saved column choice is corrected once, not reset.** A list saved before this change",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.9.004",
+    "date": "2026-10-09",
+    "title": "Home and Today stand on their own, and the alerts stop whispering",
+    "changes": [
+      {
+        "text": "**Home and Today are sibling rows, and clicking either one navigates.** They are pages rather",
+        "type": "Update"
+      },
+      {
+        "text": "**Dashboard is now Today**, everywhere it is named: the rail row, the page header, the",
+        "type": "Update"
+      },
+      {
+        "text": "**My Activity moved to My Account → My Activity**, under Preferences. It is a person's own",
+        "type": "Update"
+      },
+      {
+        "text": "**A rail row that is a page no longer leaves its node unclaimed.** Today stands for the",
+        "type": "Fix"
+      },
+      {
+        "text": "**Service Alerts is the loudest thing on Today.** The panel takes the colour of its worst",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.003",
     "date": "2026-10-09",
     "title": "The auto-sync waits for you to stop typing",

@@ -49,7 +49,9 @@ export type NavNode = {
 
 export const NAV_TREE: NavNode[] = [
   { id: "home", to: "/home", icon: Home, label: "Home" },
-  { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Dashboard" },
+  // The dashboard, under the name the product uses for it everywhere else. It is the first place the
+  // rail goes, so the tree's own label is what the page header and the breadcrumb read.
+  { id: "dashboard", to: "/", icon: LayoutDashboard, label: "Today" },
   { id: "service-alerts", to: "/service-alerts", icon: AlertTriangle, label: "Service Alerts", permission: Permission.ServiceAlertView },
   { id: "tickets", to: "/tickets", icon: Ticket, label: "Tickets", permission: Permission.TicketView },
   { id: "boards", to: "/boards", icon: Columns3, label: "Service Boards", permission: Permission.BoardView },
@@ -269,7 +271,7 @@ function isNodeActive(node: NavNode, pathname: string): boolean {
 
 function getPageTitle(nodes: NavNode[], pathname: string): string {
   // The most specific match wins, so nested routes (/kumo/organizations/:id)
-  // report their own section instead of falling through to Dashboard.
+  // report their own section instead of falling through to Today.
   const matches: { to: string; label: string }[] = [];
   const walk = (list: NavNode[]): void => {
     for (const n of list) {
@@ -278,14 +280,14 @@ function getPageTitle(nodes: NavNode[], pathname: string): string {
     }
   };
   walk(nodes);
-  if (matches.length === 0) return STANDALONE_PAGE_TITLES[pathname] ?? "Dashboard";
+  if (matches.length === 0) return STANDALONE_PAGE_TITLES[pathname] ?? "Today";
   return matches.reduce((a, b) => (b.to.length > a.to.length ? b : a)).label;
 }
 
 // ── Section descriptions for header display ───────────────────────
 const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/home": "Welcome to C7NTAX — get started with commonly used PSA features.",
-  "/": "Key metrics, ticket volumes, and technician workload.",
+  "/": "Your day at a glance: the figures, what needs a person, what is broken, and what changed.",
   "/tickets": "Client issues, troubleshooting, and billable time.",
   "/boards": "Live ticket metrics, stale tracking, and SLA status.",
   "/service-alerts": "Outage monitoring for the services you watch.",

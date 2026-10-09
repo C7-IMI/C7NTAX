@@ -7805,3 +7805,156 @@ Both are in the reply and in the briefing's pre-deployment list, and neither was
   timer it replaced.
 - **A guard that expires is a guard that fails silently.** The hold marker deliberately does not, because
   its failure mode (nothing is committed, nothing is lost) is the safe one.
+
+### Prompt 330 — Today loses its sub-menu: Home and Today become rows that navigate
+
+**Timestamp:** 2026-10-09 05:05 | **Status:** Complete | **Duration:** ~55 min
+
+**BuildNotes IDs:** **2026.10.9.004**.
+
+**Prompt**
+
+> I don't think we need a sub menu for Today. Move Home to the parent level above today. Change the icon
+> for Today. Move My Activity to the My Account Menu underneath preferences. Clicking on Today will just
+> take you to the Dashboard. Merge/rename Dashboard to Today. The configs and references etc, should just
+> be Today. We're trying to simplify the interface a bit.
+
+**What I did**
+- **Home and Today are now two rows on the rail, not one section's contents.** A new shape for a rail row
+  (`NavDomain.to`) marks a domain that *is* a page: it renders as a link with `aria-current="page"` instead
+  of a button that expands a panel, has no `aria-expanded` (a link that claims to expand something lies to a
+  screen reader), and keeps the same height, active tint and right-click menu as every other row.
+- **Dashboard is renamed Today** where it is named - rail row, page header, breadcrumb, page title, classic
+  tree, and the Help - and Today took the dashboard-grid icon rather than the house Home still uses.
+- **My Activity moved to My Account, directly under Preferences**, using the pane model's existing
+  `NOT_IN_PANE` mechanism: the reason is recorded next to the exclusion, so "removed on purpose" and
+  "forgotten" stay distinguishable. Route, page title and breadcrumb are untouched.
+- **Found and fixed a bug my own change created.** Emptying the Today domain's rows left the *dashboard*
+  tree node unclaimed, and the pane's honest-by-default rule surfaced it under **Other** - a row whose only
+  destination was the page you were on, wearing the active highlight. A page-domain now claims the node
+  behind its route and keeps its id, so the row's own menu resolves too.
+- Rewrote the Help for all of it (rail table, the note about where My Activity lives, the keyboard row - 2 is
+  now Home and 3 is Today - the FAQ answer, and the Today screen section), and re-titled the "dashboard"
+  heading in the redesign walkthrough.
+
+**Notes for next time**
+- **The pane is honest by default, which means removing rows from a domain is not a purely visual edit.** The
+  unclaimed node did not vanish; it reappeared under *Other* with the same route. A change that empties a
+  domain has to say what claims its node, and the fix belongs in the model rather than in a filter.
+- **A row that is a page needs a node id that is not its own.** Today's domain id is `today` and its node is
+  `dashboard`; anything that looks the row up by `domain.id` silently finds nothing. Naming that gap
+  (`NavDomain.nodeId`) fixed the right-click menu without touching Favorites' storage.
+- **Two interfaces means two verifications, not one.** The classic tree was checked in a separate pass -
+  signed in again, `c7_ui_nav`/`c7_ui_redesign` set to classic, read the sidebar back - because the modern
+  rail can be right while the tree still says Dashboard.
+
+
+### Prompt 331 — Two process corrections: finish the review first, and use the agents
+
+**Timestamp:** 2026-10-09 05:00 | **Status:** Complete | **Duration:** immediate (no change)
+
+**BuildNotes IDs:** none - no project change.
+
+**Prompt**
+
+> finish the claude response first before doing the TOday stuff
+
+**Prompt**
+
+> use multiple agents if necessary. Remember you have persmission to use up to 7 whenever you see fit from
+> now on
+
+**What I did**
+- Took the first as an ordering instruction: the PLAN-030 reply and its briefing were finished, committed
+  and pushed before any navigation work started, so the review answer did not sit half-written behind a UI
+  change.
+- Recorded the second as standing permission rather than as a task: up to seven concurrent background
+  agents, used from then on for independent workstreams (the infra fixes, and the ticket-column split) with
+  an explicit coordination note to each agent about which files it owns.
+
+**Notes for next time**
+- **Two writers, one repository is the real constraint, not the agent count.** The permission is useful and
+  the thing to manage is file ownership: an agent editing `HelpDoc.tsx` while I edit it is a conflict, and
+  the fix is to narrow its scope mid-flight (send it a message, hand it the files it owns, take the rest).
+
+
+### Prompt 332 — Service Alerts stops whispering on the Today screen
+
+**Timestamp:** 2026-10-09 05:20 | **Status:** Complete | **Duration:** ~15 min
+
+**BuildNotes IDs:** **2026.10.9.004**.
+
+**Prompt**
+
+> after you are done or using another agent: Service Alerts on the Today screen/Dashboard needs to be more
+> pronounced. No need to move or resieze, but jsut more eye-catching to emphasize it's importance
+
+**What I did**
+- Rebuilt the panel's *emphasis* rather than its geometry - same size, same place - because that was the
+  request: the header now takes the tone of its worst alert, states "3 services reporting a problem" in
+  words as well as in the count, carries a shield icon, and offers **All alerts**. Every row takes its
+  severity as a 3px stripe and a faint tint.
+- Kept it honest at zero: with no alerts the panel goes quiet rather than wearing the amber of a good mood,
+  which is the same rule the rail's alert count already follows (an all-clear hides the indicator rather
+  than showing a 0).
+- Verified against live data: the three real alerts (Gemini, Verizon, Claude) render amber, and the header
+  says three in words.
+
+**Notes for next time**
+- **"More pronounced" is about hierarchy, not size.** Colour, a stated count and a per-row stripe made the
+  panel read first without moving a pixel - which is also why it needed no layout work in either interface.
+
+
+### Prompt 333 — The ticket list's Timestamp column, split into Date Created and Last Updated
+
+**Timestamp:** 2026-10-09 06:05 | **Status:** Complete | **Duration:** ~40 min (delegated + review)
+
+**BuildNotes IDs:** **2026.10.9.005**.
+
+**Prompt**
+
+> After you are done: Tickets screen: The timestamp column should probably be updated to Date Created and
+> the timestamp should reflect when the ticket was created. THere should also be an option/column for Last
+> Updated with the timestamp of the last update to said ticket. Those two columns should be dispalyed by
+> default. You can remove SLA and Board as default columns, but they should still be selectable in Choose
+> columns. AKA hide them for now
+
+**Prompt**
+
+> You can remove the seconds on the timestamps. Just show the hour and minutes. THat should give some extra
+> room to fit everthing. Adjust the font accordingly
+
+**Prompt**
+
+> The seconds should remain for the audit logs, though
+
+**Prompt**
+
+> Don't display the seconds on the ticket screen, but make sure they are in the audit logs
+
+**What I did**
+- Delegated the column split to a background agent with an explicit file scope, handing it the decision
+  that mattered: the stored column choice is a **migration, not a reset** — a list saved before the change
+  gets Last Updated appended and Board/SLA removed once, and the reader's own order is left alone.
+- Narrowed that agent's scope mid-run when the overlap with my own navigation work on `HelpDoc.tsx` became
+  clear: it reports Help wording instead of writing it, and touches no git state.
+- Reviewed its diff rather than trusting the summary — the two date columns, the `updated` cell with the
+  relative age in its tooltip, the CSV path, and the `c7_ticket_columns_v3` migration — and checked the
+  width it chose against my own measurement of the live cells.
+- Then took the seconds off both columns' *display* for the queue, measuring the result in the browser at
+  the table's own font: the longest plausible stamp is 133px against a 163px cell, so the columns narrow
+  from 176px to 162px and hand 28px back to the Summary beside them. The tooltip keeps the seconds.
+- Confirmed the audit trail keeps them: opened `Administration → Audit Logs` and read the times back —
+  `12:33:43 AM`, `11:55:05 PM`.
+- Read Back the numbers the columns are named after rather than assuming: **Date Created** stayed fixed
+  through an edit that moved **Last Updated**, which is the whole point of splitting them.
+
+**Notes for next time**
+- **A question about what a column shows can be two questions.** "The timestamp should be when it was
+  created" hides the second: the time it was *last* touched was only visible as a side effect of the same
+  column, so removing that side effect would have lost it. Splitting is the answer to both.
+- **Precision belongs to the reader, not to the record.** The audit trail needs seconds; a queue needs
+  minutes. Saying which surface keeps which — and verifying both — is cheaper than a global date format.
+- **A width is a measurement, not a preference.** Both the agent and I measured the strings in the live
+  browser font before choosing a number, and both times the number the eye would have guessed (138, then
+  176, then 162) was wrong by enough to clip a real value.
