@@ -12,7 +12,8 @@ import { SortableHeader, sortData, nextSort, type SortState } from "../component
 import { kumoTrail, useBreadcrumbTrail, kumoClientTrail } from "../components/Breadcrumbs";
 import { currentView, copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
-import { PageHeader } from "../components/ui";
+import { PageHeader, Tabs } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 interface ChecklistRow {
   id: string;
@@ -78,6 +79,7 @@ export function ChecklistsPage() {
   const menu = useContextMenu();
 
   const [tab, setTab] = useState<"checklists" | "tasks">("checklists");
+  const redesign = useRedesign();
   const [checklists, setChecklists] = useState<ChecklistRow[]>([]);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -280,6 +282,17 @@ export function ChecklistsPage() {
         </div>
       </div>
 
+      {redesign ? (
+        <Tabs
+          label="Checklist sections"
+          items={[
+            { id: "checklists" as const, label: "Checklists" },
+            { id: "tasks" as const, label: "My Tasks" },
+          ]}
+          value={tab === "tasks" ? "tasks" : "checklists"}
+          onChange={(id) => setTab(id === "tasks" ? "tasks" : "checklists")}
+        />
+      ) : (
       <div className="flex items-center gap-4 border-b border-surface-border">
         {([["checklists", "Checklists"], ["tasks", "My Tasks"]] as const).map(([key, label]) => (
           <button
@@ -293,6 +306,7 @@ export function ChecklistsPage() {
           </button>
         ))}
       </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[16rem] flex-1">

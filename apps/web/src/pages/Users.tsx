@@ -16,7 +16,8 @@ import { NewUserDialog, type RoleOption, type ClientOption, isAdministrativeRole
 import { ResetPasswordDialog } from "../components/users/ResetPasswordDialog";
 import { useAuth } from "../hooks/useAuth";
 import { timezoneOptions } from "../lib/timezones";
-import { PageHeader } from "../components/ui";
+import { PageHeader, Tabs } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 const STATUS_COLORS: Record<string, string> = {
   active: "bg-green-600/20 text-green-400",
@@ -84,6 +85,7 @@ export function UsersPage() {
   // Detail panel
   const [selected, setSelected] = useState<UserFull | null>(null);
   const [tab, setTab] = useState<"profile" | "permissions" | "security">("profile");
+  const redesign = useRedesign();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Record<string, any>>({});
   const [permSet, setPermSet] = useState<Set<string>>(new Set());
@@ -562,6 +564,19 @@ export function UsersPage() {
             </div>
 
             {/* Tabs */}
+            {redesign ? (
+              <div className="px-6 pt-4">
+                <Tabs
+                  label="User sections"
+                  items={(["profile", "permissions", "security"] as const).map(t => ({
+                    id: t,
+                    label: t.charAt(0).toUpperCase() + t.slice(1),
+                  }))}
+                  value={tab}
+                  onChange={(next) => { setTab(next); setEditing(false); }}
+                />
+              </div>
+            ) : (
             <div className="flex gap-1 border-b border-surface-border px-6">
               {(["profile", "permissions", "security"] as const).map(t => (
                 <button key={t} onClick={() => { setTab(t); setEditing(false); }}
@@ -570,6 +585,7 @@ export function UsersPage() {
                   }`}>{t}</button>
               ))}
             </div>
+            )}
 
             {/* Tab Content */}
             <div className="p-6 space-y-6">

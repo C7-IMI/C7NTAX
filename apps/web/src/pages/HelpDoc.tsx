@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 import { BookOpen, HelpCircle, Settings2, ListOrdered, ChevronRight, Lightbulb, AlertTriangle, Wrench } from "lucide-react";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 // ── PSA-style documentation frame (structure modeled on Autotask / ConnectWise Asio / HaloPSA docs) ──
 // Sections are grouped: "core" (the four Help subsections) and "walkthroughs" (step-by-step
@@ -120,6 +121,8 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "h", text: "Tickets" },
       { kind: "p", text: "Q: Why was a ticket's priority changed automatically? — A: The priority deduction engine adjusts priority from keywords and SLA rules; you can override it manually." },
       { kind: "p", text: "Q: Can I acknowledge or close many tickets at once? — A: Yes. Select the checkboxes on the left of the ticket list, then apply a batch action from the bulk bar." },
+      { kind: "p", text: "Q: What are the counts above the ticket list? — A: The **views**: All, Workable, Escalated, Waiting, On Hold and New. Each one is a filter you press rather than a dialog you fill in, and the number beside it says how many tickets it would show *before* you press it — so \"Waiting 17\" is a reason to look and \"Waiting\" is not. The counts are for the board and client you are looking at, not the whole instance. A view is held in the address, so the list can be linked to and it survives a reload, and **Filtered by** underneath still names every filter in force, including the ones a view set." },
+      { kind: "p", text: "Q: How do I see a ticket's priority without a column for it? — A: Tickets carry a thin coloured bar in front of the summary — grey for low, amber for medium, orange for high, red for critical — so priority is something you notice while reading the list rather than another column competing for width. Hovering it names the priority. Choose Columns still offers the priority column for anybody who sorts by it." },
       { kind: "p", text: "Q: Can emails create tickets automatically? — A: Yes. Configure a monitored mailbox or M365 Graph connector under Administration → Service Boards → Email connectors." },
       { kind: "p", text: "Q: How do I set up the Microsoft 365 app the connector needs? — A: Open the connector, choose **Microsoft 365 / Exchange Online** and **App-only (client secret)**, then press **Deploy OAuth app**. The wizard signs you in with a code, creates or reuses the registration, grants the Mail.ReadWrite application permission with admin consent, mints the secret, prints the Exchange Online scoping commands, and fills the connector's fields. You need Application Administrator (or Global Administrator) on the tenant, and you must run the Exchange commands — until they are run the app can read every mailbox in the tenant." },
       { kind: "p", text: "Q: Why does the app need Mail.ReadWrite and not Mail.Read? — A: Because the connector marks a message read once it has become a ticket. A read-only registration connects happily, reads the mailbox, and then fails on the first message it tries to mark — which is why the wizard refuses a registration that was granted Mail.Read." },
@@ -1194,6 +1197,8 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "p", text: "Colour scheme, light/dark and density belong to neither layout and carry across the switch untouched; **My Account** holds all three in both. The navigation pane has its own separate switch — see *The Navigation Pane* — so the rail can be paired with classic screens, and the tree with redesigned ones." },
       { kind: "h", text: "Which pages" },
       { kind: "p", text: "Every standard page draws its header the redesigned way: Clients, Contacts, Assets, Tickets, Boards, Billing, Quotes, Reports, Custom Reports, the product catalog, Users, Roles, Kumo, Service Alerts, Monitors, the configuration hub, Assistant, AI Actions, What's New and the rest. Two kinds of surface deliberately keep their own layout, because a compact header is not what they are for: **sign-in, two-factor setup and help**, which are not part of the working interface, and the **console and the report designer**, which are full-bleed tools rather than pages." },
+      { kind: "h", text: "The ticket screens" },
+      { kind: "p", text: "The two screens a service desk lives in get the most of it. The **list** puts its title and its controls on one row and gains a strip of **views** with live counts above the search box, so *what am I looking at* is a row of numbers rather than a dialog. Tickets also carry a coloured **priority bar** in front of the summary; the priority column has always been off by default, and the bar is what carries that fact without spending a column on it. The **detail** groups twelve panels into five tabs with sub-tabs, keeps the tab strip and its actions pinned as you scroll, and — because the state of a ticket, the client behind it and who to contact are things you read *while* working rather than tabs you visit — leaves those pills and cards in a column that follows you down the panel." },
       { kind: "table", headers: ["Where", "What it decides"], rows: [
         ["Administration → Configuration → Workspace → **Interface**", "Which layout this deployment offers. It applies to everyone and takes effect on the next screen, with no sign-out and nothing to migrate."],
         ["My Account → Appearance → **Interface**", "The same choice for one browser, in **either** direction — including back to the redesign on an instance that has been set to classic."],
@@ -1771,6 +1776,7 @@ function SectionIcon({ id }: { id: string }) {
 }
 
 function HelpDocPage({ section }: { section: HelpSection }) {
+  const redesign = useRedesign();
   const pageAnchors = section.blocks.filter((b): b is Extract<HelpBlock, { kind: "h" }> => b.kind === "h").map((h) => ({ id: slugify(h.text), label: h.text }));
   const core = HELP_SECTIONS.filter((s) => s.group === "core");
   const walkthroughs = HELP_SECTIONS.filter((s) => s.group === "walkthroughs");
@@ -1799,8 +1805,8 @@ function HelpDocPage({ section }: { section: HelpSection }) {
         </div>
       </aside>
       <article className="flex-1 card p-6">
-        <h1 className="text-xl font-bold text-white">{section.title}</h1>
-        <p className="text-sm text-gray-400 mt-1 mb-4">{section.description}</p>
+        <h1 className={redesign ? "text-base font-semibold text-white" : "text-xl font-bold text-white"}>{section.title}</h1>
+        <p className={redesign ? "text-xs text-gray-500 mt-1 mb-3" : "text-sm text-gray-400 mt-1 mb-4"}>{section.description}</p>
         {section.blocks.map((b, i) => <Block key={i} block={b} />)}
         <div className="border-t border-surface-border/50 mt-6 pt-4">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Related topics</p>

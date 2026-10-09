@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.058 | Last Updated: 2026-10-08
+## Version: 2026.10.8.059 | Last Updated: 2026-10-08
 
 ---
 
@@ -13,6 +13,47 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.8.059 — The ticket queue becomes an inbox, and the surfaces that were left
+
+The ticket screens were converted in 2026.10.8.057 and the header every page draws in 2026.10.8.058.
+This is the rest of it: the queue's own design, the record headers that keep their own shape, and the
+handful of surfaces that had no chrome to compact — some of which turned out to need something else
+entirely.
+
+- **[New]** **The ticket list has views, with counts.** *All, Workable, Escalated, Waiting, On Hold,
+  New* — the same five the Filter dialog offers, as a strip you **press** rather than a dialog you
+  fill in, above the search box. Each one carries how many tickets it would show *before* you press
+  it, which is the whole point: "Waiting 17" is a reason to look and "Waiting" is not. The counts are
+  read from the board and client you are looking at, not from the whole instance, and the view lives
+  in the address, so a filtered list is still a link somebody can send. Verified against the running
+  instance: All 109, Workable 28, Waiting 17, On Hold 9, New 35, and pressing *Waiting* returned
+  exactly the 17 the chip promised.
+- **[New]** **Tickets carry a priority bar in front of the summary** — grey, amber, orange, red — so
+  priority is something you notice while reading the list rather than a column competing for width.
+  The priority column was already off by default; the bar is what carries the fact now, and hovering
+  it names the priority for anybody who needs it said.
+- **[Update]** **The ticket detail's context column follows you down the panel.** The state of the
+  ticket, the client behind it and who to contact are facts you read *while* working, not a tab you
+  visit — so on a wide window that column is sticky rather than scrolling away with the Overview. The
+  grouped tabs, the pinned strip and the one-row record header stay as 2026.10.8.057 left them.
+- **[Update]** **The record headers are compacted too.** A Kumo organization's name and its pills
+  (status, location, industry, service level, counts) now share one line instead of stacking, while
+  keeping the shape a record needs — a title and a description cannot express those states, which is
+  why these keep their own header rather than using the page one. The same treatment went to the
+  landing page's welcome, the Help article header and the console's title.
+- **[New]** **A `.chip` component**, for a filter or a view you press: borderless chips with a count,
+  the chosen one on the accent, themed from the palette rather than hard-coded — so it follows the
+  colour scheme and reads on both themes.
+- **[Update]** **The five multi-section pages use the application's own tab control.** Billing,
+  Reporting, a client record, Checklists and a user record each drew their own underline strip —
+  a second tab idiom, separate from the segmented control the settings screens and the board tabs
+  already use. In the redesigned interface they use the shared `Tabs` one: the same shape, the same
+  keyboard behaviour (arrow keys move the choice, one tab stop), and one place to fix it. What each
+  page's tabs *are* has not changed, and the route still owns the choice on the pages where it did.
+- **[Update]** **Help gained a *The ticket screens* section** in the Interface walkthrough and two
+  answers in the FAQ — what the counts above the list are, and how priority is shown without a column
+  — because both are things a person will see and wonder about.
 
 ## 2026.10.8.058 — The redesigned header, on every page
 

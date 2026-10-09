@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useRedesign } from "../hooks/useNavigationStyle";
 import {
   Ticket, Columns3, Building2, Target, DollarSign,
   FolderKanban, Monitor, BookOpen, Shield, Database, Users, AlertTriangle
@@ -93,12 +94,14 @@ const GETTING_STARTED: QuickLink[] = [
 ];
 
 export function HomePage() {
+  const redesign = useRedesign();
   return (
     <div className="space-y-8 animate-fade-in max-w-4xl">
-      {/* Welcome */}
-      <div>
-        <h2 className="text-2xl font-bold text-white">Welcome to C7NTAX</h2>
-        <p className="text-gray-400 mt-2 max-w-2xl">
+      {/* Welcome — the redesigned screens put the name and the summary on one line, because the bar
+          above the page has already said where you are. */}
+      <div className={redesign ? "flex flex-wrap items-baseline gap-x-3 gap-y-1" : ""}>
+        <h2 className={redesign ? "text-lg font-semibold text-white" : "text-2xl font-bold text-white"}>Welcome to C7NTAX</h2>
+        <p className={redesign ? "text-xs text-gray-500 max-w-3xl" : "text-gray-400 mt-2 max-w-2xl"}>
           Your all-in-one Professional Services Automation platform. Manage tickets, track
           billable time, monitor client agreements, and document your IT environment — all from
           a single, unified dashboard.

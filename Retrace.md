@@ -6734,3 +6734,54 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **Convert the shared thing, not the instances.** Two components and one wiring change reached 40 pages and stayed consistent; the alternative was 40 chances to be subtle. When a redesign looks like it touches everything, look for the component that everything already goes through.
 - **Make "unchanged" a property of the code, not a promise in a commit message.** `variant="section"` rendering the old markup is why this batch could be verified with two measurements, and it is the reason the remaining pages can be converted later by anyone without re-deriving the rule.
 - **Run the codemod dry, read the diff, then apply.** Both bugs would have shipped as 40 broken files, and both were visible in the dry run's output before anything was written.
+
+---
+
+### Prompt 304 — Do it all: the surfaces that were left, and tabs
+
+**Timestamp:** 2026-10-08 20:20 | **Status:** Complete | **Duration:** ~60 min
+
+**BuildNotes IDs:** **2026.10.8.059** — *The ticket queue becomes an inbox, and the surfaces that were left* (shared with prompt 305, which is the ticket half of it).
+
+**Prompt**
+
+> Do it all:
+>
+> **What's deliberately not in it:** sign-in, two-factor setup, Help, the console and the report designer keep their own layouts (they're not pages), and *record* headers — a ticket, a Kumo organization, an asset — keep theirs, because pills and states aren't things a title and a description can express. The remaining mockup feature is **tabbed navigation on the multi-section pages** (Billing, Reports, Kumo, client detail); say the word and I'll do that next.
+
+**What I did**
+- **Compacted the record headers that keep their own shape.** A Kumo organization's name and its pills — status, location, industry, service level, contact and ticket counts — now share one line instead of stacking under a 24px title. The shape stays a record header (a title and a description cannot carry those states), but the *height* is now the redesigned height. The ticket's own record header was already done in 2026.10.8.057.
+- **Compacted the three surfaces that were pages after all**: the landing page's welcome hero, the Help article header, and the console's title. Each keeps its own layout and its own voice — Help still has its sidebar of sections, the console is still a working surface — they simply draw their heading at the redesigned scale.
+- **Checked the rest instead of changing them for symmetry.** Sign-in, two-factor setup and the report designer already are what they should be: the login screen is a centred card with the wordmark, the sign-in methods, the service-health panel and the footer, built from the design system's own `input-field`/`btn-primary`; the report designer is a full-bleed canvas. Compacting a header that is a hero or a canvas is not a redesign, so nothing there was touched — and saying *why* is more useful than an edit made to make a list look complete.
+- **Put the five tab strips on the application's own tab control.** Billing, Reporting, a client record, Checklists and a user record each drew their own underline strip — a second tab idiom, separate from the segmented control the settings screens and the board tabs already use. In the redesigned interface they use the shared `Tabs` component: one shape, the keyboard behaviour that comes with it (arrow keys move the choice, one tab stop rather than three), and one place to fix it. Classic keeps the underline strips exactly as they were, verified on Billing: **0 tablists and 5 underline tabs in the classic interface, 1 tablist in the redesigned one.**
+- **Found the interesting thing, which was that the work was not what it looked like.** The brief said "add tabbed navigation where it makes sense" and the answer turned out to be that Billing, Reporting and a client record *already had* tabs — as route props, local state and hand-rolled strips. So the mockup's request was already satisfied in the product; what was missing was that five screens had invented the same control five times, and one of them was not the one the settings screens used. The change became unification rather than addition, which is smaller, safer and worth more.
+
+**Notes for next time**
+- **The delegated inventory failed and that was fine.** The explore subagent returned `400 The requested model is not supported` after 81 seconds; the four greps it would have done took me two minutes. Worth knowing: a failed agent costs latency, not correctness, and the fallback is often faster than the delegation.
+- **`noUncheckedIndexedAccess` bit the same shape a second time.** Destructuring `[["checklists","Checklists"],["tasks","My Tasks"]].map(([id, label]) => ...)` gives `string | undefined`, which will not satisfy `TabItem<string>`. The fix is to write the two items out with `as const` ids rather than to assert — the same lesson as `TICKET_TAB_GROUPS`, one component later.
+- **A page's route is not its file name.** `/checklists` silently renders the Dashboard; the page is at `/kumo/checklists`. The verification nearly "passed" on a page that was never loaded, which is exactly the kind of false green a live check is supposed to catch — so read the `h2` the route actually rendered, not just the one you expected.
+
+---
+
+### Prompt 305 — Make sure the ticket screens carry the redesign
+
+**Timestamp:** 2026-10-08 20:35 | **Status:** Complete | **Duration:** ~35 min
+
+**BuildNotes IDs:** **2026.10.8.059**.
+
+**Prompt**
+
+> Make sure the ticket screen and ticket detail screen get the redesign you made applied
+
+**What I did**
+- **Measured first, and both were already at the new scale** — 16px headers and a 47px shell bar, the same as every other page. So the honest answer to "make sure" was that the *chrome* was applied and the screens were still missing what the mockup had specified for *them*; the rest of this prompt is that.
+- **The ticket list now has views, with counts.** *All, Workable, Escalated, Waiting, On Hold, New* — the five the Filter dialog already offered — as a strip you press, above the search box, each carrying how many tickets it would show **before** you press it. That is the whole idea: a count turns a label into a reason to look. The counts come from the board and client in view rather than the whole instance, so they mean something in a scoped list, and the choice lives in the address, so a filtered list is still a link.
+- **The counts were read from the unfiltered scope, not the visible list.** The first version would have counted the rows already filtered — "Waiting 1" because you were looking at Waiting — so the chip row fetches the scope once (board and client, no view) and counts that. Verified against the running instance: **All 109, Workable 28, Escalated 0, Waiting 17, On Hold 9, New 35**, and pressing *Waiting* returned exactly the **17** the chip promised.
+- **Tickets carry a priority bar** in front of the summary — grey, amber, orange, red, with the priority named on hover. The column was already off by default, so this is the fact being carried where it is read rather than in a column competing for width.
+- **The detail's context column follows you down the panel.** The state of the ticket, the client behind it and who to contact are facts you read *while* working, not a tab you visit — so on a wide window that column is now sticky. Verified: `position: sticky` on the column, the five grouped tabs intact, no console errors on either screen.
+- **Added a `.chip` component** rather than inlining the classes: a filter or a view you press, with a count pill, the chosen one on the accent, all themed from the palette variables so it follows the colour scheme on both themes.
+- **Wrote it into Help** — a *The ticket screens* section in the Interface walkthrough, plus FAQ answers for the two things a person will actually wonder about: what the numbers above the list are, and how priority is shown without a column.
+
+**Notes for next time**
+- **"Make sure X is applied" is worth measuring before believing.** The instinct is to go and re-apply something; the answer here was that half of it was done and the other half had never been specified as "the redesign" — it was the mockup's *ticket-specific* design. Taking the measurement first turned a vague request into two concrete, testable features.
+- **A count computed from a filtered list is a lie that looks like data.** It would have been plausible (small numbers next to each chip) and wrong in a way nobody would catch without clicking. Fetch the scope, count the scope.

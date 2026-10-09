@@ -32,6 +32,11 @@ const PRIORITY_COLORS: Record<string, string> = {
   medium: "bg-amber-600/20 text-amber-400", low: "bg-gray-600/20 text-gray-400",
 };
 
+/** The priority bar in the list's Summary cell — see the title column in the row renderer. */
+const PRIORITY_BAR: Record<string, string> = {
+  critical: "bg-red-500", high: "bg-orange-400", medium: "bg-amber-400", low: "bg-gray-600",
+};
+
 /** Expense approval states (PLAN-015 Phase A #2). */
 const EXPENSE_STATUS_COLORS: Record<string, string> = {
   submitted: "bg-amber-600/20 text-amber-400",
@@ -290,7 +295,18 @@ export function TicketsPage() {
   const renderTicketCell = (t: any, colId: string) => {
     switch (colId) {
       case "number": return <td key={colId} className="px-2 py-3"><Link to={`/tickets/${t.id}`} className="text-white hover:text-cyber-400 font-medium">{t.ticketNumber}</Link></td>;
-      case "title": return <td key={colId} className="px-3 py-3"><Link to={`/tickets/${t.id}`} className="text-gray-300 hover:text-white text-sm leading-snug">{t.title}</Link></td>;
+      case "title": return <td key={colId} className="px-3 py-3">
+        <div className="flex items-center gap-2 min-w-0">
+          {/* Priority as a bar rather than a column: it is a thing you notice while reading the
+              list, not a field you sort by — and the column it replaces was one of the widest. */}
+          <span
+            className={`w-[3px] h-4 rounded-full shrink-0 ${PRIORITY_BAR[t.priority] || "bg-gray-700"}`}
+            title={`Priority: ${t.priority}`}
+            aria-hidden="true"
+          />
+          <Link to={`/tickets/${t.id}`} className="text-gray-300 hover:text-white text-sm leading-snug truncate">{t.title}</Link>
+        </div>
+      </td>;
       case "status": return <td key={colId} className="px-3 py-3"><span className={`badge ${STATUS_COLORS[t.status]||""}`}>{(t.status)?.replace(/_/g," ")}</span>{t.isOverdue ? <span className="badge bg-red-600/20 text-red-400 ml-1.5">OVERDUE</span> : null}</td>;
       case "board": return <td key={colId} className="px-3 py-3 text-gray-400 text-xs">{(t.board as {name?:string})?.name||"-"}</td>;
       case "client": return <td key={colId} className="px-3 py-3 text-gray-400">{(t.company as {name?:string})?.name||"-"}</td>;
@@ -329,6 +345,39 @@ export function TicketsPage() {
 
   useEffect(()=>{fetchBoards();},[]);
   useEffect(()=>{fetchTickets();},[boardId, statusParam, priorityParam, assignedParam, dateFromParam, dateToParam, companyParam, qParam]);
+
+  // ── The saved views, with counts ──
+  // The list on screen is filtered, so a count taken from it would be a count of the filter being
+  // on. This is the scope *without* the view applied — the board and the client, and nothing else —
+  // so each chip can say how much it would show before you press it. "Waiting 6" is a reason to
+  // look; "Waiting" is not.
+  const [scopeTickets, setScopeTickets] = useState<Array<{ status?: string; priority?: string }>>([]);
+  useEffect(() => {
+    let url = "/tickets?limit=500";
+    if (boardId) url += `&boardId=${boardId}`;
+    if (companyParam && !searchParams.get("new")) url += `&companyId=${encodeURIComponent(companyParam)}`;
+    api.get(url).then(r => setScopeTickets(r.data.data || [])).catch(() => setScopeTickets([]));
+  }, [boardId, companyParam, searchParams]);
+
+  const viewMatches = (view: (typeof FILTER_BY_OPTIONS)[number], t: { status?: string; priority?: string }) => {
+    const statuses = view.status.split(",").filter(Boolean);
+    if (statuses.length && !statuses.includes(t.status || "")) return false;
+    if (view.priority && t.priority !== view.priority) return false;
+    return true;
+  };
+  const viewCount = (view: (typeof FILTER_BY_OPTIONS)[number] | null) =>
+    view ? scopeTickets.filter(t => viewMatches(view, t)).length : scopeTickets.length;
+  const activeView = statusParam || priorityParam ? filterByFor(statusParam, priorityParam) : "all";
+  const applyView = (view: (typeof FILTER_BY_OPTIONS)[number] | null) => {
+    const next = new URLSearchParams(searchParams);
+    if (!view) { next.delete("status"); next.delete("priority"); }
+    else {
+      next.set("status", view.status);
+      if (view.priority) next.set("priority", view.priority); else next.delete("priority");
+    }
+    setSearchParams(next);
+    setPage(1);
+  };
 
   // The box follows the URL (Back/Forward, a chip being removed, a shared link)…
   useEffect(() => { setSearchInput(qParam); }, [qParam]);
@@ -810,6 +859,31 @@ export function TicketsPage() {
           </form>
         </div>
       )}
+
+      {/* ── Views ──
+          The five the Filter dialog offers, as a strip you press rather than a dialog you fill in.
+          They are the same filters the URL already carries, so a view is a link you can send. */}
+      <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Ticket views">
+        <button
+          type="button"
+          onClick={() => applyView(null)}
+          aria-pressed={activeView === "all"}
+          className={`chip ${activeView === "all" ? "chip--on" : ""}`}
+        >
+          All <span className="chip__n">{viewCount(null)}</span>
+        </button>
+        {FILTER_BY_OPTIONS.map(view => (
+          <button
+            key={view.value}
+            type="button"
+            onClick={() => applyView(view)}
+            aria-pressed={activeView === view.value}
+            className={`chip ${activeView === view.value ? "chip--on" : ""}`}
+          >
+            {view.label} <span className="chip__n">{viewCount(view)}</span>
+          </button>
+        ))}
+      </div>
 
       <div className="relative">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -2111,8 +2185,9 @@ export function TicketDetailPage() {
           </div>
         </div>
 
-        {/* Right column */}
-        <div className="space-y-5">
+        {/* Right column — redesigned, it follows you down the panel: the state of the ticket, who it
+            belongs to and who to contact are facts you read *while* working, not a tab you visit. */}
+        <div className={`space-y-5 ${redesign ? "xl:sticky xl:top-20 xl:self-start" : ""}`}>
           <div className="card space-y-3">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Classification & Details</h3>
             {editing ? (<div className="space-y-2">

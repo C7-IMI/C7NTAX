@@ -8,7 +8,8 @@ import { PageSkeleton } from "../components/ui/Skeleton";
 import { FlexpointClientCard } from "../components/FlexpointClientCard";
 import { Permission } from "@C7NTAX/shared";
 import { useAuth } from "../hooks/useAuth";
-import { PageHeader } from "../components/ui";
+import { PageHeader, Tabs } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 const TYPE_OPTIONS = ["Client", "Prospect", "Vendor", "Partner"];
 const INDUSTRY_OPTIONS = ["", "Technology", "Healthcare", "Finance", "Manufacturing", "Legal", "Education", "Government", "Non-Profit", "Retail", "Construction"];
@@ -19,6 +20,7 @@ export function ClientDetailPage() {
   const [client, setClient] = useState<Record<string, any> | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("summary");
+  const redesign = useRedesign();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
@@ -79,7 +81,15 @@ export function ClientDetailPage() {
         )}
       </div>
 
-      {/* Tabs */}
+      {/* Tabs — the redesigned interface uses the application's own segmented control. */}
+      {redesign ? (
+        <Tabs
+          label="Client sections"
+          items={tabs.map(t => ({ id: t.id, label: t.label }))}
+          value={tab}
+          onChange={setTab}
+        />
+      ) : (
       <div className="flex gap-1 border-b border-surface-border overflow-x-auto">
         {tabs.map(t => (
           <button key={t.id} onClick={() => setTab(t.id)}
@@ -88,6 +98,7 @@ export function ClientDetailPage() {
           </button>
         ))}
       </div>
+      )}
 
       {/* Summary Tab */}
       {tab === "summary" && (

@@ -148,6 +148,28 @@ html[data-theme="light"] {
     @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
   }
   /*
+   * A chip: a filter or a view you press, with the count of what it would show. Used by the ticket
+   * queue's view strip. The chosen one takes the accent, because a strip of chips where none of them
+   * look chosen is a strip you have to read the list to interpret.
+   */
+  .chip {
+    @apply inline-flex items-center gap-1.5 shrink-0 whitespace-nowrap rounded-lg border border-surface-border bg-surface-lighter px-2.5 py-1 text-xs font-medium text-gray-300 transition-colors;
+  }
+  .chip:hover { @apply text-white bg-surface-border/70; }
+  .chip--on {
+    @apply text-cyber-300;
+    border-color: color-mix(in srgb, var(--cyber-500) 45%, transparent);
+    background-color: color-mix(in srgb, var(--cyber-600) 18%, transparent);
+  }
+  .chip--on:hover { @apply text-cyber-200 bg-cyber-600/25; }
+  .chip__n {
+    @apply rounded-full bg-surface-border px-1.5 text-[10px] font-semibold tabular-nums text-gray-400;
+  }
+  .chip--on .chip__n {
+    background-color: color-mix(in srgb, var(--cyber-500) 25%, transparent);
+    color: var(--text-primary);
+  }
+  /*
    * A count on a solid red fill, as on the nav's alert indicator. The label is white on both themes
    * because the fill is red on both: `text-white` follows the theme's text colour, which would put
    * near-black on the light theme's red at just under 4.5:1.

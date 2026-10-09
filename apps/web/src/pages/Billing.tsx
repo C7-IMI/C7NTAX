@@ -15,7 +15,8 @@ import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { apiErrorMessage } from "../lib/apiError";
 import { TableSkeleton } from "../components/ui/Skeleton";
-import { PageHeader } from "../components/ui";
+import { PageHeader, Tabs } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 // Types
 interface Invoice { id: string; invoiceNumber: string; company: { name?: string; id?: string } | null; total: number; subtotal?: number; status: string; issueDate: string; dueDate: string; sentAt?: string; paidAt?: string; lineItems?: Array<{ description: string; quantity: number; unitPrice: number; total: number }>; payments?: Array<{ amount: number; method: string; processedAt: string; reference?: string }>; sourceTickets?: Array<{ id: string; ticketNumber: string }>; }
@@ -54,6 +55,7 @@ const TABS = [
 ];
 
 export function BillingPage({ tab: initialTab }: { tab?: string }) {
+  const redesign = useRedesign();
   const [activeTab, setActiveTab] = useState(initialTab || "invoices");
 
   // The route owns the tab, including /billing itself (no tab prop).
@@ -70,7 +72,16 @@ export function BillingPage({ tab: initialTab }: { tab?: string }) {
         <PageHeader variant="section" title="Billing" subtitle="Invoicing, agreements, payments, and time tracking" />
       </div>
 
-      {/* Tab Navigation */}
+      {/* Tab Navigation — the redesigned interface uses the application's own segmented control,
+          the same one the settings screens and the board tabs use, rather than a second tab idiom. */}
+      {redesign ? (
+        <Tabs
+          label="Billing sections"
+          items={TABS.map(t => ({ id: t.id, label: t.label }))}
+          value={activeTab}
+          onChange={setActiveTab}
+        />
+      ) : (
       <div className="flex items-center gap-1 border-b border-surface-border pb-0 overflow-x-auto">
         {TABS.map(tab => {
           const Icon = tab.icon;
@@ -90,6 +101,7 @@ export function BillingPage({ tab: initialTab }: { tab?: string }) {
           );
         })}
       </div>
+      )}
 
       {/* Tab Content */}
       {activeTab === "invoices" && <InvoicesTab companies={companies} />}

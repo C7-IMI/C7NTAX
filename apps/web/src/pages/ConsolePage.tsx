@@ -9,6 +9,7 @@ import {
 import { ConsolePanel } from "../components/ConsoleDialog";
 import { useAuth } from "../hooks/useAuth";
 import { useConsoleEnabled } from "../hooks/useConsoleEnabled";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 /**
  * `/console` — the console as a page rather than a popup (PLAN-028 §10).
@@ -25,6 +26,7 @@ import { useConsoleEnabled } from "../hooks/useConsoleEnabled";
  * button) and read only when the page mounts.
  */
 export function ConsolePage() {
+  const redesign = useRedesign();
   const { permissions } = useAuth();
   const consoleEnabled = useConsoleEnabled();
   const [params, setParams] = useSearchParams();
@@ -101,7 +103,7 @@ export function ConsolePage() {
     <div className="h-[calc(100vh-11rem)] min-h-[24rem] flex flex-col gap-3">
       <div className="flex items-start gap-3 shrink-0">
         <div className="min-w-0">
-          <h1 className="text-lg font-semibold text-white">Console</h1>
+          <h1 className={redesign ? "text-base font-semibold text-white" : "text-lg font-semibold text-white"}>Console</h1>
           <p className="text-xs text-gray-500">
             {permitted.length} read command{permitted.length === 1 ? "" : "s"}{" "}
             available to you, grouped the way{" "}

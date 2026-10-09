@@ -13,7 +13,8 @@ import { downloadCsv } from "../lib/csv";
 import { ReportBody, exportCsv, exportExcel, exportPdf, money, number, printReport, sectionsToTables, type Section } from "../components/reports/reportKit";
 import { REPORT_BY_ID, REPORT_TYPE_OPTIONS, REVIEW_REPORTS, STANDARD_REPORTS, type StandardReport } from "../components/reports/standardReports";
 import { ScheduleReportDialog } from "../components/reports/ScheduleReportDialog";
-import { PageHeader } from "../components/ui";
+import { PageHeader, Tabs } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 const TABS: Array<{ id: string; label: string; icon: LucideIcon; to: string }> = [
   { id: "dashboard", label: "Dashboards", icon: BarChart3, to: "/reports" },
@@ -77,6 +78,7 @@ export function ReviewsPage({ period }: { period?: string }) {
 
 export function ReportsPage({ tab: initialTab, period }: { tab?: string; period?: string }) {
   const navigate = useNavigate();
+  const redesign = useRedesign();
   const activeTab = initialTab === "qbr" ? "reviews" : initialTab || "dashboard";
 
   return (
@@ -89,6 +91,14 @@ export function ReportsPage({ tab: initialTab, period }: { tab?: string; period?
         </div>
       </div>
 
+      {redesign ? (
+        <Tabs
+          label="Reporting sections"
+          items={TABS.map(t => ({ id: t.id, label: t.label }))}
+          value={activeTab}
+          onChange={(id) => { const next = TABS.find(x => x.id === id); if (next) navigate(next.to); }}
+        />
+      ) : (
       <div className="flex items-center gap-1 border-b border-surface-border pb-0 overflow-x-auto">
         {TABS.map(tab => {
           const Icon = tab.icon;
@@ -103,6 +113,7 @@ export function ReportsPage({ tab: initialTab, period }: { tab?: string; period?
           );
         })}
       </div>
+      )}
 
       {activeTab === "dashboard" && <DashboardTab />}
       {activeTab === "standard" && <StandardReportsTab />}

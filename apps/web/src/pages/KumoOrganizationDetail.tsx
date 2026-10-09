@@ -12,6 +12,7 @@ import { UI_KUMO_TYPES } from "../lib/uiFlags";
 import { OrganizationTypePanel } from "../components/OrganizationTypePanel";
 import { OrganizationTypeRail, promotedTypeLink, type AssetType } from "../components/OrganizationTypeRail";
 import { kumoClientTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 interface Organization {
   id: string;
@@ -128,6 +129,7 @@ export function KumoOrganizationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const redesign = useRedesign();
   const [detail, setDetail] = useState<Detail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -269,11 +271,13 @@ export function KumoOrganizationDetailPage() {
 
   return (
     <div className="space-y-4 animate-fade-in">
-      {/* ── Header ─────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="text-2xl font-semibold text-white mt-1 truncate">{org.name}</h2>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-sm text-gray-400">
+      {/* ── Header ──
+          A record header keeps its own shape — the pills are states a title cannot carry — but in the
+          redesigned interface the name and those pills share one line rather than stacking. */}
+      <div className={redesign ? "flex flex-wrap items-center justify-between gap-2" : "flex flex-wrap items-start justify-between gap-3"}>
+        <div className={redesign ? "min-w-0 flex flex-wrap items-center gap-x-2.5 gap-y-1" : "min-w-0"}>
+          <h2 className={redesign ? "text-base font-semibold text-white truncate" : "text-2xl font-semibold text-white mt-1 truncate"}>{org.name}</h2>
+          <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 ${redesign ? "text-xs text-gray-500" : "mt-1 text-sm text-gray-400"}`}>
             <span className="inline-flex items-center gap-1.5">
               <span className={`w-2 h-2 rounded-full ${org.isActive ? "bg-green-400" : "bg-gray-600"}`} />
               {org.isActive ? "Active" : "Inactive"} {org.companyType || "Client"}

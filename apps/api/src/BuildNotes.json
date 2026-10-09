@@ -1,5 +1,40 @@
 [
   {
+    "version": "2026.10.8.059",
+    "date": "2026-10-08",
+    "title": "The ticket queue becomes an inbox, and the surfaces that were left",
+    "changes": [
+      {
+        "text": "**The ticket list has views, with counts.** *All, Workable, Escalated, Waiting, On Hold,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Tickets carry a priority bar in front of the summary** — grey, amber, orange, red — so",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The ticket detail's context column follows you down the panel.** The state of the",
+        "type": "Update"
+      },
+      {
+        "text": "**The record headers are compacted too.** A Kumo organization's name and its pills",
+        "type": "Update"
+      },
+      {
+        "text": "**A `.chip` component**, for a filter or a view you press: borderless chips with a count,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The five multi-section pages use the application's own tab control.** Billing,",
+        "type": "Update"
+      },
+      {
+        "text": "**Help gained a *The ticket screens* section** in the Interface walkthrough and two",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.058",
     "date": "2026-10-08",
     "title": "The redesigned header, on every page",
