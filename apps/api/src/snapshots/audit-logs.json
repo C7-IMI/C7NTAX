@@ -222832,6 +222832,43 @@
     "createdAt": "2026-10-09T03:27:11.053Z"
   },
   {
+    "id": "00a3fb45-2e8e-4fe1-80a3-8ad2eb0274c3",
+    "action": "boards:update",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "tiles": [
+        {
+          "id": "workable",
+          "pinned": true
+        },
+        {
+          "id": "new",
+          "pinned": false
+        },
+        {
+          "id": "on_hold",
+          "pinned": false
+        },
+        {
+          "id": "waiting",
+          "pinned": false
+        },
+        {
+          "id": "escalated",
+          "pinned": false
+        },
+        {
+          "id": "avg_age",
+          "pinned": false
+        }
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T06:46:23.550Z"
+  },
+  {
     "id": "3c7927ad-ce41-4955-83a3-01a5395fdd51",
     "action": "cloudconnect:create",
     "entity": "cloudconnect",
@@ -224141,6 +224178,18 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-09T03:28:11.067Z"
+  },
+  {
+    "id": "c147f1f9-a977-496b-97d0-0772c560bc1e",
+    "action": "boards:delete",
+    "entity": "boards",
+    "entityId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T06:48:14.857Z"
   },
   {
     "id": "f45fee53-f80d-4317-92a3-bbd92bd23e3f",
