@@ -219991,6 +219991,42 @@
     "createdAt": "2026-10-09T03:25:43.098Z"
   },
   {
+    "id": "7e83a0ac-32ec-41bd-b621-2e1741a66a75",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "4dd0c8de-dc4f-474b-a315-6219002d1b63",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T06:00:39.994Z"
+  },
+  {
+    "id": "9567a3e9-510a-4af5-b01c-ff636e0f1d88",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "c1a15aa5-5bde-47d2-9071-12a3e2c8607c",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T06:00:40.000Z"
+  },
+  {
+    "id": "5950b3e9-443e-4f3a-9de2-82c7c426093a",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "de368785-aecf-448d-917c-c6fa68b025df",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T06:00:40.006Z"
+  },
+  {
     "id": "6da6c70a-1ee0-4c6f-804c-dc0d2879bdd7",
     "action": "configuration:update",
     "entity": "configuration",
@@ -220943,6 +220979,30 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-08T19:26:49.358Z"
+  },
+  {
+    "id": "41a9ec16-2d8b-4e9b-997d-c8f063a64452",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "ca238ceb-e8e7-40ae-9fbf-3c505cc4cf81",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T06:00:40.011Z"
+  },
+  {
+    "id": "532c6a85-7bc6-404f-8da1-2785ce318d67",
+    "action": "tickets:delete",
+    "entity": "tickets",
+    "entityId": "4d3b65c9-d081-4fdd-a83b-dd3c33a9d2d5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T06:00:40.016Z"
   },
   {
     "id": "79730f64-28cc-464c-b902-3b2cfab955f0",

@@ -5159,17 +5159,6 @@
     "updatedAt": "2026-10-06T20:27:17.849Z"
   },
   {
-    "id": "d2ff5725-b88a-41ce-8083-9ad7599e6ffd",
-    "body": "Status: New → In Progress",
-    "isInternal": true,
-    "isEmail": false,
-    "fromEmail": null,
-    "ticketId": "4dd0c8de-dc4f-474b-a315-6219002d1b63",
-    "authorId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "createdAt": "2026-10-09T05:33:43.762Z",
-    "updatedAt": "2026-10-09T05:33:43.762Z"
-  },
-  {
     "id": "ce131f1d-f46a-4d3b-bcad-03d05324d570",
     "body": "Email received from jane.doe@contoso.com (Message-ID: <mockup-verify-1@example.com>)\n\nHi team,\nSince yesterday the VPN drops every few minutes.\nThanks,\nJane",
     "isInternal": false,
@@ -5256,60 +5245,5 @@
     "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
     "createdAt": "2026-10-07T22:19:08.399Z",
     "updatedAt": "2026-10-07T22:19:08.399Z"
-  },
-  {
-    "id": "e52a3fa2-f0c9-4807-9517-18b810c98922",
-    "body": "Email received from someone@umbrellacorp.net (Message-ID: <addin-probe-muyogvpi@probe.invalid>)\n\nRe: Addin probe\nHi, the VPN client will not connect since this morning.",
-    "isInternal": false,
-    "isEmail": true,
-    "fromEmail": "someone@umbrellacorp.net",
-    "ticketId": "c1a15aa5-5bde-47d2-9071-12a3e2c8607c",
-    "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
-    "createdAt": "2026-10-07T22:27:09.264Z",
-    "updatedAt": "2026-10-07T22:27:09.264Z"
-  },
-  {
-    "id": "d040c75a-0e57-4a18-b9eb-944d0c443b5a",
-    "body": "Email received from one@umbrellacorp.net (Message-ID: <addin-a-muyogvpi@probe.invalid>)\n\nprinter is offline",
-    "isInternal": false,
-    "isEmail": true,
-    "fromEmail": "one@umbrellacorp.net",
-    "ticketId": "de368785-aecf-448d-917c-c6fa68b025df",
-    "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
-    "createdAt": "2026-10-07T22:27:09.290Z",
-    "updatedAt": "2026-10-07T22:27:09.290Z"
-  },
-  {
-    "id": "f9898b44-a3c2-467d-8a07-00e666f09d10",
-    "body": "Email received from two@umbrellacorp.net (Message-ID: <addin-b-muyogvpi@probe.invalid>)\n\nmailbox is full",
-    "isInternal": false,
-    "isEmail": true,
-    "fromEmail": "two@umbrellacorp.net",
-    "ticketId": "ca238ceb-e8e7-40ae-9fbf-3c505cc4cf81",
-    "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
-    "createdAt": "2026-10-07T22:27:09.296Z",
-    "updatedAt": "2026-10-07T22:27:09.296Z"
-  },
-  {
-    "id": "bdadef7f-59b3-40de-aa4e-c691d2627700",
-    "body": "Email received from someone@umbrellacorp.net (Message-ID: <addin-probe-muyoha2p@probe.invalid>)\n\nRe: Addin probe\nHi, the VPN client will not connect since this morning.",
-    "isInternal": false,
-    "isEmail": true,
-    "fromEmail": "someone@umbrellacorp.net",
-    "ticketId": "4d3b65c9-d081-4fdd-a83b-dd3c33a9d2d5",
-    "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
-    "createdAt": "2026-10-07T22:27:28.136Z",
-    "updatedAt": "2026-10-07T22:27:28.136Z"
-  },
-  {
-    "id": "ed443d47-a17f-4216-baf1-4bef64e76659",
-    "body": "Email received from someone@umbrellacorp.net (Message-ID: <addin-probe-muyohht9@probe.invalid>)\n\nRe: Addin probe\nHi, the VPN client will not connect since this morning.",
-    "isInternal": false,
-    "isEmail": true,
-    "fromEmail": "someone@umbrellacorp.net",
-    "ticketId": "4dd0c8de-dc4f-474b-a315-6219002d1b63",
-    "authorId": "38f63d60-ef50-49f7-821e-c67115d6814e",
-    "createdAt": "2026-10-07T22:27:37.968Z",
-    "updatedAt": "2026-10-07T22:27:37.968Z"
   }
 ]
