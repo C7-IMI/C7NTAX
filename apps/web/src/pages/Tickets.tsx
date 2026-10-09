@@ -6,7 +6,7 @@ import { useAuth } from "../hooks/useAuth";
 import { Permission } from "@C7NTAX/shared";
 import { orgTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 import { InferencePanel } from "../components/InferencePanel";
-import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, Filter, ChevronDown, CheckSquare, Square, RotateCw, MessageSquare, Mail, Paperclip, Printer, Bell, MoreHorizontal, Link2, Package, Wrench, History, Receipt, ShieldCheck, Download, Trash2, FileText, User, Columns3, GripVertical, ExternalLink, AppWindow, SquareArrowOutUpRight, UserCheck, Flag, CircleDot, Copy, Eraser, Check, AlertTriangle, Loader2 } from "lucide-react";
+import { Plus, Search, Save, X, Clock, Edit3, Timer, Send, Home, ChevronRight, ChevronLeft, ChevronsLeft, ChevronsRight, Filter, ChevronDown, CheckSquare, Square, RotateCw, MessageSquare, Mail, Paperclip, Printer, Bell, MoreHorizontal, Link2, Package, Wrench, History, Receipt, ShieldCheck, Download, Trash2, FileText, User, Columns3, GripVertical, ExternalLink, AppWindow, SquareArrowOutUpRight, UserCheck, Flag, CircleDot, Copy, Eraser, Check, AlertTriangle, Loader2, Building2, Server } from "lucide-react";
 import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
@@ -36,6 +36,89 @@ const PRIORITY_COLORS: Record<string, string> = {
 const PRIORITY_BAR: Record<string, string> = {
   critical: "bg-red-500", high: "bg-orange-400", medium: "bg-amber-400", low: "bg-gray-600",
 };
+
+/** Compact relative age, as the queue reads it: 34m, 4h, 2d. */
+function relativeAge(iso?: string | null): string {
+  if (!iso) return "";
+  const minutes = Math.max(1, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  return minutes < 60 ? `${minutes}m` : minutes < 1440 ? `${Math.round(minutes / 60)}h` : `${Math.round(minutes / 1440)}d`;
+}
+
+/**
+ * The clock on a ticket as a chip: how long is left, or how long ago it went.
+ *
+ * It reads the board's SLA resolution target, or the due date when that is what the instance set —
+ * whichever clock the ticket actually carries — and it reads the same way either way, which is why
+ * the chip says "SLA" and the tooltip says which of the two it is looking at.
+ */
+function slaChipFor(ticket: { slaResolutionDue?: unknown; dueDate?: unknown; isOverdue?: unknown }): { tone: string; label: string; title: string } | null {
+  const raw = (ticket.slaResolutionDue || ticket.dueDate) as string | null | undefined;
+  if (!raw) return null;
+  const diffMs = new Date(raw).getTime() - Date.now();
+  const breached = diffMs < 0 || ticket.isOverdue === true;
+  const minutes = Math.max(1, Math.round(Math.abs(diffMs) / 60000));
+  const amount = minutes < 60 ? `${minutes}m` : minutes < 1440 ? `${Math.round(minutes / 60)}h` : `${Math.round(minutes / 1440)}d`;
+  return {
+    tone: breached ? "chip--bad" : diffMs < 4 * 3600_000 ? "chip--warn" : "chip--good",
+    label: breached ? `SLA breached · ${amount} ago` : `${amount} to SLA`,
+    title: `${ticket.slaResolutionDue ? "SLA resolution" : "Due"} ${new Date(raw).toLocaleString()}`,
+  };
+}
+
+/**
+ * A state as a pill you press.
+ *
+ * The redesigned record header shows status, priority and assignee as the things themselves rather
+ * than as fields inside a form: changing one is a click, not a dialog with a save button. The pill
+ * does not own the value — it hands back what was picked and the page writes it through the route
+ * the Edit form uses — so there is still exactly one place that changes a ticket.
+ */
+function TicketPill({
+  label, value, options, onPick, disabled, tone = "",
+}: {
+  label: string;
+  value: string;
+  options: Array<{ value: string; label: string }>;
+  onPick: (value: string) => void;
+  disabled?: boolean;
+  tone?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        disabled={disabled}
+        aria-expanded={open}
+        title={`${label}: ${value} — press to change it`}
+        className={`chip capitalize ${tone}`}
+      >
+        {value} <ChevronDown size={11} className="opacity-60" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div role="menu" className="absolute left-0 top-full z-50 mt-1 min-w-[11rem] rounded-lg border border-surface-border bg-surface p-1 shadow-xl">
+            <p className="px-2.5 py-1 text-[10px] uppercase tracking-wider text-gray-500">{label}</p>
+            {options.map(option => (
+              <button
+                key={option.value || "none"}
+                role="menuitem"
+                type="button"
+                disabled={option.value === value || disabled}
+                onClick={() => { setOpen(false); onPick(option.value); }}
+                className="w-full rounded px-2.5 py-1.5 text-left text-xs text-gray-300 hover:bg-surface-lighter hover:text-white disabled:opacity-40"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 /** Expense approval states (PLAN-015 Phase A #2). */
 const EXPENSE_STATUS_COLORS: Record<string, string> = {
@@ -135,6 +218,8 @@ const TICKET_COLUMNS: TicketColumnDef[] = [
   { id: "board", label: "Board", defaultVisible: true, sortField: "board.name" },
   { id: "client", label: "Client", defaultVisible: true, sortField: "company.name" },
   { id: "technician", label: "Technician", defaultVisible: true },
+  { id: "age", label: "Age", defaultVisible: true, sortField: "createdAt" },
+  { id: "sla", label: "SLA", defaultVisible: true },
   { id: "priority", label: "Priority", defaultVisible: false },
   { id: "timestamp", label: "Timestamp", defaultVisible: true, sortField: "updatedAt" },
 ];
@@ -1149,6 +1234,10 @@ export function TicketDetailPage() {
   const menu = useContextMenu();
   const { user: currentUser, permissions: myPermissions } = useAuth();
   const [ticket, setTicket] = useState<Record<string,unknown>|null>(null);
+  // ── The client's other open work ──
+  // Read while the ticket is open rather than from a tab: a request is rarely the only thing a
+  // client has in flight, and the ticket that explains this one is often already open beside it.
+  const [clientTickets, setClientTickets] = useState<Array<{ id: string; ticketNumber: string; title: string; status: string; updatedAt?: string }>>([]);
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState<Record<string,string>>({});
   const [saving, setSaving] = useState(false);
@@ -1217,6 +1306,15 @@ export function TicketDetailPage() {
     const group = TICKET_TAB_GROUPS.find(g => g.tabs.includes(activeTab));
     if (group) setTabByGroup(prev => (prev[group.id] === activeTab ? prev : { ...prev, [group.id]: activeTab }));
   }, [activeTab]);
+  useEffect(() => {
+    const companyId = ticket?.companyId as string | undefined;
+    if (!companyId) { setClientTickets([]); return; }
+    let cancelled = false;
+    api.get(`/tickets?companyId=${companyId}&limit=10`)
+      .then(r => { if (!cancelled) setClientTickets(r.data.data || []); })
+      .catch(() => { if (!cancelled) setClientTickets([]); });
+    return () => { cancelled = true; };
+  }, [ticket?.companyId]);
   const [cf, setCf] = useState<Record<string, any>>({});
   const [expenses, setExpenses] = useState<any[]>([]);
   const canManageBilling = myPermissions.includes(Permission.BillingManage);
@@ -1868,6 +1966,41 @@ export function TicketDetailPage() {
 
   if(!ticket) return <PageSkeleton />;
 
+  // ── The record header's facts ──
+  const company = ticket.company as { name?: string; notes?: string | null; companyType?: string | null; serviceLevel?: string | null; openTickets?: number | null } | null;
+  const companyName = company?.name || "";
+  // The client's own brief, the same note the client record carries: the thing you need while
+  // reading a ticket rather than the thing you go and look up.
+  const companyBrief = (company?.notes || "").trim();
+  const assigneeName = ticket.assignedTo ? `${(ticket.assignedTo as { firstName?: string; lastName?: string }).firstName || ""} ${(ticket.assignedTo as { firstName?: string; lastName?: string }).lastName || ""}`.trim() : "";
+  const agreementName = (ticket.serviceAgreement as { name?: string } | null)?.name || "";
+  const otherOpen = clientTickets.filter(t => t.id !== id && !["closed", "cancelled", "resolved"].includes(t.status));
+  // What is behind each group of tabs, from the payload the page already holds.
+  const tabCounts: Record<string, number> = {
+    activity: ((ticket.comments as unknown[]) || []).length,
+    work: ((ticket.timeEntries as unknown[]) || []).length,
+    files: ((ticket.attachments as unknown[]) || []).length,
+  };
+  /*
+   * The clock the board put on this ticket — its SLA resolution target, or the due date if the
+   * instance set one of those instead. The chip reads the same either way: how long is left, or how
+   * long ago it went.
+   */
+  const slaTargetRaw = (ticket.slaResolutionDue || ticket.dueDate) as string | null | undefined;
+  const slaChip = (() => {
+    if (!slaTargetRaw) return null;
+    const diffMs = new Date(slaTargetRaw).getTime() - Date.now();
+    const breached = diffMs < 0 || ticket.isOverdue === true;
+    const minutes = Math.max(1, Math.round(Math.abs(diffMs) / 60000));
+    const amount = minutes < 60 ? `${minutes}m` : minutes < 1440 ? `${Math.round(minutes / 60)}h` : `${Math.round(minutes / 1440)}d`;
+    const what = ticket.slaResolutionDue ? "SLA resolution" : "Due";
+    return {
+      tone: breached ? "chip--bad" : diffMs < 4 * 3600_000 ? "chip--warn" : "chip--good",
+      label: breached ? `SLA breached · ${amount} ago` : `${amount} to SLA`,
+      title: `${what} ${new Date(slaTargetRaw).toLocaleString()}`,
+    };
+  })();
+
   return (
     <div
       className={redesign ? "space-y-4 animate-fade-in" : "space-y-6 animate-fade-in max-w-4xl"}
@@ -1875,27 +2008,69 @@ export function TicketDetailPage() {
     >
       <ContextMenu state={menu.menuState} onClose={menu.close} />
       <DeleteTicketDialog target={deleteOpen ? { ticketNumber: String(ticket?.ticketNumber ?? ""), title: String(ticket?.title ?? "") } : null} busy={deleting} onCancel={() => setDeleteOpen(false)} onConfirm={confirmDeleteTicket} />
-      <div className={redesign ? "flex items-center gap-3 flex-wrap" : "flex items-center justify-between flex-wrap gap-3"}>
-        {redesign ? (
-          <>
-            <Link to="/tickets" className="text-xs text-gray-500 hover:text-white shrink-0">Tickets</Link>
-            <ChevronRight size={13} className="text-gray-600 shrink-0" />
-            <span className="text-xs font-mono text-gray-500 shrink-0">{(ticket.ticketNumber as string) || `#${id}`}</span>
-            <span className="text-xs text-gray-600 shrink-0">·</span>
-            <span className="text-xs text-gray-500 shrink-0 truncate max-w-[16rem]">{(ticket.board as {name?: string})?.name || "No board"}</span>
-            <h2 className="text-base font-semibold text-white truncate min-w-0 flex-1">{(ticket.title as string) || "Untitled ticket"}</h2>
-            <span className={`badge shrink-0 ${STATUS_COLORS[ticket.status as string] || ""}`}>{(ticket.status as string)?.replace(/_/g, " ")}</span>
-            <span className={`badge shrink-0 ${PRIORITY_COLORS[ticket.priority as string] || ""}`}>{ticket.priority as string}</span>
-            <div className="flex items-center gap-2 shrink-0">
-              {editing ? (<>
-                <button onClick={() => setEditing(false)} className="btn-secondary text-sm">Cancel</button>
-                <button onClick={handleSave} disabled={saving} className="btn-primary text-sm">{saving ? "Saving..." : "Save"}</button>
-              </>) : (
-                <button onClick={() => setEditing(true)} className="btn-secondary text-sm flex items-center gap-1"><Edit3 size={14} />Edit</button>
+      {/* ── The record header ──
+          Redesigned: where it sits, what it is, and then the states *themselves* as pills you press.
+          Every pill writes through the route the Edit form uses, so a status change is a click
+          rather than a dialog with a form and a save — and there is still one place that writes. */}
+      {redesign ? (
+        <div className="space-y-2">
+          <div className="flex items-center gap-x-2 gap-y-1 flex-wrap">
+            <Link to="/tickets" className="text-xs text-gray-500 hover:text-white">Tickets</Link>
+            <ChevronRight size={12} className="text-gray-600" />
+            <span className="text-xs font-mono text-gray-400">{(ticket.ticketNumber as string) || `#${id}`}</span>
+            <span className="text-xs text-gray-600">·</span>
+            <span className="text-xs text-gray-500">{(ticket.board as {name?:string})?.name || "No board"}</span>
+            {companyName ? (<>
+              <span className="text-xs text-gray-600">·</span>
+              <span className="text-xs text-gray-500 truncate max-w-[18rem]">{companyName}</span>
+            </>) : null}
+            <div className="ml-auto flex items-center gap-2">
+              <button onClick={copyTicketLink} className="btn-secondary text-xs flex items-center gap-1.5"><Link2 size={13} /> Copy link</button>
+              {(ticket.status as string) !== "in_progress" && (ticket.status as string) !== "closed" && (
+                <button onClick={() => void applyTicketField("status", "in_progress")} disabled={moreActionsBusy} className="btn-primary text-xs">
+                  {moreActionsBusy ? "Working…" : "Acknowledge"}
+                </button>
               )}
             </div>
-          </>
-        ) : (<>
+          </div>
+
+          <h1 className="text-xl font-semibold text-white leading-tight">{(ticket.title as string) || "Untitled ticket"}</h1>
+
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <TicketPill
+              label="Status"
+              value={statusLabel(ticket.status as string)}
+              options={TICKET_STATUSES.map(value => ({ value, label: statusLabel(value) }))}
+              onPick={value => void applyTicketField("status", value)}
+              disabled={moreActionsBusy}
+            />
+            <TicketPill
+              label="Priority"
+              value={priorityLabel(ticket.priority as string)}
+              options={TICKET_PRIORITIES.map(value => ({ value, label: priorityLabel(value) }))}
+              onPick={value => void applyTicketField("priority", value)}
+              disabled={moreActionsBusy}
+            />
+            <TicketPill
+              label="Assigned to"
+              value={assigneeName || "Unassigned"}
+              options={[{ value: "", label: "Unassigned" }, ...users.map(u => ({ value: u.id, label: `${u.firstName} ${u.lastName}`.trim() }))]}
+              onPick={value => void assignTicketTo(value || null)}
+              disabled={moreActionsBusy}
+            />
+            {slaChip && <span className={`chip ${slaChip.tone}`} title={slaChip.title}>{slaChip.label}</span>}
+            {(ticket.source as string) && <span className="chip capitalize">{String(ticket.source).replace(/_/g, " ")}</span>}
+            {agreementName && <span className="chip" title="The service agreement this ticket is billed against">{agreementName}</span>}
+            <span className="chip ml-auto" title="Every field, in one form">
+              <button onClick={() => setEditing(true)} className="flex items-center gap-1.5"><Edit3 size={12} /> Edit</button>
+            </span>
+            {editing && (<>
+              <button onClick={() => setEditing(false)} className="btn-secondary text-xs">Cancel</button>
+              <button onClick={handleSave} disabled={saving} className="btn-primary text-xs">{saving ? "Saving…" : "Save"}</button>
+            </>)}
+          </div>
+        </div>
+      ) : (<>
           <div>
             <div className="flex items-center gap-2">
               <Link to="/tickets" className="text-sm text-gray-500 hover:text-white">Tickets</Link>
@@ -1913,7 +2088,6 @@ export function TicketDetailPage() {
             )}
           </div>
         </>)}
-      </div>
 
       {/* ── Toolbar card: tabs + icon actions ──
           Redesigned, the twelve panels are grouped into five tabs the screen can hold at once, and a
@@ -1936,6 +2110,9 @@ export function TicketDetailPage() {
                   }`}
                 >
                   <group.icon size={13} />{group.label}
+                  {/* How much is behind the tab, where the payload knows: a strip that says where to
+                      look is useful, one that says how much there is is a reason to look. */}
+                  {tabCounts[group.id] ? <span className="chip__n">{tabCounts[group.id]}</span> : null}
                 </button>
               ))}
             </div>
@@ -2066,15 +2243,66 @@ export function TicketDetailPage() {
             </div>
           </div>
 
-          {/* Notes */}
+          {/* The client's other open work — read while this ticket is open, because the ticket that
+              explains this one is usually already open beside it. */}
+          {redesign && otherOpen.length > 0 && (
+            <div className="card space-y-3">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">The client's other open work</h3>
+              <div className="space-y-2">
+                {otherOpen.slice(0, 5).map(other => (
+                  <Link
+                    key={other.id}
+                    to={`/tickets/${other.id}`}
+                    className="flex items-center gap-3 rounded-lg border border-surface-border px-2.5 py-2 transition-colors hover:bg-surface-lighter"
+                  >
+                    <span className="shrink-0 font-mono text-[11px] text-gray-500">{other.ticketNumber}</span>
+                    <span className="min-w-0 flex-1 truncate text-xs text-gray-200">{other.title}</span>
+                    <span className={`badge shrink-0 text-[10px] ${STATUS_COLORS[other.status] || ""}`}>{other.status.replace(/_/g, " ")}</span>
+                    <span className="shrink-0 text-[11px] text-gray-600" title="Last updated">{relativeAge(other.updatedAt)}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Notes — and, redesigned, the composer: a note, a reply to the client and a time entry
+              all start in the same place, because they are the same act of recording what you did.
+              The tab is the existing internal/emailed flag, so nothing new is being written. */}
           <div className="card space-y-3">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Notes</h3>
+            {redesign ? (
+              <>
+                <div className="flex items-center gap-1 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setNoteInternal(true)}
+                    aria-pressed={noteInternal}
+                    className={`chip ${noteInternal ? "chip--on" : ""}`}
+                  >
+                    <ShieldCheck size={12} /> Note
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNoteInternal(false)}
+                    aria-pressed={!noteInternal}
+                    className={`chip ${!noteInternal ? "chip--on" : ""}`}
+                  >
+                    <Mail size={12} /> Reply to client
+                  </button>
+                  <button type="button" onClick={() => { setActiveTab("time"); openTimeEntryModal(); }} className="chip">
+                    <Timer size={12} /> Log time
+                  </button>
+                  <span className="ml-auto text-[11px] text-gray-600 hidden lg:inline">The composer is always here.</span>
+                </div>
+              </>
+            ) : (
+              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Notes</h3>
+            )}
             <form onSubmit={handlePostNote} className="space-y-2">
               <textarea
                 ref={noteInputRef}
-                rows={4}
+                rows={redesign ? 3 : 4}
                 className="input-field w-full text-sm resize-y min-h-[6.5rem]"
-                placeholder={noteInternal ? "Add an internal note... (Ctrl+Enter to submit)" : "Add a note for the customer... (Ctrl+Enter to submit)"}
+                placeholder={noteInternal ? "What did you do? (Ctrl+Enter to submit)" : "Reply to the client — this is emailed to the ticket contact (Ctrl+Enter to submit)"}
                 value={noteText}
                 onChange={e=>setNoteText(e.target.value)}
                 onKeyDown={e=>{ if(e.key==="Enter" && (e.ctrlKey||e.metaKey)) handlePostNote(e); }}
@@ -2085,11 +2313,18 @@ export function TicketDetailPage() {
                   {noteInternal ? "Internal only — the customer is not emailed" : "Will be emailed to the ticket contact"}
                 </span>
                 <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer select-none">
-                    <input type="checkbox" checked={noteInternal} onChange={e=>setNoteInternal(e.target.checked)} />
-                    Internal
-                  </label>
-                  <button type="submit" disabled={posting || !noteText.trim()} className="btn-primary text-sm">{posting?"...":"Add Note"}</button>
+                  {redesign && (
+                    <button type="button" onClick={() => setShowAttachDialog(true)} className="btn-secondary text-sm flex items-center gap-1.5">
+                      <Paperclip size={13} /> Attach
+                    </button>
+                  )}
+                  {!redesign && (
+                    <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer select-none">
+                      <input type="checkbox" checked={noteInternal} onChange={e=>setNoteInternal(e.target.checked)} />
+                      Internal
+                    </label>
+                  )}
+                  <button type="submit" disabled={posting || !noteText.trim()} className="btn-primary text-sm">{posting ? "…" : redesign ? "Save and log" : "Add Note"}</button>
                 </div>
               </div>
 
@@ -2185,9 +2420,94 @@ export function TicketDetailPage() {
           </div>
         </div>
 
-        {/* Right column — redesigned, it follows you down the panel: the state of the ticket, who it
-            belongs to and who to contact are facts you read *while* working, not a tab you visit. */}
+        {/* Right column — the CONTEXT rail, and it follows you down the panel: whose ticket this is,
+            who to talk to and what they run are facts you read *while* working, not a tab you visit.
+            Read-only on purpose — a state you change is a pill in the header, and the rest is Edit. */}
         <div className={`space-y-5 ${redesign ? "xl:sticky xl:top-20 xl:self-start" : ""}`}>
+          {redesign && !editing ? (<>
+            <div className="card space-y-3">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5"><Building2 size={12} /> Client</h3>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-medium text-white truncate">{companyName || "No client"}</span>
+                {company?.companyType && <span className="badge bg-cyber-600/20 text-cyber-400 text-[10px]">{company.companyType}</span>}
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs"><span className="text-gray-500">Open tickets</span><span className="text-white">{otherOpen.length + 1}</span></div>
+                {company?.serviceLevel && (<div className="flex items-center justify-between text-xs"><span className="text-gray-500">Service level</span><span className="text-white">{company.serviceLevel}</span></div>)}
+                {agreementName && (<div className="flex items-start justify-between gap-3 text-xs"><span className="text-gray-500 shrink-0">Agreement</span><span className="text-white text-right">{agreementName}</span></div>)}
+                <div className="flex items-center justify-between text-xs"><span className="text-gray-500">Opened</span><span className="text-white">{ticket.createdAt ? new Date(ticket.createdAt as string).toLocaleDateString() : "—"}</span></div>
+              </div>
+              {companyBrief && (
+                <p className="rounded-md border-l-2 border-amber-400/70 bg-amber-500/10 px-2.5 py-2 text-xs leading-relaxed text-amber-100/90">{companyBrief}</p>
+              )}
+              {ticket.companyId ? (
+                <Link to={`/clients/${ticket.companyId as string}`} className="btn-secondary text-xs w-full justify-center flex">Open the client</Link>
+              ) : null}
+            </div>
+
+            <div className="card space-y-3">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5"><User size={12} /> Contact</h3>
+              {ticket.contact ? (<>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs"><span className="text-gray-500">Name</span><span className="text-white">{`${(ticket.contact as { firstName?: string }).firstName || ""} ${(ticket.contact as { lastName?: string }).lastName || ""}`.trim() || "—"}</span></div>
+                  <div className="flex items-center justify-between gap-3 text-xs"><span className="text-gray-500 shrink-0">Email</span><span className="text-cyber-400 truncate">{(ticket.contact as { email?: string }).email || "—"}</span></div>
+                  <div className="flex items-center justify-between text-xs"><span className="text-gray-500">Phone</span><span className="text-white">{(ticket.contact as { phone?: string }).phone || "—"}</span></div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={openEmailDialog} className="btn-secondary text-xs flex-1 justify-center flex items-center gap-1.5"><Mail size={12} /> Reply</button>
+                  <button onClick={() => { setActiveTab("time"); openTimeEntryModal(); }} className="btn-secondary text-xs flex-1 justify-center flex items-center gap-1.5"><Timer size={12} /> Log a call</button>
+                </div>
+              </>) : (
+                <p className="text-xs text-gray-500">No contact on this ticket yet — add one with Edit.</p>
+              )}
+              {(((ticket.additionalContacts as Array<{ id: string; contact?: { id: string; firstName?: string; lastName?: string; email?: string }; role?: string; notifyOnNote?: boolean }>) || []).length > 0) && (
+                <div className="space-y-2 border-t border-surface-border pt-2.5">
+                  {((ticket.additionalContacts as Array<{ id: string; contact?: { id: string; firstName?: string; lastName?: string; email?: string }; role?: string; notifyOnNote?: boolean }>) || []).map(link => (
+                    <div key={link.id} className="flex items-center gap-2">
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-xs font-medium text-white">{[link.contact?.firstName, link.contact?.lastName].filter(Boolean).join(" ") || link.contact?.email}</span>
+                        <span className="block truncate text-[11px] text-gray-500">{link.contact?.email}</span>
+                      </span>
+                      <select
+                        className="shrink-0 rounded border border-surface-border bg-surface-input px-1.5 py-0.5 text-[11px] text-gray-300"
+                        value={link.role === "cc" ? "cc" : link.notifyOnNote ? "notes" : "ticket"}
+                        onChange={(e) => void updateTicketContactLink(link.contact?.id || "", e.target.value)}
+                        title="How this contact is used on the ticket"
+                      >
+                        <option value="ticket">On the ticket</option>
+                        <option value="cc">CC on email</option>
+                        <option value="notes">Notified of notes</option>
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {showAddContact ? (
+                <div className="rounded-lg border border-surface-border bg-surface-lighter/40 px-2.5 py-2">
+                  <RecipientField
+                    label="Add"
+                    value={[]}
+                    onChange={(picked) => { const person = picked[0]; if (person) void addTicketContactLink(person); }}
+                    suggestions={contactSuggestions}
+                    placeholder="Search this client's contacts or type an address"
+                    hint="Added as an additional contact — choose how they are used once added."
+                    orgName={orgName}
+                    orgEmails={orgEmails}
+                  />
+                </div>
+              ) : (
+                <button type="button" onClick={() => setShowAddContact(true)} className="text-xs text-cyber-400 hover:text-cyber-300 flex items-center gap-1"><Plus size={12} /> Add contact</button>
+              )}
+            </div>
+
+            <div className="card space-y-3">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                <Server size={12} /> Estate <span className="text-[10px] font-normal normal-case tracking-normal text-gray-600">was "Configurations"</span>
+              </h3>
+              <p className="text-xs text-gray-500 leading-relaxed">What this client runs — servers, workstations and network gear, from the configuration records.</p>
+              <button onClick={() => setActiveTab("configurations")} className="btn-secondary text-xs w-full justify-center flex items-center gap-1.5"><Wrench size={12} /> Open the estate</button>
+            </div>
+          </>) : (<>
           <div className="card space-y-3">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Classification & Details</h3>
             {editing ? (<div className="space-y-2">
@@ -2289,6 +2609,7 @@ export function TicketDetailPage() {
               </div>
             )}
           </div>
+          </>)}
         </div>
       </div>)}
 

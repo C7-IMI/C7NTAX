@@ -170,6 +170,14 @@ html[data-theme="light"] {
     color: var(--text-primary);
   }
   /*
+   * Chips that report a state rather than a filter: how much time is left on an SLA, and what
+   * happens when there is none left. Tinted from the same colour as the label, so the pair stays in
+   * step with the theme the way the status badges do.
+   */
+  .chip--good { color: #34d399; border-color: color-mix(in srgb, #34d399 40%, transparent); background-color: color-mix(in srgb, #34d399 14%, transparent); }
+  .chip--warn { color: #fbbf24; border-color: color-mix(in srgb, #fbbf24 40%, transparent); background-color: color-mix(in srgb, #fbbf24 14%, transparent); }
+  .chip--bad { color: #f87171; border-color: color-mix(in srgb, #f87171 40%, transparent); background-color: color-mix(in srgb, #f87171 14%, transparent); }
+  /*
    * A count on a solid red fill, as on the nav's alert indicator. The label is white on both themes
    * because the fill is red on both: `text-white` follows the theme's text colour, which would put
    * near-black on the light theme's red at just under 4.5:1.
