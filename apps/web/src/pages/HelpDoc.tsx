@@ -1498,7 +1498,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       { kind: "h", text: "The five reporting areas" },
       { kind: "table", headers: ["Area", "What it is"], rows: [
         ["Dashboards", "The at-a-glance reporting home: the numbers a desk looks at first."],
-        ["Standard Reports", "The reports built into the product — tickets, SLA, time, commercials, client value and Microsoft 365 account hygiene — each with its own filters."],
+        ["Standard Reports", "The reports built into the product — tickets, SLA, time, commercials, receivables, client value and Microsoft 365 account hygiene — each with its own filters."],
         ["Business Reviews", "One review pack at three cadences — weekly, monthly and quarterly."],
         ["Custom Reports", "Designed reports you build yourself (see Designing a Report)."],
         ["Analytics", "Ad-hoc analysis over the same data."],
@@ -1509,6 +1509,9 @@ export const HELP_SECTIONS: HelpSection[] = [
         ["SLA Performance", "Are we meeting the promises, and where are the misses"],
         ["Technician Productivity", "Hours, utilisation and throughput per person"],
         ["Revenue", "What has been billed and what is outstanding"],
+        ["Aging Report", "Receivables by age band, with each client's oldest debt and the largest unpaid invoices. **Ticket Aging** is the other one — that ages tickets, not money."],
+        ["Tax Summary", "Tax collected by rate, jurisdiction and client, and where the figures disagree with themselves"],
+        ["Billing Forecast", "What the agreements and recurring invoices already in place will bill, month by month, and the assumptions it rests on"],
         ["Ticket Aging", "What has been open too long, by age band"],
         ["Time Tracking", "Where the hours actually went"],
         ["Client Satisfaction", "Survey responses and trends, from the responses that exist"],
@@ -1525,6 +1528,13 @@ export const HELP_SECTIONS: HelpSection[] = [
         "Select **Print**, **PDF**, **Excel** or **CSV** to take it away.",
       ] },
       { kind: "note", text: "Where a figure genuinely cannot be known, the report **says so and tells you why** rather than estimating it — for example how many delivered hours carry no cost rate, so a margin that reads well can be seen to be incomplete." },
+      { kind: "h", text: "The same reports, reached from Billing" },
+      { kind: "p", text: "**Billing → Reports** lists six of these by the question a biller asks — Revenue, Aging Report, Tax Summary, Billing Forecast, Contract Profitability and Technician Productivity — and opening one runs it **in place**, with the same filters, the same **Print** and the same **Export** as Reporting → Standard Reports. It is the same report, not a second copy of the figures, so a number cannot be right in one place and stale in the other. Three of the six are billing's own and are worth knowing:" },
+      { kind: "steps", items: [
+        "**Aging Report** — money owed, by age band, measured from each invoice's own due date; the largest unpaid invoices are listed underneath so the total has names against it.",
+        "**Tax Summary** — what was collected, by rate, jurisdiction and client, plus the questions the figures cannot answer: invoices with no rate, a missing jurisdiction, a subtotal that does not match its rate. Drafts are excluded, and it says how much that excluded.",
+        "**Billing Forecast** — what the agreements and recurring invoices already in place will bill, month by month, with what expires inside the horizon and the assumptions the projection rests on.",
+      ] },
       { kind: "h", text: "Business Reviews (weekly, monthly, quarterly)" },
       { kind: "p", text: "A business review is a **pack** rather than a table: service delivery, targets, commercials, the estate and risk — the same sections at all three cadences, only the window changes. It opens on the last **finished** period, so a review is never mid-flight." },
       { kind: "steps", items: [

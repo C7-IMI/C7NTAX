@@ -8929,3 +8929,50 @@ The `preflight.mjs` failures and the PLAN-030 open items are untouched.
 **Also in flight:** two agents are building the Billing → Reports tab — the three report types that tab
 promises and does not have (**AR ageing**, **Tax Summary**, **Billing Forecast**) and the wiring that makes
 Generate generate on all six cards. That is a separate change and a separate version.
+
+---
+
+### Prompt 354 — The Billing report cards, and the two reports that printed `$NaN`
+
+**Timestamp:** 2026-10-09 13:28 | **Status:** Complete | **Duration:** ~55 min
+
+**BuildNotes IDs:** **2026.10.9.024**.
+
+**Prompt**
+
+> The generate buttons don't work on any of these reports. Fix it and build out the reports
+
+**What I did**
+- **The cards were never buttons.** `ReportCard` in `Billing.tsx` is a presentational `div` with no handler — six
+  cards that look pressable and do nothing. Three of the six also named a report that did not exist: *AR ageing*,
+  *Tax Summary* and *Billing Forecast* had card copy and no catalogue entry.
+- **Three reports built** (`billing-aging`, `billing-tax-summary`, `billing-forecast`), each with a `basis` or
+  `dataQuality` block that states what the figures rest on and what they cannot answer — the rate-versus-fraction
+  trap in the invoice tax column is disclosed rather than guessed at.
+- **One ageing implementation.** The Revenue report had its own inline buckets; it now calls a shared
+  `ageingBuckets` helper that the Aging Report calls too, so the two cannot drift. The DB check: both give
+  3,518.13 / 0 / 8,680 / 0 / 0, summing to the 12,198.13 outstanding Revenue reports.
+- **`ReportViewer` extracted** from `Reports.tsx` (moved, byte-identical) so a card opens the same viewer
+  Reporting uses — filters, Print and Export included — rather than a second rendering of the same figures.
+- **Two `$NaN` columns fixed.** A pre-formatted string handed to a column that formats again:
+  `money(x)` in a row map plus `format: "money"` on the column. Billing Forecast's *Cumulative* and Contract
+  Profitability's *Effective rate* (the second pre-existing and visible on `/reports/standard` before today).
+- **Swept all sixteen** standard reports in the browser for the same defect: none left. Cumulative now reads
+  $26,000 → $165,000 (the horizon total) and the effective rate $148.13 = $3,518.13 ÷ 23.75h.
+- **Help**: three rows in the Standard Reports table, **Aging Report** disambiguated from **Ticket Aging**, and a
+  passage saying Billing → Reports runs the same reports in place.
+
+**Notes for next time**
+- **"The button doesn't work" and "the report is missing" were one report.** I would have shipped the wiring and
+  left three cards unable to resolve anything if the recon had stopped at the handler.
+- **The agents' own verification was not enough, and mine was not either until the third attempt.** The API
+  payloads were clean, so the first NaN search — over the API — found nothing; the page found it. Then my
+  case-insensitive `/NaN/i` matched "mainte**nan**ce" and turned a clean sweep into seven false alarms. Scan the
+  rendered thing, and scan it case-sensitively.
+- **A fixed-scope caller is the cheapest security test for a new report endpoint.** Asking for a client outside
+  the caller's scope and confirming the answer was not widened took one request.
+
+**Also begun in this turn:** the Developer section mockups. Two agents were sent — the section hub with the
+purge screen and the catalogue of developer options, and the *Prepare for Live Deployment* wizard mapped onto
+PLAN-030. Mockups only; they are the next version, not this one.
+

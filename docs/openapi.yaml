@@ -89,7 +89,7 @@ tags:
   - name: "Quotes"
     description: "4 operations"
   - name: "Reports"
-    description: "27 operations"
+    description: "30 operations"
   - name: "Roles"
     description: "5 operations"
   - name: "Schedule"
@@ -5464,6 +5464,51 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/reports/data/billing-aging":
+    get:
+      tags: ["Reports"]
+      operationId: "getReportsdatabillingAging"
+      summary: "Receivables ageing, by bucket and by client"
+      description: "Every unpaid invoice (status `sent`, `partial` or `overdue`) aged in days past its due date into five buckets — not yet due, 1–30, 31–60, 61–90 and over 90 — with a per-client matrix of what each client owes in each bucket, the oldest debt per client and the 25 largest unpaid invoices. A point-in-time report: `from`/`to` are deliberately not applied, because what is owed is what is owed today, and `asOf` names the date the age was measured. The buckets come from the same definition the revenue summary uses, so `totals.outstanding` equals `revenue-summary`'s `totalOutstanding` for the same scope; `basis` returns the bucket rule and the statuses counted. Requires report:view and honours `clientId`."
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["report:view"]
+      x-source: "reports.ts · reportsRouter.get"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/reports/data/billing-forecast":
+    get:
+      tags: ["Reports"]
+      operationId: "getReportsdatabillingForecast"
+      summary: "Projected revenue from active agreements and recurring invoices"
+      description: "Revenue projected forward from active service agreements and recurring invoices. `months` sets the horizon (1–24, default 6) and the window starts with the month after the current one. Each agreement is repeated at its recorded billing amount and cadence, anchored on its next invoice date (or its start date when none is set) and stopped at its end date; each recurring invoice is stepped by its own recurrence rule from its next generation date, and one that belongs to an active agreement is counted once, through the agreement. The answer carries a monthly series, the contribution of each agreement, what expires in the horizon, and `assumptions` — the whole basis, including that hourly and overage work is not projected, amounts are before tax, and no growth, churn or currency conversion is assumed. Anything that could not be projected is listed in `dataQuality` with the reason instead of being counted as zero. Requires report:view and honours `clientId`."
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["report:view"]
+      x-source: "reports.ts · reportsRouter.get"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/reports/data/billing-tax-summary":
+    get:
+      tags: ["Reports"]
+      operationId: "getReportsdatabillingTaxSummary"
+      summary: "Tax collected and taxable revenue, by rate, jurisdiction and client"
+      description: "Tax collected and taxable revenue for the period (invoices by issue date, drafts excluded), grouped by rate, by jurisdiction and by client, with what was invoiced against what has been paid and what remains outstanding. The schema has no tax-jurisdiction column, so jurisdiction is derived from the client's billing country and state (falling back to its primary address) and any invoice whose client has neither is grouped as \"Not recorded\" rather than guessed — `basis` states this. Tax rates are stored two ways in this database (invoices as a percentage, service agreements as a fraction), so a rate above 1 is read as a percentage and one at or below 1 as a fraction; `dataQuality` counts invoices whose recorded tax does not equal subtotal x rate, invoices with a 0% rate, invoices with no jurisdiction and the drafts that were left out. Requires report:view and honours `clientId`, `from` and `to`."
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["report:view"]
+      x-source: "reports.ts · reportsRouter.get"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
   "/api/reports/data/client-value":
     get:
       tags: ["Reports"]
@@ -7446,5 +7491,5 @@ components:
         occurredAt: { type: string, format: date-time }
         data: { type: object, description: "Kept as it arrived, on the ticket." }
 
-# 79 of 440 operations carry a curated summary from docs/api-operations.json;
+# 82 of 443 operations carry a curated summary from docs/api-operations.json;
 # the rest are described from their own path, which is still enough to call them correctly.

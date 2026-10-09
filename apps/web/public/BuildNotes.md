@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.023 | Last Updated: 2026-10-09
+## Version: 2026.10.9.024 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,53 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.024 — The six Billing report cards generate, and the two reports they were missing
+
+**Billing → Reports** offered six cards that looked like buttons and were not: `ReportCard` was a presentational
+`div` with no handler, so nothing happened on any of them. Three of the six named a report that did not exist —
+*AR ageing*, *Tax Summary* and *Billing Forecast* were promised by the card copy and absent from the catalogue.
+
+- **[New]** **Aging Report** (`/api/reports/data/billing-aging`) — receivables by age band, measured from each
+  invoice's own due date, with a per-client matrix, the largest unpaid invoices and a `basis` block stating the
+  bucket rule (`min < days ≤ max`, so an invoice due today is current) and the statuses counted.
+- **[New]** **Tax Summary** (`/api/reports/data/billing-tax-summary`) — tax collected and taxable revenue by
+  rate, jurisdiction and client, with a `dataQuality` block that names what the figures cannot answer: invoices
+  with no rate, a missing jurisdiction, a subtotal that disagrees with its rate, and how much tax the excluded
+  drafts carried.
+- **[New]** **Billing Forecast** (`/api/reports/data/billing-forecast?months=1–24`) — the months the agreements
+  and recurring invoices already in place will bill, each agreement's contributions and occurrence dates, what
+  expires inside the horizon, and a seven-item `assumptions` list.
+- **[Fix]** **The six cards now generate.** Each card resolves its report through the catalogue
+  (`REPORT_BY_ID`) and opens it in place, using **the same viewer as Reporting → Standard Reports** — so filters,
+  **Print**, **Export** and the period picker come with it rather than being a second copy that can drift. A card
+  with no catalogue entry says so instead of offering an action. The modern interface shows a row-per-report sheet
+  with a Generate chip and a **← All reports** way back; the classic interface keeps its card grid, with the whole
+  card now a control.
+- **[Update]** **`ReportViewer` moved out of `Reports.tsx`** into `components/reports/ReportViewer.tsx`, moved
+  rather than rewritten — the extracted code is byte-identical to what it replaced. `Reports.tsx` loses 452 lines
+  and keeps unchanged behaviour.
+- **[Update]** **The ageing buckets are one implementation.** `revenueReport`'s inline ageing became a shared
+  `ageingBuckets` helper, so the Revenue report and the Aging Report cannot disagree about a bucket boundary.
+  Verified against the database: both produce 3,518.13 / 0 / 8,680 / 0 / 0, summing to the 12,198.13 outstanding
+  total that Revenue reports.
+- **[Fix]** **Two reports printed `$NaN`.** A pre-formatted string was being handed to a column that formats
+  again — Billing Forecast's *Cumulative* column and Contract Profitability's *Effective rate* column (the latter
+  pre-existing, and visible on `/reports/standard`). Both now pass the number through: cumulative reads
+  $26,000 → $165,000, matching the horizon total, and the effective rate reads $148.13 for Umbrella Silver
+  ($3,518.13 ÷ 23.75h). Every one of the sixteen standard reports was swept for the same defect; none remain.
+- **[Update]** **Help** lists the three new reports, disambiguates **Aging Report** from **Ticket Aging**, and
+  explains that Billing → Reports runs the same reports in place.
+- **[Update]** **`docs/openapi.yaml`, `docs/API.md` and `docs/api-operations.json`** carry the three new
+  endpoints, their `report:view` permission and their filters.
+
+**Verification:** both apps type-check clean; `guard:routes`, `guard:api-docs`, `guard:help-links` and
+`guard:encoding` pass; the three endpoints return 200 with an admin token and 401 unauthenticated; a fixed-scope
+caller asking for a client outside its scope is not widened; the tax groupings each sum to the 1,449.38 collected
+(2,499.38 across all invoices less the 1,050 on the excluded draft); all six cards driven in the browser with real
+figures and no `NaN`.
 
 ---
 

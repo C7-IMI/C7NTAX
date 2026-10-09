@@ -709,7 +709,7 @@ const contract: StandardReport = {
             products: num(costs.products),
             margin: num(a.margin),
             marginPct: num(a.marginPct),
-            effectiveHourlyRate: a.effectiveHourlyRate === null || a.effectiveHourlyRate === undefined ? "—" : money(a.effectiveHourlyRate),
+            effectiveHourlyRate: a.effectiveHourlyRate ?? null,
             endDate: text(a.endDate, "Open ended"),
           };
         }),
@@ -749,6 +749,401 @@ const contract: StandardReport = {
         { label: "Products", value: text(basis.products) },
       ] },
       ...(basis.note ? [{ kind: "notes", title: "Read this before quoting the margin", items: [String(basis.note)], tone: num(basis.hoursWithoutCostRate) > 0 ? "warn" : "good" } as Section] : []),
+    ];
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  9. Receivables ageing (Billing)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * The Billing screen's "Aging Report". Point-in-time rather than period-scoped — see
+ * `billingAgingReport` in `apps/api/src/services/reportData.ts` — so its only shared filter is the
+ * client, and the bucket boundaries it used are printed in the facts section.
+ */
+const billingAging: StandardReport = {
+  id: "billing-aging",
+  title: "Aging Report",
+  description: "Accounts receivable aging: current, 30, 60, 90+ days with client-level detail",
+  icon: Clock,
+  endpoint: "/reports/data/billing-aging",
+  filters: { client: true },
+  build: payload => {
+    const totals = record(payload.totals);
+    const basis = record(payload.basis);
+    const currencies = list<unknown>(basis.currencies).map(String);
+    return [
+      {
+        kind: "kpis",
+        title: "Outstanding",
+        items: [
+          { label: "Total outstanding", value: money(totals.outstanding), tone: "warn" },
+          { label: "Overdue", value: money(totals.overdue), tone: "bad" },
+          { label: "Not yet due", value: money(totals.notYetDue), tone: "good" },
+          { label: "Open invoices", value: number(totals.invoices) },
+        ],
+      },
+      { kind: "bars", title: "Ageing profile", rows: list<Payload>(payload.buckets).map(b => ({ label: text(b.label), value: num(b.amount), display: money(b.amount) })) },
+      {
+        kind: "table",
+        title: "Buckets",
+        columns: [
+          { key: "label", label: "Bucket" },
+          { key: "invoices", label: "Invoices", align: "right" },
+          { key: "amount", label: "Amount", align: "right", format: "money" },
+          { key: "share", label: "Share", align: "right", format: "percent" },
+        ],
+        rows: list<Payload>(payload.buckets).map(b => ({
+          label: text(b.label),
+          invoices: number(b.invoices),
+          amount: num(b.amount),
+          // The total is the sum of the buckets, so a bucket's share can be taken against it directly.
+          share: num(totals.outstanding) ? Math.round((num(b.amount) / num(totals.outstanding)) * 1000) / 10 : 0,
+        })),
+      },
+      {
+        kind: "table",
+        title: "By client",
+        columns: [
+          { key: "client", label: "Client" },
+          { key: "invoices", label: "Invoices", align: "right" },
+          { key: "current", label: "Current", align: "right", format: "money" },
+          { key: "days1to30", label: "1–30 days", align: "right", format: "money" },
+          { key: "days31to60", label: "31–60 days", align: "right", format: "money" },
+          { key: "days61to90", label: "61–90 days", align: "right", format: "money" },
+          { key: "days90plus", label: "90+ days", align: "right", format: "money" },
+          { key: "outstanding", label: "Outstanding", align: "right", format: "money" },
+          { key: "oldest", label: "Oldest overdue", align: "right" },
+        ],
+        rows: list<Payload>(payload.clients).map(c => ({
+          client: text(c.client),
+          invoices: number(c.invoices),
+          current: num(c.current),
+          days1to30: num(c.days1to30),
+          days31to60: num(c.days31to60),
+          days61to90: num(c.days61to90),
+          days90plus: num(c.days90plus),
+          outstanding: num(c.outstanding),
+          oldest: num(c.oldestOverdueDays) ? `${number(c.oldestOverdueDays)} days` : "Current",
+        })),
+        emptyText: "Nothing is outstanding.",
+      },
+      {
+        kind: "table",
+        title: "Largest unpaid invoices",
+        columns: [
+          { key: "invoiceNumber", label: "Invoice" },
+          { key: "client", label: "Client" },
+          { key: "amount", label: "Amount", align: "right", format: "money" },
+          { key: "issued", label: "Issued" },
+          { key: "due", label: "Due" },
+          { key: "daysOverdue", label: "Days overdue", align: "right" },
+          { key: "bucket", label: "Bucket" },
+        ],
+        rows: list<Payload>(payload.largest),
+        emptyText: "Nothing is outstanding.",
+      },
+      {
+        kind: "facts",
+        title: "How this is measured",
+        items: [
+          { label: "As of", value: text(payload.asOf) },
+          { label: "Measure", value: text(basis.measure, "Days past the due date") },
+          { label: "Bucket rule", value: text(basis.bucketRule, "—") },
+          { label: "Counted as owed", value: list<unknown>(basis.openStatuses).map(String).join(", ") || "sent, partial, overdue" },
+          ...(currencies.length > 1 ? [{ label: "Currencies", value: currencies.join(", ") }] : []),
+          { label: "Average open invoice", value: money(totals.averageInvoice) },
+        ],
+      },
+      ...(list<unknown>(payload.notes).length ? [{ kind: "notes", tone: "info", title: "Read this before dunning", items: list<unknown>(payload.notes).map(String) } as Section] : []),
+    ];
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  10. Tax summary (Billing)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * The Billing screen's "Tax Summary". Jurisdiction is derived from the client's billing address
+ * because the schema has no jurisdiction column — the basis section says so on the screen, and the
+ * figures that could not be trusted are listed under data quality rather than smoothed over.
+ */
+const billingTax: StandardReport = {
+  id: "billing-tax-summary",
+  title: "Tax Summary",
+  description: "Taxable revenue by jurisdiction, tax collected report for compliance reporting",
+  icon: DollarSign,
+  endpoint: "/reports/data/billing-tax-summary",
+  filters: { client: true, period: true },
+  build: payload => {
+    const totals = record(payload.totals);
+    const basis = record(payload.basis);
+    const quality = record(payload.dataQuality);
+    const mismatched = list<Payload>(quality.mismatched);
+    return [
+      {
+        kind: "kpis",
+        title: "Tax in the period",
+        items: [
+          { label: "Tax collected", value: money(totals.taxCollected), tone: "good" },
+          { label: "Taxable revenue", value: money(totals.taxableRevenue) },
+          { label: "Effective rate", value: `${number(totals.effectiveRatePct)}%` },
+          { label: "Invoices", value: number(totals.invoices) },
+        ],
+      },
+      {
+        kind: "kpis",
+        title: "Invoiced against paid",
+        items: [
+          { label: "Invoiced", value: money(totals.invoiced) },
+          { label: "Collected", value: money(totals.collected), tone: "good" },
+          { label: "Outstanding", value: money(totals.outstanding), tone: "warn" },
+          { label: "Payment rate", value: `${number(totals.invoiced) ? Math.round((num(totals.collected) / num(totals.invoiced)) * 1000) / 10 : 0}%`, tone: toneFor(num(totals.invoiced) ? (num(totals.collected) / num(totals.invoiced)) * 100 : null, 95) },
+        ],
+      },
+      {
+        kind: "table",
+        title: "By rate",
+        columns: [
+          { key: "rateLabel", label: "Rate" },
+          { key: "invoices", label: "Invoices", align: "right" },
+          { key: "taxableRevenue", label: "Taxable revenue", align: "right", format: "money" },
+          { key: "taxCollected", label: "Tax collected", align: "right", format: "money" },
+          { key: "invoiced", label: "Invoiced", align: "right", format: "money" },
+          { key: "collected", label: "Collected", align: "right", format: "money" },
+        ],
+        rows: list<Payload>(payload.byRate).map(r => ({ ...r, rateLabel: text(r.rateLabel) })),
+        emptyText: "No invoices were issued in this period.",
+      },
+      {
+        kind: "table",
+        title: "By jurisdiction",
+        columns: [
+          { key: "jurisdiction", label: "Jurisdiction" },
+          { key: "rates", label: "Rates" },
+          { key: "invoices", label: "Invoices", align: "right" },
+          { key: "taxableRevenue", label: "Taxable revenue", align: "right", format: "money" },
+          { key: "taxCollected", label: "Tax collected", align: "right", format: "money" },
+          { key: "invoiced", label: "Invoiced", align: "right", format: "money" },
+          { key: "collected", label: "Collected", align: "right", format: "money" },
+          { key: "outstanding", label: "Outstanding", align: "right", format: "money" },
+        ],
+        rows: list<Payload>(payload.byJurisdiction).map(r => ({ ...r, jurisdiction: text(r.jurisdiction), rates: text(r.rates, "—") })),
+        emptyText: "No invoices were issued in this period.",
+      },
+      {
+        kind: "table",
+        title: "By client",
+        columns: [
+          { key: "client", label: "Client" },
+          { key: "jurisdiction", label: "Jurisdiction" },
+          { key: "taxId", label: "Tax ID" },
+          { key: "invoices", label: "Invoices", align: "right" },
+          { key: "taxableRevenue", label: "Taxable revenue", align: "right", format: "money" },
+          { key: "taxCollected", label: "Tax collected", align: "right", format: "money" },
+          { key: "invoiced", label: "Invoiced", align: "right", format: "money" },
+          { key: "collected", label: "Collected", align: "right", format: "money" },
+          { key: "outstanding", label: "Outstanding", align: "right", format: "money" },
+        ],
+        rows: list<Payload>(payload.byClient).map(r => ({ ...r, client: text(r.client), jurisdiction: text(r.jurisdiction), taxId: text(r.taxId, "—") })),
+        emptyText: "No invoices were issued in this period.",
+      },
+      ...(mismatched.length ? [{
+        kind: "table",
+        title: "Invoices whose recorded tax differs from subtotal × rate",
+        columns: [
+          { key: "invoiceNumber", label: "Invoice" },
+          { key: "client", label: "Client" },
+          { key: "rate", label: "Rate" },
+          { key: "recorded", label: "Recorded tax", align: "right", format: "money" },
+          { key: "expected", label: "Subtotal × rate", align: "right", format: "money" },
+        ],
+        rows: mismatched,
+        note: "The totals above use the recorded figure, not the expected one.",
+      } as Section] : []),
+      {
+        kind: "facts",
+        title: "Basis",
+        items: [
+          { label: "Period", value: text(basis.period, "Invoices by issue date") },
+          { label: "Taxable revenue", value: text(basis.taxableRevenue) },
+          { label: "Tax collected", value: text(basis.taxCollected) },
+          { label: "Jurisdiction", value: text(basis.jurisdiction) },
+          { label: "Rate convention", value: text(basis.rateConvention) },
+          { label: "Paid", value: text(basis.paid) },
+          { label: "Outstanding", value: text(basis.outstanding) },
+          { label: "Drafts", value: text(basis.drafts) },
+        ],
+      },
+      {
+        kind: "facts",
+        title: "Data quality",
+        items: [
+          { label: "Invoices with a 0% rate", value: number(quality.invoicesWithoutRate) },
+          { label: "Invoices with no jurisdiction", value: number(quality.invoicesMissingJurisdiction) },
+          { label: "Tax mismatches", value: number(quality.taxMismatch) },
+          { label: "Draft invoices excluded", value: number(quality.draftsExcluded) },
+          { label: "Tax on those drafts", value: money(quality.draftTaxExcluded) },
+          { label: "Currencies", value: list<unknown>(quality.currencies).map(String).join(", ") || "—" },
+        ],
+      },
+      ...(list<unknown>(payload.notes).length ? [{ kind: "notes", tone: num(quality.taxMismatch) || num(quality.invoicesMissingJurisdiction) ? "warn" : "info", title: "Read this before filing", items: list<unknown>(payload.notes).map(String) } as Section] : []),
+    ];
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════════
+//  11. Billing forecast (Billing)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * The Billing screen's "Billing Forecast". Its own option is the horizon; every assumption the
+ * projection rests on is returned by the endpoint and printed here, so the numbers never appear
+ * without the basis that produced them.
+ */
+const billingForecast: StandardReport = {
+  id: "billing-forecast",
+  title: "Billing Forecast",
+  description: "Projected revenue from active agreements and recurring invoices",
+  icon: TrendingUp,
+  endpoint: "/reports/data/billing-forecast",
+  filters: { client: true },
+  options: [
+    { key: "months", label: "Horizon", kind: "number", default: 6, suffix: "months", hint: "How far forward to project, from next month. 6 months is two quarters; 12 covers a renewal cycle." },
+  ],
+  build: payload => {
+    const totals = record(payload.totals);
+    const horizon = record(payload.horizon);
+    const quality = record(payload.dataQuality);
+    const months = list<Payload>(payload.months);
+    const notProjected = list<Payload>(quality.agreementsNotProjected);
+    const mismatched = list<Payload>(quality.billingAmountDiffersFromLatestInvoice);
+    const expiring = list<Payload>(payload.expiring);
+    return [
+      {
+        kind: "kpis",
+        title: "Expected",
+        items: [
+          { label: "Next month", value: money(totals.nextMonth), tone: "info", sub: text(months[0] ? months[0].label : "", "") },
+          { label: "Following months", value: money(totals.followingMonths), sub: text(horizon.label, "") },
+          { label: "Horizon total", value: money(totals.horizonTotal) },
+          { label: "Annualised run rate", value: money(totals.annualisedRunRate), sub: `Recorded agreements: ${money(totals.runRateNextMonth)}/month` },
+        ],
+      },
+      {
+        kind: "kpis",
+        title: "Behind the numbers",
+        items: [
+          { label: "Active agreements", value: number(totals.activeAgreements), sub: `${number(totals.projectedAgreements)} projected` },
+          { label: "Recurring invoices", value: number(totals.recurringInvoices) },
+          { label: "Expiring in the horizon", value: number(totals.expiringInHorizon), tone: num(totals.expiringInHorizon) ? "warn" : "good", sub: `${money(totals.expiringAnnualValue)} annual value` },
+          { label: "Horizon", value: `${number(horizon.months)} months`, sub: text(horizon.label, "") },
+        ],
+      },
+      { kind: "bars", title: "Expected by month", rows: months.map(m => ({ label: text(m.label), value: num(m.total), display: money(m.total) })) },
+      {
+        kind: "table",
+        title: "By month",
+        columns: [
+          { key: "label", label: "Month" },
+          { key: "agreements", label: "Agreements billed", align: "right" },
+          { key: "recurring", label: "Recurring invoices", align: "right", format: "money" },
+          { key: "total", label: "Expected", align: "right", format: "money" },
+          { key: "cumulative", label: "Cumulative", align: "right", format: "money" },
+        ],
+        rows: months.map((m, index) => ({
+          label: text(m.label),
+          agreements: number(m.agreements),
+          recurring: num(m.recurring),
+          total: num(m.total),
+          cumulative: months.slice(0, index + 1).reduce((s, row) => s + num(row.total), 0),
+        })),
+        emptyText: "No horizon to show.",
+      },
+      {
+        kind: "table",
+        title: "Agreements",
+        columns: [
+          { key: "agreement", label: "Agreement" },
+          { key: "client", label: "Client" },
+          { key: "type", label: "Type" },
+          { key: "billingPeriod", label: "Cadence" },
+          { key: "billingAmount", label: "Amount", align: "right", format: "money" },
+          { key: "annualisedValue", label: "Annualised", align: "right", format: "money" },
+          { key: "nextInvoiceDate", label: "Next invoice" },
+          { key: "occurrences", label: "Bills in horizon", align: "right" },
+          { key: "horizonValue", label: "Horizon value", align: "right", format: "money" },
+          { key: "endDate", label: "Renews" },
+          { key: "status", label: "Projection" },
+        ],
+        rows: list<Payload>(payload.agreements).map(a => ({
+          agreement: text(a.agreement),
+          client: text(a.client),
+          type: text(a.type),
+          billingPeriod: text(a.billingPeriod),
+          billingAmount: num(a.billingAmount),
+          annualisedValue: num(a.annualisedValue),
+          nextInvoiceDate: text(a.nextInvoiceDate),
+          occurrences: number(a.occurrences),
+          horizonValue: num(a.horizonValue),
+          endDate: text(a.endDate, "Open ended"),
+          status: a.projected ? "Projected" : text(a.reason, "Not projected"),
+        })),
+        emptyText: "No active agreements in scope.",
+      },
+      ...(expiring.length ? [{
+        kind: "table",
+        title: "What expires in the horizon",
+        columns: [
+          { key: "agreement", label: "Agreement" },
+          { key: "client", label: "Client" },
+          { key: "endDate", label: "Ends" },
+          { key: "month", label: "Month" },
+          { key: "daysToExpiry", label: "Days", align: "right" },
+          { key: "billingAmount", label: "Amount", align: "right", format: "money" },
+          { key: "annualisedValue", label: "Annual value", align: "right", format: "money" },
+        ],
+        rows: expiring,
+        emptyText: "Nothing expires in this horizon.",
+        note: "An agreement is projected to this date and no further; no renewal is assumed.",
+      } as Section] : []),
+      {
+        kind: "table",
+        title: "Recurring invoices",
+        columns: [
+          { key: "invoiceNumber", label: "Invoice" },
+          { key: "client", label: "Client" },
+          { key: "amount", label: "Amount", align: "right", format: "money" },
+          { key: "recurrenceRule", label: "Rule" },
+          { key: "nextGenerationDate", label: "Next generation" },
+          { key: "occurrences", label: "Bills in horizon", align: "right" },
+          { key: "horizonValue", label: "Horizon value", align: "right", format: "money" },
+          { key: "status", label: "Projection" },
+        ],
+        rows: list<Payload>(payload.recurring).map(r => ({
+          invoiceNumber: text(r.invoiceNumber),
+          client: text(r.client),
+          amount: num(r.amount),
+          recurrenceRule: text(r.recurrenceRule),
+          nextGenerationDate: text(r.nextGenerationDate),
+          occurrences: number(r.occurrences),
+          horizonValue: num(r.horizonValue),
+          status: r.occurrences ? "Projected" : text(r.reason, "Not projected"),
+        })),
+        emptyText: "No recurring invoices in scope.",
+      },
+      ...(list<unknown>(payload.assumptions).length ? [{ kind: "notes", tone: "info", title: "Assumptions", items: list<unknown>(payload.assumptions).map(String) } as Section] : []),
+      ...((notProjected.length || mismatched.length) ? [{
+        kind: "facts",
+        title: "Data quality",
+        items: [
+          { label: "Agreements not projected", value: number(notProjected.length) },
+          { label: "Amount differs from latest invoice", value: number(mismatched.length) },
+        ],
+      } as Section] : []),
+      ...(list<unknown>(payload.notes).length ? [{ kind: "notes", tone: num(notProjected.length) || num(mismatched.length) ? "warn" : "info", title: "Read this before promising a number", items: list<unknown>(payload.notes).map(String) } as Section] : []),
     ];
   },
 };
@@ -1249,6 +1644,9 @@ export const STANDARD_REPORTS: StandardReport[] = [
   sla,
   utilization,
   revenue,
+  billingAging,
+  billingTax,
+  billingForecast,
   aging,
   timeTracking,
   csat,

@@ -537,6 +537,37 @@ export async function utilizationReport(user: AuthUser | undefined, period: Repo
 
 const OPEN_INVOICE_STATUSES = ["sent", "partial", "overdue"];
 
+/**
+ * The receivables ageing buckets, measured in days past each invoice's due date. Defined once and
+ * used by both the revenue summary and the ageing report, so "60 days" cannot mean one thing on one
+ * screen and another on the next. The boundaries are deliberate and are printed in the payload:
+ * a bucket is `min < days <= max`, so an invoice due today is still current and one due exactly
+ * 30 days ago is in the 1–30 band.
+ */
+const AGING_BUCKETS: Array<{ key: string; label: string; min: number; max: number }> = [
+  { key: "current", label: "Not yet due", min: -Infinity, max: 0 },
+  { key: "1-30", label: "1–30 days", min: 0, max: 30 },
+  { key: "31-60", label: "31–60 days", min: 30, max: 60 },
+  { key: "61-90", label: "61–90 days", min: 60, max: 90 },
+  { key: "over-90", label: "Over 90 days", min: 90, max: Infinity },
+];
+
+const daysOverdue = (dueDate: Date, now: Date) => (now.getTime() - dueDate.getTime()) / 86400000;
+
+/** The bucket an invoice's age falls in, for labelling its row as well as counting it. */
+const bucketFor = (days: number) => AGING_BUCKETS.find(b => days > b.min && days <= b.max) ?? AGING_BUCKETS[AGING_BUCKETS.length - 1]!;
+
+/** Every open invoice, counted and summed into the five ageing buckets. */
+function ageingBuckets<T extends { total: number; dueDate: Date }>(outstanding: T[], now: Date) {
+  return AGING_BUCKETS.map(b => {
+    const matching = outstanding.filter(i => {
+      const days = daysOverdue(i.dueDate, now);
+      return days > b.min && days <= b.max;
+    });
+    return { key: b.key, label: b.label, invoices: matching.length, amount: money(matching.reduce((s, i) => s + i.total, 0)) };
+  });
+}
+
 export async function revenueReport(user: AuthUser | undefined, period: ReportPeriod) {
   const scope = companyFilter(period);
   const inPeriod = dateRange("issueDate", period);
@@ -582,20 +613,7 @@ export async function revenueReport(user: AuthUser | undefined, period: ReportPe
     monthly.get(key)!.collected += p.amount;
   }
 
-  const buckets = [
-    { label: "Not yet due", min: -Infinity, max: 0 },
-    { label: "1–30 days", min: 0, max: 30 },
-    { label: "31–60 days", min: 30, max: 60 },
-    { label: "61–90 days", min: 60, max: 90 },
-    { label: "Over 90 days", min: 90, max: Infinity },
-  ];
-  const aging = buckets.map(b => {
-    const matching = outstanding.filter(i => {
-      const overdueDays = (now.getTime() - i.dueDate.getTime()) / 86400000;
-      return overdueDays > b.min && overdueDays <= b.max;
-    });
-    return { label: b.label, invoices: matching.length, amount: money(matching.reduce((s, i) => s + i.total, 0)) };
-  });
+  const aging = ageingBuckets(outstanding, now);
 
   const clientRows = byClientCompanies.map(c => {
     const theirs = invoices.filter(i => i.companyId === c.id);
@@ -1743,5 +1761,472 @@ export async function m365InactiveAccountsReport(user: AuthUser | undefined, per
     })),
     truncated: sorted.length > 500,
     notes,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  Billing screen reports: receivables ageing, tax summary, forecast
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Accounts receivable ageing for the Billing screen.
+ *
+ * This answers "who owes what, and how late is it", so it is a point-in-time report rather than a
+ * period one: everything still open is aged as of today, and the shared client filter still applies.
+ * The buckets come from the same `ageingBuckets` the revenue summary uses, so `totals.outstanding`
+ * here equals `revenue.totalOutstanding` for the same scope and a bucket boundary cannot drift
+ * between the two screens.
+ */
+export async function billingAgingReport(user: AuthUser | undefined, period: ReportPeriod) {
+  const now = new Date();
+  const scope = companyFilter(period);
+  const outstanding = await prisma.invoice.findMany({
+    where: { status: { in: OPEN_INVOICE_STATUSES }, ...scope },
+    select: {
+      invoiceNumber: true, status: true, total: true, currency: true, issueDate: true, dueDate: true,
+      companyId: true, company: { select: { name: true } },
+    },
+  });
+
+  const buckets = ageingBuckets(outstanding, now);
+  const totalOutstanding = money(outstanding.reduce((s, i) => s + i.total, 0));
+  const notYetDue = buckets.find(b => b.key === "current")?.amount ?? 0;
+
+  const clientRows = [...new Set(outstanding.map(i => i.companyId))].map(id => {
+    const theirs = outstanding.filter(i => i.companyId === id);
+    const byKey = new Map(ageingBuckets(theirs, now).map(b => [b.key, b.amount]));
+    return {
+      client: theirs[0]?.company?.name ?? "—",
+      invoices: theirs.length,
+      outstanding: money(theirs.reduce((s, i) => s + i.total, 0)),
+      current: byKey.get("current") ?? 0,
+      days1to30: byKey.get("1-30") ?? 0,
+      days31to60: byKey.get("31-60") ?? 0,
+      days61to90: byKey.get("61-90") ?? 0,
+      days90plus: byKey.get("over-90") ?? 0,
+      overdue: money(theirs.filter(i => daysOverdue(i.dueDate, now) > 0).reduce((s, i) => s + i.total, 0)),
+      oldestOverdueDays: theirs.length ? Math.max(0, Math.round(Math.max(...theirs.map(i => daysOverdue(i.dueDate, now))))) : 0,
+    };
+  }).sort((a, b) => b.outstanding - a.outstanding);
+
+  const largest = outstanding
+    .slice()
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 25)
+    .map(i => {
+      const days = Math.round(daysOverdue(i.dueDate, now));
+      return {
+        invoiceNumber: i.invoiceNumber,
+        client: i.company?.name ?? "—",
+        status: i.status,
+        amount: money(i.total),
+        issued: i.issueDate.toISOString().slice(0, 10),
+        due: i.dueDate.toISOString().slice(0, 10),
+        daysOverdue: Math.max(0, days),
+        bucket: bucketFor(days).label,
+      };
+    });
+
+  const currencies = [...new Set(outstanding.map(i => i.currency))];
+
+  return {
+    period,
+    asOf: now.toISOString().slice(0, 10),
+    buckets,
+    totals: {
+      invoices: outstanding.length,
+      outstanding: totalOutstanding,
+      overdue: money(totalOutstanding - notYetDue),
+      notYetDue,
+      clients: clientRows.length,
+      averageInvoice: money(outstanding.length ? totalOutstanding / outstanding.length : 0),
+    },
+    basis: {
+      measure: "Days past the invoice's due date, as of today",
+      bucketRule: "A bucket is min < days ≤ max, so an invoice due today is current and one due exactly 30 days ago sits in the 1–30 band.",
+      openStatuses: OPEN_INVOICE_STATUSES,
+      currencies,
+    },
+    clients: clientRows,
+    largest,
+    notes: [
+      "Receivables ageing is a point-in-time figure: the period filter is not applied, so the total is everything open right now.",
+      "Only invoices in a status of sent, partial or overdue are counted as owed; drafts have not been issued and paid invoices owe nothing.",
+      ...(currencies.length > 1 ? [`Invoices in ${currencies.length} currencies are summed as recorded; no conversion is applied.`] : []),
+    ],
+  };
+}
+
+/**
+ * Tax collected and taxable revenue, for compliance reporting.
+ *
+ * The schema records a tax rate and a tax total on each invoice but **has no jurisdiction column**,
+ * so jurisdiction is derived from the client's billing address (falling back to its primary address)
+ * and the payload says so rather than implying a tax engine decided it. Draft invoices are excluded —
+ * tax is a liability once an invoice is issued, and a draft has not been. Invoices whose recorded tax
+ * does not equal `subtotal × rate` are counted and named in `dataQuality`, so a reconciliation does
+ * not have to guess why the totals differ. A 0% rate may be a genuine exempt supply or simply not
+ * recorded; the two are indistinguishable here and the payload says that too.
+ */
+export async function billingTaxSummaryReport(user: AuthUser | undefined, period: ReportPeriod) {
+  const scope = companyFilter(period);
+  const inPeriod = dateRange("issueDate", period);
+  const [invoices, drafts] = await Promise.all([
+    prisma.invoice.findMany({
+      where: { ...scope, ...inPeriod, status: { not: "draft" } },
+      select: {
+        invoiceNumber: true, status: true, issueDate: true, subtotal: true, taxRate: true, taxTotal: true, total: true, currency: true,
+        companyId: true,
+        company: { select: { name: true, taxId: true, billingState: true, billingCountry: true, state: true, country: true } },
+        payments: { select: { amount: true } },
+      },
+    }),
+    prisma.invoice.aggregate({ _count: { _all: true }, _sum: { taxTotal: true }, where: { ...scope, ...inPeriod, status: "draft" } }),
+  ]);
+
+  type TaxInvoice = (typeof invoices)[number];
+  const paid = (i: TaxInvoice) => i.payments.reduce((s, p) => s + p.amount, 0);
+  const totalsOf = (rows: TaxInvoice[]) => {
+    const taxableRevenue = rows.reduce((s, i) => s + i.subtotal, 0);
+    const taxCollected = rows.reduce((s, i) => s + i.taxTotal, 0);
+    const invoiced = rows.reduce((s, i) => s + i.total, 0);
+    const collected = rows.reduce((s, i) => s + paid(i), 0);
+    return {
+      invoices: rows.length,
+      taxableRevenue: money(taxableRevenue),
+      taxCollected: money(taxCollected),
+      invoiced: money(invoiced),
+      collected: money(collected),
+      outstanding: money(invoiced - collected),
+      effectiveRatePct: taxableRevenue > 0 ? +((taxCollected / taxableRevenue) * 100).toFixed(4) : 0,
+    };
+  };
+
+  /** The nearest thing the data has to a jurisdiction: the client's billing address. */
+  const jurisdictionOf = (company: TaxInvoice["company"]) => {
+    const country = company?.billingCountry || company?.country || "";
+    const state = company?.billingState || company?.state || "";
+    return [country, state].filter(Boolean).join(" · ") || "Not recorded";
+  };
+  /**
+   * `taxRate` is written two ways in this database: invoices carry a percentage (8.5) while service
+   * agreements carry a fraction (0.085). No tax rate is 100% or more, so a value above 1 is read as a
+   * percentage and one at or below 1 as a fraction — and the payload says so, because guessing
+   * silently would misstate a compliance figure by a factor of a hundred.
+   */
+  const ratePercent = (rate: number) => +((rate > 1 ? rate : rate * 100)).toFixed(4);
+  const rateLabel = (rate: number) => `${ratePercent(rate)}%`;
+
+  const group = <T,>(rows: TaxInvoice[], keyOf: (i: TaxInvoice) => T) => {
+    const map = new Map<T, TaxInvoice[]>();
+    for (const i of rows) {
+      const key = keyOf(i);
+      map.set(key, [...(map.get(key) ?? []), i]);
+    }
+    return map;
+  };
+
+  const byRate = [...group(invoices, i => ratePercent(i.taxRate)).entries()]
+    .map(([rate, rows]) => ({ rate, rateLabel: rateLabel(rate), ...totalsOf(rows) }))
+    .sort((a, b) => b.taxCollected - a.taxCollected);
+
+  const byJurisdiction = [...group(invoices, i => jurisdictionOf(i.company)).entries()]
+    .map(([jurisdiction, rows]) => ({
+      jurisdiction,
+      rates: [...new Set(rows.map(i => rateLabel(i.taxRate)))].sort().join(", "),
+      ...totalsOf(rows),
+    }))
+    .sort((a, b) => b.taxCollected - a.taxCollected);
+
+  const byClient = [...group(invoices, i => i.companyId).entries()]
+    .map(([, rows]) => {
+      const first = rows[0]!;
+      return {
+        client: first.company?.name ?? "—",
+        taxId: first.company?.taxId ?? "",
+        jurisdiction: jurisdictionOf(first.company),
+        ...totalsOf(rows),
+      };
+    })
+    .sort((a, b) => b.taxCollected - a.taxCollected);
+
+  const mismatched = invoices
+    .map(i => ({ invoice: i, expected: money((i.subtotal * ratePercent(i.taxRate)) / 100) }))
+    .filter(row => Math.abs(row.invoice.taxTotal - row.expected) > 0.01);
+
+  const currencies = [...new Set(invoices.map(i => i.currency))];
+
+  return {
+    period,
+    totals: totalsOf(invoices),
+    byRate,
+    byJurisdiction,
+    byClient: byClient.slice(0, 50),
+    dataQuality: {
+      invoicesWithoutRate: invoices.filter(i => !i.taxRate).length,
+      invoicesMissingJurisdiction: invoices.filter(i => jurisdictionOf(i.company) === "Not recorded").length,
+      taxMismatch: mismatched.length,
+      mismatched: mismatched.slice(0, 10).map(row => ({
+        invoiceNumber: row.invoice.invoiceNumber,
+        client: row.invoice.company?.name ?? "—",
+        rate: rateLabel(row.invoice.taxRate),
+        recorded: money(row.invoice.taxTotal),
+        expected: row.expected,
+      })),
+      draftsExcluded: drafts._count._all,
+      draftTaxExcluded: money(drafts._sum.taxTotal ?? 0),
+      currencies,
+    },
+    basis: {
+      period: "Invoices by issue date",
+      taxableRevenue: "Sum of each invoice's subtotal",
+      taxCollected: "Sum of each invoice's recorded tax total",
+      jurisdiction: "The client's billing country and state, falling back to its primary address; the schema has no tax-jurisdiction column of its own",
+      rateConvention: "An invoice rate above 1 is read as a percentage (8.5 = 8.5%) and one at or below 1 as a fraction (0.085 = 8.5%); the two conventions share one column and the report states which it used",
+      paid: "Payments recorded against the invoice",
+      outstanding: "Invoice total less payments recorded against it",
+      drafts: "Draft invoices are excluded",
+    },
+    notes: [
+      "Tax rates are stored two ways in this database — invoices as a percentage (8.5) and service agreements as a fraction (0.085) — so a rate above 1 is read as a percentage and one at or below 1 as a fraction. A rate entered in the wrong convention in one of those columns would be counted here at its face value.",
+      "Jurisdiction is derived from the client's address, not from a tax engine: if a client's billing address is missing, its invoices are grouped as \"Not recorded\" rather than guessed.",
+      "A 0% rate may be an exempt or zero-rated supply or simply a rate nobody entered — the two cannot be told apart here, so both appear as 0%.",
+      "Outstanding is the invoice total less payments recorded against it, so a part-paid invoice shows only what is left and an overpayment shows as a negative.",
+      ...(drafts._count._all ? [drafts._count._all === 1
+        ? `1 draft invoice (${money(drafts._sum.taxTotal ?? 0)} of tax) was left out because it has not been issued.`
+        : `${plural(drafts._count._all, "draft invoice")} (${money(drafts._sum.taxTotal ?? 0)} of tax) were left out because they have not been issued.`] : []),
+      ...(mismatched.length ? [mismatched.length === 1
+        ? "1 invoice carries a tax total that does not equal subtotal × rate; it is listed under data quality and its recorded figure is what the totals above use."
+        : `${mismatched.length} invoices carry tax totals that do not equal subtotal × rate; they are listed under data quality and their recorded figures are what the totals above use.`] : []),
+      ...(currencies.length > 1 ? [`Invoices in ${currencies.length} currencies are summed as recorded; no conversion is applied.`] : []),
+    ],
+  };
+}
+
+/** How many months a billing period is, for stepping an agreement's schedule forward. */
+const FORECAST_CADENCE_MONTHS: Record<string, number> = { monthly: 1, quarterly: 3, annual: 12, yearly: 12 };
+
+const monthStart = (date: Date, offset = 0) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + offset, 1));
+const monthKeyOf = (date: Date) => date.toISOString().slice(0, 7);
+const monthLabelOf = (date: Date) => date.toLocaleDateString("en-GB", { month: "long", year: "numeric", timeZone: "UTC" });
+
+/** Keeps the day of the month when stepping a date forward, clamping into a shorter month. */
+function addMonthsKeepingDay(date: Date, count: number) {
+  const target = monthStart(date, count);
+  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth(), Math.min(date.getUTCDate(), lastDay), date.getUTCHours(), date.getUTCMinutes()));
+}
+
+/** The dates an agreement bills on inside a window, its cadence stepped from the anchor date. */
+function billingDates(anchor: Date, cadenceMonths: number, windowStart: Date, windowEnd: Date, endDate: Date | null): Date[] {
+  let cursor = new Date(anchor.getTime());
+  if (cursor < windowStart) {
+    const monthsApart = (windowStart.getUTCFullYear() - cursor.getUTCFullYear()) * 12 + (windowStart.getUTCMonth() - cursor.getUTCMonth());
+    if (monthsApart > 0) cursor = addMonthsKeepingDay(cursor, Math.floor(monthsApart / cadenceMonths) * cadenceMonths);
+  }
+  const dates: Date[] = [];
+  for (let guard = 0; cursor < windowStart && guard < 400; guard++) cursor = addMonthsKeepingDay(cursor, cadenceMonths);
+  for (let guard = 0; cursor <= windowEnd && guard < 400; guard++) {
+    if (endDate && cursor > endDate) break;
+    dates.push(new Date(cursor.getTime()));
+    cursor = addMonthsKeepingDay(cursor, cadenceMonths);
+  }
+  return dates;
+}
+
+export interface BillingForecastOptions { months: number }
+
+/** The one option the forecast asks for: how far forward to look. */
+export function billingForecastOptions(query: Record<string, unknown> = {}): BillingForecastOptions {
+  const months = Number(asString(query.months) ?? 6);
+  return { months: Number.isFinite(months) ? Math.min(Math.max(Math.round(months), 1), 24) : 6 };
+}
+
+/**
+ * Projected revenue forward from active service agreements and recurring invoices.
+ *
+ * The projection is deliberately literal: each active agreement is repeated at the amount and
+ * cadence already recorded against it, and each recurring invoice at its own rule. Nothing is
+ * assumed to grow, expire early or be renewed, and work that is not booked — hourly and overage
+ * time — is left out entirely rather than estimated. The assumptions are returned in the payload as
+ * `assumptions`, because a forecast whose basis is not printed beside it is a number pretending to
+ * be a fact.
+ */
+export async function billingForecastReport(user: AuthUser | undefined, period: ReportPeriod, query: Record<string, unknown> = {}) {
+  const { months } = billingForecastOptions(query);
+  const scope = companyFilter(period);
+  const now = new Date();
+  const windowStart = monthStart(now, 1);
+  const horizonMonths = Array.from({ length: months }, (_, i) => monthStart(windowStart, i));
+  const lastMonth = horizonMonths[horizonMonths.length - 1]!;
+  const windowEnd = new Date(Date.UTC(lastMonth.getUTCFullYear(), lastMonth.getUTCMonth() + 1, 0, 23, 59, 59, 999));
+
+  const [agreements, recurringInvoices, latestAgreementInvoices] = await Promise.all([
+    prisma.serviceAgreement.findMany({
+      where: { isActive: true, ...scope },
+      select: {
+        id: true, name: true, companyId: true, agreementType: true, billingPeriod: true, billingAmount: true,
+        currency: true, taxRate: true, hourlyRate: true, blockHoursIncluded: true, startDate: true, endDate: true, nextInvoiceDate: true,
+        company: { select: { name: true } },
+      },
+      orderBy: { name: "asc" },
+    }),
+    prisma.invoice.findMany({
+      where: { isRecurring: true, nextGenerationDate: { not: null }, ...scope },
+      select: {
+        invoiceNumber: true, total: true, currency: true, recurrenceRule: true, nextGenerationDate: true, agreementId: true,
+        company: { select: { name: true } },
+      },
+    }),
+    prisma.serviceAgreement.findMany({
+      where: { isActive: true, ...scope },
+      select: { id: true, invoices: { select: { total: true, issueDate: true }, orderBy: { issueDate: "desc" }, take: 1 } },
+    }),
+  ]);
+
+  const latestByAgreement = new Map(latestAgreementInvoices.map(a => [a.id, a.invoices[0] ?? null]));
+  const activeAgreementIds = new Set(agreements.map(a => a.id));
+
+  const rows = horizonMonths.map(month => ({ key: monthKeyOf(month), label: monthLabelOf(month), agreements: new Set<string>(), recurring: 0, total: 0 }));
+
+  const agreementRows = agreements.map(a => {
+    const cadence = FORECAST_CADENCE_MONTHS[a.billingPeriod] ?? 0;
+    const anchor = a.nextInvoiceDate ?? a.startDate;
+    const dates = cadence ? billingDates(anchor, cadence, windowStart, windowEnd, a.endDate) : [];
+    for (const date of dates) {
+      const row = rows.find(r => r.key === monthKeyOf(date));
+      if (!row) continue;
+      row.agreements.add(a.id);
+      row.total += a.billingAmount;
+    }
+    const billedMonths = [...new Set(dates.map(d => monthKeyOf(d)))];
+    const latest = latestByAgreement.get(a.id) ?? null;
+    return {
+      agreement: a.name,
+      client: a.company?.name ?? "—",
+      type: a.agreementType,
+      billingPeriod: a.billingPeriod,
+      billingAmount: money(a.billingAmount),
+      annualisedValue: money(annualise(a.billingAmount, a.billingPeriod)),
+      currency: a.currency,
+      nextInvoiceDate: anchor.toISOString().slice(0, 10),
+      scheduledMonths: billedMonths,
+      occurrences: dates.length,
+      horizonValue: money(dates.length * a.billingAmount),
+      endDate: a.endDate ? a.endDate.toISOString().slice(0, 10) : null,
+      hoursBased: a.agreementType === "block" || a.agreementType === "spot" || a.agreementType === "cyberCare",
+      latestInvoice: latest ? { total: money(latest.total), issued: latest.issueDate.toISOString().slice(0, 10) } : null,
+      billingAmountMatchesLatestInvoice: latest ? Math.abs(latest.total - a.billingAmount) <= 0.01 : null,
+      projected: cadence > 0 && dates.length > 0,
+      reason: cadence === 0
+        ? `No billing cadence is recorded ("${a.billingPeriod}"), so nothing is projected.`
+        : dates.length === 0
+          ? (a.endDate && a.endDate < windowStart ? "The agreement ends before the forecast window." : "Nothing falls due in the forecast window.")
+          : null,
+    };
+  });
+
+  const recurringRows: Array<{ invoiceNumber: string; client: string; amount: number; currency: string; recurrenceRule: string; nextGenerationDate: string; occurrences: number; horizonValue: number; reason: string | null }> = [];
+  for (const invoice of recurringInvoices) {
+    const rule = (invoice.recurrenceRule ?? "").toLowerCase();
+    const cadence = FORECAST_CADENCE_MONTHS[rule] ?? 0;
+    const next = invoice.nextGenerationDate!;
+    // An invoice that belongs to an active agreement is already counted through that agreement.
+    const viaAgreement = invoice.agreementId ? activeAgreementIds.has(invoice.agreementId) : false;
+    const dates = cadence && !viaAgreement ? billingDates(next, cadence, windowStart, windowEnd, null) : [];
+    for (const date of dates) {
+      const row = rows.find(r => r.key === monthKeyOf(date));
+      if (!row) continue;
+      row.recurring += invoice.total;
+      row.total += invoice.total;
+    }
+    recurringRows.push({
+      invoiceNumber: invoice.invoiceNumber,
+      client: invoice.company?.name ?? "—",
+      amount: money(invoice.total),
+      currency: invoice.currency,
+      recurrenceRule: invoice.recurrenceRule ?? "Not recorded",
+      nextGenerationDate: next.toISOString().slice(0, 10),
+      occurrences: dates.length,
+      horizonValue: money(dates.length * invoice.total),
+      reason: viaAgreement
+        ? "Belongs to an active agreement, so it is counted once through that agreement."
+        : cadence === 0
+          ? `No recurrence rule is recorded ("${invoice.recurrenceRule ?? "none"}"), so nothing is projected.`
+          : dates.length === 0 ? "Nothing falls due in the forecast window." : null,
+    });
+  }
+
+  const monthSeries = rows.map(r => ({ key: r.key, label: r.label, agreements: r.agreements.size, recurring: money(r.recurring), total: money(r.total) }));
+
+  const expiring = agreements
+    .filter(a => a.endDate && a.endDate >= now && a.endDate <= windowEnd)
+    .map(a => ({
+      agreement: a.name,
+      client: a.company?.name ?? "—",
+      endDate: a.endDate!.toISOString().slice(0, 10),
+      month: monthLabelOf(monthStart(a.endDate!)),
+      daysToExpiry: Math.round((a.endDate!.getTime() - now.getTime()) / 86400000),
+      billingAmount: money(a.billingAmount),
+      annualisedValue: money(annualise(a.billingAmount, a.billingPeriod)),
+    }))
+    .sort((a, b) => a.endDate.localeCompare(b.endDate));
+
+  const annualisedRunRate = money(agreements.reduce((s, a) => s + annualise(a.billingAmount, a.billingPeriod), 0));
+  const mismatchedAmounts = agreementRows.filter(r => r.billingAmountMatchesLatestInvoice === false);
+  const notProjected = agreementRows.filter(r => !r.projected);
+  const currencies = [...new Set([...agreements.map(a => a.currency), ...recurringInvoices.map(i => i.currency)])];
+
+  return {
+    period,
+    generatedAt: now.toISOString().slice(0, 10),
+    horizon: {
+      months,
+      from: monthKeyOf(windowStart),
+      to: monthKeyOf(lastMonth),
+      label: `${monthLabelOf(windowStart)} – ${monthLabelOf(lastMonth)}`,
+    },
+    totals: {
+      activeAgreements: agreements.length,
+      projectedAgreements: agreementRows.filter(r => r.projected).length,
+      recurringInvoices: recurringRows.filter(r => r.occurrences > 0).length,
+      nextMonth: monthSeries[0]?.total ?? 0,
+      followingMonths: money(monthSeries.slice(1).reduce((s, m) => s + m.total, 0)),
+      horizonTotal: money(monthSeries.reduce((s, m) => s + m.total, 0)),
+      annualisedRunRate,
+      runRateNextMonth: money(annualisedRunRate / 12),
+      expiringInHorizon: expiring.length,
+      expiringAnnualValue: money(expiring.reduce((s, e) => s + e.annualisedValue, 0)),
+    },
+    months: monthSeries,
+    agreements: agreementRows.sort((a, b) => b.horizonValue - a.horizonValue),
+    expiring,
+    recurring: recurringRows.sort((a, b) => b.horizonValue - a.horizonValue),
+    dataQuality: {
+      agreementsNotProjected: notProjected.map(r => ({ agreement: r.agreement, client: r.client, reason: r.reason })),
+      billingAmountDiffersFromLatestInvoice: mismatchedAmounts.map(r => ({
+        agreement: r.agreement, client: r.client, billingAmount: r.billingAmount, latestInvoice: r.latestInvoice,
+      })),
+      currencies,
+    },
+    assumptions: [
+      `The window is the next ${months} months, ${monthLabelOf(windowStart)} to ${monthLabelOf(lastMonth)}.`,
+      "Each active service agreement is repeated at the billing amount and cadence already recorded on it, anchored on its next invoice date — or its start date when no next date is set.",
+      "An agreement with an end date stops billing after it: a renewal that has not been recorded is not assumed.",
+      "Hourly, overage and time-and-materials work is not booked ahead, so it is not projected; a block or spot agreement contributes only its flat recorded amount.",
+      "Recurring invoices are projected by their own recurrence rule from their next generation date, and an invoice that belongs to an active agreement is counted once, through the agreement.",
+      "Amounts are before tax; the agreement's tax rate is not applied.",
+      "No growth, churn, price change or currency conversion is assumed — the projection repeats today's recorded amounts as they stand.",
+    ],
+    notes: [
+      ...(notProjected.length ? [notProjected.length === 1
+        ? "1 agreement cannot be projected and contributes nothing: see data quality for the reason."
+        : `${notProjected.length} agreements cannot be projected and contribute nothing: see data quality for the reason on each.`] : []),
+      ...(mismatchedAmounts.length ? [mismatchedAmounts.length === 1
+        ? "1 agreement bills an amount that differs from the total of its most recent invoice; the projection uses the recorded billing amount, not the invoice."
+        : `${mismatchedAmounts.length} agreements bill amounts that differ from the totals of their most recent invoices; the projection uses the recorded billing amounts, not the invoices.`] : []),
+      ...(currencies.length > 1 ? [`Amounts in ${currencies.length} currencies are summed as recorded; no conversion is applied.`] : []),
+      "Recurring invoices appear only when they carry a recurrence rule and a next generation date; a recurring invoice with neither is listed with the reason it was left out.",
+    ],
   };
 }

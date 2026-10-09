@@ -16,6 +16,11 @@ import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { apiErrorMessage } from "../lib/apiError";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { ListFooter, ListViews, PageHeader, StatCard, Tabs } from "../components/ui";
+import { REPORT_BY_ID, type StandardReport } from "../components/reports/standardReports";
+import {
+  ReportViewer, useReportOptions, EMPTY_FILTERS, defaultOptionValues,
+  type ReportFilters, type ReportOptionValues,
+} from "../components/reports/ReportViewer";
 import { useRedesign } from "../hooks/useNavigationStyle";
 
 // Types
@@ -1409,9 +1414,32 @@ function TimeExpensesTab() {
 //  REPORTS TAB
 // ═══════════════════════════════════════════════════════════════════
 
+/**
+ * The reports this tab offers, named by their id in the catalogue rather than by a title and an
+ * endpoint of their own. The catalogue is the one description of a report in the product, so a card
+ * cannot offer a report the runner has never heard of — and a card whose report is missing says so,
+ * because the alternative is what this tab did before: a "Generate →" that ran nothing.
+ *
+ * `label` is only the name of a report that is *not* in the catalogue, which is the one case no
+ * catalogue entry can supply a name for.
+ */
+const BILLING_REPORTS: Array<{ id: string; label: string }> = [
+  { id: "revenue", label: "Revenue Summary" },
+  { id: "billing-aging", label: "Aging Report" },
+  { id: "billing-tax-summary", label: "Tax Summary" },
+  { id: "billing-forecast", label: "Billing Forecast" },
+  { id: "contract", label: "Agreement Profitability" },
+  { id: "utilization", label: "Utilization Report" },
+];
+
 function ReportsTab() {
   const menu = useContextMenu();
   const navigate = useNavigate();
+  const redesign = useRedesign();
+  const options = useReportOptions();
+  const [open, setOpen] = useState<StandardReport | null>(null);
+  const [filters, setFilters] = useState<ReportFilters>({ ...EMPTY_FILTERS });
+  const [values, setValues] = useState<ReportOptionValues>({});
 
   const sectionMenuEntries = (): MenuEntry[] => [
     { label: "Custom report builder", icon: FileText, onSelect: () => navigate("/reports/custom") },
@@ -1419,20 +1447,98 @@ function ReportsTab() {
     ...viewMenuEntries(),
   ];
 
+  /** Opening a report starts from that report's own defaults, not from whichever one was open last. */
+  const generate = (report: StandardReport) => {
+    setValues(defaultOptionValues(report));
+    setOpen(report);
+  };
+
+  // A generated report takes the place of the list. It is the Reporting screen's viewer rather than a
+  // second renderer, so the figures are the ones that screen shows and Print and Export come with it.
+  if (open) {
+    return (
+      <div className="space-y-4">
+        {/* The list gets a name here: in the redesign the way back is a chip that says where it goes,
+            where the classic screen uses the viewer's own Close, as Reporting does. */}
+        {redesign && (
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" onClick={() => setOpen(null)} className="chip">← All reports</button>
+            <span className="text-xs text-gray-500">Run from the same catalogue as Reporting → Standard Reports</span>
+          </div>
+        )}
+        <ReportViewer
+          report={open}
+          filters={filters}
+          onFilters={setFilters}
+          options={options}
+          values={{ ...defaultOptionValues(open), ...values }}
+          onValue={(key, value) => setValues(current => ({ ...current, [key]: value }))}
+          onClose={redesign ? undefined : () => setOpen(null)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       className="space-y-4"
       onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
     >
       <ContextMenu state={menu.menuState} onClose={menu.close} />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ReportCard icon={Receipt} title="Revenue Summary" desc="Monthly revenue breakdown by client and service, payment trends, and year-over-year comparisons" />
-        <ReportCard icon={Clock} title="Aging Report" desc="Accounts receivable aging: current, 30, 60, 90+ days with client-level detail" />
-        <ReportCard icon={DollarSign} title="Tax Summary" desc="Taxable revenue by jurisdiction, tax collected report for compliance reporting" />
-        <ReportCard icon={TrendingUp} title="Billing Forecast" desc="Projected revenue from active agreements and recurring invoices" />
-        <ReportCard icon={ClipboardList} title="Agreement Profitability" desc="Revenue vs cost per agreement, margin analysis, and contract performance" />
-        <ReportCard icon={Timer} title="Utilization Report" desc="Billable vs non-billable time, technician utilization rates" />
-      </div>
+      {/* Two arrangements of one list, because the interfaces are two designs rather than one with a
+          class on it: the classic screen keeps the card grid it has always had, and the redesign
+          offers the redesigned list — a row per report with the control that acts beside it. */}
+      {redesign ? (
+        <div className="card divide-y divide-surface-border">
+          {BILLING_REPORTS.map(({ id, label }) => {
+            const report = REPORT_BY_ID.get(id);
+            if (!report) {
+              return (
+                <div key={id} className="flex items-start gap-3 p-4">
+                  <AlertTriangle size={16} className="text-amber-400 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-400">{label}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Not in this build — the catalogue has no report with the id <code>{id}</code>.</p>
+                  </div>
+                </div>
+              );
+            }
+            const Icon = report.icon;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => generate(report)}
+                className="w-full flex items-start gap-3 p-4 text-left hover:bg-surface-lighter/50 transition-colors"
+              >
+                <div className="p-2 rounded-lg bg-cyber-600/10 shrink-0"><Icon size={18} className="text-cyber-400" /></div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white">{report.title}</p>
+                  <p className="text-xs text-gray-500 mt-1">{report.description}</p>
+                </div>
+                <span className="chip shrink-0">Generate</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {BILLING_REPORTS.map(({ id, label }) => {
+            const report = REPORT_BY_ID.get(id);
+            return report ? (
+              <ReportCard key={id} icon={report.icon} title={report.title} desc={report.description} onGenerate={() => generate(report)} />
+            ) : (
+              <ReportCard
+                key={id}
+                icon={AlertTriangle}
+                title={label}
+                desc="This build's catalogue has no report with this id, so there is nothing to run."
+                note="Not available yet"
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -1460,18 +1566,37 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
   );
 }
 
-function ReportCard({ icon: Icon, title, desc }: { icon: LucideIcon; title: string; desc: string }) {
+/**
+ * The classic grid's card. It is the card that was always here, with the promise in it kept: pressing
+ * it opens the report, rather than only revealing "Generate →" on hover. A card without a report to
+ * open (`onGenerate` absent) states that in the corner the affordance would have been, and is not a
+ * control, so a keyboard cannot land on something that does nothing.
+ */
+function ReportCard({ icon: Icon, title, desc, onGenerate, note }: {
+  icon: LucideIcon; title: string; desc: string; onGenerate?: () => void; note?: string;
+}) {
+  const opens = Boolean(onGenerate);
   return (
-    <div className="card hover:border-cyber-500/30 transition-colors group cursor-pointer">
+    <div
+      className={`card transition-colors ${opens ? "hover:border-cyber-500/30 group cursor-pointer" : "border-amber-600/20"}`}
+      role={opens ? "button" : undefined}
+      tabIndex={opens ? 0 : undefined}
+      onClick={onGenerate}
+      onKeyDown={opens ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onGenerate?.(); } } : undefined}
+    >
       <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg bg-cyber-600/10"><Icon size={18} className="text-cyber-400" /></div>
+        <div className={`p-2 rounded-lg ${opens ? "bg-cyber-600/10" : "bg-amber-600/10"}`}><Icon size={18} className={opens ? "text-cyber-400" : "text-amber-400"} /></div>
         <div>
           <h3 className="font-semibold text-white text-sm group-hover:text-cyber-400 transition-colors">{title}</h3>
           <p className="text-xs text-gray-500 mt-1">{desc}</p>
         </div>
       </div>
       <div className="mt-3 text-right">
-        <span className="text-xs text-cyber-400 opacity-0 group-hover:opacity-100 transition-opacity">Generate →</span>
+        {opens ? (
+          <span className="text-xs text-cyber-400 opacity-0 group-hover:opacity-100 transition-opacity">Generate →</span>
+        ) : (
+          <span className="text-[11px] text-amber-400">{note}</span>
+        )}
       </div>
     </div>
   );

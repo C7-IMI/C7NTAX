@@ -433,6 +433,30 @@ activity could not be read at all. Requires `report:view` **and** `integration:v
 names individual accounts across tenants. The same endpoint backs the **Inactive Microsoft 365
 Accounts** standard report, so the screen, the print-out and the CSV are one implementation.
 
+### Financial reports behind the Billing screen
+
+The same `/api/reports/data/…` family carries the financial reports the Billing screen opens. They
+need no connector: they read this deployment's own invoices, payments and service agreements.
+
+```bash
+GET /api/reports/data/billing-aging                    # receivables ageing, point-in-time
+# → buckets, totals, clients, largest, basis, notes
+GET /api/reports/data/billing-tax-summary               # tax collected and taxable revenue
+# → totals, byRate, byJurisdiction, byClient, dataQuality, basis, notes
+GET /api/reports/data/billing-forecast?months=6          # projected revenue forward
+# → horizon, months, agreements, expiring, recurring, totals, assumptions, dataQuality
+```
+
+`billing-aging` is a point-in-time figure — `from` and `to` are not applied to it, because what is
+owed is what is owed today — and its buckets are the same definition the revenue summary uses, so
+`totals.outstanding` here and `totalOutstanding` there agree for the same scope. `billing-tax-summary`
+groups by the client's billing country and state because the schema has no jurisdiction column of its
+own, and `basis` states how it read a rate whose convention differs between invoices and agreements;
+draft invoices are excluded and counted in `dataQuality`. `billing-forecast` takes `months` (1–24,
+default 6) and returns every assumption it made in `assumptions`; an agreement or recurring invoice it
+could not project is listed with the reason rather than quietly counted as zero. All three require
+`report:view`, all three honour `clientId`, and none can be widened by a query parameter.
+
 ### Microsoft 365 account hygiene
 
 The Microsoft 365 sync brings in each tenant's users with their sign-in activity where Azure will

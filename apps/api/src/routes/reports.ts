@@ -13,8 +13,9 @@ import {
   catalogForValidation, invalidateTemplateCache, listTemplateRefs, resolveParameters, runTemplateDocument, validateDocument,
 } from "../services/reportTemplates";
 import {
-  agingReport, clientValueReport, contractProfitabilityReport, csatReport, m365InactiveAccountsReport, monthlyReviewReport, parsePeriod,
-  qbrReport, revenueReport, slaReport, ticketVolumeReport, timeTrackingReport, utilizationReport, weeklyReviewReport,
+  agingReport, billingAgingReport, billingForecastReport, billingTaxSummaryReport, clientValueReport, contractProfitabilityReport,
+  csatReport, m365InactiveAccountsReport, monthlyReviewReport, parsePeriod, qbrReport, revenueReport, slaReport, ticketVolumeReport,
+  timeTrackingReport, utilizationReport, weeklyReviewReport,
   type ReportPeriod,
 } from "../services/reportData";
 import type { AuthUser } from "../middleware/auth";
@@ -45,6 +46,9 @@ reportsRouter.get("/data/time-tracking", requirePermission(Permission.ReportView
 reportsRouter.get("/data/csat", requirePermission(Permission.ReportView), standardReport(csatReport));
 reportsRouter.get("/data/contract-profitability", requirePermission(Permission.ReportView), standardReport(contractProfitabilityReport));
 reportsRouter.get("/data/client-value", requirePermission(Permission.ReportView), standardReport(clientValueReport));
+reportsRouter.get("/data/billing-aging", requirePermission(Permission.ReportView), standardReport(billingAgingReport));
+reportsRouter.get("/data/billing-tax-summary", requirePermission(Permission.ReportView), standardReport(billingTaxSummaryReport));
+reportsRouter.get("/data/billing-forecast", requirePermission(Permission.ReportView), standardReport(billingForecastReport));
 /**
  * Inactive Microsoft 365 accounts. Gated on `integration:view` as well as the report permission:
  * it names individual accounts across every connected tenant, which is integration data rather than
@@ -365,6 +369,12 @@ async function runBuiltIn(type: string, user: AuthUser | undefined, period: Repo
     contract: contractProfitabilityReport,
     contract_profitability: contractProfitabilityReport,
     client_value: clientValueReport,
+    "billing-aging": billingAgingReport,
+    billing_aging: billingAgingReport,
+    "billing-tax-summary": billingTaxSummaryReport,
+    billing_tax_summary: billingTaxSummaryReport,
+    "billing-forecast": billingForecastReport,
+    billing_forecast: billingForecastReport,
     qbr: qbrReport,
     quarterly_business_review: qbrReport,
     weekly_review: weeklyReviewReport,

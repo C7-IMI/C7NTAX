@@ -1,5 +1,48 @@
 [
   {
+    "version": "2026.10.9.024",
+    "date": "2026-10-09",
+    "title": "The six Billing report cards generate, and the two reports they were missing",
+    "changes": [
+      {
+        "text": "**Aging Report** (`/api/reports/data/billing-aging`) — receivables by age band, measured from each",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Tax Summary** (`/api/reports/data/billing-tax-summary`) — tax collected and taxable revenue by",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Billing Forecast** (`/api/reports/data/billing-forecast?months=1–24`) — the months the agreements",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The six cards now generate.** Each card resolves its report through the catalogue",
+        "type": "Fix"
+      },
+      {
+        "text": "**`ReportViewer` moved out of `Reports.tsx`** into `components/reports/ReportViewer.tsx`, moved",
+        "type": "Update"
+      },
+      {
+        "text": "**The ageing buckets are one implementation.** `revenueReport`'s inline ageing became a shared",
+        "type": "Update"
+      },
+      {
+        "text": "**Two reports printed `$NaN`.** A pre-formatted string was being handed to a column that formats",
+        "type": "Fix"
+      },
+      {
+        "text": "**Help** lists the three new reports, disambiguates **Aging Report** from **Ticket Aging**, and",
+        "type": "Update"
+      },
+      {
+        "text": "**`docs/openapi.yaml`, `docs/API.md` and `docs/api-operations.json`** carry the three new",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.023",
     "date": "2026-10-09",
     "title": "The report designer's modern interface is the mockup's, and the classic one is untouched",
