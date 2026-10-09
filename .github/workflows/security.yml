@@ -35,6 +35,15 @@ jobs:
       - name: Every authenticated route carries a permission
         run: pnpm guard:routes
 
+      # Text that has been through Windows PowerShell (which reads a BOM-less UTF-8 file as CP1252 and
+      # writes it back as UTF-8) turns one character into three, and the result is invisible in the
+      # console and fatal in the changelog: the generator's heading pattern stops matching. It has
+      # happened three times, so it is a check rather than a note. Anything that round-trips back is a
+      # failure, except the lines that name the defect they are quoting, which are reported and left
+      # alone because repairing a specimen would delete the warning.
+      - name: No file contains double-encoded text
+        run: pnpm guard:encoding
+
       # The console's catalogue is an authorization list by another name, so it is checked the same
       # way: every command's path must resolve to a real route, its permission must be the permission
       # that route checks, and every flag it offers must be a parameter that route reads (PLAN-028 §7).

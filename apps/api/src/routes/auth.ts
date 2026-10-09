@@ -35,7 +35,7 @@ const MAX_LOGIN_ATTEMPTS = 5;
  * bcrypt cost the hardening pass writes, and the prefix test that recognises it.
  *
  * `bcryptjs` writes `$2a$12$` while native bcrypt writes `$2b$12$`, so testing for one variant
- * made every `$2a$12$` hash look stale: the account was re-hashed on **every** sign-in â€” a wasted
+ * made every `$2a$12$` hash look stale: the account was re-hashed on **every** sign-in — a wasted
  * 300 ms and a password row written on the hot path. Match the cost and the algorithm, not the
  * vendor's letter. (`$2y$` is bcrypt's other spelling of the same thing.)
  */
@@ -71,8 +71,8 @@ function codesMatch(a: string, b: string): boolean {
  * Where this sign-in should land.
  *
  * The person's own choice wins, then the instance default an administrator set in
- * Administration â†’ Configuration â†’ Workspace, then the dashboard. The personal choice lives on
- * the user record because it is not a fact about the deployment â€” before this existed the
+ * Administration → Configuration → Workspace, then the dashboard. The personal choice lives on
+ * the user record because it is not a fact about the deployment — before this existed the
  * personal screen wrote the instance-wide key, so one person's preference silently became
  * everyone's.
  *
@@ -99,7 +99,7 @@ async function resolveLandingPage(user: { landingPage?: string | null }): Promis
   return { path: "/", label: "Today" };
 }
 
-// â”€â”€ POST /api/auth/login â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── POST /api/auth/login ────────────────────────────────────────────
 authRouter.post("/login", credentialLimiter, async (req, res, next) => {
   try {
     const { email, username, password } = req.body;
@@ -165,7 +165,7 @@ authRouter.post("/login", credentialLimiter, async (req, res, next) => {
       return;
     }
 
-    // A successful sign-in clears the counter â€” and for the exempt account also any
+    // A successful sign-in clears the counter — and for the exempt account also any
     // lock or residue left behind by an earlier run, whatever the lockout setting is,
     // so a testing session can neither be blocked by one nor leave a stale locked row
     // behind in the UI.
@@ -228,7 +228,7 @@ authRouter.post("/login", credentialLimiter, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// â”€â”€ POST /api/auth/change-password â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── POST /api/auth/change-password ──────────────────────────────────
 // Self-service password change, and the step that clears mustChangePassword.
 // A fresh token is returned because the old one predates passwordChangedAt.
 authRouter.post("/change-password", authenticate, credentialLimiter, async (req: AuthRequest, res, next) => {
@@ -280,7 +280,7 @@ authRouter.post("/change-password", authenticate, credentialLimiter, async (req:
   } catch (e) { next(e); }
 });
 
-// â”€â”€ POST /api/auth/mfa/setup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── POST /api/auth/mfa/setup ────────────────────────────────────────
 authRouter.post("/mfa/setup", authenticate, async (req: AuthRequest, res, next) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user!.userId } });
@@ -299,7 +299,7 @@ authRouter.post("/mfa/setup", authenticate, async (req: AuthRequest, res, next) 
   } catch (e) { next(e); }
 });
 
-// â”€â”€ POST /api/auth/mfa/verify-setup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── POST /api/auth/mfa/verify-setup ─────────────────────────────────
 authRouter.post("/mfa/verify-setup", authenticate, async (req: AuthRequest, res, next) => {
   try {
     const { code } = req.body;
@@ -315,7 +315,7 @@ authRouter.post("/mfa/verify-setup", authenticate, async (req: AuthRequest, res,
   } catch (e) { next(e); }
 });
 
-// â”€â”€ POST /api/auth/mfa/verify â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── POST /api/auth/mfa/verify ───────────────────────────────────────
 authRouter.post("/mfa/verify", credentialLimiter, async (req, res, next) => {
   try {
     const { code, mfaToken } = req.body;
@@ -366,7 +366,7 @@ authRouter.post("/mfa/verify", credentialLimiter, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-// â”€â”€ POST /api/auth/send-mfa-email â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── POST /api/auth/send-mfa-email ───────────────────────────────────
 authRouter.post("/send-mfa-email", credentialLimiter, async (req, res, next) => {
   try {
     const { mfaToken } = req.body;
@@ -379,7 +379,7 @@ authRouter.post("/send-mfa-email", credentialLimiter, async (req, res, next) => 
     const user = await prisma.user.findUnique({ where: { id: payload.userId } });
     if (!user) { res.status(404).json({ error: "User not found" }); return; }
 
-    // Generate 6-digit code â€” CSPRNG, not Math.random
+    // Generate 6-digit code — CSPRNG, not Math.random
     const code = String(randomInt(100000, 1000000));
     // Store temporarily (15 min expiry)
     await prisma.user.update({
@@ -393,7 +393,7 @@ authRouter.post("/send-mfa-email", credentialLimiter, async (req, res, next) => 
   } catch (e) { next(e); }
 });
 
-// â”€â”€ POST /api/auth/mfa/verify-email â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── POST /api/auth/mfa/verify-email ─────────────────────────────────
 authRouter.post("/mfa/verify-email", credentialLimiter, async (req, res, next) => {
   try {
     const { code, mfaToken } = req.body;
@@ -438,7 +438,7 @@ authRouter.post("/mfa/verify-email", credentialLimiter, async (req, res, next) =
   } catch (e) { next(e); }
 });
 
-// â”€â”€ GET /api/auth/me â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── GET /api/auth/me ────────────────────────────────────────────────
 authRouter.get("/me", authenticate, async (req: AuthRequest, res, next) => {
   try {
     const user = await prisma.user.findUnique({
@@ -475,7 +475,7 @@ authRouter.patch("/me/landing-page", authenticate, async (req: AuthRequest, res,
 });
 
 /**
- * Session state for the SPA (PLAN-001 Â§3.1/Â§3.2). Deliberately unauthenticated: it is how
+ * Session state for the SPA (PLAN-001 §3.1/§3.2). Deliberately unauthenticated: it is how
  * the client finds out whether the cookie is still good before it renders a signed-in UI,
  * and it answers 401 rather than 403 so a caller can tell "not signed in" from "no rights".
  * It also carries the numbers the idle-timeout warning needs, so no second request is made.
@@ -527,12 +527,12 @@ authRouter.get("/session", async (req, res) => {
  * The address the server sees this connection arriving from.
  *
  * Deliberately unauthenticated: the sign-in screen shows it *before* a session exists, which is the
- * moment it is worth anything â€” a VPN, a proxy or a client's site is the usual reason a sign-in
+ * moment it is worth anything — a VPN, a proxy or a client's site is the usual reason a sign-in
  * behaves oddly, and the first question is "which address am I arriving as?".
  *
  * It answers with the same value the session row and the audit trail record (`req.ip`, falling back
  * to the socket), so what a person reads on screen matches what the trail says about them. While
- * `trust proxy` is unset that value is the socket's, i.e. the address that actually reached us â€” the
+ * `trust proxy` is unset that value is the socket's, i.e. the address that actually reached us — the
  * truthful answer, and the one a reverse proxy must be configured around rather than papered over.
  * Nothing here is instance data: the caller is being handed their own address back.
  */
@@ -541,14 +541,14 @@ authRouter.get("/client-ip", (req, res) => {
 });
 
 /**
- * "Stay logged in" (PLAN-001 Â§3.3). Extending is just activity, so the sliding window does
+ * "Stay logged in" (PLAN-001 §3.3). Extending is just activity, so the sliding window does
  * the work; the endpoint exists so the modal can be explicit and get the new deadline back.
  */
 authRouter.post("/session/extend", async (req, res) => {
   const result = await resolveSession(req);
   if (result.status !== "ok") {
     if (result.status !== "none") clearSessionCookies(res);
-    res.status(401).json({ error: { message: "Session expired â€” sign in again", code: "SESSION_TIMEOUT" } });
+    res.status(401).json({ error: { message: "Session expired — sign in again", code: "SESSION_TIMEOUT" } });
     return;
   }
   await touchSession(result.session.sessionId);

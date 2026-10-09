@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.9.021",
+    "date": "2026-10-09",
+    "title": "Two files carried three-times-encoded text, and there is now a guard for it",
+    "changes": [
+      {
+        "text": "**26 lines across `auth.ts` and `console.ts` were repaired**: em dashes, arrows, the box",
+        "type": "Fix"
+      },
+      {
+        "text": "**`node scripts/check-encoding.mjs`** (`pnpm guard:encoding`, wired into the security",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Prose that quotes the damage is reported, not \"fixed\".** `Retrace.md`, `BuildNotes.md`",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.020",
     "date": "2026-10-09",
     "title": "Screenshots in the walkthroughs, where a picture answers faster than a sentence",

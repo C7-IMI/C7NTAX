@@ -8562,3 +8562,72 @@ Both are in the reply and in the briefing's pre-deployment list, and neither was
   was not looking at. Comparing complete block texts is what found it.
 - **A screenshot is part of the change.** `README.md` in the folder says so, because the failure mode is a
   picture of a control that has moved, which a reader trusts and then cannot find.
+
+---
+
+### Prompt 347 — Sweeping the mojibake, and a guard so it cannot come back quietly
+
+**Timestamp:** 2026-10-09 12:05 | **Status:** Complete | **Duration:** ~30 min
+
+**BuildNotes IDs:** **2026.10.9.021**.
+
+**Prompt**
+
+> sweep and fix this:
+>
+> 1. **`apps/api/src/routes/auth.ts` contains pre-existing mojibake** (`â€”` where em dashes should be) from an earlier PowerShell edit — I fixed the one line I touched; the rest is untouched and unrelated to this work, so say the word and I'll sweep the file.
+
+**What I did**
+- **Wrote the test before the repair, as the inverse conversion rather than a character blacklist.** A line
+  is damaged iff **encoding it to CP1252 and decoding the result as UTF-8 succeeds and differs** — that is
+  literally what double-encoding is, and it cannot be true of a correct line, whereas a search for `â€`
+  misses the arrows, the box characters and the `Â` sequences, and would happily "repair" prose that quotes
+  the damage on purpose.
+- **Repaired 26 lines**: 18 in `apps/api/src/routes/auth.ts` and 8 in `apps/api/src/routes/console.ts` —
+  the same defect, the second file not previously suspected. Twenty-five are comments and the box-drawing
+  dividers; the last one is a string a user reads, and the mojibake had reached it: a lapsed session was
+  told `Session expired â€” sign in again`, mojibake where an em dash belongs. The dividers are 71
+  characters again (they had been three times that, so the alignment the file is written in is restored).
+- **Left the quotations alone, by declaration rather than by luck.** `Retrace.md`, `BuildNotes.md` and
+  `PLAN-029` each describe this trap by showing an example of it, and repairing a quotation would delete
+  the warning. The round-trip test cannot tell a specimen from wreckage — the same three characters are
+  the same three characters either way — so the rule is declared: **a line that round-trips *and* names the
+  defect (`mojibake`, `double-encoded`) is a quotation**, reported with its line number and left alone;
+  everything else that round-trips is assumed to be wreckage. That is why this entry says "mojibake" on the
+  same line as the example it gives. The list is short — the four files that document the trap — and the
+  hole is a line that mentions the defect while being damage, which is small and deliberate.
+- **Made it a guard, not a one-off script**: `node scripts/check-encoding.mjs` (`--list`, `--fix`),
+  `guard:encoding` in `package.json` beside the other guards, and a step in `.github/workflows/security.yml`
+  after `guard:routes` — because this defect is invisible in review, arrives from a tool outside the repo
+  (PowerShell 5.1 reading UTF-8 as CP1252), and is only cheap to fix the moment it lands. Both reports
+  print line numbers, because a count is useless when the point is to go and look at one.
+- **Proved the tool both ways** against a purpose-built damaged file — and then again after the quotation
+  rule went in, because a rule that suppresses repairs is exactly the kind that quietly suppresses too many.
+  It failed on the file (line 2 damaged, line 4 — which names the defect — reported as a quotation, and the
+  file's one genuinely correct em dash untouched); `--fix` then produced a **byte-for-byte** match to the
+  file it should have produced, including that the quotation was left as it was and the line endings and
+  trailing newline survived. Then `--list` across the repo: 707 files, 0 damaged lines.
+- **Wrote the repairer to be safe by construction** — UTF-8, no BOM, the file's own line endings. A tool
+  about encoding that uses `Out-File` or `WriteAllText` would cause the next incident itself.
+- **Caught the trap again while writing the *test* for it.** The first scratch file I built in PowerShell
+  came out with the three characters on separate lines: string concatenation with `[char]` produced an
+  array, and PowerShell then joined it. The guard correctly reported nothing, because a file that damaged
+  that way is not this defect. Built it in Node instead — which is the whole lesson, applied.
+
+**Notes for next time**
+- **This is the third time this has bitten, and the first time it has a guard.** Retrace 6297 records the
+  same trap; it survived that time because the lesson was written down instead of enforced. A recorded
+  lesson protects the person who reads it, and a guard protects everyone who does not.
+- **Look for the second file.** The prompt named `auth.ts`; `console.ts` had eight damaged lines too. A
+  repo-wide check after repairing a symptom is worth more than the repair, because the cause is a *tool*,
+  not a *file*.
+- **Do not judge a file's encoding by the console.** PowerShell prints UTF-8 as mojibake regardless, so
+  correct output looks damaged and damaged output looks correct. Compare bytes, or round-trip and compare.
+- **When a check has to make an exception, make the exception say what it is.** Suppressing a repair
+  silently is how a guard becomes decoration; requiring the quoting line to name the defect keeps the
+  exemption visible in the content it protects, and keeps the two real cases (a specimen, wreckage)
+  distinguishable by a reader as well as by the tool. Also note the honest asymmetry: the abandoned first
+  scratch file, whose damage was of a different kind, correctly reported *nothing*, so a green run only
+  ever means "no damage of *this* kind".
+- **Do not round-trip a UTF-8 file through PowerShell to edit it.** `Get-Content -Raw` → `WriteAllText`
+  double-encodes the whole file; `Out-File -Encoding utf8` adds a BOM. The `edit` tool, Node or Python.

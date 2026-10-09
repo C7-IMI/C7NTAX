@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.020 | Last Updated: 2026-10-09
+## Version: 2026.10.9.021 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,42 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.021 — Two files carried three-times-encoded text, and there is now a guard for it
+
+Windows PowerShell 5.1 reads a BOM-less UTF-8 file as CP1252 and writes it back as UTF-8, which turns one
+character into three. The mojibake is unmistakable once you know it: an em dash becomes `â€”`, an arrow
+becomes `â†’`, a section sign `Â§`. It is invisible in the console (PowerShell prints UTF-8 as mojibake
+either way), so it survives review and shows up much later, as a broken parse or a sentence a user reads
+twice.
+
+- **[Fix]** **26 lines across `auth.ts` and `console.ts` were repaired**: em dashes, arrows, the box
+  characters in the section dividers, and one **user-facing string** the mojibake had reached — a user
+  with a lapsed session was told `Session expired â€” sign in again`, three characters of mojibake in a
+  sentence they read.
+- **[New]** **`node scripts/check-encoding.mjs`** (`pnpm guard:encoding`, wired into the security
+  workflow). The test is the **inverse conversion**, not a list of suspicious characters: a line is
+  damaged if CP1252-encoding it and decoding the result as UTF-8 succeeds and differs — which is what
+  double-encoding *means*, and cannot be true of a correctly encoded line. `--fix` repairs in place,
+  UTF-8 with no BOM and the file's own line endings, because a tool about encoding must not cause the
+  next incident.
+- **[Update]** **Prose that quotes the damage is reported, not "fixed".** `Retrace.md`, `BuildNotes.md`
+  and `PLAN-029` each describe this trap by showing an example of it, and repairing a quotation would
+  delete the warning — so a line that names the defect it is quoting is left alone and listed separately,
+  with its line number, and the guard still exits 0. Every other round-trippable line is assumed to be
+  wreckage. `--list` prints the same report without failing.
+
+**Verification:** the repair is 26 changed lines, 25 of them comments, and the dividers in `auth.ts` are
+all 71 characters again (they had been three times that). The guard was then proved both ways against a
+purpose-built damaged file: it **failed** on it, `--fix` restored the em dash and the arrow **exactly**
+(asserted byte-for-byte, including that the file's one already-correct em dash came back untouched and its
+line endings survived), and the same proof was repeated after the quotation rule went in — because a rule
+that suppresses repairs is exactly the kind that quietly suppresses too many. The repo now reports
+**0 damaged lines across 707 files**, listing the lines that quote the damage on purpose — with their line
+numbers, because a count is useless when the point is to go and look at one.
+`tsc` clean; `guard:routes`, `guard:api-docs`, `guard:help-links` and the new `guard:encoding` all pass.
 
 ---
 

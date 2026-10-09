@@ -45,7 +45,8 @@
     "deploy:preflight:full": "node scripts/azure/preflight.mjs --docker",
     "deploy:validate": "node scripts/azure/validate-bicep.mjs",
     "deploy:dev": "pwsh -NoProfile -File scripts/azure/deploy-env.ps1 -Environment dev",
-    "deploy:prod": "pwsh -NoProfile -File scripts/azure/deploy-env.ps1 -Environment prod"
+    "deploy:prod": "pwsh -NoProfile -File scripts/azure/deploy-env.ps1 -Environment prod",
+    "guard:encoding": "node scripts/check-encoding.mjs"
   },
   "devDependencies": {
     "@types/speakeasy": "^2.0.10",
