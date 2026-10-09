@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.066 | Last Updated: 2026-10-08
+## Version: 2026.10.8.067 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,32 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.067 — How a list reads
+
+Every list in the application was its own invention: a table, a search box, sometimes a sort control,
+and no statement of how many rows there were. The redesigned lists now share one chrome, which is
+also how the mockup draws them — a strip of views above, filters you can read, and a count line
+below.
+
+- **[New]** `components/ui/ListChrome` — **`ListViews`** (the saved slices as chips, each with its
+  count) and **`ListFooter`** (*1–25 of 109*, with paging when a list has pages, and room for the
+  note a page would otherwise bury). One place, so nineteen lists cannot drift apart.
+- **[New]** **Assets** uses it: **All**, **Needs attention**, **Warranty expiring** and **Retired**
+  as views with live counts, a count line that says how many need attention, a **Warranty** column
+  that turns amber inside ninety days, an **Open** action on every row, and a footer stating the
+  range and the current sort.
+- **[Update]** The views are worked out from the rows already in hand — a warranty ending in ninety
+  days, a status of maintenance or lost — so no view costs a request and the counts cannot disagree
+  with the table under them.
+
+**Verification:** `tsc --noEmit` clean; in the browser Assets reads *All 10 · Needs attention 1 ·
+Warranty expiring 0 · Retired 0*, the count line *10 assets · 1 needs attention*, the mockup's eight
+columns including Warranty, the footer *1–10 of 10 · Sorted by Asset Name*, and pressing **Needs
+attention** narrows the table to the one row. With `c7_ui_redesign=0` the page is the original six
+columns, its own selects and no views strip.
 
 ---
 

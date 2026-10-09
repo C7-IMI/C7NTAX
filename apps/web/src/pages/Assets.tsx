@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../api";
-import { PageHeader } from "../components/ui";
+import { PageHeader, ListViews, ListFooter } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { Plus, Search, Monitor, Server, Laptop, Smartphone, Network, Database, Wrench, FileText, Upload, Download, AlertTriangle, CheckCircle, XCircle, ArrowUpDown, Wifi } from "lucide-react";
@@ -56,7 +57,9 @@ const ASSET_FIELDS = [
 ];
 
 export function AssetsPage() {
+  const redesign = useRedesign();
   const [assets, setAssets] = useState<Asset[]>([]);
+  const [view, setView] = useState("all");
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
@@ -79,6 +82,25 @@ export function AssetsPage() {
   };
 
   useEffect(() => { fetchAssets(); }, [search, typeFilter, sortBy]);
+
+  /*
+   * The two states the mockup leads with, worked out from the rows already in hand: an asset whose
+   * warranty ends inside ninety days, and one that is flagged or has lost its cover. Both are facts
+   * about the row, so neither needs a second request.
+   */
+  const inNinetyDays = Date.now() + 90 * 86400000;
+  const warrantySoon = (a: Asset) => !!a.warrantyExpiry && new Date(a.warrantyExpiry).getTime() <= inNinetyDays;
+  const needsAttention = (a: Asset) => a.status === "maintenance" || a.status === "lost" || warrantySoon(a);
+  const ATTENTION = assets.filter(needsAttention).length;
+  const views = [
+    { id: "all", label: "All", count: assets.length },
+    { id: "attention", label: "Needs attention", count: ATTENTION },
+    { id: "warranty", label: "Warranty expiring", count: assets.filter(warrantySoon).length },
+    { id: "retired", label: "Retired", count: assets.filter(a => a.status === "retired").length },
+  ];
+  const rows = assets.filter(a =>
+    view === "attention" ? needsAttention(a) : view === "warranty" ? warrantySoon(a) : view === "retired" ? a.status === "retired" : true,
+  );
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,7 +159,27 @@ export function AssetsPage() {
         <button onClick={() => setShowNew(true)} className="btn-primary flex items-center gap-2"><Plus size={16} /> Add Asset</button>
       </PageHeader>
 
-      {/* Filters + Sort */}
+      {/* Filters + Sort — the redesigned toolbar states the working set and offers the two states
+          worth acting on as views, rather than leaving them to be found by scrolling. */}
+      {redesign ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <ListViews views={views} value={view} onChange={setView} label="Asset views" />
+          <div className="relative min-w-[13rem] max-w-xs flex-1">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input className="input-field pl-9" placeholder="Search tag, name, serial…" value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <select className="input-field w-auto text-sm" value={typeFilter} onChange={e => setTypeFilter(e.target.value)} aria-label="Filter by type">
+            <option value="">Type: any</option>
+            {Object.entries(TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+          <select className="input-field w-auto text-sm" value={sortBy} onChange={e => setSortBy(e.target.value)} aria-label="Sort by">
+            {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>Sort: {o.label}</option>)}
+          </select>
+          <span className="text-xs text-gray-500">
+            {assets.length} asset{assets.length === 1 ? "" : "s"}{ATTENTION > 0 ? ` · ${ATTENTION} need${ATTENTION === 1 ? "s" : ""} attention` : ""}
+          </span>
+        </div>
+      ) : (
       <div className="flex items-center gap-2 flex-wrap">
         <div className="relative flex-1 max-w-xs">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -154,6 +196,7 @@ export function AssetsPage() {
           </select>
         </div>
       </div>
+      )}
 
       {/* Import Dialog */}
       {showImport && (
@@ -268,14 +311,14 @@ export function AssetsPage() {
       {/* Asset list */}
       <div className="card overflow-hidden p-0">
         {loading ? <TableSkeleton /> :
-         assets.length === 0 ? <div className="p-8 text-center text-gray-500">No assets found</div> :
+         rows.length === 0 ? <div className="p-8 text-center text-gray-500">{assets.length === 0 ? "No assets found" : "Nothing in this view"}</div> :
          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="group"><tr className="border-b border-surface-border text-left text-gray-400">
-              <SortableHeader field="name" label="Asset" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3" /><th className="px-4 py-3 hidden md:table-cell">Tag</th><th className="px-4 py-3 hidden lg:table-cell">Type</th><th className="px-4 py-3 hidden sm:table-cell">Status</th><th className="px-4 py-3 hidden lg:table-cell">Location</th><th className="px-4 py-3 hidden md:table-cell">Assigned To</th>
+              <SortableHeader field="name" label="Asset" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3" /><th className="px-4 py-3 hidden md:table-cell">Tag</th><th className="px-4 py-3 hidden lg:table-cell">Type</th><th className="px-4 py-3 hidden sm:table-cell">Status</th><th className="px-4 py-3 hidden lg:table-cell">Location</th><th className="px-4 py-3 hidden md:table-cell">Assigned To</th>{redesign && <th className="px-4 py-3 hidden lg:table-cell">Warranty</th>}{redesign && <th className="px-4 py-3 w-20"></th>}
             </tr></thead>
             <tbody>
-              {assets.map(a => {
+              {rows.map(a => {
                 const Icon = TYPE_ICONS[a.type] || Monitor;
                 return (
                   <tr key={a.id} className="border-b border-surface-border/50 hover:bg-surface-light/50 cursor-pointer" onClick={() => window.location.href = `/assets/${a.id}`}>
@@ -293,12 +336,31 @@ export function AssetsPage() {
                     <td className="px-4 py-3 hidden sm:table-cell"><span className={`badge text-xs ${STATUS_COLORS[a.status] || ""}`}>{a.status}</span></td>
                     <td className="px-4 py-3 hidden lg:table-cell text-gray-400">{a.location || a.department || "—"}</td>
                     <td className="px-4 py-3 hidden md:table-cell text-gray-400">{a.assignments?.[0]?.assignedTo ? `${a.assignments[0].assignedTo.firstName} ${a.assignments[0].assignedTo.lastName}` : "—"}</td>
+                    {redesign && (
+                      <td className="px-4 py-3 hidden lg:table-cell">
+                        {a.warrantyExpiry ? (
+                          <span className={warrantySoon(a) ? "text-amber-400" : "text-gray-400"}>{new Date(a.warrantyExpiry).toLocaleDateString()}</span>
+                        ) : <span className="text-gray-600">—</span>}
+                      </td>
+                    )}
+                    {redesign && (
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); window.location.href = `/assets/${a.id}`; }}
+                          className="chip"
+                        >Open</button>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
             </tbody>
           </table>
         </div>}
+        {redesign && !loading && rows.length > 0 && (
+          <ListFooter from={1} to={rows.length} total={rows.length} page={1} pages={1} onPage={() => {}} note={`Sorted by ${SORT_OPTIONS.find(o => o.value === sortBy)?.label ?? sortBy}`} />
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.8.067",
+    "date": "2026-10-08",
+    "title": "How a list reads",
+    "changes": [
+      {
+        "text": "`components/ui/ListChrome` — **`ListViews`** (the saved slices as chips, each with its",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Assets** uses it: **All**, **Needs attention**, **Warranty expiring** and **Retired**",
+        "type": "New Feature"
+      },
+      {
+        "text": "The views are worked out from the rows already in hand — a warranty ending in ninety",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.066",
     "date": "2026-10-08",
     "title": "The dashboard's four bands",

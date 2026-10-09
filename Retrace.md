@@ -7063,3 +7063,31 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **Guard extra reads by interface, not by visibility.** `{redesign && <Bands/>}` keeps the request
   out of Classic; a hook called in the page body would have fired it in both.
 
+### Prompt 311 (continued) — Keep going: the shared list chrome, and Assets
+
+**BuildNotes IDs:** **2026.10.8.067**.
+
+**What I did**
+- **Created `components/ui/ListChrome.tsx`** — `ListViews` and `ListFooter` — from the pattern the
+  mockup repeats on every list: views with counts above, filters you can read, a countable footer
+  below. The ticket list had grown its own version of this; the rest of the application had none.
+- **Converted Assets onto it**: four views with live counts (All, Needs attention, Warranty expiring,
+  Retired), a count line stating how many need attention, the mockup's **Warranty** column (amber
+  inside ninety days), a per-row **Open** action, and the footer stating range and sort.
+- **Worked the views out of the rows in hand** rather than adding API filters: `warrantyExpiry` and
+  `status` are already on every row, so the counts agree with the table by construction.
+
+**Notes for next time**
+- **The mockup's own words about its lists were the instruction**: *"Every list in the application
+  shares this pattern: views, filters you can read, a table, a footer."* That sentence is what turned
+  twenty page-by-page jobs into one component and twenty applications of it.
+- **A view that needs a request is a view that can lie.** Deriving the counts from the loaded rows
+  means the strip and the table can never disagree — and it costs nothing per press.
+- **Vite served a stale module again** (the Assets page 500'd mid-edit). The fix is unchanged: touch
+  the file, then reload. Do this after every multi-edit pass on a page, before reading any error.
+- **Next: the remaining list pages onto the same chrome** — Contacts, Projects, Procurement, Quotes,
+  Product Catalog, Knowledge Base, Users, Roles — then the pages the mockup draws differently
+  (Opportunities as a kanban, Service Alerts as alert rows plus monitors, Boards as board load,
+  Billing as invoices with views, Reports as figures plus a board table, Kumo as its own branded
+  surface), then the utility screens, and the report designer last with a mockup first.
+
