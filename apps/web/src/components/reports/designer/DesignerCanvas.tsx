@@ -55,6 +55,16 @@ interface CanvasProps {
   onSelect: (selection: Selection) => void;
   onDocument: (next: ReportTemplateDocument, options?: { push?: boolean }) => void;
   onDropField: (bandId: string, fieldKey: string, at: { x: number; y: number }) => void;
+  /**
+   * The two views a designer looks *through* rather than edits.
+   *
+   * Both default to on, so the classic designer — which does not pass them — draws exactly what it
+   * always drew. The redesigned one offers them as chips: a grid you can turn off is what lets you
+   * judge spacing against the sheet, and band guides you can turn off are what lets you see the
+   * report as the reader will.
+   */
+  showGrid?: boolean;
+  showBandGuides?: boolean;
 }
 
 /** The order bands are shown in: how they will print, top to bottom. */
@@ -78,7 +88,7 @@ export function designBandOrder(document: ReportTemplateDocument): TemplateBand[
   return ordered;
 }
 
-export function DesignerCanvas({ document, selection, zoom, issues, values, charts, onSelect, onDocument, onDropField }: CanvasProps) {
+export function DesignerCanvas({ document, selection, zoom, issues, values, charts, onSelect, onDocument, onDropField, showGrid = true, showBandGuides = true }: CanvasProps) {
   const dims = pageDimensions(document.page);
   const content = contentBox(document.page);
   const pxPerMm = mmToPx(1) * zoom;
@@ -188,8 +198,10 @@ export function DesignerCanvas({ document, selection, zoom, issues, values, char
           style={{
             marginLeft: marginLeftPx,
             width: contentWidthPx,
-            backgroundImage: "repeating-linear-gradient(to right, rgba(148,163,184,.18) 0 1px, transparent 1px 100%), repeating-linear-gradient(to bottom, rgba(148,163,184,.18) 0 1px, transparent 1px 100%)",
-            backgroundSize: `${mmToPx(10) * zoom}px ${mmToPx(10) * zoom}px`,
+            backgroundImage: showGrid
+              ? "repeating-linear-gradient(to right, rgba(148,163,184,.18) 0 1px, transparent 1px 100%), repeating-linear-gradient(to bottom, rgba(148,163,184,.18) 0 1px, transparent 1px 100%)"
+              : undefined,
+            backgroundSize: showGrid ? `${mmToPx(10) * zoom}px ${mmToPx(10) * zoom}px` : undefined,
           }}
         >
           {bands.map(band => {
@@ -197,25 +209,31 @@ export function DesignerCanvas({ document, selection, zoom, issues, values, char
             const selectedBand = selection.kind === "band" ? selection.bandId : selection.kind === "element" ? selection.bandId : null;
             return (
               <div key={band.id} className="relative">
-                <div
-                  className={`flex items-center justify-between px-1 text-[9px] leading-none cursor-pointer select-none ${
-                    selectedBand === band.id ? "bg-cyber-600/70 text-white" : "bg-slate-700/80 text-slate-200 hover:bg-slate-600/80"
-                  }`}
-                  style={{ height: 14 }}
-                  onClick={() => onSelect({ kind: "band", bandId: band.id })}
-                  onDoubleClick={() => onSelect({ kind: "band", bandId: band.id })}
-                >
-                  <span className="truncate">
-                    {band.kind}
-                    {band.groupKey ? ` · ${document.groups.find(g => g.key === band.groupKey)?.label ?? band.groupKey}` : ""}
-                    {band.repeatOnNewPage ? " · repeats" : ""}
-                    {band.pageBreakBefore ? " · new page" : ""}
-                  </span>
-                  <span className="text-slate-400">{band.height}mm</span>
-                </div>
+                {showBandGuides ? (
+                  <div
+                    className={`flex items-center justify-between px-1 text-[9px] leading-none cursor-pointer select-none ${
+                      selectedBand === band.id ? "bg-cyber-600/70 text-white" : "bg-slate-700/80 text-slate-200 hover:bg-slate-600/80"
+                    }`}
+                    style={{ height: 14 }}
+                    onClick={() => onSelect({ kind: "band", bandId: band.id })}
+                    onDoubleClick={() => onSelect({ kind: "band", bandId: band.id })}
+                  >
+                    <span className="truncate">
+                      {band.kind}
+                      {band.groupKey ? ` · ${document.groups.find(g => g.key === band.groupKey)?.label ?? band.groupKey}` : ""}
+                      {band.repeatOnNewPage ? " · repeats" : ""}
+                      {band.pageBreakBefore ? " · new page" : ""}
+                    </span>
+                    <span className="text-slate-400">{band.height}mm</span>
+                  </div>
+                ) : null}
                 <div
                   className="relative"
-                  style={{ height: bandHeightPx, background: BAND_TINTS[band.kind] ?? "transparent", outline: hoverBandId === band.id ? "1px dashed rgba(34,211,238,.6)" : undefined }}
+                  style={{
+                    height: bandHeightPx,
+                    background: showBandGuides ? BAND_TINTS[band.kind] ?? "transparent" : undefined,
+                    outline: showBandGuides && hoverBandId === band.id ? "1px dashed rgba(34,211,238,.6)" : undefined,
+                  }}
                   onMouseEnter={() => setHoverBandId(band.id)}
                   onMouseLeave={() => setHoverBandId(null)}
                   onPointerDown={() => onSelect({ kind: "band", bandId: band.id })}

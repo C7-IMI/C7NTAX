@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.9.023",
+    "date": "2026-10-09",
+    "title": "The report designer's modern interface is the mockup's, and the classic one is untouched",
+    "changes": [
+      {
+        "text": "**One toolbar row of pills, in the order the work is done** — the report's name and its identity",
+        "type": "Update"
+      },
+      {
+        "text": "**A ruler along the top of the sheet**, measured in the sheet's own millimetres at the current zoom —",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Grid and Bands as views you can turn off.** The grid is the millimetre one the snapping follows;",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Run.** The preview also runs by itself a moment after you stop changing something, so Run is not",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Help** describes the redesigned chrome, the ruler, the two views and the six panes, and says",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.022",
     "date": "2026-10-09",
     "title": "Two screens rebuilt from their mockups, a sign-in page replaced, documents that look like documents, and the pages that reported \"Today\"",

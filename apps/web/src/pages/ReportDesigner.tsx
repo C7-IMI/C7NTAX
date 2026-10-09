@@ -46,6 +46,11 @@ interface SavedReport {
 
 type Tab = "design" | "preview" | "data";
 
+/** The hairline the redesigned toolbar divides its groups with — the mockup's `.rd-sep`. */
+function ToolbarDivider() {
+  return <span className="mx-0.5 h-4 w-px shrink-0 bg-surface-border" aria-hidden="true" />;
+}
+
 export function ReportDesignerPage() {
   const redesign = useRedesign();
   const { id = "new" } = useParams<{ id: string }>();
@@ -64,6 +69,9 @@ export function ReportDesignerPage() {
   const [zoom, setZoom] = useState(1);
   const [palettePane, setPalettePane] = useState<"bands" | "data" | "parameters" | "fields" | "expressions" | "schedule">("bands");
   const [showSchedule, setShowSchedule] = useState(false);
+  /** The two views, as chips: what the sheet draws rather than what the report is. */
+  const [showGrid, setShowGrid] = useState(true);
+  const [showBandGuides, setShowBandGuides] = useState(true);
   /** The scrolling stage, measured for Fit width. */
   const stageRef = useRef<HTMLDivElement | null>(null);
   const [tab, setTab] = useState<Tab>("design");
@@ -177,25 +185,36 @@ export function ReportDesignerPage() {
   const errorCount = issues.filter(issue => issue.severity === "error").length;
   const warningCount = issues.length - errorCount;
 
+  /**
+   * Run the report now.
+   *
+   * The preview also runs by itself a moment after you stop changing something, so this is not the
+   * only way to see data — it is the way to *ask* for it, which is what a designer wants after changing
+   * a filter rather than after every keystroke. Both paths call this, so what Run produces and what the
+   * debounce produces cannot become two different things.
+   */
+  const runPreview = useCallback(async () => {
+    if (!document) return;
+    setRunning(true);
+    try {
+      const supplied: Record<string, unknown> = { ...parameters };
+      if (from) supplied.from = from;
+      if (to) supplied.to = to;
+      const response = await api.post("/reports/designer/preview", { name, document, parameters: supplied, from, to });
+      setRun(response.data as DesignerRun);
+    } catch (e) {
+      setRun(null);
+      toast.error(apiErrorMessage(e, "Could not run the preview"));
+    } finally {
+      setRunning(false);
+    }
+  }, [document, name, parameters, from, to]);
+
   useEffect(() => {
     if (!document || errorCount) return;
-    let cancelled = false;
-    setRunning(true);
-    const timer = setTimeout(async () => {
-      try {
-        const supplied: Record<string, unknown> = { ...parameters };
-        if (from) supplied.from = from;
-        if (to) supplied.to = to;
-        const response = await api.post("/reports/designer/preview", { name, document, parameters: supplied, from, to });
-        if (!cancelled) setRun(response.data as DesignerRun);
-      } catch (e) {
-        if (!cancelled) setRun(null);
-        if (!cancelled) toast.error(apiErrorMessage(e, "Could not run the preview"));
-      } finally {
-        if (!cancelled) setRunning(false);
-      }
-    }, 600);
-    return () => { cancelled = true; clearTimeout(timer); };
+    const timer = setTimeout(() => { void runPreview(); }, 600);
+    return () => clearTimeout(timer);
+    // Re-run on the same signal the validation is keyed on: the document, the name, the parameters.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [errorKey, errorCount]);
 
@@ -619,7 +638,126 @@ export function ReportDesignerPage() {
           >Discard the draft</button>
         </div>
       ) : null}
-      {/* Toolbar */}
+      {/* Toolbar — one arrangement for each interface. The redesigned one is the mockup's: a single
+          wrapping row of pills in the order the work is done (what this is, how you are looking at it,
+          how big, what is drawn, undo, and the two writes), with the report's own identity stated
+          beside its name rather than in a heading. The classic one is untouched below it. */}
+      {redesign ? (
+        <div className="surface-card flex flex-wrap items-center gap-x-2 gap-y-1.5 px-3 py-2">
+          <button
+            type="button"
+            className="text-xs text-gray-400 transition-colors hover:text-gray-200"
+            onClick={() => navigate("/reports/custom")}
+            title="Back to the saved reports"
+          >← Reports</button>
+          <input
+            className="w-[min(20rem,34vw)] rounded border border-transparent bg-transparent px-1.5 py-1 text-sm font-semibold text-white hover:border-surface-lighter focus:border-cyber-500/50 focus:outline-none"
+            value={name}
+            onChange={event => { setName(event.target.value); setDirty(true); }}
+            aria-label="Report name"
+          />
+          <span className="text-[11px] text-gray-500">
+            · banded · {document.page.size === "custom" ? "Custom" : document.page.size.toUpperCase()} {document.page.orientation}
+            {" · "}{document.dataSources.length} data source{document.dataSources.length === 1 ? "" : "s"}
+            {" · "}{document.bands.length} bands
+          </span>
+          {dirty ? <span className="chip chip--warn">unsaved</span> : null}
+
+          <ToolbarDivider />
+          <div className="flex items-center gap-1" role="group" aria-label="What you are looking at">
+            {(["design", "preview", "data"] as Tab[]).map(candidate => (
+              <button
+                key={candidate}
+                type="button"
+                aria-pressed={tab === candidate}
+                onClick={() => setTab(candidate)}
+                className={`chip capitalize ${tab === candidate ? "chip--on" : ""}`}
+              >
+                {candidate}
+                {candidate === "data" ? <span className="chip__n">{run?.rows.length ?? 0}</span> : null}
+              </button>
+            ))}
+          </div>
+
+          <ToolbarDivider />
+          <div className="flex items-center gap-1" role="group" aria-label="Zoom">
+            <button type="button" className="chip" title="Zoom out" onClick={() => setZoom(value => Math.max(0.35, Math.round((value - 0.1) * 100) / 100))}>−</button>
+            <span className="chip cursor-default tabular-nums" aria-label={`Zoom ${Math.round(zoom * 100)} percent`}>{Math.round(zoom * 100)}%</span>
+            <button type="button" className="chip" title="Zoom in" onClick={() => setZoom(value => Math.min(2, Math.round((value + 0.1) * 100) / 100))}>+</button>
+            <button type="button" className="chip" title="Zoom so the whole sheet fits the width of the stage" onClick={fitWidth}>Fit width</button>
+          </div>
+
+          <ToolbarDivider />
+          <div className="flex items-center gap-1" role="group" aria-label="What the sheet draws">
+            <button type="button" className={`chip ${showGrid ? "chip--on" : ""}`} aria-pressed={showGrid} title="The millimetre grid the snapping follows" onClick={() => setShowGrid(value => !value)}>Grid</button>
+            <button type="button" className={`chip ${showBandGuides ? "chip--on" : ""}`} aria-pressed={showBandGuides} title="Band names and heights — off shows the report as the reader will see it" onClick={() => setShowBandGuides(value => !value)}>Bands</button>
+          </div>
+
+          <ToolbarDivider />
+          <div className="flex items-center gap-1">
+            <button type="button" className="chip" title="Undo (Ctrl+Z)" disabled={!past.length} onClick={undo}>↶ Undo</button>
+            <button type="button" className="chip" title="Redo (Ctrl+Shift+Z)" disabled={!future.length} onClick={redo}>↷ Redo</button>
+          </div>
+
+          <ToolbarDivider />
+          <button
+            type="button"
+            className="chip"
+            onClick={() => void save()}
+            disabled={saving || errorCount > 0}
+            title={errorCount ? "A template saves when it has no errors" : "Save this report"}
+          >{saving ? "Saving…" : reportId ? "Save" : "Create report"}</button>
+          <button
+            type="button"
+            className="btn-primary text-xs"
+            onClick={() => void runPreview()}
+            disabled={running || errorCount > 0}
+            title="Run the report now — the preview also updates as you type"
+          >{running ? "Running…" : "Run"}</button>
+
+          <div className="ml-auto flex flex-wrap items-center gap-x-2 gap-y-1.5">
+            <button
+              type="button"
+              className={`chip ${errorCount ? "chip--bad" : warningCount ? "chip--warn" : "chip--good"}`}
+              onClick={() => setShowIssues(value => !value)}
+              title="Validation results — click for the list"
+            >
+              {errorCount ? `${errorCount} error${errorCount === 1 ? "" : "s"}` : warningCount ? `${warningCount} warning${warningCount === 1 ? "" : "s"}` : "No problems"}
+            </button>
+            <span className="text-[11px] text-gray-500">
+              {run ? `${run.rows.length} row${run.rows.length === 1 ? "" : "s"}` : "no rows"}
+              {laid ? ` · ${laid.pages.length} page${laid.pages.length === 1 ? "" : "s"}` : ""}
+            </span>
+            <button
+              type="button"
+              className={`text-[11px] ${errorCount ? "text-red-400" : autosaving || saving ? "text-cyber-300" : dirty ? "text-amber-400" : "text-gray-500"}`}
+              title={dirty && !errorCount ? "The draft is on this device; the report saves itself when it validates" : "Autosave"}
+              onClick={() => { if (errorCount) setShowIssues(true); }}
+            >
+              {errorCount
+                ? `Fix ${errorCount} error${errorCount === 1 ? "" : "s"} to save`
+                : saving || autosaving
+                  ? "Saving…"
+                  : dirty
+                    ? draftAt ? `Draft saved ${draftAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "Unsaved changes"
+                    : savedAt ? `All changes saved ${savedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : reportId ? "Saved" : "Not saved yet"}
+            </button>
+            <ToolbarDivider />
+            <div className="flex items-center gap-1" role="group" aria-label="Output">
+              <button type="button" className="chip" onClick={() => output("print")} disabled={!laid?.pages.length}>Print</button>
+              <button type="button" className="chip" onClick={() => output("pdf")} disabled={!laid?.pages.length}>PDF</button>
+              <button type="button" className="chip" onClick={() => output("excel")} disabled={!laid?.pages.length}>Excel</button>
+              <button type="button" className="chip" onClick={() => output("csv")} disabled={!laid?.pages.length}>CSV</button>
+              <button
+                type="button"
+                className="chip"
+                onClick={poppedOutHere ? bringPopoutForward : openPopout}
+                title="Open the designer in its own window, so the rest of the application stays usable"
+              >{poppedOutHere ? "Bring it forward" : "Pop out"}</button>
+            </div>
+          </div>
+        </div>
+      ) : (
       <div className="surface-card flex flex-wrap items-center gap-2 px-3 py-2">
         <button type="button" className="text-xs text-gray-400 hover:text-gray-200" onClick={() => navigate("/reports/custom")}>← Custom Reports</button>
         <input
@@ -628,15 +766,6 @@ export function ReportDesignerPage() {
           onChange={event => { setName(event.target.value); setDirty(true); }}
         />
         {dirty ? <span className="text-[10px] text-amber-400">unsaved</span> : null}
-        {redesign ? (
-          // The report's own identity, the way the mockup's toolbar states it: what this is, what
-          // paper it prints on and how much is in it.
-          <span className="text-[11px] text-gray-500">
-            · banded · {document.page.size === "custom" ? "Custom" : document.page.size.toUpperCase()} {document.page.orientation}
-            {" · "}{document.dataSources.length} data source{document.dataSources.length === 1 ? "" : "s"}
-            {" · "}{document.bands.length} bands
-          </span>
-        ) : null}
 
         <div className="flex items-center gap-1 ml-2">
           <button type="button" className="btn-icon" title="Undo (Ctrl+Z)" disabled={!past.length} onClick={undo}>↶</button>
@@ -714,6 +843,7 @@ export function ReportDesignerPage() {
           {saving ? "Saving…" : reportId ? "Save" : "Create report"}
         </button>
       </div>
+      )}
 
       {/* The report is open in its own window, so this one steps back rather than letting two windows
           edit one document. */}
@@ -888,17 +1018,50 @@ export function ReportDesignerPage() {
         {/* Canvas / preview / data */}
         <main ref={stageRef} className="flex-1 min-w-0 overflow-auto surface-card p-4">
           {tab === "design" ? (
-            <DesignerCanvas
-              document={document}
-              selection={selection}
-              zoom={zoom}
-              issues={issues}
-              values={values}
-              charts={charts}
-              onSelect={select}
-              onDocument={applyDocument}
-              onDropField={onDropField}
-            />
+            redesign ? (
+              /* The stage, as the mockup has it: a rule along the top of the sheet, then the paper. The
+                 ruler is measured in the sheet's own millimetres at the current zoom, so it says what
+                 the position of an element actually is rather than decorating the space above it. */
+              <div className="inline-block align-top">
+                <div className="relative mb-1 h-4 select-none" style={{ width: mmToPx(pageDimensions(document.page).width) * zoom }}>
+                  <div
+                    className="absolute inset-x-0 bottom-0 h-1.5"
+                    style={{
+                      backgroundImage: "repeating-linear-gradient(to right, rgba(148,163,184,.55) 0 1px, transparent 1px 100%)",
+                      backgroundSize: `${mmToPx(10) * zoom}px 100%`,
+                    }}
+                  />
+                  {Array.from({ length: Math.floor(pageDimensions(document.page).width / 50) }, (_, index) => (index + 1) * 50).map(mm => (
+                    <span key={mm} className="absolute bottom-1.5 -translate-x-1/2 text-[9px] tabular-nums text-gray-500" style={{ left: mmToPx(mm) * zoom }}>{mm}</span>
+                  ))}
+                </div>
+                <DesignerCanvas
+                  document={document}
+                  selection={selection}
+                  zoom={zoom}
+                  issues={issues}
+                  values={values}
+                  charts={charts}
+                  showGrid={showGrid}
+                  showBandGuides={showBandGuides}
+                  onSelect={select}
+                  onDocument={applyDocument}
+                  onDropField={onDropField}
+                />
+              </div>
+            ) : (
+              <DesignerCanvas
+                document={document}
+                selection={selection}
+                zoom={zoom}
+                issues={issues}
+                values={values}
+                charts={charts}
+                onSelect={select}
+                onDocument={applyDocument}
+                onDropField={onDropField}
+              />
+            )
           ) : null}
 
           {tab === "preview" ? (

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.022 | Last Updated: 2026-10-09
+## Version: 2026.10.9.023 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,43 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.023 — The report designer's modern interface is the mockup's, and the classic one is untouched
+
+The previous version said the designer's modern arrangement "now matches the mockup". It did not. Three of the
+mockup's six pieces had been built — the pane tabs, Fit width and the status bar — and they had been *added to*
+the designer rather than replacing its chrome, so the screen still read as the old designer with tabs bolted on.
+This is the arrangement itself.
+
+- **[Update]** **One toolbar row of pills, in the order the work is done** — the report's name and its identity
+  (*banded · A4 portrait · N data sources · M bands*), how you are looking at it (Design · Preview · Data), how
+  big it is (− · the percentage · + · **Fit width**), what the sheet draws (**Grid** · **Bands**), undo and redo,
+  and the two writes: **Save** and **Run**. The output actions (Print · PDF · Excel · CSV · Pop out) and the
+  autosave state sit at the other end of the same row rather than on a second line.
+- **[New]** **A ruler along the top of the sheet**, measured in the sheet's own millimetres at the current zoom —
+  so a position on the page can be read rather than eyeballed, which is the difference between a designer and a
+  drawing surface.
+- **[New]** **Grid and Bands as views you can turn off.** The grid is the millimetre one the snapping follows;
+  the band names and heights are the tool's own scaffolding. Turning both off shows the page as the reader will
+  get it, which is the check a layout tool owes you and usually charges a preview for.
+- **[New]** **Run.** The preview also runs by itself a moment after you stop changing something, so Run is not
+  the only way to see data — it is the way to *ask* for it, and both paths call one function, so what Run
+  produces and what the debounce produces cannot become two different things.
+- **[Update]** **Help** describes the redesigned chrome, the ruler, the two views and the six panes, and says
+  plainly that the classic interface keeps the older toolbar and the single scrolling palette.
+
+**The classic interface is untouched**, and that is checked rather than asserted: with
+`localStorage.setItem("c7_ui_redesign","0")` the designer renders its previous toolbar ("← Custom Reports", the
+mode tab strip, the outputs on their own row), **no pill chips at all**, no pane tabs and no ruler. `Grid` and
+`Bands` default to on inside the canvas, so the classic designer — which does not pass them — draws exactly
+what it always drew.
+
+**Verification:** `tsc` clean; `guard:help-links` and `guard:encoding` pass. The toggles were proved by
+counting what they draw: two gradient layers before (the ruler and the grid) and one after Grid is off; six
+band labels before and none after Bands is off; the ruler unaffected by either. The whole screen was
+screenshotted and read in the modern interface, and the classic one checked the same way.
 
 ---
 

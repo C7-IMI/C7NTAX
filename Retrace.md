@@ -8876,3 +8876,56 @@ The `preflight.mjs` failures and the PLAN-030 open items are untouched.
 - **When a lookup is written by hand, check its siblings.** Three sign-in paths matched addresses exactly while
   three others matched them case-insensitively — the inconsistency was the bug, and the fix was to make the
   odd ones agree with the rest.
+
+---
+
+### Prompt 353 — The designer's modern interface, actually the mockup's this time
+
+**Timestamp:** 2026-10-09 13:35 | **Status:** Complete | **Duration:** ~40 min
+
+**BuildNotes IDs:** **2026.10.9.023**.
+
+**Prompt**
+
+> I'm still seeing what looks like the old customer report designer in the modern interface. The mockup looked
+> totally different. I want the mockup version in the modern interface and the original version in the classic
+> interface.
+
+**What I did**
+- **The operator was right, and the previous version's claim was wrong.** Retrace 349 and BuildNotes 022 both
+  said the designer's modern arrangement "now matches the mockup". Three of the mockup's six pieces had been
+  built — the pane tabs, Fit width, the status bar — and they had been **added to** the designer rather than
+  replacing its chrome, so it still read as the old toolbar with tabs bolted on. I built the other three and
+  arranged the whole row.
+- **One toolbar row instead of two, in the mockup's order**: name and identity, the three modes, zoom with Fit
+  width, **Grid** and **Bands**, undo and redo, then **Save** and **Run**; the outputs and the autosave state
+  moved to the other end of the same row. It uses `.chip`/`.chip--on`, which are the mockup's own `ch`/`ch.on`
+  in this application's vocabulary — the arrangement is the mockup's, the controls are the product's.
+- **The ruler is measured, not decorative**: drawn at the sheet's own millimetres at the current zoom, so a
+  position on the page can be read rather than guessed.
+- **Grid and Bands are views.** The canvas took two optional props defaulting to on, so the classic designer —
+  which does not pass them — draws exactly what it always drew. Verified by counting what they draw: two
+  gradient layers (the ruler and the grid) before and one after Grid is off; six band labels before and none
+  after Bands is off; the ruler unaffected by either.
+- **Run is the way to *ask* for data.** The preview also runs by itself after a pause, so both paths now call
+  one `runPreview` — a designer that produced different data depending on which one you used would be two
+  reports wearing one name.
+- **Help** describes the redesigned chrome, the ruler, the two views and the six panes, and says plainly that
+  the classic interface keeps the old toolbar and the single scrolling palette.
+
+**Notes for next time**
+- **I wrote a claim I had not checked, twice.** "Now matches the mockup" went into both the changelog and the
+  log because I had ported *some* of the mockup and called the arrangement done. When a mockup is the spec, the
+  comparison is piece by piece, not "did I add the things I happened to notice".
+- **Adding to a design is not implementing it.** The pane tabs and the status bar were real work and they made
+  the screen *worse*, because they landed on top of chrome that had not moved — which is why the result still
+  looked like the old designer.
+- **A view toggle is cheap, and optional props are how the classic branch stays untouched.** Defaulting
+  `showGrid`/`showBandGuides` to on cost nothing and meant the classic screen needed no re-check beyond one look.
+- **The swallowed-heading trap fired again, and the parse count caught it inside two minutes.**
+  `generate-buildnotes` reporting the wrong total after an addition is the only check that sees a consumed
+  heading; Retrace 349 recorded that lesson and it still had to be applied by hand.
+
+**Also in flight:** two agents are building the Billing → Reports tab — the three report types that tab
+promises and does not have (**AR ageing**, **Tax Summary**, **Billing Forecast**) and the wiring that makes
+Generate generate on all six cards. That is a separate change and a separate version.
