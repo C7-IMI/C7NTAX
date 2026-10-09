@@ -55,6 +55,7 @@ html {
   --status-waiting-vendor: #a5b4fc;
   --status-resolved: #4ade80;
   --status-closed: #9ca3af;
+  --status-reopened: #fb923c;
 
   --text-primary: #ffffff;
   --text-secondary: #d1d5db;
@@ -106,6 +107,7 @@ html[data-theme="light"] {
   --status-waiting-vendor: #3730a3;
   --status-resolved: #166534;
   --status-closed: #374151;
+  --status-reopened: #9a3412;
 
   --text-primary: #1a1a1a;
   --text-secondary: #363636;
@@ -202,6 +204,7 @@ html[data-theme="light"] {
   .badge-status-waiting_on_vendor { color: var(--status-waiting-vendor); }
   .badge-status-resolved { color: var(--status-resolved); }
   .badge-status-closed { color: var(--status-closed); }
+  .badge-status-customer_reopened { color: var(--status-reopened); }
   /*
    * The chosen tab of a segmented control. It takes the primary button's fill — the accent at 600
    * with the scheme's label colour — because a tint of the accent (the usual way a segmented

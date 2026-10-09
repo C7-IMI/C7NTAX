@@ -3,7 +3,7 @@ import { TicketStatus, InvoiceStatus } from "@C7NTAX/shared";
 import { notifyUser } from "./ws";
 import { EmailService } from "@C7NTAX/email";
 import { logger } from "./services/logger";
-import { notifyTicketStatusChange } from "./services/ticketNotifications";
+import { notifyTicketClosure, notifyTicketStatusChange } from "./services/ticketNotifications";
 
 const emailService = new EmailService();
 
@@ -135,8 +135,11 @@ async function processAutoClose(): Promise<void> {
           },
         });
 
-        // Notify the customer contact that the ticket was auto-closed
-        await notifyTicketStatusChange(ticket.id, ticket.status, TicketStatus.Closed);
+        // Notify the customer contact that the ticket was auto-closed, and what brings it back.
+        await notifyTicketClosure(ticket.id, {
+          status: TicketStatus.Closed,
+          notes: `This ticket was closed automatically after ${board.autoCloseDays || 14} days without a reply.`,
+        });
 
         // Add auto-close comment
         await prisma.ticketComment.create({

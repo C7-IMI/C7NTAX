@@ -18,6 +18,7 @@ import { absoluteUrl, copyText, openInNewTab, openInNewWindow, viewMenuEntries }
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { apiErrorMessage } from "../lib/apiError";
 import { TableSkeleton, PageSkeleton } from "../components/ui/Skeleton";
+import { CloseTicketDialog, type CloseTicketTarget } from "../components/CloseTicketDialog";
 import { useRedesign, useContextPane, setContextPane as setContextPanePreference } from "../hooks/useNavigationStyle";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -26,6 +27,8 @@ const STATUS_COLORS: Record<string, string> = {
   on_hold: "bg-purple-600/20 text-purple-400",
   resolved: "bg-green-600/20 text-green-400", closed: "bg-gray-600/20 text-gray-400", cancelled: "bg-red-600/20 text-red-400",
   pending_approval: "bg-yellow-600/20 text-yellow-400",
+  // The client came back: amber rather than the grey of a settled ticket, because it is work again.
+  customer_reopened: "bg-orange-600/20 text-orange-400",
 };
 const PRIORITY_COLORS: Record<string, string> = {
   critical: "bg-red-600/20 text-red-400", high: "bg-orange-600/20 text-orange-400",
@@ -139,7 +142,9 @@ const BATCH_ACTIONS = [
   { value: "priority_critical", label: "Set Priority → Critical" },
 ];
 
-const TICKET_STATUSES = ["new","in_progress","waiting_on_client","waiting_on_third_party","on_hold","pending_approval","resolved","closed","cancelled"];
+const TICKET_STATUSES = ["new","in_progress","waiting_on_client","waiting_on_third_party","on_hold","pending_approval","resolved","closed","customer_reopened","cancelled"];
+/** Settled statuses: the ones the client is told about, and the ones a client reply brings back. */
+const SETTLED_STATUSES = ["resolved", "closed", "cancelled"];
 const TICKET_PRIORITIES = ["low","medium","high","critical"];
 
 // ── Time entry options (mirrors ConnectWise / AutoTask work type & role lists) ──
@@ -400,6 +405,9 @@ export function TicketsPage() {
   const [visibleColumns, setVisibleColumns] = useState<string[]>(loadTicketColumns);
   const [showColumnModal, setShowColumnModal] = useState(false);
   const [dragCol, setDragCol] = useState<string | null>(null);
+
+  /** Tickets queued for closing: one from a row or a record, many from the list's bulk actions. */
+  const [closeTargets, setCloseTargets] = useState<CloseTicketTarget[]>([]);
 
   /*
    * Column widths.
@@ -768,10 +776,18 @@ export function TicketsPage() {
   };
 
   // ── Individual ticket action ──
+  const openCloseDialog = (targets: CloseTicketTarget[]) => {
+    if (targets.length) setCloseTargets(targets);
+  };
+
   const ticketAction = async (ticketId: string, action: string) => {
     try {
       if (action === "close") {
-        await api.patch(`/tickets/${ticketId}`, { status: "closed" });
+        // Closing asks a question — email the client or not — so it opens the dialog rather than
+        // firing a silent PATCH that someone would have to undo by hand.
+        const ticket = tickets.find((row: any) => row.id === ticketId);
+        openCloseDialog([{ id: ticketId, ticketNumber: ticket?.ticketNumber, title: ticket?.title }]);
+        return;
       } else if (action === "acknowledge") {
         await api.patch(`/tickets/${ticketId}`, { status: "in_progress" });
       } else if (action.startsWith("status_")) {
@@ -1014,7 +1030,19 @@ export function TicketsPage() {
                 <div className="absolute left-0 top-full mt-1 w-max grid bg-navy-800 border border-surface-border rounded-lg shadow-xl z-50 py-1">
                   <div className="px-3 py-1.5 text-[10px] text-gray-600 uppercase font-semibold">Quick Actions</div>
                   <button onClick={() => quickApply("acknowledge")} className="text-left whitespace-nowrap px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Acknowledge</button>
-                  <button onClick={() => quickApply("close")} className="text-left whitespace-nowrap px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Close</button>
+                  <button
+                    onClick={() => {
+                      setQuickOpen(false);
+                      openCloseDialog(
+                        tickets
+                          .filter((row: any) => selectedIds.has(row.id))
+                          .map((row: any) => ({ id: row.id, ticketNumber: row.ticketNumber, title: row.title })),
+                      );
+                    }}
+                    className="text-left whitespace-nowrap px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white"
+                  >
+                    Close
+                  </button>
                   <div className="border-t border-surface-border my-1" />
                   {TICKET_STATUSES.filter(s => s !== "closed" && s !== "cancelled").slice(0,5).map(s => (
                     <button key={s} onClick={() => quickApply(`status_${s}`)} className="text-left whitespace-nowrap px-4 py-2 text-sm text-gray-300 hover:bg-surface-lighter hover:text-white">Set Status → {s.replace(/_/g, " ")}</button>
@@ -1034,6 +1062,24 @@ export function TicketsPage() {
         </div>
       </div>
       </div>
+
+      {/* ── Closing a ticket asks first: email the client, or close in silence ── */}
+      {closeTargets.length > 0 && (
+        <CloseTicketDialog
+          tickets={closeTargets}
+          onCancel={() => setCloseTargets([])}
+          onClosed={({ status: closedAs, emailed, count }) => {
+            setCloseTargets([]);
+            setSelectedIds(new Set());
+            toast.success(
+              count > 1
+                ? `${count} tickets ${closedAs}${emailed ? " — each client emailed" : " — nobody notified"}`
+                : `Ticket ${closedAs}${emailed ? " — client emailed" : " — nobody notified"}`,
+            );
+            fetchTickets();
+          }}
+        />
+      )}
 
       {/* ── Filter Dialog ── */}
       {showFilter && (
@@ -1600,6 +1646,8 @@ export function TicketDetailPage() {
   const [attachingEmailFiles, setAttachingEmailFiles] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [showMoreActions, setShowMoreActions] = useState(false);  const [moreActionsBusy, setMoreActionsBusy] = useState(false);
+  /** The record queued for closing, so the status pill can ask before it settles the ticket. */
+  const [closeTargets, setCloseTargets] = useState<CloseTicketTarget[]>([]);
   const [tabRefresh, setTabRefresh] = useState(0);
 
   const cfArr = (key: string): any[] => Array.isArray(cf[key]) ? cf[key] : [];
@@ -2089,7 +2137,15 @@ export function TicketDetailPage() {
     }
   };
 
-  const applyTicketField = async (field: "status" | "priority", value: string) => {    setMoreActionsBusy(true);
+  const applyTicketField = async (field: "status" | "priority", value: string) => {
+    // Closing or resolving is the one status change the client is told about, so it asks first:
+    // whether to tell them, and what to say. See CloseTicketDialog.
+    if (field === "status" && SETTLED_STATUSES.includes(value)) {
+      if (!id || !ticket) return;
+      setCloseTargets([{ id, ticketNumber: ticket.ticketNumber as string, title: ticket.title as string }]);
+      return;
+    }
+    setMoreActionsBusy(true);
     try {
       await api.patch(`/tickets/${id}`, { [field]: value });
       toast.success(`${field === "status" ? "Status" : "Priority"} updated`);
@@ -2370,6 +2426,18 @@ export function TicketDetailPage() {
               <button onClick={handleSave} disabled={saving} className="btn-primary text-xs">{saving ? "Saving…" : "Save"}</button>
             </>)}
           </div>
+          {/* Closing from the Status pill asks the same two questions the list does. */}
+          {closeTargets.length > 0 && (
+            <CloseTicketDialog
+              tickets={closeTargets}
+              onCancel={() => setCloseTargets([])}
+              onClosed={({ status: closedAs, emailed }) => {
+                setCloseTargets([]);
+                toast.success(`Ticket ${closedAs}${emailed ? " — client emailed" : " — nobody notified"}`);
+                load();
+              }}
+            />
+          )}
         </div>
       ) : (<>
           <div>

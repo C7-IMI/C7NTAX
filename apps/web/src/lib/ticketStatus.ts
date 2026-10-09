@@ -20,6 +20,7 @@ const LABELS: Record<string, string> = {
   waiting_on_vendor: "Waiting on Vendor",
   resolved: "Resolved",
   closed: "Closed",
+  customer_reopened: "Customer Reopened",
 };
 
 /** "in_progress" → "In Progress"; anything unrecognised is still made readable. */
@@ -36,6 +37,7 @@ const BADGE_CLASSES: Record<string, string> = {
   waiting_on_vendor: "badge-status-waiting_on_vendor",
   resolved: "badge-status-resolved",
   closed: "badge-status-closed",
+  customer_reopened: "badge-status-customer_reopened",
 };
 
 /** The colour classes for an element that also carries the `badge` component class. */

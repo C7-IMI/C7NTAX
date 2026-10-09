@@ -2,7 +2,8 @@
   "GET /api/reports/data/m365-inactive-accounts": {
     "summary": "Inactive Microsoft 365 accounts, by client and tenant",
     "description": "Every account brought in by the Microsoft 365 sync that nobody signs in to, with the client it maps to and the tenant it came from. Options: inactiveDays (default 90, 1–730), includeDisabled and includeUnknown (both default true), tenantId for one connected tenant, plus clientId from the shared report filters. An account with no sign-in activity recorded is reported as unknown rather than inactive, and the payload says so in `notes` — reading it needs Entra ID P1 and AuditLog.Read.All on the app registration. Requires report:view and integration:view."
-  },  "_README": [
+  },
+  "_README": [
     "Curated operation documentation, keyed by `METHOD /path` exactly as the router declares it.",
     "scripts/generate-openapi.mjs merges these into docs/openapi.yaml; anything missing still appears",
     "with a summary derived from its path, so this file is where a description is made *better*, never",
@@ -214,8 +215,13 @@
     "summary": "One ticket with its thread"
   },
   "PATCH /api/tickets/:id": {
-    "summary": "Update a ticket",
-    "description": "Status, priority, assignment, board and the rest. Status changes are what fire the ticket's notifications."
+    "summary": "Update a ticket, including closing it",
+    "description": "Status, priority, assignment, board and the rest. A status change emails the ticket's contact ? that is what the notifications are ? so two fields exist to control it. `closeNotes` is the reason the ticket is being closed: it is written to the (customer-visible) thread and it is what the closing email says. `notifyCustomer: false` does the same work in silence, for a ticket whose contact has gone or one closed by mistake.\n\nClosing settles the ticket (`closed`, `resolved`, `cancelled`) and emails the client a message that invites a reply. A reply from one of the client's own contacts reopens the ticket as `customer_reopened` and puts it back in the queue ? the reply itself is recorded on the ticket before the status changes.",
+    "requestExample": {
+      "status": "closed",
+      "closeNotes": "Replaced the failing switch and confirmed the link is stable.",
+      "notifyCustomer": true
+    }
   },
   "POST /api/tickets/:id/comments": {
     "summary": "Add a note or reply to a ticket",
@@ -403,5 +409,9 @@
   "GET /api/oauth-app/:sessionId": {
     "summary": "Where a deployment got to, without contacting Microsoft",
     "description": "The session's own state: pending, authorized, declined, expired or failed, plus the tenant, mode, mailbox and display name it was started with."
+  },
+  "POST /api/tickets/batch": {
+    "summary": "Apply one change to many tickets",
+    "description": "Status and priority only. `notifyCustomer: false` closes a batch without emailing anybody, which is usually what housekeeping wants; `closeNotes` is recorded on every ticket in the batch. Note that closing a batch *does* email each ticket's contact, one ticket at a time ? there is no digest."
   }
 }

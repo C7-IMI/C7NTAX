@@ -6683,8 +6683,12 @@ paths:
     patch:
       tags: ["Tickets"]
       operationId: "patchTicketsbyId"
-      summary: "Update a ticket"
-      description: "Status, priority, assignment, board and the rest. Status changes are what fire the ticket's notifications."
+      summary: "Update a ticket, including closing it"
+      description: "Status, priority, assignment, board and the rest. A status change emails the ticket's contact ? that is what the notifications are ? so two fields exist to control it. `closeNotes` is the reason the ticket is being closed: it is written to the (customer-visible) thread and it is what the closing email says. `notifyCustomer: false` does the same work in silence, for a ticket whose contact has gone or one closed by mistake.\n\nClosing settles the ticket (`closed`, `resolved`, `cancelled`) and emails the client a message that invites a reply. A reply from one of the client's own contacts reopens the ticket as `customer_reopened` and puts it back in the queue ? the reply itself is recorded on the ticket before the status changes."
+      requestBody:
+        content:
+          application/json:
+            example: {"status":"closed","closeNotes":"Replaced the failing switch and confirmed the link is stable.","notifyCustomer":true}
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["ticket:edit"]
       x-source: "tickets/index.ts · ticketsRouter.patch"
@@ -6964,7 +6968,8 @@ paths:
     post:
       tags: ["Tickets"]
       operationId: "postTicketsbatch"
-      summary: "Create or act on tickets/batch"
+      summary: "Apply one change to many tickets"
+      description: "Status and priority only. `notifyCustomer: false` closes a batch without emailing anybody, which is usually what housekeeping wants; `closeNotes` is recorded on every ticket in the batch. Note that closing a batch *does* email each ticket's contact, one ticket at a time ? there is no digest."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["ticket:edit"]
       x-source: "tickets/index.ts · ticketsRouter.post"
@@ -7252,5 +7257,5 @@ components:
         occurredAt: { type: string, format: date-time }
         data: { type: object, description: "Kept as it arrived, on the ticket." }
 
-# 63 of 430 operations carry a curated summary from docs/api-operations.json;
+# 64 of 430 operations carry a curated summary from docs/api-operations.json;
 # the rest are described from their own path, which is still enough to call them correctly.

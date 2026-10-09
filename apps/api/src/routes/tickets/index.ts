@@ -3,7 +3,7 @@ import { unlink } from "node:fs/promises";
 import path from "node:path";
 import { prisma } from "../../index";
 import { authenticate, requirePermission, type AuthRequest } from "../../middleware/auth";
-import { Permission, TicketStatus } from "@C7NTAX/shared";
+import { isSettledTicketStatus, Permission, TicketStatus } from "@C7NTAX/shared";
 import { AppError } from "../../middleware/errorHandler";
 import { routeParam } from "../../middleware/routeParams";
 import { onTicketStatusChange, extractPriority } from "./automations";
@@ -276,6 +276,20 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
     if (req.body.endTime) updates.endTime = new Date(req.body.endTime);
     if (req.body.dueDate) updates.dueDate = new Date(req.body.dueDate);
 
+    /*
+     * Stamp the moment the ticket was finished with, or clear the stamp when it comes back.
+     *
+     * Without this a reopened ticket still claims a closedAt, and "how long did this take, and how
+     * often did it come back" is unanswerable from the record. Matches what the event gateway and the
+     * auto-close worker already write.
+     */
+    if (req.body.status === TicketStatus.Closed) updates.closedAt = new Date();
+    else if (req.body.status === TicketStatus.Resolved) updates.resolvedAt = new Date();
+    else if (req.body.status === TicketStatus.CustomerReopened) {
+      updates.closedAt = null;
+      updates.resolvedAt = null;
+    }
+
     const updated = await prisma.ticket.update({ where: { id: req.params.id }, data: updates });
 
     // ── Audit log: detect changes and create a comment ──
@@ -326,10 +340,6 @@ ticketsRouter.patch("/:id", requirePermission(Permission.TicketEdit), async (req
 
     if (updates.status && updates.status !== oldStatus) {
       await onTicketStatusChange(routeParam(req, "id"), updates.status as TicketStatus, oldStatus);
-      // Stamp when the ticket was finished with, so "closed and reopened" is legible afterwards.
-      if (updates.status === TicketStatus.Closed) await prisma.ticket.update({ where: { id: ticket.id }, data: { closedAt: new Date() } });
-      if (updates.status === TicketStatus.Resolved) await prisma.ticket.update({ where: { id: ticket.id }, data: { resolvedAt: new Date() } });
-      if (updates.status === TicketStatus.CustomerReopened) await prisma.ticket.update({ where: { id: ticket.id }, data: { closedAt: null, resolvedAt: null } });
       // A solved ticket is the raw material for a knowledge base article. It is drafted in the
       // background: a draft is a nice-to-have and must not hold up the status change.
       if (updates.status === TicketStatus.Resolved || updates.status === TicketStatus.Closed) {
@@ -725,13 +735,34 @@ ticketsRouter.post("/batch", requirePermission(Permission.TicketEdit), async (re
     if (status) data.status = status;
     if (priority) data.priority = priority;
     if (Object.keys(data).length === 0) throw new AppError("status or priority required", 400);
+    if (status === TicketStatus.Closed) data.closedAt = new Date();
+    if (status === TicketStatus.Resolved) data.resolvedAt = new Date();
+    if (status === TicketStatus.CustomerReopened) {
+      data.closedAt = null;
+      data.resolvedAt = null;
+    }
     const previousStatuses = status
       ? await prisma.ticket.findMany({ where: { id: { in: ticketIds } }, select: { id: true, status: true } })
       : [];
     const result = await prisma.ticket.updateMany({ where: { id: { in: ticketIds } }, data });
 
-    // Email each contact whose ticket status actually changed
-    if (status) {
+    // One closing note, written to every ticket the bulk action closed: the reason for a batch of
+    // closures is usually the same reason, and it is what the clients' copies of it say.
+    const closeNotes = typeof req.body?.closeNotes === "string" ? req.body.closeNotes.trim().slice(0, 4000) : "";
+    if (closeNotes && isSettledTicketStatus(status)) {
+      await prisma.ticketComment.createMany({
+        data: ticketIds.map((ticketId: string) => ({
+          ticketId,
+          body: closeNotes,
+          authorId: req.user!.userId,
+          isInternal: false,
+        })),
+      });
+    }
+
+    // Email each contact whose ticket status actually changed, unless the caller asked for silence:
+    // a bulk close is often housekeeping, and emailing two hundred clients about it is not.
+    if (status && req.body?.notifyCustomer !== false) {
       const previous = new Map(previousStatuses.map((t) => [t.id, t.status] as const));
       for (const ticketId of ticketIds) {
         const oldStatus = previous.get(ticketId);

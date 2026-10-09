@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.8.077",
+    "date": "2026-10-08",
+    "title": "Closing a ticket tells the client, and a reply brings it back",
+    "changes": [
+      {
+        "text": "**A closing email that invites an answer.** `notifyTicketClosure` replaces the generic status",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`customer_reopened`, and a client reply that sets it.** The email connector's reply path now",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Closing asks, in both interfaces.** `CloseTicketDialog` — from the list's right-click",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`notifyCustomer: false` and `closeNotes` on the API**, on `PATCH /api/tickets/{id}` and on",
+        "type": "New Feature"
+      },
+      {
+        "text": "Closing and resolving now stamp `closedAt`/`resolvedAt`, and reopening clears them — the",
+        "type": "Update"
+      },
+      {
+        "text": "`HelpDoc.tsx`: a **Closing a ticket** walkthrough, three FAQ answers, and the Index row.",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.076",
     "date": "2026-10-08",
     "title": "The queue reads in one line, and its columns are yours to size",

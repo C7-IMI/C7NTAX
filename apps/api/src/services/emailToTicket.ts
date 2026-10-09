@@ -7,7 +7,8 @@
 import { prisma } from "../index";
 import type { Company } from "@prisma/client";
 import { generateTicketNumber } from "./ticketNumber";
-import { TicketStatus } from "@C7NTAX/shared";
+import { isSettledTicketStatus, TicketStatus } from "@C7NTAX/shared";
+import { ticketStatusLabel } from "./ticketNotifications";
 import {
   stripSubjectPrefixes,
   deduceName,
@@ -459,9 +460,50 @@ async function createTicketWithNumber(
   }
 }
 
-/** Append an email as a comment to an existing ticket. Returns false when the
- *  quoted reference does not resolve, so the caller can raise a new ticket
- *  instead of dropping the message. */
+/**
+ * Does this address speak for the client on this ticket?
+ *
+ * The test is deliberately narrow. The sender must be a contact *of the ticket's own client*, and must
+ * not be one of our own staff — a technician replying into a monitored mailbox is the single most
+ * likely way for a closed ticket to reopen by itself, and it would do it silently. An unknown sender
+ * (a vendor, a colleague, a stranger on a CC) leaves the ticket as it is: they are not the client, so
+ * the client has not asked for anything.
+ */
+async function senderIsTicketClient(
+  ticket: { companyId: string; contactId: string | null },
+  fromEmail: string,
+): Promise<boolean> {
+  const email = (fromEmail || "").trim();
+  if (!email) return false;
+  const staff = await prisma.user.findFirst({
+    where: { email: { equals: email, mode: "insensitive" }, isActive: true },
+    select: { id: true },
+  });
+  if (staff) return false;
+  if (ticket.contactId) {
+    const primary = await prisma.contact.findFirst({
+      where: { id: ticket.contactId, email: { equals: email, mode: "insensitive" } },
+      select: { id: true },
+    });
+    if (primary) return true;
+  }
+  const contact = await prisma.contact.findFirst({
+    where: { companyId: ticket.companyId, email: { equals: email, mode: "insensitive" }, isActive: true },
+    select: { id: true },
+  });
+  return Boolean(contact);
+}
+
+/**
+ * Append an email as a comment to an existing ticket. Returns false when the
+ * quoted reference does not resolve, so the caller can raise a new ticket
+ * instead of dropping the message.
+ *
+ * A reply from the client on a ticket that had been closed **reopens it**: the closure email invites
+ * exactly this reply, so anything else would be an invitation with nothing behind it. It comes back as
+ * `customer_reopened` rather than `in_progress` so the queue shows which tickets were declared finished
+ * and were not, and the reply itself is the first thing the technician reads.
+ */
 export async function appendEmailToTicket(ticketId: string, email: ParsedEmail): Promise<boolean> {
   const ticket = await prisma.ticket.findFirst({
     where: { OR: [{ id: ticketId }, { ticketNumber: { contains: ticketId } }] },
@@ -480,5 +522,47 @@ export async function appendEmailToTicket(ticketId: string, email: ParsedEmail):
     },
   });
   await attachEmailFiles(ticket.id, email, systemUser.id, comment.id);
+  await reopenIfClientReplied(ticket, email.from.email);
   return true;
+}
+
+/**
+ * Reopen a settled ticket when the client answers it.
+ *
+ * Recorded twice on purpose: the status change is what the queue reads, and the internal note is what
+ * the person opening the ticket reads next — "the client replied and it came back" is a fact worth one
+ * line in the thread rather than something to infer from a status badge.
+ */
+async function reopenIfClientReplied(
+  ticket: { id: string; status: string; companyId: string; contactId: string | null },
+  fromEmail: string,
+): Promise<void> {
+  if (!isSettledTicketStatus(ticket.status)) return;
+  if (!(await senderIsTicketClient(ticket, fromEmail))) return;
+  try {
+    await prisma.ticket.update({
+      where: { id: ticket.id },
+      data: {
+        status: TicketStatus.CustomerReopened,
+        closedAt: null,
+        resolvedAt: null,
+        waitingSince: null,
+        followUpCount: 0,
+      },
+    });
+    const systemUser = await resolveSystemUser();
+    await prisma.ticketComment.create({
+      data: {
+        ticketId: ticket.id,
+        body: `${ticketStatusLabel(ticket.status)} → Customer reopened: the client replied to the closure email from ${fromEmail}.`,
+        authorId: systemUser.id,
+        isInternal: true,
+      },
+    });
+    console.log(`[EmailConnector] Reopened ticket ${ticket.id} — ${fromEmail} replied to a ${ticket.status} ticket`);
+  } catch (err) {
+    // The reply is already on the ticket. Failing the whole message over the status change would lose
+    // the client's words, which is the one thing here that cannot be fetched again.
+    console.error(`[EmailConnector] Reply stored but ticket ${ticket.id} could not be reopened:`, err instanceof Error ? err.message : err);
+  }
 }

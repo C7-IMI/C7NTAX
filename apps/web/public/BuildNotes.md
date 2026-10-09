@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.076 | Last Updated: 2026-10-08
+## Version: 2026.10.8.077 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,49 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.077 — Closing a ticket tells the client, and a reply brings it back
+
+Closing used to be one silent field change with a generic "Status updated" email attached. It is now the
+two things it actually is — the ticket settles, and somebody tells the client — with the choice asked for
+rather than assumed, and with a way back for the client who disagrees.
+
+- **[New]** **A closing email that invites an answer.** `notifyTicketClosure` replaces the generic status
+  notification for `closed`, `resolved` and `cancelled`: it carries the closing note and it ends by
+  telling the client that a reply reopens the ticket. The auto-close worker uses it too, so a ticket
+  closed for silence says *that* rather than claiming the work is finished.
+- **[New]** **`customer_reopened`, and a client reply that sets it.** The email connector's reply path now
+  reopens a settled ticket when the reply comes from one of **the client's own contacts** — and only then:
+  a reply from a vendor, a colleague or one of our own staff is recorded without reopening, because a
+  technician answering into a monitored mailbox is the most likely way for a closed ticket to reopen by
+  itself. The reply is stored before the status changes, `closedAt`/`resolvedAt` are cleared, and an
+  internal line records what happened. Kept as its own status rather than folded back into `in_progress`
+  so the queue distinguishes work that was never finished from work that was declared finished and was not.
+- **[New]** **Closing asks, in both interfaces.** `CloseTicketDialog` — from the list's right-click
+  **Close ticket**, a row's menu, the bulk **Quick Actions**, or the record's **Status** pill — offers
+  *Email the client* or *Close silently*, Closed or Resolved, and a closing note that becomes both the
+  body of the email and a customer-visible comment in the thread. The choice is remembered per browser
+  and the primary button says what it will do (**Close and email the client** / **Close silently**). The
+  modern sheet is two decisions with their consequences beside them; the classic form is a labelled field
+  list with a checkbox, as every other classic dialog is.
+- **[New]** **`notifyCustomer: false` and `closeNotes` on the API**, on `PATCH /api/tickets/{id}` and on
+  `POST /api/tickets/batch` (one note written to every ticket in the batch) — the same opt-out for an
+  integration, and documented in `docs/API.md` §8: an integrator that closes tickets should expect them
+  to come back on their own.
+- **[Update]** Closing and resolving now stamp `closedAt`/`resolvedAt`, and reopening clears them — the
+  same fields the event gateway and the auto-close worker already write, so "how often did this come
+  back" is answerable from the record.
+- **[Update]** `HelpDoc.tsx`: a **Closing a ticket** walkthrough, three FAQ answers, and the Index row.
+  `lib/ticketStatus.ts` and `index.css` gained the new status's label and colour token in both themes.
+
+**Verification:** API, shared and web `tsc --noEmit` clean; `pnpm build` clean; `check-help-links`,
+`check-api-docs` and `check-route-guards` green. Driven in the browser: the dialog opens from the
+right-click menu in both interfaces, a silent close wrote the customer-visible note and set `closedAt`
+with no email attempted, and the reopen path was exercised against the real `appendEmailToTicket` — a
+reply from the client's contact reopened the ticket as `customer_reopened` with `closedAt` cleared, a
+reply from a staff address left it closed, and the test's own comments were removed afterwards.
 
 ---
 

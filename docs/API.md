@@ -350,7 +350,7 @@ curl -s -X PATCH https://psa.example.com/api/system/config/eventIntakeBoardId \
 ## 8. Writing to the PSA directly
 
 Events are the right shape for *incidents*. For anything else — a project sync, a scheduled import, a
-script that creates a ticket from a form — write to the domain endpoints. Two things to know before
+script that creates a ticket from a form — write to the domain endpoints. Three things to know before
 you do:
 
 * **Comments e-mail the customer; internal ones do not.** `POST /api/tickets/{id}/comments` (body in
@@ -358,6 +358,19 @@ you do:
   `note` all notify the ticket's customer contact unless `isInternal: true` (for `PATCH`, the flag is
   `noteInternal`). An integration that writes status updates should be explicit about this rather
   than surprised by it. Status changes notify too, when the status is one the customer is told about.
+* **Closing a ticket is a notification, so it can be silenced.** Setting `status` to `closed`,
+  `resolved` or `cancelled` sends the contact a closing email: `closeNotes` is the reason, and it is
+  written to the customer-visible thread as well as into that email. `notifyCustomer: false` does the
+  same work without sending anything — which is what a ticket whose contact has left needs, and what
+  housekeeping on a batch of stale tickets wants (`POST /api/tickets/batch` takes the same two fields;
+  it still emails one ticket at a time, with no digest).
+* **A reply from the client reopens a closed ticket.** The closing email invites one, and the email
+  connector acts on it: a reply from one of the client's own contacts on a `closed`, `resolved` or
+  `cancelled` ticket puts the status back to `customer_reopened` and returns it to the queue. The reply
+  is recorded on the ticket before the status changes, and a reply from anyone else — a vendor, a
+  colleague, our own staff — is recorded without reopening. An integration that closes tickets should
+  therefore expect them to come back on their own; `customer_reopened` is the status that says why, and
+  it is deliberately not folded back into `in_progress`.
 * **Ticket creation needs `title` and `boardId`**; `companyId`, `priority`, `source`, `contactId`,
   `assignedToId` and `additionalContactIds` are optional, and `POST /api/tickets/:id/time` adds the
   time entry that a status change alone does not.

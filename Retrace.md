@@ -7420,3 +7420,48 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **A 1280px window cannot show nine readable columns.** Auto-fit plus a smaller font gets every value
   whole and scrolls for the last two; the honest alternatives are fewer columns or a wider window, and
   both are the user's call.
+
+
+### Prompt 320 ? Close a ticket out loud, and let a reply bring it back
+
+**Timestamp:** 2026-10-08 23:58 | **Status:** Complete | **Duration:** ~50 min
+
+**BuildNotes IDs:** **2026.10.8.077**.
+
+**Prompt**
+
+> After you are finished: If a ticket is closed or marked completed it should email the client saying so.
+> If the client replies to the e-mail, the ticket should automatically reopen and the status should change
+> to customer re-opened. There should be an option/checkbox that will let me close the ticekt without
+> notifying the client. As far as teh right click menu goes, if I select close ticket, it should either
+> prompt me whether I want to email the client or just close it. Perhaps a dialog popup to enter final
+> notes or a reason why it's being closed
+
+**What I did**
+- **Found the notification that already existed and specialised it** rather than adding a second one:
+  every status change already emailed the contact, so the work was to make the *closing* one carry the
+  closing note and the invitation to reply, and to route auto-close through it as well.
+- **Added `customer_reopened`** and the reopen rule in `appendEmailToTicket`, the function the email
+  connector already calls for a reply: settled status + a sender who is a contact **of that ticket's
+  client** and is not one of our own staff. The reply is stored before the status changes, so a failure to
+  reopen cannot lose the client's words.
+- **Built one dialog for four entry points** (right-click, row menu, bulk Quick Actions, the record's
+  Status pill) with two real designs: a modern *sheet* whose choices carry their consequences, and the
+  classic field list with a checkbox. The primary button states what will happen.
+- **Gave the API the same vocabulary** ? `closeNotes` and `notifyCustomer` on `PATCH` and on
+  `/batch` ? and documented it for integrators, because "the ticket will come back on its own" is the
+  sort of behaviour that surprises a script.
+- **Verified the reopen against the real function**: a client reply reopened a closed ticket with
+  `closedAt` cleared, a staff reply did not, and the test removed its own comments afterwards.
+
+**Notes for next time**
+- **"Completed" is not in this vocabulary.** There is no *completed* status; `resolved` is the one that
+  means the work is done, so the instruction's two words map to `closed` and `resolved` and both
+  settle. Reading the enum first is what turned an ambiguous instruction into two statuses rather than a
+  new one invented to match a word.
+- **A reply that reopens is a policy, not a feature.** It is only right because the closing email asks
+  for the reply; the two are one decision and had to land together, in the same commit, with the
+  invitation in the same email that makes the promise.
+- **A dialog that asks is worth more than a checkbox nobody sees.** The consequence is written under each
+  choice and repeated on the button, so "I closed it and forgot to tell them" is no longer a thing that
+  can happen by pressing the obvious button.
