@@ -109,12 +109,41 @@ console.log("\ninfrastructure contract");
     /\bparam\s+imageTag\s+string\s*=/m.test(main)
       ? fail("infra/main.bicep gives imageTag a default — deploy-env.ps1 must pass the tag the app is running (§1.3)")
       : ok("imageTag has no default, so a Bicep run cannot introduce an image of its own");
-    /\btraffic\s*:/m.test(main)
-      ? fail("infra/main.bicep declares an ingress traffic rule — it would bypass the 0%-traffic health gate (§1.3)")
-      : ok("no ingress traffic rule in the template: the promotion path owns traffic");
+
+    // Review §5. Traffic has to be *restated*, not omitted: a Bicep deployment is a PUT of the whole
+    // resource, and an absent `ingress.traffic` reads as the default — `latestRevision: true` —
+    // which hands 100% to a revision the health gate has not looked at. The template therefore
+    // declares the traffic rule and restates the serving revision, which the script reads before it
+    // creates a new one and passes. An empty `activeRevision` is by design (it means "nothing is
+    // serving yet"), so the guard is that the default is *empty* — never a revision name the
+    // template picked for itself.
+    const activeRevisionParam = main.match(/\bparam\s+activeRevision\s+string\s*=\s*'([^']*)'/m);
+    const activeRevisionRestated = /\brevisionName\s*:\s*activeRevision\b/m.test(main);
+    if (!activeRevisionParam) {
+      fail("infra/main.bicep has no `param activeRevision string = ''` — the ingress traffic rule cannot restate the serving revision (review §5)");
+    } else if (activeRevisionParam[1] !== "") {
+      fail(`infra/main.bicep defaults activeRevision to '${activeRevisionParam[1]}' — the template would pin a revision of its own choosing, not the one serving (review §5)`);
+    } else if (!activeRevisionRestated) {
+      fail("infra/main.bicep does not use activeRevision as the ingress traffic revisionName — traffic would fall back to the latest revision (review §5)");
+    } else {
+      ok("activeRevision defaults to empty and restates the serving revision in the ingress traffic rule");
+    }
+
     main.includes("activeRevisionsMode: 'Multiple'")
       ? ok("activeRevisionsMode is Multiple")
       : fail("activeRevisionsMode is not Multiple — a Bicep run would flip back the mode the script sets (§1.3)");
+  }
+  const deployPath = path.join(root, "scripts", "azure", "deploy-env.ps1");
+  if (!existsSync(deployPath)) {
+    fail("scripts/azure/deploy-env.ps1 is missing");
+  } else {
+    const deploy = readFileSync(deployPath, "utf8");
+    deploy.includes("activeRevision=")
+      ? ok("deploy-env.ps1 passes activeRevision to the Bicep step")
+      : fail("deploy-env.ps1 does not pass activeRevision — a Bicep run would reset traffic to the latest revision (review §5)");
+    /properties\.trafficWeight==/.test(deploy)
+      ? ok("deploy-env.ps1 reads the revision serving 100% of traffic before creating a new one")
+      : fail("deploy-env.ps1 does not read the serving revision (properties.trafficWeight) before the revision step (review §5)");
   }
   const paramsDir = path.join(root, "infra", "params");
   for (const file of existsSync(paramsDir) ? readdirSync(paramsDir) : []) {

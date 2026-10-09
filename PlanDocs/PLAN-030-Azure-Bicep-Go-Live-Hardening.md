@@ -8,8 +8,30 @@
 > 2.5, 2.6, 2.7, 2.10, 2.11) landed in `infra/`, `scripts/azure/` and `.bicepparam`, and the templates
 > **compile** against the real Bicep CLI (0.48.1, no warnings). Four items were deliberately **not**
 > applied and six decisions are still the operator's: see *§7 What landed, and what did not* below.
-> Everything marked *(verify)* is still confirmed or dropped by the first `what-if` against a
-> subscription — compiling is not deploying.
+>
+> **Revised against the review of the applied changes** (`PLAN-030-Review-of-Applied-Changes.md`, §1–§6
+> applied; §7 there — the least-privilege Postgres role, this plan's 2.3 — is tracked separately and
+> deliberately not applied):
+> geo-redundant backup is now **on in prod** and off in dev (§9.1, §9.3); every claim that `SameZone`
+> "halves the compute" is corrected, because a standby is billed in **both** HA modes and only
+> `Disabled` is ×1 (§2 of the review, §4, §8.5, §9.1–§9.4); the pipeline's migration step now runs as
+> the app's user-assigned identity, like the script (§3 of the review, §8.10); the template creates and
+> probes the app on the bootstrap image's port 80 and the script moves it back to 4000 (§4);
+> `ingress.traffic` is **declared** — restating the revision that is serving — instead of omitted (§5);
+> and the private-DNS comment states the actual rule (§6).
+>
+> **Confirmed against Microsoft documentation** (these were *(verify)* items, and are not any more):
+> geo-redundant backup storage for Flexible Server is settable **only at server creation**, which is why
+> prod has to have it from the first deployment; and for a VNet-injected server the private DNS zone
+> name only has to *end in* `.postgres.database.azure.com`, so the name used is a choice rather than a
+> requirement (§9.1, §9.3).
+> **Still unverified without a subscription**, and settled by the first `what-if` and the first dev
+> deployment: the port hand-off on the first `-Create` run — the script's `--target-port` is confirmed
+> against the CLI's own command module, but a probe's `port` is a **required** field of the revision
+> template, so the ingress port moves and the probes do not (review §4 option (b) avoids the hand-off
+> altogether; the script's `/api/health` gate covers the promotion until the next Bicep run) —
+> whether the bootstrap image answers the probe's path, a creation-time-only backup property that
+> cannot be *proved* from a template, and the four §3 checks below. Compiling is not deploying.
 > **Depends on:** nothing. **Gates:** PLAN-016's first deployment of dev and prod.
 
 **Read first:** §1 (it will not deploy as written) and §2.1 (the app is internet-facing with no WAF).
@@ -67,16 +89,16 @@ These are East US 2 pay-as-you-go list prices in USD, from memory rather than a 
 
 | Resource | Prod | Dev |
 |---|---|---|
-| PostgreSQL compute (D2ds_v5 with zone-redundant HA, so compute ×2 / B1ms; `SameZone` halves it — §8.5) | ~$260 | ~$12 |
-| PostgreSQL storage (128 GB / 32 GB) + backup (35-day **local** retention / 7-day) — geo-redundant copies are off by default (§9.3) | ~$35–55 | ~$4 |
+| PostgreSQL compute (D2ds_v5 with zone-redundant HA, so compute ×2 / B1ms single-zone; **either** HA mode bills a standby, so only `Disabled` would be ×1 — §8.5) | ~$260 | ~$12 |
+| PostgreSQL storage (128 GB / 32 GB) + backup (35-day retention / 7-day) — prod's copies are **geo-redundant** (~$10–30/mo of this line at 128 GB; §9.1, §9.3) | ~$45–85 | ~$4 |
 | Container Apps (2 always-on replicas at 2 vCPU/4 GiB / 1 at 1 vCPU/2 GiB; idle → busy) | ~$95–310 | ~$20–75 |
 | Container Registry (Premium / Basic) | ~$50 | ~$5 |
 | Log Analytics (prod 5–10 GB/mo, 365-day retention) | ~$20–50 | ~$5 |
 | Key Vault, private DNS, VNet, NSGs | <$5 | <$2 |
-| **This template** | **≈ $470–730** | **≈ $45–100** |
+| **This template** | **≈ $480–760** | **≈ $45–100** |
 | Ingress, needed for go-live (Front Door Premium ~$330 + traffic, *or* App Gateway WAF_v2 ~$325 + capacity units) | +$330–700 | — |
 | Private endpoints (Key Vault, ACR: ~$7–8 each) | +~$15 | — |
-| **Realistic go-live total** | **≈ $800–1,450** | **≈ $45–100** |
+| **Realistic go-live total** | **≈ $810–1,480** | **≈ $45–100** |
 
 **Not included:** Defender for Cloud plans, DDoS Network Protection (~$2,900/mo, which Front Door makes unnecessary at this size), and egress beyond 100 GB.
 
@@ -104,18 +126,24 @@ These are East US 2 pay-as-you-go list prices in USD, from memory rather than a 
 ## 7. What landed, and what did not
 
 **Applied** — the templates compile with Bicep CLI 0.48.1 (`node scripts/azure/validate-bicep.mjs`, exit
-0, no warnings), and `scripts/azure/preflight.mjs` gained a regression guard for the two items most
-likely to come back:
+0, no warnings), and `scripts/azure/preflight.mjs` gained a regression guard for the items most likely
+to come back — the running image, the serving revision, the revisions mode and the secrets:
 
 | Item | Where |
 |---|---|
 | 1.1 workload profile, delegation kept | `infra/main.bicep` |
 | 1.2 user-assigned identity, both role grants, attached to the app and the app's `secretRef`s | `infra/main.bicep` |
-| 1.3 `imageTag` required with no default; `activeRevisionsMode: Multiple`; **the `traffic` block deleted**; the script reads the running tag (or the public placeholder) and sets the mode before it updates | `infra/main.bicep`, `scripts/azure/deploy-env.ps1` |
+| 1.3 `imageTag` required with no default; `activeRevisionsMode: Multiple`; the script reads the running tag (or the public placeholder) and sets the mode before it updates. **Revised by the review §5:** the `traffic` block is declared after all — it restates `activeRevision`, read by the script before it creates a revision — because an omitted rule resets to `latestRevision` | `infra/main.bicep`, `scripts/azure/deploy-env.ps1` |
 | 1.4 ACR policies prod-only | `infra/main.bicep` |
 | 1.5 every subnet inline, one VNet PUT, no duplicate subnet resource | `infra/main.bicep` |
 | 1.6 `postgres` depends on the DNS link | `infra/main.bicep` |
 | 1.8 migration job on the user-assigned identity, create-or-update, `DATABASE_URL` from Key Vault | `scripts/azure/deploy-env.ps1` |
+| **1.8's workflow half** (review §3): the pipeline's migration step now uses the app's user-assigned identity, `--mi-user-assigned`/`--registry-identity`, `DATABASE_URL` as a `keyvaultref:` secret with `identityref:`, and create-or-update before `job start` | `.github/workflows/deploy-azure.yml` |
+| **Review §1**: geo-redundant backup on in prod, off in dev, with the creation-time constraint stated as fact | `infra/main.bicep` |
+| **Review §2**: the HA-cost claim corrected everywhere a standby is billed or a reservation is sized | `infra/main.bicep`, PLAN-030 §4, §8.5, §9 |
+| **Review §4**: the app is created and probed on the bootstrap image's port, and the script moves it back to 4000 with the real image | `infra/main.bicep`, `scripts/azure/deploy-env.ps1` |
+| **Review §5**: ingress `traffic` restates `activeRevision`; the script reads the serving revision before creating one; `preflight.mjs` guards all three | `infra/main.bicep`, `scripts/azure/deploy-env.ps1`, `scripts/azure/preflight.mjs` |
+| **Review §6**: the private-DNS comment states the rule (`end in`, not `match`) | `infra/main.bicep` |
 | 2.1 Front Door restriction behind a switch + the `X-Azure-FDID` checklist item | `infra/main.bicep`, `infra/README.md` §4 |
 | 2.2 `@minLength` on the three secrets; params read `readEnvironmentVariable` | `infra/main.bicep`, both `.bicepparam` |
 | 2.4 Key Vault private endpoint + zone group; `publicNetworkAccess: Disabled` **prod only** | `infra/main.bicep` |
@@ -128,13 +156,18 @@ likely to come back:
 **Four deliberate deviations** from this plan, each decided during review and recorded in the
 templates or the README:
 
-1. **The `traffic` block is removed, not merely complemented.** `latestRevision: true` hands a new
-   revision 100% the moment it exists and every Bicep run re-applies it, so the script's 0%-traffic
-   health gate would be fiction on *every* deploy. Traffic is now owned by the promotion path alone.
-2. **The Postgres private DNS zone keeps its name** (1.7). For a VNet-injected server the zone must
-   match the server's own `*.postgres.database.azure.com`; renaming it risks a server that resolves
-   nowhere. The collision this plan feared is avoided by giving Key Vault its own
-   `privatelink.vaultcore.azure.net` zone instead — and no ACR zone, because 2.8 defers that endpoint.
+1. **The `traffic` block restates the revision that is serving, rather than being removed** — the
+   review (§5) reversed the original decision here. Omitting it does not preserve traffic: a deployment
+   is a PUT of the whole resource, and an absent rule reads as the default, `latestRevision: true,
+   weight: 100`, so a Bicep-only run would hand 100% to a revision the health gate had just rejected.
+   The template now declares `traffic` and pins `activeRevision`, which the script reads *before* it
+   creates a new revision; the promotion path still owns moving traffic, after the gate.
+2. **The Postgres private DNS zone keeps its name** (1.7), though the reason recorded here was wrong
+   until the review corrected it (§6). For a VNet-injected server the zone name only has to **end in**
+   `.postgres.database.azure.com`, so `c7ntax-<env>.postgres.database.azure.com` would have resolved
+   too; this name is kept because a VNet-injected server never takes a private endpoint, so nothing
+   competes for it. Key Vault gets its own `privatelink.vaultcore.azure.net` zone because it *does*
+   take one — and no ACR zone, because 2.8 defers that endpoint.
 3. **The Key Vault private endpoint is created in dev too**, with public access left on there, so the
    zone-group wiring is exercised before prod depends on it.
 4. **No `priority` or `ipSecurityRestrictionsDefaultAction` on the ingress rule** — neither exists in
@@ -152,7 +185,6 @@ templates or the README:
 | NSGs on `snet-aca`, `snet-appgw`, `snet-pe` (the rest of 2.5) | Deferred as riskier than the Postgres rules; README §4 records the `GatewayManager` 65200–65535 and `AzureLoadBalancer` rules App Gateway will need. |
 | The migration job declared in Bicep (1.8's second half) | The script remains its owner for now; the identity, image and update path are fixed. |
 | §4's cost estimate and §5's D1–D4 | The operator's, unchanged. Dev now carries one extra private endpoint (~$7/mo), recorded in the README cost table. |
-| A pre-existing defect in `.github/workflows/deploy-azure.yml` (~line 178): the workflow still creates the migration job with `--mi-system-assigned` and no `DATABASE_URL` — the same bug 1.8 fixes in the script | Outside the reviewed file set. Recorded in `infra/README.md` so it is not lost. |
 
 ## 8. Recommendations on the open items
 
@@ -261,8 +293,11 @@ Container Apps spans $95–310 — a factor of three, and the largest single var
   those exact SKUs in the Azure Pricing Calculator, save the export next to this plan, and set a Cost
   Management **budget alert at 80%** on the subscription. The alert is the mechanism that catches a
   wrong estimate; another table is not.
-- **Two decisions worth an hour each:** (a) Postgres HA mode — `ZoneRedundant` doubles compute, and
-  `SameZone` halves it, so the RTO you actually need decides ~$130/mo; (b) Front Door **Standard vs
+- **Two decisions worth an hour each:** (a) Postgres HA mode — a standby is billed in **both** HA
+  modes, so `ZoneRedundant` and `SameZone` cost the same ×2 compute and only `Disabled` (no standby)
+  is ×1, about $130/mo less on D2ds_v5. The real choice is therefore *availability*: survive the loss
+  of a zone (`ZoneRedundant`), survive a host failure only (`SameZone`), or have no standby at all
+  (`Disabled`) — not a saving. (b) Front Door **Standard vs
   Premium** — see 8.6, where Premium is recommended for a non-cost reason.
 - **Reservations:** a 1-year reservation on the Postgres compute is the single biggest saving (~35–40%),
   and Container Apps has savings plans. Buy after 30 days of real usage, never before.
@@ -308,30 +343,39 @@ spend $40/mo on the wrong control.
 
 ### 8.9 — D4: closed
 
-**Recommendation: closed as decided and implemented, in the stronger form.** The template no longer
-owns the running image *and* no longer declares traffic at all — `latestRevision: true` re-applied on
-every Bicep run would have made the script's 0%-traffic health gate fiction. Traffic now belongs to the
-promotion path alone, and `preflight.mjs` fails if a `traffic` rule or an `imageTag` default reappears.
+**Recommendation: closed as decided and implemented — with one correction from the review §5.** The
+template no longer owns the running image: `imageTag` has no default, and the script passes what is
+actually running. Traffic is handled differently from the original decision, which was to declare no
+`traffic` block at all: omitting it does not preserve traffic, because a deployment is a PUT of the whole
+resource and an absent rule reads as the default, `latestRevision: true, weight: 100`. The template
+therefore *declares* the rule and restates `activeRevision` — the revision the script reads before it
+creates a new one. Traffic is still moved only by the promotion path, after the health gate.
+`preflight.mjs` fails if an `imageTag` default reappears, if `activeRevision` stops being the traffic
+target (or gains a default that names a revision), if `activeRevisionsMode` is not Multiple, or if the
+script stops reading and passing the serving revision.
 
-### 8.10 — One more thing this plan found: fix the workflow in the same change as the next infra commit
+### 8.10 — The workflow defect: fixed in the next infrastructure change
 
-`.github/workflows/deploy-azure.yml` (~line 178) still creates the migration job with
-`--mi-system-assigned` and no `DATABASE_URL`, which is exactly the defect 1.8 fixes in the script. The
-workflow is the path a production deploy actually takes, so leaving it means the fix is not in the
-route that matters.
+`.github/workflows/deploy-azure.yml` created the migration job with `--mi-system-assigned` and no
+`DATABASE_URL` — the defect 1.8 fixes in the script, on the path a production deploy actually takes, so
+every push to `main` stopped at the migration step.
 
-**Recommendation: fix it in the next infrastructure change, not as a follow-up**, and while there, add
-the job's `identityref` secret form so the workflow matches `deploy-env.ps1` line for line.
+**Done** in the review's follow-up (§3 of the review): the step reads the app's user-assigned identity,
+passes `--mi-user-assigned`/`--registry-identity`, supplies `DATABASE_URL` as a `keyvaultref:` secret
+with `identityref:`, and updates-then-starts the job when it already exists — mirroring
+`deploy-env.ps1`, which remains the reference for both.
 
 ### 8.11 — The go-live bar I would hold
 
 Minimum before a production deployment, in this order, leaving 2.8 and secret expiry to follow:
 
-1. **2.3** — the least-privilege role (8.1).
+1. **2.3** — the least-privilege role (8.1). Still open, and deliberately not part of the review
+   follow-up (§7 of the review, tracked separately).
 2. **2.9** — `verify-full` with the bundle in the image (8.4).
 3. **2.1 + D1** — the ingress decided (8.6) and the origin not publicly reachable, with the
    `X-Azure-FDID` check in the API.
-4. **The workflow fix** (8.10).
+4. ~~The workflow fix (8.10)~~ — **applied**: the pipeline's migration step now uses the app's
+   user-assigned identity, so this is no longer a bar item.
 5. **The four §3 checks** that only a subscription can confirm, run against dev first, then prod with a
    saved `what-if`.
 
@@ -339,35 +383,44 @@ Minimum before a production deployment, in this order, leaving 2.8 and secret ex
 
 ### 9.1 — "Probably don't need geo redundancy. That'll shave the cost."
 
-**Agreed, and it is worth separating three things this template calls redundancy — because only one of
-them is geo, and only one of them is the big saving.**
+**That comment was answered, and the answer was wrong. It is reversed: geo-redundant backup is on in
+prod and off in dev (§9.3).**
+
+Three things this template calls redundancy are worth separating, because only one of them is geo — and
+the conclusion is no longer the one this section first drew.
 
 | Where | What it actually is | Cost | Verdict |
 |---|---|---|---|
-| `postgres.backup.geoRedundantBackup` (was `Enabled` in prod) | Backups replicated to the **paired region** | a slice of the storage+backup line | **Agreed — turned off, and now a parameter (§9.3)** |
-| `postgres.highAvailability.mode = 'ZoneRedundant'` in prod | A standby in a **second availability zone, in the same region** | ≈ doubles the compute — about **$130/mo** | **Deliberate. This is the real lever, but it is an availability decision, not a redundancy one — see below** |
+| `postgres.backup.geoRedundantBackup` | Backups replicated to the **paired region** | ~$10–30/mo at 128 GB | **On in prod, off in dev — reversed after the review (§1 of the review)** |
+| `postgres.highAvailability.mode = 'ZoneRedundant'` in prod | A standby in a **second availability zone, in the same region** | ≈ doubles the compute — about **$130/mo** | **Deliberate: this is the availability decision. `SameZone` costs the same and survives less — `Disabled` is the only ×1 mode** |
 | `containerAppsEnvironment.zoneRedundant` in prod (2.11) | Replicas spread across zones | small | Keep |
 
-**Why the distinction matters more than the saving.** A geo-redundant backup buys you a restore into
-the paired region — where this template puts **no compute, no Container Apps environment, no Front Door
-origin, no Key Vault and no DNS**. There is nothing to restore *to*, so the recovery is a rebuild this
-package cannot perform: it is the second half of a disaster plan whose first half has not been written.
-Turning it off costs you a promise you could not have kept. Zone-redundant HA is a different thing
-entirely: it survives the loss of one availability zone *in the region you actually serve from*, which
-is a failure this application does meet, and it is the one that earns its ~$130/mo.
+**Why the original reasoning did not hold.** It said there was "nothing to restore *to*", which treats the
+compute as the hard part. Here it is the easy part: the VNet, the Container Apps environment, the vault
+and the registry are all in `infra/main.bicep` and can be redeployed into the paired region in about an
+hour. **The data is the one thing that cannot be rebuilt**, and a geo-redundant backup is the only copy
+of it that survives losing the region. It is not the second half of an unwritten disaster plan; it is the
+precondition for ever writing one.
 
-So: **geo off** (done), and **zone redundancy kept as a conscious choice** — now one word,
-`postgresHaMode: 'SameZone'` — with the consequence written on the parameter itself so nobody changes it
-without reading what it costs them.
+**And it cannot be added later.** Microsoft documents geo-redundant backup storage for Flexible Server as
+settable **only at server creation**; it cannot be changed on a server that already exists (*Backup and
+restore in Azure Database for PostgreSQL – Flexible Server*). A prod server created without it can only
+gain it by being rebuilt as a new server and having its data migrated into it. That is a one-way door and
+the reason this is the review's highest-priority finding rather than a cost preference; everything else
+in the template is reversible by redeploying it. The alternative is not "keep it off until the second
+region exists" — it is to accept in writing that the only copy of the data that survives losing the
+region does not exist, rather than assume the switch will still be there later.
 
-Two caveats to carry forward:
+So: **geo on in prod, off in dev**, and **zone redundancy kept as a conscious choice** — one word,
+`postgresHaMode`, whose description states what each mode buys and what each one costs.
 
-- *(verify)* Azure documents geo-redundant backup for Flexible Server as settable **at server creation**,
-  so a server built without it may not be able to gain it later without a restore. Confirm against the
-  subscription before relying on "we can always turn it on".
-- If a contract or a SOC 2 commitment requires region-level backup retention, the honest answer is to
-  **build the second region** — or to get the requirement waived in writing — not to pay for a
-  replicated backup of a region you cannot serve from.
+Two things to carry forward:
+
+- **Confirmed against documentation, no subscription needed:** the creation-time constraint above. It was
+  a *(verify)* in both this section and the template, and it is a fact: prod has to have geo-redundant
+  backup from the first deployment, because there is no later deployment that can add it.
+- If a contract or a SOC 2 commitment requires region-level backup retention, the honest answer is still
+  to **build the second region** — the backup is what makes that possible, not a substitute for it.
 
 On *"it did find some security issues in the design so I'd check those"*: agreed, and they are already
 triaged in this plan. §1 is the set that stops the deployment working at all; of the High items, **2.2**
@@ -381,7 +434,7 @@ template deploys:
 
 | Instrument | Covers | Typical saving | Buy it when |
 |---|---|---|---|
-| **PostgreSQL Flexible Server reserved capacity**, 1 year (3 year is bigger) | The Postgres **compute**, the largest line | ~35–40% (3-year ≈55%) | **After the HA decision settles** — while `ZoneRedundant` stands, the standby is billed, so the reservation must cover **twice** the SKU; reserving for one and then switching to `SameZone` over-reserves by half |
+| **PostgreSQL Flexible Server reserved capacity**, 1 year (3 year is bigger) | The Postgres **compute**, the largest line | ~35–40% (3-year ≈55%) | **After the HA decision settles** — a standby is billed in *both* HA modes, so reserve **×2** the SKU for `ZoneRedundant` **or** `SameZone`, and **×1** only for `Disabled`. A reservation sized ×1 on the belief that `SameZone` halves the compute under-reserves by half |
 | **Container Registry Premium reserved capacity**, 1 year | The ACR Premium daily fee (~$50/mo) | Modest but certain | Once prod's registry exists |
 | **A savings plan for compute**, or the service's own reserved offering if the region has one | Container Apps compute | Variable | After 30 days of real usage, when the always-on floor is known |
 | **Log Analytics commitment tier** | Ingestion | *Do not buy it* — at 5–10 GB/month the per-GB tier is cheaper; a commitment tier is for ≥100 GB/day | Only if ingest grows by an order of magnitude |
@@ -400,27 +453,32 @@ guessed.
 *(I am deliberately not asserting Container Apps' eligibility for a savings plan as fact — it varies by
 offer and region, and a verify item is more useful than a confident error.)*
 
-### 9.3 — What was applied now (the easy wins, complete on their own)
+### 9.3 — What was applied, and what the review changed
 
-- **`geoRedundantBackup` is off by default in both environments**, exposed as
-  `postgresGeoRedundantBackup` (allowed values `Enabled`/`Disabled`) so it is one word to turn back on,
-  with the reasoning and the *(verify)* caveat written beside it in `infra/main.bicep`.
-  **Verified:** all templates still compile with Bicep CLI 0.48.1, no warnings.
-- **The HA parameter now carries its consequence**: `postgresHaMode`'s description says that
-  `SameZone` halves the compute cost and survives no availability-zone failure, so the ~$130/mo
-  decision is legible where it is made.
-- **§4's storage-and-backup line comes down**, though not by much: the geo-redundant portion of
-  prod's backup storage is charged at a higher rate than local, so expect roughly **$5–15/mo** at
-  128 GB with 35-day retention — worth confirming in the calculator, and far smaller than the two
-  levers above it.
+- **`geoRedundantBackup` is on in prod and off in dev**, exposed as `postgresGeoRedundantBackup`
+  (allowed values `Enabled`/`Disabled`). It was off in **both** environments when this plan was applied;
+  the review reversed that for prod, because the property is settable **only at server creation** and
+  the data is the one thing here that cannot be rebuilt. The reasoning is written beside the parameter
+  in `infra/main.bicep`.
+  **Verified:** the templates still compile with Bicep CLI 0.48.1, no warnings.
+- **The HA parameter's description now states the consequence correctly**: `postgresHaMode` says that a
+  standby is billed in **both** HA modes — `ZoneRedundant` survives the loss of an availability zone,
+  `SameZone` only a host failure — and that `Disabled`, with no standby, is the only ×1 mode, so the
+  ~$130/mo decision is legible where it is made. (It previously said `SameZone` "halves the compute",
+  which would have bought nothing and cost zone resilience.)
+- **§4's storage-and-backup line goes up, not down.** Prod's backups are geo-redundant now, charged at
+  a higher rate than local copies: roughly **$10–30/mo** at 128 GB with 35-day retention, already
+  reflected in §4. Worth confirming in the calculator, and still far smaller than the two levers above
+  it.
 
 ### 9.4 — The reservation shopping list, from the template's own defaults
 
 Take these to the reservations blade *after* the HA and D1 decisions, and confirm the resolved SKUs from
 a saved `what-if` rather than from this table:
 
-1. **PostgreSQL Flexible Server**, `Standard_D2ds_v5` / `GeneralPurpose`, **×2 if `ZoneRedundant`
-   (the standby is billed), ×1 if `SameZone`**, in the deployment region, 1 year.
+1. **PostgreSQL Flexible Server**, `Standard_D2ds_v5` / `GeneralPurpose`, **×2 for *either* HA mode —
+   `ZoneRedundant` or `SameZone`, because both bill a standby — and ×1 only for `Disabled`**, in the
+   deployment region, 1 year. Only `Disabled` halves the compute; the two HA modes cost the same.
 2. **Azure Container Registry**, Premium tier, 1 registry, 1 year.
 3. **Container Apps compute** via a savings plan for the always-on floor — amount from 30 days of
    observed usage, not from an estimate.

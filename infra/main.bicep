@@ -10,9 +10,10 @@
 //
 //   · Bicep never owns what is *running*. `imageTag` has no default and `deploy-env.ps1` passes
 //     the tag the app is already running (a full public bootstrap image on the first run of an
-//     environment), and no `traffic` rule is declared here at all — the promotion path's
-//     update → 0%-traffic revision → health gate → traffic shift is the only thing that moves
-//     either of them.
+//     environment); `activeRevision` is empty unless the script passes the revision that is serving
+//     100% of traffic, which the ingress `traffic` rule below restates. The promotion
+//     path's update → 0%-traffic revision → health gate → traffic shift is still the only thing
+//     that moves either of them.
 //   · A subnet is declared once, inline, with its NSG attached there. Every other resource
 //     refers to the inline subnet through an `existing` handle, so a redeploy does not detach
 //     and re-attach an NSG.
@@ -20,6 +21,11 @@
 // Nothing here has been deployed yet, so validate before the first run with:
 //     node scripts/azure/validate-bicep.mjs     (or: az bicep build --file infra/main.bicep)
 //     az deployment group what-if --resource-group rg-c7ntax-<env> --template-file infra/main.bicep --parameters infra/params/<env>.bicepparam
+//
+// A direct `az deployment group create` has to pass `imageTag` **and** `activeRevision` as well — the
+// two parameters deploy-env.ps1 reads from what is already running. An empty `activeRevision` makes the
+// ingress traffic rule fall back to `latestRevision`, which is only right on the first run of an
+// environment, so the script is the supported path.
 //
 // One environment per deployment. Dev and prod are separate resource groups (or separate
 // subscriptions), and nothing here is shared between them.
@@ -46,25 +52,28 @@ param postgresAdminLogin string = 'c7ntaxadmin'
 @minLength(16)
 param postgresAdminPassword string
 
-@description('prod gets General Purpose with HA; dev gets a Burstable single-zone server. SameZone halves the compute cost but survives no availability-zone failure — see PLAN-030 §8.5.')
+@description('prod gets General Purpose with HA; dev gets a Burstable single-zone server. Any HA mode bills a standby, so the compute is ×2 in both: ZoneRedundant survives the loss of an availability zone, SameZone survives a host failure only, and Disabled — ×1 — has no standby at all. See PLAN-030 §8.5.')
 param postgresSkuName string = environment == 'prod' ? 'Standard_D2ds_v5' : 'Standard_B1ms'
 param postgresSkuTier string = environment == 'prod' ? 'GeneralPurpose' : 'Burstable'
 param postgresHaMode string = environment == 'prod' ? 'ZoneRedundant' : 'Disabled'
 param postgresStorageGb int = environment == 'prod' ? 128 : 32
 
-// Off in both environments, on the reviewer's instruction and for a reason worth stating: the
-// application runs in exactly **one** region. A geo-redundant backup is the ability to restore into
-// the paired region — where this template puts no compute, no Front Door origin and no vault, so
-// there is nothing to restore *to* and the recovery would be a rebuild that only exists on paper.
-// It is the second half of a disaster plan whose first half has not been written. Turn it on the day
-// a second region is real; the switch is one word here.
+// On in prod, off in dev, and the constraint that decides it is a creation-time one: Microsoft
+// documents that geo-redundant backup storage can be set **only when the flexible server is
+// created**, and cannot be changed afterwards (concepts-backup-restore, Azure Database for
+// PostgreSQL – Flexible Server). So a prod server built without it can only ever gain it by being
+// rebuilt as a new server and having its data migrated into it — "we can turn it on the day a
+// second region is real" is not a switch this file can offer.
 //
-// (verify) Azure documents geo-redundant backup for Flexible Server as settable at *creation*, so a
-// server built without it may not be able to gain it later without a restore. The operator should
-// confirm that against the subscription before relying on "we can always turn it on".
-@description('Geo-redundant Postgres backups. Disabled by default: single-region deployment, nothing to fail over to (PLAN-030 §9).')
+// That matters because of what is *not* replaceable here. The application runs in one region, but
+// the VNet, the Container Apps environment, the vault and the registry are all this file and can be
+// redeployed into the paired region in about an hour. The **data** is the one thing that cannot be
+// rebuilt, and a geo-redundant backup is the only copy of it that survives losing the region. It is
+// not the second half of a disaster plan; it is the precondition for ever writing one. The cost is
+// roughly $10–30/month at 128 GB. Dev has nothing worth restoring into, so it stays off there.
+@description('Geo-redundant Postgres backups: on in prod, off in dev (PLAN-030 §9.1). Creation-time only — changing it later means a new server and a data migration.')
 @allowed(['Enabled', 'Disabled'])
-param postgresGeoRedundantBackup string = 'Disabled'
+param postgresGeoRedundantBackup string = environment == 'prod' ? 'Enabled' : 'Disabled'
 
 // Required, with no default (PLAN-030 §1.3 and §2.7). deploy-env.ps1 passes the tag the app is
 // already running, so a Bicep run restates the live image instead of introducing one; on the
@@ -74,6 +83,19 @@ param postgresGeoRedundantBackup string = 'Disabled'
 // point for a new revision, and the script's own update is still the only thing that promotes.
 @description('The image the app starts with: the tag the app is already running in this environment\'s registry, or a full public image reference on the first run. Never a default.')
 param imageTag string
+
+// Which revision is serving, passed by deploy-env.ps1 and restated in the ingress traffic rule
+// below (review §5). A Bicep deployment is a PUT of the whole resource, so *omitting* ingress.traffic
+// does not preserve traffic: an absent rule reads as the default, `latestRevision: true, weight: 100`,
+// which would hand everything to a revision that failed the health gate. Declaring the serving
+// revision explicitly is the same principle as imageTag — the template restates what is already
+// true instead of choosing. Empty only on the first run of an environment, when nothing is serving.
+//
+// A bare `az deployment group create` that does not pass this leaves it empty and *would* reset
+// traffic to the latest revision; the script passes it whenever something is serving, and
+// infra/README.md says so.
+@description('The revision serving 100% of traffic, read by deploy-env.ps1 before it creates a new one. Empty only when nothing is serving yet.')
+param activeRevision string = ''
 
 @description('Container registry login server, without the protocol. Leave empty to create one.')
 param acrName string = 'acrc7ntax${environment}${uniqueSuffix}'
@@ -126,6 +148,20 @@ var subnets = {
 // slash) is used as it stands — that is the bootstrap image on the first run of an environment,
 // which has to pull without a registry identity.
 var containerImage = contains(imageTag, '/') ? imageTag : '${acr.properties.loginServer}/c7ntax:${imageTag}'
+
+// The same test decides the port the app is created with (review §4): a full reference is the
+// bootstrap image, which is a plain HTTP server on port 80, while the application itself listens on
+// 4000. Creating the app with the bootstrap image and probing it on 4000 would fail the very
+// liveness probe the bootstrap image exists to satisfy, so the port follows the image. The script
+// moves the app back to 4000 in the update that installs the image it just built.
+//
+// A probe's port belongs to the *revision template*, not to the ingress, so only a Bicep run can move
+// it: `az containerapp update --target-port` moves the ingress and leaves the probes as the last
+// deployment declared them. On an environment's first run that means the revision the script creates
+// is still probed on 80 until the next Bicep run — see the KNOWN LIMITATION note in deploy-env.ps1
+// and review §4 option (b), which avoids the hand-off entirely by creating the app against the real
+// tag. The script's own /api/health gate is what protects the promotion in the meantime.
+var appPort = contains(imageTag, '/') ? 80 : 4000
 
 // ── Observability: everything logs here, and diagnostics point at it ──
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
@@ -326,13 +362,13 @@ resource nsgPostgres 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
 
 // Private DNS so the injected server resolves its own name inside the VNet.
 //
-// DO NOT rename this zone (PLAN-030 §1.7 — a deliberate departure from the plan, which proposed
-// c7ntax-<env>.postgres.database.azure.com to avoid a collision with future private endpoints):
-// a VNet-injected flexible server only auto-registers its A record in the zone whose name matches
-// its own *.postgres.database.azure.com namespace, so renaming it risks a server that resolves
-// nowhere. The collision the plan wanted to avoid is avoided instead by giving Key Vault — and
-// ACR, if prod ever takes a private endpoint — their own privatelink.vaultcore.azure.net /
-// privatelink.azurecr.io zones, so nothing else ever needs this one.
+// Any zone ending in `.postgres.database.azure.com` works; this name is kept because a
+// VNet-injected server never takes a private endpoint, so nothing competes for it. (PLAN-030 §1.7
+// proposed c7ntax-<env>.postgres.database.azure.com for a collision that cannot arise: the rule for
+// a VNet-injected server is that the zone name must *end in* `.postgres.database.azure.com` — both
+// names satisfy that — and such a server cannot take a private endpoint at all.) Key Vault — and
+// ACR, if prod ever takes a private endpoint — get their own privatelink.vaultcore.azure.net /
+// privatelink.azurecr.io zones, because those *do* take private endpoints and do compete for names.
 resource privateDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
   name: 'privatelink.postgres.database.azure.com'
   location: 'global'
@@ -541,16 +577,20 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
       activeRevisionsMode: 'Multiple'
       ingress: {
         external: true
-        targetPort: 4000
+        targetPort: appPort
         transport: 'auto'
         allowInsecure: false
-        // There is deliberately no `traffic` block here (PLAN-030 §1.3). `latestRevision: true`
-        // hands a brand-new revision 100% of the traffic the moment it is created, before the
-        // health gate has looked at it, and every Bicep run re-applies that. Traffic is owned by
-        // the promotion path (deploy-env.ps1 and the workflow), which pins a named revision after
-        // the gate passes. Declaring nothing here is what makes a Bicep-only run unable to change
-        // what is serving.
-        //
+        // The serving revision is restated, not omitted (review §5). A Bicep deployment is a PUT of
+        // the whole resource, and an absent `traffic` rule reads as the default — `latestRevision:
+        // true, weight: 100` — which hands a brand-new revision 100% of the traffic the moment it is
+        // created, before the health gate has looked at it. Restating `activeRevision`, which
+        // deploy-env.ps1 reads *before* it creates a revision, means a Bicep-only run re-applies
+        // what is already serving and cannot promote a revision that failed the gate. It is empty
+        // only on the first run of an environment, when there is nothing to restate and the app has
+        // to start on its first revision. Traffic still belongs to the promotion path: the script
+        // pins the new revision by name after the gate passes.
+        traffic: empty(activeRevision) ? [ { latestRevision: true, weight: 100 } ] : [ { revisionName: activeRevision, weight: 100 } ]
+
         // The origin restriction is off by default (PLAN-030 §2.1) because it is only correct
         // once the Front Door module exists: see lockIngressToFrontDoor. The rule shape is the
         // one this API version has — a match on the service tag, with `action: 'Allow'`. Anything
@@ -589,8 +629,8 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'DATABASE_URL', secretRef: 'database-url' }
           ]
           probes: [
-            { type: 'Liveness', httpGet: { path: '/api/health', port: 4000 }, initialDelaySeconds: 20, periodSeconds: 30 }
-            { type: 'Readiness', httpGet: { path: '/api/health', port: 4000 }, initialDelaySeconds: 10, periodSeconds: 10 }
+            { type: 'Liveness', httpGet: { path: '/api/health', port: appPort }, initialDelaySeconds: 20, periodSeconds: 30 }
+            { type: 'Readiness', httpGet: { path: '/api/health', port: appPort }, initialDelaySeconds: 10, periodSeconds: 10 }
           ]
         }
       ]

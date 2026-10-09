@@ -1,5 +1,67 @@
 [
   {
+    "version": "2026.10.9.003",
+    "date": "2026-10-09",
+    "title": "The auto-sync waits for you to stop typing",
+    "changes": [
+      {
+        "text": "**`scripts/auto-sync.ps1` waits for a quiet tree.** It commits only when no changed file has",
+        "type": "Update"
+      },
+      {
+        "text": "**The snapshot poller is excluded from that test.** It rewrites `apps/api/src/snapshots/*`",
+        "type": "Update"
+      },
+      {
+        "text": "**`.git/AUTO_SYNC_HOLD` stops the sync entirely**, for a sequence of changes that must land as",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`scripts/register-auto-sync-task.ps1`** registers the task, so the schedule and the reason for",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A PowerShell parsing hazard, found by walking into it.** A `.ps1` saved as UTF-8 without a",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.9.002",
+    "date": "2026-10-09",
+    "title": "The PLAN-030 review, answered: two one-way doors closed the other way",
+    "changes": [
+      {
+        "text": "**Geo-redundant database backups are ON in production again.** Azure permits the setting only",
+        "type": "Fix"
+      },
+      {
+        "text": "**The \"`SameZone` halves the compute\" claim is corrected everywhere it appeared** — the",
+        "type": "Fix"
+      },
+      {
+        "text": "**The CI migration step worked again.** It authenticated as a fresh system-assigned identity with",
+        "type": "Fix"
+      },
+      {
+        "text": "**The first `-Create` run's port mismatch.** The placeholder image used on a brand-new",
+        "type": "Fix"
+      },
+      {
+        "text": "**The deployment no longer relies on an omitted field.** `traffic` was removed to stop every",
+        "type": "Fix"
+      },
+      {
+        "text": "`preflight.mjs`'s infrastructure-contract guards follow the new intent, and the DNS-zone",
+        "type": "Update"
+      },
+      {
+        "text": "`PlanDocs/PLAN-030-Response-to-Review.md` — the point-by-point reply, including where the",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.001",
     "date": "2026-10-09",
     "title": "Ticket numbers now name the queue, the client and the ticket — in eleven characters",

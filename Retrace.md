@@ -5728,7 +5728,7 @@ clicking a tab again to confirm the URL, the band and the row scoping were unaff
 - **Port 3010 refusing while 4000 answers 200** is the signature of a stopped Vite server, not a stopped API — the login page meanwhile reports "3 services down" and blames the API and the database, so trust `Invoke-WebRequest` over the page's own diagnostics.
 - **The route/permission dump is worth keeping**: `files/routes-with-permissions.tsv` in this session (437 rows: file, method, path, permission) is the input PLAN-026 Phase 1's generator needs.
 - **Count the catalogue from the document, not from memory.** I wrote "~230 commands" in the registry before counting the tables; the real figure is **401** across sixteen groups, and the per-group breakdown is now in §12's preamble.
-- **`Select-String` counts lines, so count in the document's own range** — a `^\| \`` match over the whole file catches tables outside §12 and overstates the catalogue by 33 rows.
+- **`Select-String` counts lines, so count in the document's own range** — a `^\| `` match over the whole file catches tables outside §12 and overstates the catalogue by 33 rows.
 
 
 ---
@@ -7718,3 +7718,90 @@ so no version applies.
   shape is what found it.
 - **Renumbering is a one-way door for email.** The script keeps each ticket's own sequence, refuses to run
   without `--apply`, and writes a map, because the number in an email already sent cannot be changed.
+
+
+### Prompt 328 — The PLAN-030 review: applying six findings, and pushing back on one
+
+**Timestamp:** 2026-10-09 00:20 | **Status:** Complete | **Duration:** ~40 min (parallel agent + review)
+
+**BuildNotes IDs:** **2026.10.9.002**.
+
+**Prompt**
+
+> Also here is Claude's response from Plan 030: [the review]. Two of the findings need to be fixed before
+> the first production deployment: geo-redundant backup - set it back on for prod, because it can only be
+> turned on when the server is created. The "SameZone halves the cost" claim - correct it, because it
+> affects how many reservations get bought. Create a reply to can send back to Claude as well as a doc I can
+> copy and paste and send to someone else
+
+**What I did**
+- Found the review where it actually was: a file on the branch `claude/plan-030-bicep-go-live`, which had
+  been force-updated (1854bda..e74ea18) and now held one new file on top of the applied work.
+- **Verified all seven findings against the files before accepting any of them** — every one checked out:
+  the hardcoded `Disabled`, the wrong `@description`, the workflow's `--mi-system-assigned`, `targetPort:
+  4000` against a bootstrap image, and the absent `traffic` block.
+- Ran the six fixes through a background agent with a precise spec while I wrote the reply and the briefing,
+  then verified its work myself: Bicep compiles without warnings, the infrastructure-contract guards pass,
+  the script parses, and I reproduced preflight's two remaining failures on a pristine checkout to prove they
+  are pre-existing.
+- Wrote `PLAN-030-Response-to-Review.md` (the reply) and `PLAN-030-Go-Live-Briefing.md` (the copy-pasteable
+  document), and corrected both after the agent found a hole in one of the review's own recommendations.
+
+**Where the agent found more than the reviewer did, and it is the most useful output of the whole task**
+- The reviewer's option (a) for the bootstrap-image problem **does not get a first run through**. A health
+  probe's `port` is a required field of `HTTPGet` and probes live in the **revision template**, not the
+  ingress — so moving the ingress port leaves the probes pointing at the bootstrap image's port, and the
+  script's own health gate then throws on the promotion. The reviewer's option (b) is the correct fix.
+- The bootstrap image is a static-file server, so `/api/health` probably 404s on it and ACA counts only
+  2xx–3xx as success — a likely second failure in the same path.
+
+Both are in the reply and in the briefing's pre-deployment list, and neither was papered over.
+
+**Notes for next time**
+- **A review is evidence, not instruction.** Six of seven findings were right, so the seventh being
+  incomplete is easy to miss: it is the one that *sounds* most concrete (a port, a variable) and it is the
+  one that would still have failed the first deployment. Checking a recommendation against the resource
+  provider's actual schema is what caught it.
+- **When a number is invented, it spreads.** The wrong `SameZone` claim was one clause in a parameter
+  description; it had been copied into six places including the reservation maths, and correcting it meant
+  finding all six. Citing a figure is cheap; retracting one is not.
+- **`git stash` on a OneDrive-backed repository can half-fail.** The pop aborted on file locks after the
+  push succeeded. The stash was intact and the worktree was complete, so the recovery was to compare them
+  and drop the duplicate — but the lesson is that verifying the worktree after a failed pop matters more
+  than the pop itself, and that a repository synced by OneDrive is a poor place for stash gymnastics.
+
+
+### Prompt 329 — The auto-sync stops interrupting: a quiet-period guard
+
+**Timestamp:** 2026-10-09 00:16 | **Status:** Complete | **Duration:** ~25 min
+
+**BuildNotes IDs:** **2026.10.9.003**.
+
+**Prompt**
+
+> modify, pause, or disable the auto sync to github if it's causing you problems. Ideally it souhld only run
+> once you make changes, not at intervals that interrupt what you're doing. I prefer you didn't diable it
+> unless there's no other way
+
+**What I did**
+- Diagnosed the actual harm from the log rather than guessing: the task fired every 15 minutes and
+  `git add -A`'d everything it found, which is how one feature arrived as `cb06bd0 auto-sync: ` plus my own
+  commit, and how an earlier change was split across two.
+- **Kept it, and made it wait.** It now commits only when no non-snapshot file has been written in the last
+  four minutes, and says which files made it wait. The poll interval *dropped* to 5 minutes, because the
+  interval is the poll and not the commit: the effect is a push 4–9 minutes after work stops rather than
+  never during it.
+- Excluded `apps/api/src/snapshots/` from the quiet test, having noticed the snapshot poller rewrites those
+  tracked files every few minutes — which would otherwise have held the sync off permanently.
+- Added `.git/AUTO_SYNC_HOLD` for sequences that must land as one commit, and
+  `scripts/register-auto-sync-task.ps1` so the schedule and its reasoning live in the repository.
+- **Hit a PowerShell trap and fixed the class of it**: a BOM-less UTF-8 `.ps1` is read as ANSI by Windows
+  PowerShell, so the em dash in a log string ended the string early and the parse error pointed at an
+  unrelated line. Both scripts are ASCII now.
+
+**Notes for next time**
+- **Read the log of an interfering process before changing it.** The interval was not the only problem —
+  the poller-owned snapshot files meant a naive "has anything changed?" guard would have been worse than the
+  timer it replaced.
+- **A guard that expires is a guard that fails silently.** The hold marker deliberately does not, because
+  its failure mode (nothing is committed, nothing is lost) is the safe one.

@@ -23,6 +23,17 @@ built again. PLAN-016 §16 is the full description of that model.
 > called out where they land: the Consumption workload profile on a delegated subnet, a
 > zone-redundant Container Apps environment in prod, and the Postgres server parameters. What was
 > deliberately *not* changed is in **Notes and known gaps**.
+>
+> **The review of that work is applied too** (`PlanDocs/PLAN-030-Review-of-Applied-Changes.md`, §1–§6;
+> §7, the least-privilege database role, is tracked separately). Prod's Postgres is now **created with
+> geo-redundant backup** — a creation-time-only property, so it is only settable on the first
+> deployment — the bootstrap image's port is handled, ingress `traffic` restates the serving revision
+> instead of being omitted, and the pipeline's migration step uses the app's user-assigned identity.
+> Two things only a subscription can settle: whether the bootstrap image answers the probe's path on
+> port 80, and the port hand-off on the first `-Create` run — the script's `--target-port` is confirmed
+> against the CLI's own command module, but a probe's `port` belongs to the revision template, so the
+> ingress port moves and the probes do not until the next Bicep run. Review §4's option (b) — create
+> the app only against the real tag — avoids the hand-off altogether and is the cleaner fix.
 
 ## What is in the package
 
@@ -32,7 +43,7 @@ built again. PLAN-016 §16 is the full description of that model.
 | `infra/main.bicep` | VNet, subnets and NSG, Log Analytics, Key Vault (+ the three secrets, a private endpoint and a private DNS zone), ACR, PostgreSQL Flexible Server (VNet-injected, no public endpoint, pgaudit on), Container Apps environment and app, and the *user-assigned* identity with its `AcrPull` and `Key Vault Secrets User` grants. |
 | `infra/params/dev.bicepparam`, `prod.bicepparam` | Per-environment sizing: dev is Burstable, single-zone, 7-day backup; prod is General Purpose, zone-redundant HA, 35-day backup with geo-redundant copies. The secret values are read from the deploying shell's environment (`readEnvironmentVariable`), so a run that is missing one fails while the deployment is compiled rather than writing an empty secret into Key Vault. |
 | `infra/env/.env.production.example` | Every environment variable the API reads, with the ones that must be set in Key Vault called out. |
-| `scripts/azure/preflight.mjs` | Fails before a deploy does: stale lockfile, missing migration, undocumented env var, unguarded route, new advisory, non-root image. |
+| `scripts/azure/preflight.mjs` | Fails before a deploy does: stale lockfile, missing migration, undocumented env var, unguarded route, new advisory, non-root image — and a template that could move the running image or the traffic (an `imageTag` default, an `activeRevision` the script does not pass, a revisions mode that is not `Multiple`). |
 | `scripts/azure/deploy-env.ps1` | The local push tool: preflight → infrastructure → image → schema → 0%-traffic revision → health gate → traffic shift, with `-WhatIf`, `-Create` and `-PromoteFrom`. |
 | `.github/workflows/deploy-azure.yml` | CI/CD: build once, deploy **dev** on every push to `main`; a prod dispatch **promotes the tag dev is running** (copying the image between registries) instead of building, so prod only ever receives an artifact dev has served. Prod runs only from a manual dispatch, behind the `prod` environment's reviewers. |
 | `.github/workflows/security.yml` | The gate from PLAN-018: route guards, typechecks, the dependency baseline, gitleaks, trivy. |
@@ -120,9 +131,17 @@ $env:KUMO_MASTER_KEY_VALUE   = '<32 random bytes, base64>'
 The first run of an environment creates its registry, then builds into it. Until that build lands,
 the Container App runs a public placeholder image (`mcr.microsoft.com/k8se/quickstart:latest`):
 `deploy-env.ps1` gives Bicep the image the app is *already* running — the placeholder when there is
-none — so applying infrastructure can never point the app at a tag that does not exist, and the
-template carries no traffic rule, so infrastructure can never promote anything either. The
-deploy finishes by updating the revision to the freshly built tag and shifting traffic to it.
+none — so applying infrastructure can never point the app at a tag that does not exist. The placeholder
+is a plain HTTP server on **port 80**, so the template creates and probes the app on port 80 while that
+image is in use and on 4000 otherwise; the script's update installs the real image and moves the port
+back to 4000 in the same call.
+
+Infrastructure also cannot promote anything. The template's ingress `traffic` rule *restates* the
+revision serving 100% of traffic — `activeRevision`, which the script reads before it creates a new
+revision — rather than omitting the rule, because a deployment is a PUT of the whole resource and an
+absent rule falls back to `latestRevision`, which would hand everything to a revision the health gate
+has not looked at. The deploy finishes by updating the revision to the freshly built tag and shifting
+traffic to it, after the gate.
 
 After that, `-Create` is never needed again — leave it off, and the script will stop
 with a clear message rather than create a resource group by mistake if one is missing.
@@ -253,8 +272,9 @@ with no rotation runbook is an outage with a date on it. Calendar the rotations 
 - [ ] **A redeploy with no changes reports no subnet or NSG churn** — the subnets are declared
       once, inline, with their NSG (§1.5)
 - [ ] **A Bicep-only run does not change the running image, the revision or the traffic weights**
-      (§1.3) — run `deploy-env.ps1 -SkipBuild -WhatIf` against a deployed environment, then apply
-      and compare `az containerapp show`
+      (§1.3, review §5) — run `deploy-env.ps1 -SkipBuild -WhatIf` against a deployed environment, then
+      apply and compare `az containerapp show`: the ingress `traffic` rule should name the same revision
+      it named before, because the script reads it and passes it as `activeRevision`
 - [ ] Bring dev up, tear it down and rebuild it to prove the template is repeatable. Purge
       protection means vault **names** are reserved for 90 days, so rebuild with a fresh
       `uniqueSuffix`
@@ -291,21 +311,28 @@ with no rotation runbook is an outage with a date on it. Calendar the rotations 
   - **Only `snet-postgres` has an NSG.** Adding one to `snet-aca`, `snet-appgw` and `snet-pe` is a
     separate change with real risk — `snet-aca` carries the running environment — so it was not
     bundled with this one. The App Gateway's required rules are written down in §4.
-- **The Postgres private DNS zone keeps its default name** (`privatelink.postgres.database.azure.com`).
-  A VNet-injected flexible server only registers its A record in the zone that matches its own
-  namespace; renaming it risks a server that resolves nowhere. New private endpoints get their *own*
-  zones instead, which is what avoiding the collision actually needed.
+- **The Postgres private DNS zone keeps its default name** (`privatelink.postgres.database.azure.com`),
+  which is a choice rather than a requirement: a VNet-injected server needs the zone name to **end in**
+  `.postgres.database.azure.com`, so `c7ntax-<env>.postgres.database.azure.com` would resolve too. This
+  name is kept because a VNet-injected server never takes a private endpoint, so nothing competes for
+  it. Private endpoints get their *own* zones — that, not the Postgres name, is what avoids a collision.
+- **Prod's Postgres is created with geo-redundant backup; dev's is not.** That is a creation-time-only
+  property on a flexible server: a server built without it can only gain it by being rebuilt and having
+  its data migrated, so prod has to have it from its first deployment (~$10–30/mo at 128 GB). It is not
+  a DR plan — the compute, VNet, vault and registry are all in this template and can be redeployed into
+  the paired region — but it is the only copy of the data that survives losing the region.
 - **Dev's Key Vault stays reachable publicly**; prod's does not. Dev is exercised from a laptop that
   cannot reach a private endpoint. The endpoint and zone exist in both, so the prod path is proven
   before prod depends on it.
 - **The migration job belongs to `deploy-env.ps1`**, not to the template: declaring it in Bicep is a
   larger change and is reviewed separately.
-- **The pipeline's migration step still creates its own system-assigned identity** for the job
-  (`--mi-system-assigned` in `.github/workflows/deploy-azure.yml`), which holds no `AcrPull` on the
-  registry, so the job cannot pull its image and the first pipeline deploy of an environment stops
-  at the migration step. `deploy-env.ps1` was fixed to use the app's user-assigned identity for
-  exactly this reason; the workflow needs the same two flags (`--mi-user-assigned`,
-  `--registry-identity`) before it is used for a real deploy.
+- **The pipeline's migration step runs as the app's user-assigned identity, like the script**
+  (review §3). It previously created the job with `--mi-system-assigned`, which holds no `AcrPull` on
+  the registry and no Key Vault Secrets User on the vault, so the job could neither pull its image nor
+  read `DATABASE_URL` — and every push to `main` stopped there. It now reads the identity from the app,
+  passes `--mi-user-assigned`/`--registry-identity`, supplies `DATABASE_URL` as a `keyvaultref:` secret
+  with `identityref:`, and updates-then-starts an existing job rather than re-creating it.
+  `deploy-env.ps1` and the workflow do the same thing; keep them in step.
 - **`what-if` in `deploy-env.ps1` is informational**, not an approval step: the script
   prints it and applies. Review it on the first run of each environment, then keep moving.
 - **`apps/web` is built inside the image**, so a UI-only change still ships a new image.

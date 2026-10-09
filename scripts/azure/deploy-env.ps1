@@ -34,10 +34,11 @@
     read back from the running dev app, so the artifact production runs is byte-for-byte the
     one dev verified. Nothing is rebuilt, and no commit that dev has not run can reach prod.
 
-    The Bicep step never decides which image runs (PLAN-030 §1.3). It is given the image the app
-    is already serving — or a public bootstrap image on the very first run of an environment —
-    and the template carries no traffic rule at all, so applying infrastructure cannot promote
-    anything. Only the revision step below, after the health gate, moves the image and the traffic.
+    The Bicep step never decides which image runs, and never moves traffic (PLAN-030 §1.3, review
+    §5). It is given the image the app is already serving — or a public bootstrap image on the very
+    first run of an environment — and the revision that is serving 100% of traffic, which the
+    template restates in its ingress traffic rule. Applying infrastructure therefore cannot promote
+    anything: only the revision step below, after the health gate, moves the image and the traffic.
 
 .PARAMETER Environment
     dev or prod. dev is deployed automatically by CI; prod only on an explicit push.
@@ -129,8 +130,14 @@ $postgresPassword = [System.Environment]::GetEnvironmentVariable('POSTGRES_ADMIN
 if (-not $postgresPassword) { $postgresPassword = [System.Environment]::GetEnvironmentVariable('PG_ADMIN_PASSWORD') }
 # The image the Bicep step is given: the one the app is already running, so applying infrastructure
 # cannot move it (PLAN-030 §1.3). Replaced below, once the Azure context is known, with the real
-# value — this is only the answer for a dry run or a first deployment.
+# value — this is only the answer for a dry run or a first deployment. It is also the reason the
+# template creates the app on port 80: this image is a plain HTTP server, not the application
+# (review §4).
 $bicepImage = 'mcr.microsoft.com/k8se/quickstart:latest'
+# The revision serving 100% of traffic, read before the revision step creates a newer one and passed
+# to the Bicep step, whose ingress traffic rule restates it (review §5). Empty means nothing is
+# serving yet — the first run of an environment.
+$activeRevision = ''
 
 # The promotion path, printed the way the operator said it: sync, dev, prod. Seeing which step
 # this run is makes "did I push that to production or only to dev?" a question the output answers.
@@ -267,6 +274,23 @@ if (-not $SkipInfrastructure) {
         }
     }
 
+    # Which revision is serving is read *here*, before the revision step below creates a newer one,
+    # because after that update this query would return the new revision — the one whose health has
+    # not been looked at yet (review §5). The template restates this revision in its ingress
+    # traffic rule, so a Bicep run cannot hand 100% of the traffic to a revision that failed the
+    # health gate. Empty is correct on the first run: there is nothing to restate.
+    if ($WhatIf) {
+        Write-Info 'would read the revision serving 100% of traffic and pass it as activeRevision'
+    } elseif ($azAvailable) {
+        # Single-quoted so the backticks in the JMESPath literal survive to the CLI unchanged.
+        $activeRevision = (& az containerapp revision list --name $appName --resource-group $ResourceGroup --query '[?properties.trafficWeight==`100`].name | [0]' -o tsv 2>$null)
+        if ($activeRevision) {
+            Write-Info "the app is serving $activeRevision; Bicep restates it and cannot move traffic"
+        } else {
+            Write-Info 'nothing is serving yet; the app starts on its first revision'
+        }
+    }
+
     # Exported as well as passed, because the parameter file reads IMAGE_TAG out of the environment
     # the same way it reads the secrets.
     $env:IMAGE_TAG = $bicepImage
@@ -279,6 +303,9 @@ if (-not $SkipInfrastructure) {
         "jwtSecret=$([System.Environment]::GetEnvironmentVariable('JWT_SECRET_VALUE'))",
         "kumoMasterKey=$([System.Environment]::GetEnvironmentVariable('KUMO_MASTER_KEY_VALUE'))"
     )
+    # Only when there is one: an empty value is what the template's own default already provides,
+    # and the parameter is not set in the .bicepparam files (it is this script's to pass).
+    if ($activeRevision) { $bicepParameters += @('--parameters', "activeRevision=$activeRevision") }
     Invoke-Az (@('deployment', 'group', 'what-if',
         '--resource-group', $ResourceGroup,
         '--template-file', (Join-Path $repoRoot 'infra\main.bicep')) + $bicepParameters) | Out-Null
@@ -419,8 +446,28 @@ $revisionSuffix = "$Environment-$ImageTag".ToLowerInvariant() -replace '[^a-z0-9
 # already taking traffic. The template declares Multiple as well, so this is a restatement — but
 # the script must not depend on the template having been applied.
 Invoke-Az @('containerapp', 'revision', 'set-mode', '--name', $appName, '--resource-group', $ResourceGroup, '--mode', 'multiple') | Out-Null
+# --target-port is what installs the *application's* port (review §4). The template creates the app
+# on port 80 whenever it is given the bootstrap image, because that image is a plain HTTP server
+# there; this update replaces it with the image just built, so the port has to move back to 4000 in
+# the same call — otherwise the new revision's liveness probe on 4000 fails against an ingress that
+# is still routing to 80. Passing it on every run is harmless: 4000 is the same port the template
+# sets for a tagged image.
+# The flag itself is confirmed: `target_port` is declared on the `containerapp` argument context
+# (arg_group 'Ingress') in the CLI's own command module, so `az containerapp update` accepts it; the
+# equivalent if a future CLI disagrees is `az containerapp ingress update --target-port 4000`. What
+# only a dev deployment can confirm is the end-to-end hand-off on the first `-Create` run.
+#
+# KNOWN LIMITATION of the bootstrap path (review §4), and the reason the first `-Create` run needs
+# watching: the *probe* ports are part of the revision template, not of the ingress, and `port` is a
+# required field of a probe (HTTPGet in the Container Apps REST spec) — so this update moves the
+# ingress port but leaves the probes the last deployment declared, which on a first run means the
+# bootstrap image's port 80. The clean fix is the review's option (b): deploy everything except the
+# app, build into the new registry, then create the app with the real tag so it is only ever created
+# against a port the application actually listens on. Until then the script's own /api/health gate
+# below — which talks to the new revision's FQDN before any traffic moves — is what protects the
+# promotion, and the next deployment declares the probes correctly again.
 Invoke-Az @('containerapp', 'update', '--name', $appName, '--resource-group', $ResourceGroup,
-    '--image', $image, '--revision-suffix', $revisionSuffix) | Out-Null
+    '--image', $image, '--target-port', '4000', '--revision-suffix', $revisionSuffix) | Out-Null
 if (-not $WhatIf) {
     Write-Info 'waiting for the new revision to become healthy…'
     for ($i = 0; $i -lt 60; $i++) {

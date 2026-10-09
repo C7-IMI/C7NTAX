@@ -165,18 +165,53 @@ jobs:
       # The same image, with the command overridden, so the schema is applied by exactly
       # the code that expects it. Waits for the job and fails the pipeline on anything
       # other than Succeeded, before any traffic moves.
+      #
+      # The job runs as the app's *user-assigned* identity, which is the only one holding AcrPull on
+      # the registry and Key Vault Secrets User on the vault. A system-assigned identity of its own
+      # holds neither, so it could neither pull the image nor read DATABASE_URL — every push to main
+      # failed here (PLAN-030 §1.8, review §3). This mirrors scripts/azure/deploy-env.ps1; keep the
+      # two in step.
       - name: Run prisma migrate deploy
         run: |
           ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
           RG="rg-c7ntax-${ENVIRONMENT}"
+          APP="c7ntax-${ENVIRONMENT}"
           JOB="c7ntax-${ENVIRONMENT}-migrate"
-          az containerapp job create \
-            --name "$JOB" --resource-group "$RG" --environment "aca-c7ntax-${ENVIRONMENT}" \
-            --image "${{ needs.build.outputs.registry }}/c7ntax:${{ needs.build.outputs.tag }}" \
-            --command "npx prisma migrate deploy" \
-            --cpu 0.5 --memory 1.0Gi --replica-timeout 900 --replica-retry-limit 1 \
-            --registry-server "${{ needs.build.outputs.registry }}" --mi-system-assigned \
-            --only-show-errors
+          IMAGE="${{ needs.build.outputs.registry }}/c7ntax:${{ needs.build.outputs.tag }}"
+
+          ID=$(az containerapp show --name "$APP" --resource-group "$RG" \
+            --query "identity.userAssignedIdentities | keys(@)" -o tsv | head -n1)
+          if [ -z "$ID" ]; then
+            echo "::error::$APP has no user-assigned identity, so the migration job cannot pull its image or read DATABASE_URL — deploy the infrastructure to this environment first"
+            exit 1
+          fi
+          VAULT=$(az keyvault list --resource-group "$RG" --query "[0].name" -o tsv)
+          if [ -z "$VAULT" ]; then
+            echo "::error::no Key Vault in $RG to read DATABASE-URL from; the migration job needs it"
+            exit 1
+          fi
+          VAULT_URI=$(az keyvault show --name "$VAULT" --query "properties.vaultUri" -o tsv)
+
+          # Create the first time, move the image afterwards: `job create` on a job that already
+          # exists fails, which is what a second push to main would hit.
+          if az containerapp job show --name "$JOB" --resource-group "$RG" --query "name" -o tsv >/dev/null 2>&1; then
+            az containerapp job update \
+              --name "$JOB" --resource-group "$RG" \
+              --image "$IMAGE" \
+              --mi-user-assigned "$ID" --registry-identity "$ID" \
+              --only-show-errors
+          else
+            az containerapp job create \
+              --name "$JOB" --resource-group "$RG" --environment "aca-c7ntax-${ENVIRONMENT}" \
+              --image "$IMAGE" \
+              --command "npx prisma migrate deploy" \
+              --cpu 0.5 --memory 1.0Gi --replica-timeout 900 --replica-retry-limit 1 \
+              --registry-server "${{ needs.build.outputs.registry }}" \
+              --mi-user-assigned "$ID" --registry-identity "$ID" \
+              --secrets "database-url=keyvaultref:${VAULT_URI}secrets/DATABASE-URL,identityref:$ID" \
+              --env-vars "DATABASE_URL=secretref:database-url" \
+              --only-show-errors
+          fi
           az containerapp job start --name "$JOB" --resource-group "$RG" --only-show-errors
           for i in $(seq 1 60); do
             state=$(az containerapp job execution list --name "$JOB" --resource-group "$RG" --query "[0].properties.status" -o tsv)

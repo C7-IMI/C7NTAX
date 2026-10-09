@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.001 | Last Updated: 2026-10-09
+## Version: 2026.10.9.003 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,91 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.003 — The auto-sync waits for you to stop typing
+
+The scheduled job that commits the working tree fired on a timer and `git add -A`'d whatever it found — so
+it could commit a change halfway through being written. It did: a single feature arrived as an
+`auto-sync: <timestamp>` commit plus a real one. A timer cannot know whether anybody is still working, so
+the script now asks the filesystem.
+
+- **[Update]** **`scripts/auto-sync.ps1` waits for a quiet tree.** It commits only when no changed file has
+  been written in the last four minutes, and logs which files made it wait. The interval is now **5 min**
+  instead of 15 — the interval is the *poll*, not the commit, so the effect is a push roughly 4–9 minutes
+  after work stops, never during it.
+- **[Update]** **The snapshot poller is excluded from that test.** It rewrites `apps/api/src/snapshots/*`
+  every few minutes by design, so counting it as "somebody is working" would block the sync forever and
+  counting it as "the tree has settled" would commit a half-finished file. It is ignored for the quiet test
+  and still committed when the tree really does settle.
+- **[New]** **`.git/AUTO_SYNC_HOLD` stops the sync entirely**, for a sequence of changes that must land as
+  one commit. It lives in `.git/`, so it can never be committed and never shows in a status, and it
+  deliberately does not expire — a guard that silently gives up is worse than one that waits.
+- **[New]** **`scripts/register-auto-sync-task.ps1`** registers the task, so the schedule and the reason for
+  it are in the repository rather than in one machine's Task Scheduler.
+- **[Fix]** **A PowerShell parsing hazard, found by walking into it.** A `.ps1` saved as UTF-8 without a
+  BOM is read as ANSI by Windows PowerShell, and the em dash written into a log message became a character
+  that ended the string early — taking the whole script with it, with a parse error pointing at a line that
+  looked fine. Both scripts are now ASCII, which is the safe form for anything the task runner executes with
+  a hidden console.
+
+**Verification:** parse-checked with the PowerShell parser (0 errors) and run for real: the hold marker
+stopped it, and a live run reported `skip: 7 file(s) written within 4m, still working — …` against another
+agent's in-flight edits, which is exactly the interruption it was written to avoid.
+
+---
+
+## 2026.10.9.002 — The PLAN-030 review, answered: two one-way doors closed the other way
+
+A second review of the applied PLAN-030 hardening found seven issues. Six are fixed here, one is deferred
+with its reason written down, and one is pushed back on with evidence.
+
+- **[Fix]** **Geo-redundant database backups are ON in production again.** Azure permits the setting only
+  when the server is **created**, so the previous change — off, to save ~$10–30/mo — was a one-way door:
+  ever turning it on again would mean a new server and a data migration. The reasoning behind it ("nothing
+  to restore to" in the paired region) had the scarcity backwards: the VNet, environment, vault and registry
+  are all Bicep, so the compute is reproducible in an afternoon and **the data is the only irreplaceable
+  thing this package owns**. Off in dev, on in prod.
+- **[Fix]** **The "`SameZone` halves the compute" claim is corrected everywhere it appeared** — the
+  parameter's description and five places in the plan. `SameZone` still provisions a billed standby, so its
+  compute cost equals `ZoneRedundant`'s; only `Disabled` halves it. The reservation guidance is rewritten to
+  match: **×2 the SKU for either HA mode, ×1 only when HA is disabled**. The invented saving was wrong and
+  it fed a purchase-sizing figure, which is the worst place for an unverified number.
+- **[Fix]** **The CI migration step worked again.** It authenticated as a fresh system-assigned identity with
+  no registry pull and no vault access, so **every push to `main` would have failed** before the deploy job
+  ran. It now mirrors `deploy-env.ps1`: the app's user-assigned identity, `--mi-user-assigned` and
+  `--registry-identity`, `DATABASE_URL` as a `keyvaultref:` secret with `identityref:`, and create-or-update
+  rather than create-only.
+- **[Fix]** **The first `-Create` run's port mismatch.** The placeholder image used on a brand-new
+  environment serves on port 80 while the app is probed on 4000, so the app is now created on the port the
+  image it is given actually uses.
+- **[Fix]** **The deployment no longer relies on an omitted field.** `traffic` was removed to stop every
+  Bicep run handing 100% to a brand-new revision before the health gate saw it; the field is now **restated
+  explicitly** from `activeRevision`, which the script reads from the serving revision *before* creating the
+  next one. An omitted field is an assumption; this is a decision.
+- **[Update]** `preflight.mjs`'s infrastructure-contract guards follow the new intent, and the DNS-zone
+  comment states the actual rule (the zone name must *end in* `.postgres.database.azure.com`; a
+  VNet-injected server cannot take a private endpoint, so nothing competes for the name).
+- **[Update]** `PlanDocs/PLAN-030-Response-to-Review.md` — the point-by-point reply, including where the
+  earlier reasoning was wrong and why — and `PlanDocs/PLAN-030-Go-Live-Briefing.md`, a self-contained
+  briefing for anyone accountable for the deployment.
+
+**Not done, deliberately:** the least-privilege Postgres role needs a server to create the role on, so it is
+the first task after the first deployment and before production data. See the briefing.
+
+**Known and documented, not fixed:** the port change is **not sufficient for a deployment from empty**.
+Health-probe settings belong to the container revision, so the swap to the real image leaves the probes on
+the placeholder's port and the run still fails its own health gate. The recommended fix — create the app
+only against the real image — is a flow change that wants a throwaway resource group, and it is the first
+item in the briefing's pre-deployment list.
+
+**Verification:** `node scripts/azure/validate-bicep.mjs` with the real Bicep CLI 0.48.1 → *all three
+templates compile without warnings*, exit 0. `node scripts/azure/preflight.mjs` → every
+infrastructure-contract check ok, including the new ones; its two remaining failures (the dependency audit
+baseline and undocumented environment variables) were reproduced on a pristine checkout at `HEAD` and are
+pre-existing. `deploy-env.ps1` parses with 0 errors, and the workflow's extracted shell block passes
+`bash -n`.
 
 ---
 
