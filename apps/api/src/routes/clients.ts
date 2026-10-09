@@ -44,6 +44,9 @@ clientsRouter.get("/", requirePermission(Permission.ClientView), async (req: Aut
         include: {
           _count: { select: { contacts: true, tickets: true, serviceAgreements: true } },
           contacts: { where: { isPrimary: true }, take: 1, select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
+          // Active agreement values so a client card can state what the relationship is worth
+          // without a second round trip per row.
+          serviceAgreements: { where: { isActive: true }, select: { billingAmount: true, billingPeriod: true, currency: true } },
         },
       }),
       prisma.company.count({ where }),

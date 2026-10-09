@@ -288,15 +288,6 @@
     "viewedAt": "2026-10-07T01:41:54.248Z"
   },
   {
-    "id": "e12c91db-d55d-4283-8615-78e5e613d603",
-    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
-    "entityType": "organization",
-    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
-    "entityName": "Acme Corporation",
-    "entityIcon": "building",
-    "viewedAt": "2026-10-07T01:42:09.489Z"
-  },
-  {
     "id": "bcf56167-354d-4967-ac41-c3f0546669cc",
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "entityType": "asset",
@@ -349,5 +340,14 @@
     "entityName": "Initech Solutions — domain controller",
     "entityIcon": "server",
     "viewedAt": "2026-10-08T04:00:51.534Z"
+  },
+  {
+    "id": "e12c91db-d55d-4283-8615-78e5e613d603",
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "entityType": "organization",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "entityName": "Acme Corporation",
+    "entityIcon": "building",
+    "viewedAt": "2026-10-09T02:26:12.149Z"
   }
 ]

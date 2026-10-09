@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
@@ -9,6 +9,7 @@ import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { Plus, Building2, Search, Mail, Phone, MapPin, Users, FileText, ArrowUpDown, ExternalLink, AppWindow, SquareArrowOutUpRight, Copy, Download, RotateCw, Eraser, Ticket, Cloud, KeyRound, Server } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { PageHeader } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 const TYPE_COLORS: Record<string, string> = {
   Client: "bg-cyber-600/20 text-cyber-400", Prospect: "bg-amber-600/20 text-amber-400",
@@ -20,7 +21,27 @@ const SORT_OPTIONS = [
   { value: "industry", label: "Industry" },
 ];
 
+// How many months each billing period covers, so agreements of different periods can be added up
+// as one monthly figure. Periods that are not recurring (one_time) are deliberately absent.
+const PERIOD_MONTHS: Record<string, number> = {
+  weekly: 12 / 52, monthly: 1, quarterly: 3, semi_annually: 6, annually: 12,
+};
+function monthlyValue(agreements: any[] = []): { amount: number; currency: string } {
+  let amount = 0;
+  for (const a of agreements) {
+    const months = PERIOD_MONTHS[a.billingPeriod];
+    if (months === undefined) continue;
+    amount += (Number(a.billingAmount) || 0) / months;
+  }
+  return { amount, currency: agreements[0]?.currency ?? "USD" };
+}
+
 export function ClientsPage() {
+  const redesign = useRedesign();
+  // The mockup reads clients as cards — a card is where the brief, the counts and the state fit
+  // together, which is what you are actually scanning for. The table is still there for anybody who
+  // wants columns, and it is what the classic interface gets.
+  const [view, setView] = useState<"cards" | "table">("cards");
   const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -40,6 +61,9 @@ export function ClientsPage() {
   };
 
   useEffect(() => { fetch(); }, [search, typeFilter, sort]);
+
+  // Only meaningful when the API sends the ticket count down with each client.
+  const ticketTotal = clients.reduce((n, c) => n + (c._count?.tickets ?? 0), 0);
 
   const handleCreate = async (e: React.FormEvent) => { e.preventDefault();
     try { await api.post("/clients", form); toast.success("Client created"); setShowNew(false); setForm({ name: "", email: "", phone: "", city: "", state: "", companyType: "Client", industry: "" }); fetch(); }
@@ -141,7 +165,29 @@ export function ClientsPage() {
         <button onClick={() => setShowNew(true)} className="btn-primary flex items-center gap-2"><Plus size={16} /> Add Client</button>
       </div>
 
-      {/* Filters + Sort */}
+      {/* Filters + Sort — redesigned, the same controls as chips with the count line the mockup
+          carries, and a Cards / Table switch because the two are good at different questions. */}
+      {redesign ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[15rem] max-w-md flex-1">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <input ref={searchRef} className="input-field pl-9" placeholder="Search clients, contacts, tags…" value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <select className="input-field w-auto text-sm" value={typeFilter} onChange={e => setTypeFilter(e.target.value)} aria-label="Filter by type">
+            <option value="">Type: any</option>
+            <option value="Client">Client</option><option value="Prospect">Prospect</option>
+            <option value="Vendor">Vendor</option><option value="Partner">Partner</option>
+          </select>
+          <div className="flex items-center gap-0.5 rounded-lg border border-surface-border p-0.5">
+            <button type="button" onClick={() => setView("cards")} aria-pressed={view === "cards"} className={`chip ${view === "cards" ? "chip--on" : "border-transparent bg-transparent"}`}>Cards</button>
+            <button type="button" onClick={() => setView("table")} aria-pressed={view === "table"} className={`chip ${view === "table" ? "chip--on" : "border-transparent bg-transparent"}`}>Table</button>
+          </div>
+          <span className="text-xs text-gray-500">
+            {clients.length} client{clients.length === 1 ? "" : "s"}
+            {ticketTotal > 0 ? ` · ${ticketTotal} tickets` : ""}
+          </span>
+        </div>
+      ) : (
       <div className="flex items-center gap-2 flex-wrap">
         <div className="relative flex-1 max-w-xs"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input ref={searchRef} className="input-field pl-9" placeholder="Search clients..." value={search} onChange={e => setSearch(e.target.value)} /></div>
         <select className="input-field text-sm py-1.5 w-auto" value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
@@ -156,6 +202,7 @@ export function ClientsPage() {
           </select>
         </div>
       </div>
+      )}
 
       {/* Create modal */}
       {showNew && (
@@ -179,7 +226,46 @@ export function ClientsPage() {
         </div>
       )}
 
-      {/* Client List */}
+      {/* Client List — redesigned, as cards: the brief, the counts and the state in one place. */}
+      {redesign && view === "cards" ? (
+        loading ? <TableSkeleton /> : clients.length === 0 ? (
+          <div className="card p-8 text-center text-gray-500">No clients found</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            {clients.map(c => {
+              const contact = c.contacts?.[0];
+              const { amount: mrr, currency } = monthlyValue(c.serviceAgreements);
+              return (
+                <Link
+                  key={c.id}
+                  to={`/clients/${c.id}`}
+                  onContextMenu={(e) => menu.open(e, clientMenuEntries(c), clientMenuHeader(c))}
+                  className="card transition-colors hover:border-gray-600 space-y-2.5"
+                >
+                  <div className="flex items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-white">{c.name}</p>
+                      <p className="truncate text-[11px] text-gray-500">
+                        {[c.city, c.companyType, c.serviceLevel].filter(Boolean).join(" · ") || "—"}
+                      </p>
+                    </div>
+                    <span className={`chip shrink-0 text-[10px] ${c.isActive ? "chip--good" : ""}`}>{c.isActive ? "Active" : "Inactive"}</span>
+                  </div>
+                  <div className="flex items-end gap-5 border-t border-surface-border pt-2.5 text-[11px] text-gray-500">
+                    <span>Tickets<br /><span className="text-sm font-semibold tabular-nums text-white">{c._count?.tickets ?? "—"}</span></span>
+                    <span>Contacts<br /><span className="text-sm font-semibold tabular-nums text-white">{c._count?.contacts ?? c.contacts?.length ?? "—"}</span></span>
+                    <span>MRR<br /><span className="text-sm font-semibold tabular-nums text-white">{mrr > 0 ? mrr.toLocaleString(undefined, { style: "currency", currency, maximumFractionDigits: 0 }) : "—"}</span></span>
+                    <span className="ml-auto min-w-0 text-right">Primary<br />
+                      <span className="block truncate text-[11px] text-gray-300">{contact ? `${contact.firstName || ""} ${contact.lastName || ""}`.trim() || contact.email : "—"}</span>
+                    </span>
+                  </div>
+                  {c.notes ? <p className="truncate text-[11px] text-gray-600" title={c.notes}>{c.notes}</p> : null}
+                </Link>
+              );
+            })}
+          </div>
+        )
+      ) : (
       <div className="card overflow-hidden p-0">
         {loading ? <TableSkeleton /> :
          clients.length === 0 ? <div className="p-8 text-center text-gray-500">No clients found</div> :
@@ -228,6 +314,7 @@ export function ClientsPage() {
           </table>
         </div>}
       </div>
+      )}
     </div>
   );
 }
