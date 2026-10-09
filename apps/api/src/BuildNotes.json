@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.10.8.069",
+    "date": "2026-10-08",
+    "title": "Projects and Procurement",
+    "changes": [
+      {
+        "text": "**Projects** gained views with counts (**All**, **planning**, **in progress**, **completed**,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Procurement** gained the same views for purchase orders (**All**, **draft**, **ordered**,",
+        "type": "New Feature"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.068",
     "date": "2026-10-08",
     "title": "Contacts onto the same chrome",

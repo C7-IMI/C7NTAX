@@ -7105,3 +7105,32 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 - **I tested the wrong URL for a while.** Contacts lives at `/clients/contacts`, not `/contacts` — the
   empty `<main>` was the route not existing, not the page failing. Check `App.tsx` for the path before
   debugging a page that renders nothing, and trust `App.tsx` over the rail's label.
+
+---
+
+### Prompt 312 — Keep going: Projects and Procurement
+
+**Timestamp:** 2026-10-08 21:55 | **Status:** Complete | **Duration:** ~15 min
+
+**BuildNotes IDs:** **2026.10.8.069**.
+
+**Prompt**
+
+> Do what you think is best
+
+**What I did**
+- **Projects onto the shared chrome**: views with counts for the four statuses, a *5 shown · 16% of
+  budget spent* line, a budget bar per card that turns red past the budget, and totals in the header.
+- **Procurement onto the same chrome**: views for the four PO states, an outstanding count line,
+  tabular amounts, and a footer that pages the list and says how many orders have not arrived.
+- Both keep their dialog, their Receive action and their tables; Classic sees none of it.
+
+**Notes for next time**
+- **Two small pages are one commit's worth of work; four are not.** The chrome is cheap to apply now
+  — what costs is reading each page and working out which figures it can honestly state.
+  `budgetSpent`, `status` and `total` were already on the rows; nothing needed a request.
+- **A paged table needs its window computed once.** `pageStart` and `currentPage` as consts keep the
+  range, the slice and the pager buttons from disagreeing — and keep the JSX attributes simple enough
+  to read. A `{pageRows.map(...)}` closing with `)}` instead of `))}` is a syntax error `tsc` catches
+  immediately; the `ListFooter` block above it is written the same way and is where the mistake came
+  from.

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.068 | Last Updated: 2026-10-08
+## Version: 2026.10.8.069 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,26 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.069 — Projects and Procurement
+
+The two lists that spend money now state it, in the chrome the other lists use.
+
+- **[New]** **Projects** gained views with counts (**All**, **planning**, **in progress**, **completed**,
+  **on hold**), a line stating *5 shown · 16% of budget spent*, a **budget bar** on every card that
+  turns red when the spend is past the budget, and the totals in the page header — *5 projects ·
+  $X budgeted · $Y spent*.
+- **[New]** **Procurement** gained the same views for purchase orders (**All**, **draft**, **ordered**,
+  **shipped**, **received**), a count line stating what is still outstanding, and a footer that pages
+  the list and says how many orders have not been received. Amounts are now tabular figures so the
+  column can be compared line by line.
+
+**Verification:** `tsc --noEmit` clean; in the browser **Projects** reads *All 5 · planning 2 · in
+progress 1 · completed 0 · on hold 0* with *5 shown · 16% of budget spent* and a bar on each card, and
+**Procurement** reads *All 2 · ordered 1 · received 1* with *2 shown · $2,400 outstanding* and a
+footer range. Both keep their existing cards, tables and dialogs, and Classic is untouched.
 
 ---
 

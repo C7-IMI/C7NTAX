@@ -5,7 +5,8 @@ import { SortableHeader, sortData, nextSort, type SortState } from "../component
 import { Plus, ShoppingCart, Truck, CheckCircle, X, Building } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { ProductPicker } from "../components/ProductPicker";
-import { PageHeader } from "../components/ui";
+import { PageHeader, ListViews, ListFooter } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 interface PO{id:string;poNumber:string;vendorId:string;status:string;total:number;expectedAt?:string;createdAt:string;vendor?:{name:string};}
 interface POItem{description:string;quantity:number;unitPrice:number;productId?:string|null;sku?:string|null;}
@@ -33,12 +34,36 @@ export function ProcurementPage(){
   const handleReceive=async(id:string)=>{try{await api.patch("/procurement/orders/"+id,{status:"received",receivedAt:new Date().toISOString()});toast.success("Received");fetch()}catch{toast.error("Failed")}};
 
   const SC:Record<string,string>={draft:"bg-gray-600/20 text-gray-400",ordered:"bg-blue-600/20 text-blue-400",shipped:"bg-amber-600/20 text-amber-400",received:"bg-green-600/20 text-green-400"};
+  const redesign = useRedesign();
+  const [view,setView]=useState("all");
+  const PO_STATUSES = ["draft","ordered","shipped","received"] as const;
+  const poViews = [
+    { id:"all", label:"All", count: pos.length },
+    ...PO_STATUSES.map(status=>({ id:status, label:status, count: pos.filter(p=>p.status===status).length })),
+  ];
+  const shownPos = pos.filter(p=>view==="all"||p.status===view);
+  // Outstanding is what has been ordered and not received: the figure a buyer is actually tracking.
+  const outstanding = pos.filter(p=>p.status!=="received").reduce((n,p)=>n+(Number(p.total)||0),0);
+  const outstandingCount = pos.filter(p=>p.status!=="received").length;
+  const PAGE = 25;
+  const [page,setPage]=useState(1);
+  const pageCount = Math.max(1, Math.ceil(shownPos.length / PAGE));
+  const currentPage = Math.min(page, pageCount);
+  const pageStart = (currentPage - 1) * PAGE;
+  const pageRows = shownPos.slice(pageStart, pageStart + PAGE);
 
   return(<div className="space-y-4 animate-fade-in">
     <div className="flex items-center justify-between flex-wrap gap-3">
-      <PageHeader variant="section" title="Procurement" subtitle={<>{pos.length} purchase orders</>} />
+      <PageHeader variant="section" title="Procurement" subtitle={<>{pos.length} purchase orders{outstandingCount > 0 ? ` · $${outstanding.toLocaleString(undefined, { maximumFractionDigits: 0 })} outstanding` : ""}</>} />
       <button onClick={()=>setShowNew(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16}/>New PO</button>
     </div>
+
+    {redesign && pos.length > 0 && (
+      <div className="flex flex-wrap items-center gap-2">
+        <ListViews views={poViews} value={view} onChange={(id)=>{ setView(id); setPage(1); }} label="Purchase order views" />
+        <span className="text-xs text-gray-500">{shownPos.length} shown · ${outstanding.toLocaleString(undefined, { maximumFractionDigits: 0 })} outstanding</span>
+      </div>
+    )}
 
     {showNew&&(<div className="card"><form onSubmit={handleCreate} className="space-y-3">
       <div className="flex items-center justify-between"><h3 className="text-lg font-semibold text-white">New Purchase Order</h3><button type="button" onClick={()=>setShowNew(false)} className="text-gray-500 hover:text-white"><X size={18}/></button></div>
@@ -49,12 +74,24 @@ export function ProcurementPage(){
     </form></div>)}
 
     {loading?<TableSkeleton />:pos.length===0?<div className="text-center py-12 card"><ShoppingCart size={40} className="text-gray-600 mx-auto mb-3"/><p className="text-gray-500">No purchase orders</p></div>:(
-      <div className="card overflow-hidden"><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase"><th className="p-3">PO #</th><th className="p-3">Vendor</th><th className="p-3">Amount</th><th className="p-3">Status</th><th className="p-3 hidden md:table-cell">Created</th><th className="p-3 text-right">Actions</th></tr></thead>
-        <tbody>{pos.map(po=>(<tr key={po.id} className="border-b border-surface-border/50 hover:bg-surface-lighter/30">
+      <div className="card overflow-hidden p-0"><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-surface-border text-left text-gray-500 text-xs uppercase"><th className="p-3">PO #</th><th className="p-3">Vendor</th><th className="p-3">Amount</th><th className="p-3">Status</th><th className="p-3 hidden md:table-cell">Created</th><th className="p-3 text-right">Actions</th></tr></thead>
+        <tbody>{pageRows.map(po=>(<tr key={po.id} className="border-b border-surface-border/50 hover:bg-surface-lighter/30">
           <td className="p-3 font-medium text-white font-mono text-xs">{po.poNumber}</td><td className="p-3 text-gray-300">{po.vendor?.name||"—"}</td>
-          <td className="p-3">${po.total.toFixed(2)}</td><td className="p-3"><span className={"badge text-xs "+(SC[po.status]||"")}>{po.status}</span></td>
+          <td className="p-3 tabular-nums">${po.total.toFixed(2)}</td><td className="p-3"><span className={"badge text-xs "+(SC[po.status]||"")}>{po.status}</span></td>
           <td className="p-3 text-gray-400 text-xs hidden md:table-cell">{new Date(po.createdAt).toLocaleDateString()}</td>
           <td className="p-3 text-right">{po.status==="shipped"&&<button onClick={()=>handleReceive(po.id)} className="text-xs text-green-400 hover:text-green-300"><CheckCircle size={13} className="inline mr-1"/>Receive</button>}</td>
-        </tr>))}</tbody></table></div></div>)}
+        </tr>))}</tbody></table></div>
+        {redesign && shownPos.length > 0 && (
+          <ListFooter
+            from={pageStart + 1}
+            to={pageStart + pageRows.length}
+            total={shownPos.length}
+            page={currentPage}
+            pages={pageCount}
+            onPage={setPage}
+            note={`${outstandingCount} not yet received`}
+          />
+        )}
+      </div>)}
   </div>);
 }
