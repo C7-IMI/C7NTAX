@@ -8976,3 +8976,58 @@ Generate generate on all six cards. That is a separate change and a separate ver
 purge screen and the catalogue of developer options, and the *Prepare for Live Deployment* wizard mapped onto
 PLAN-030. Mockups only; they are the next version, not this one.
 
+---
+
+### Prompt 355 — A Developer section, drawn before it is built
+
+**Timestamp:** 2026-10-09 13:50 | **Status:** Complete (mockups only) | **Duration:** ~35 min
+
+**BuildNotes IDs:** none — this turn changed no product behaviour, so no BuildNotes entry applies. The
+deliverables are two drawings under `docs/mockups/`, the same convention as the Contacts, Boards, login and
+report-designer mockups before them.
+
+**Prompt**
+
+> I need to add a mockup of a new Developer section. It will have pages that will allow changes not normally
+> available to users. One of the options will be a purge data/database page. This will let me get rid of all
+> sample/seed data in the application so that it is a clean slate to start ingesting live data. Ponder the
+> possibility of creating a Prepare for Live Deployment screen in the developer options that will sanitize the
+> application in various ways to prepare it for a deployment to something like Azure or AWS. I guess in a way
+> create a wizard that works alongside the Azure migration plan, with checklists, configurations, etc. Also
+> suggest options/configurations that you would normally see in a developer section/mode in the context of an
+> application like C7NTAX. Do a mockup of these first. No changes yet. Use multiple agents as necessary
+
+**What I did**
+- **Two agents, two drawings**, both grounded in real reads rather than invented furniture.
+  `docs/mockups/developer-section.html` (143 KB) holds the section hub — 34 entries across 6 groups, each
+  saying what it does, what it can destroy and the safeguard — plus the **Purge data** screen and a
+  **Danger zone**. `docs/mockups/prepare-for-live-deployment.html` (101 KB) is the *Prepare for Live
+  Deployment* wizard mapped step by step onto PLAN-030's own items.
+- **The purge screen puts a face on something that already exists on the command line.** `db:sample-off` /
+  `db:sample-on` is real, and its contract is real: snapshot first, keep the identity and platform tables, set
+  the disabled flag that stops automatic capture and reseed. The drawing shows that contract — a dry run with
+  counts, the removed list beside the preserved list, a typed confirmation with a mandatory reason, and a
+  receipt — instead of a red button.
+- **The finding, which is the reason the drawing was worth making.** `WIPE_MODELS` has 85 entries and
+  `KEEP_MODELS` 13, but `schema.prisma` declares **119 models**, so **21 models are named by neither list and
+  survive a purge**. Five of them are not configuration at all: `Company` 5 rows, `Contact` 21, `Product` 8,
+  `Quote` 3, `QuoteLineItem` 5 (`AiAction` 10 also survives). I re-checked the arithmetic myself — 119 − 98 =
+  21 — and counted those rows against the live database. An instance purged for a clean slate would still hold
+  its clients, contacts and product catalogue.
+- **The wizard refuses to flatter.** It carries five states rather than two — done, attention, blocked,
+  **decision owed** and **could not verify** — so PLAN-030's review-round-2 finding (a gate that could not see
+  the database) has somewhere honest to sit, and the things the operator must decide have an owner and a place
+  to record the answer instead of a checkbox that pretends they are done.
+
+**Notes for next time**
+- **A mockup is an audit that happens to be drawn.** The purge screen asked what a purge keeps, and the answer
+  was nobody's decision — it was the shape of two hand-written lists that had drifted from the schema. Had I
+  built the page first and audited later, the page would have reported "success" over an instance still full of
+  customers.
+- **Ground the drawing or the drawing is worthless.** Every figure in these files comes from a real read: the
+  guard outputs (including `guard:plugin` failing and `guard:deps` not being runnable), `snapshots/_manifest.json`,
+  the migration count, the real account and session counts. The handful of things with no code behind them —
+  the outbound-mail sandbox, `developer:manage`, impersonation, maintenance mode — are labelled as proposals
+  inside the file, not drawn as if they existed.
+
+
