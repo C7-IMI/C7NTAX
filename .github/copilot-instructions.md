@@ -23,3 +23,12 @@ The product ships its own documentation at `/help` (`apps/web/src/pages/HelpDoc.
 - A new walkthrough is reachable as soon as it is a section in `HELP_SECTIONS` — the route is `/help/walkthroughs/:slug`, so no route or menu change is needed. It must still be listed in the Index, which is where people look for something they cannot name.
 - `node scripts/check-help-links.mjs` fails when a help link points at a route that does not exist or a walkthrough is missing from the Index. Run it after any Help change, and after any change that renames a route.
 - A change to a feature flag, an environment variable, a default, or a user-visible limit is a Help change: the flags table in the `configuration` section is the reference users are pointed at.
+
+# Two Interfaces, Two Designs
+
+The application has two interfaces, and `useRedesign()` (from `hooks/useNavigationStyle`) says which one is in use. They are **two designs of the same screen, not one screen with a class toggled**: the modern interface is built from the redesign's own furniture (rails, tabs, pills you press, sheets, a status track you step along, sentences beside the control that acts), and the classic interface is a form — labelled fields in a grid, a dialog with a heading and Save/Cancel, a select where the modern screen has a segmented control.
+
+- **Every interface change is designed for both, individually.** A new dialog, panel, detail view or control gets a modern arrangement and a classic arrangement; the shared part is the state, the API call and the words, never the layout. `components/CloseTicketDialog.tsx` and `components/PurchaseOrderDialog.tsx` are the pattern: one component, one set of handlers, two returns, with the reason for each arrangement written at the top of the file.
+- The modern branch is `if (redesign) { … }` and it is not allowed to be a restyle of the classic one. If the two would come out identical, the feature is probably a shared component (`components/ui/*`) and belongs there instead — but say so in the comment rather than leaving the reader to guess.
+- Verify a change in **both** interfaces before calling it done: `localStorage.setItem("c7_ui_redesign", "0")` is the classic screen, `removeItem` returns the browser to the instance's default. Take the screenshot of both.
+- Anything the classic interface keeps that the modern one deliberately drops (or the other way round) belongs in the Help walkthrough, because it is a difference the user will notice.

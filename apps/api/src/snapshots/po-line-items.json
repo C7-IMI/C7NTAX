@@ -1,11 +1,11 @@
 [
   {
-    "id": "e773d0ea-cac1-424c-8aa5-c6f9e6b138d5",
+    "id": "95389c7b-1933-4141-bb6d-0fdd7fa65c0d",
     "poId": "8e9b288f-257c-4996-a989-58efee651240",
     "description": "1TB NVMe SSD",
-    "quantity": 12,
+    "quantity": 10,
     "unitPrice": 200,
-    "total": 2400,
+    "total": 2000,
     "assetId": null,
     "productId": null
   }

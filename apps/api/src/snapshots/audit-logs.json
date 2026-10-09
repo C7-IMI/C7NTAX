@@ -190310,6 +190310,20 @@
     "createdAt": "2026-10-08T22:09:35.673Z"
   },
   {
+    "id": "67068f27-b9c5-4a83-b01b-dc3d207fb64f",
+    "action": "tickets:update",
+    "entity": "tickets",
+    "entityId": "4dd0c8de-dc4f-474b-a315-6219002d1b63",
+    "changes": {
+      "status": "closed",
+      "closeNotes": "Automated verification note — no action needed.",
+      "notifyCustomer": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T04:09:14.050Z"
+  },
+  {
     "id": "52c6fdea-cd8b-4218-bb26-1ca8fd3941e4",
     "action": "billing:create",
     "entity": "billing",
@@ -192001,6 +192015,38 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-08T22:40:40.655Z"
+  },
+  {
+    "id": "4b6a63e5-8ce0-4b7f-8285-9be29bdb1c0f",
+    "action": "procurement:update",
+    "entity": "procurement",
+    "entityId": "8e9b288f-257c-4996-a989-58efee651240",
+    "changes": {
+      "status": "shipped"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T04:15:20.731Z"
+  },
+  {
+    "id": "a086c81f-2d36-4e27-bce5-46746ed7d3c3",
+    "action": "procurement:update",
+    "entity": "procurement",
+    "entityId": "683cde29-08f6-41b2-83b2-a6f63d5c17dd",
+    "changes": {
+      "name": "TechSupply Co",
+      "email": "sales@techsupply.example",
+      "notes": "",
+      "phone": "+1 555 0100",
+      "taxId": "",
+      "address": "",
+      "website": "",
+      "contactName": "Dana Reyes",
+      "paymentTerms": "Net 30"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T04:15:33.592Z"
   },
   {
     "id": "a8a65de9-4efb-418e-b990-e2cd9ed913b4",
@@ -193806,6 +193852,30 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-08T22:41:47.252Z"
+  },
+  {
+    "id": "b0381741-a312-493d-ac49-e5a84bd1f4d3",
+    "action": "procurement:update",
+    "entity": "procurement",
+    "entityId": "8e9b288f-257c-4996-a989-58efee651240",
+    "changes": {
+      "lineItems": [
+        {
+          "id": "e773d0ea-cac1-424c-8aa5-c6f9e6b138d5",
+          "sku": null,
+          "poId": "8e9b288f-257c-4996-a989-58efee651240",
+          "total": 2400,
+          "assetId": null,
+          "quantity": 10,
+          "productId": null,
+          "unitPrice": 200,
+          "description": "1TB NVMe SSD"
+        }
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T04:15:23.757Z"
   },
   {
     "id": "ff8fc223-667e-49d0-bdcb-2269b95d45c5",
