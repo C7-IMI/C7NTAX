@@ -6827,3 +6827,56 @@ reported failure and the script nevertheless ended with *"All checks passed. App
 **Notes for next time**
 - **Designs that change *structure* need the data checked first.** The reason this went quickly once started is that one API response answered "can the rail show the client's brief, the SLA clock, the source and the agreement?" — all yes. Guessing at that would have produced a rail of plausible-looking dashes.
 - **A shared helper is worth it the moment the same fact appears twice.** The SLA chip looks like a small thing to write inline; written twice it would be two definitions of "breached", and one of them would be wrong.
+
+---
+
+### Prompt 308 — Finish the detail, and find the mechanism that carries the rest
+
+**Timestamp:** 2026-10-08 21:20 | **Status:** Complete for this pass; the remaining pages are queued behind the theme that now carries them | **Duration:** ~60 min
+
+**BuildNotes IDs:** **2026.10.8.061**.
+
+**Prompt**
+
+> And the ticket screens still don't have the new design applied according to how you made them in the mockup.
+
+**What I did**
+- **Stopped incrementing on the visible symptoms and asked what actually differed.** Comparing the
+  screenshot with the mockup line by line, the gaps were not decoration: the left column was still
+  General / Dates & Times / Notes rather than *The record* / *What the client said* / *the other open
+  work*, and every page in the product still carried the old density and type — which is why the
+  screens read as "the old app with pills added" no matter how many pills were added.
+- **Found the one change that reaches every page.** The redesign is as much a *theme* as a layout:
+  denser rows, flatter cards, smaller headers, controls sized to the new row height. Scoped to
+  `html[data-ui-redesign="true"]` — set from the same switch as everything else — that is one
+  stylesheet, applied to every screen at once, and the classic interface keeps every rule it had.
+  This is the answer to "the entire application", rather than forty page-by-page impressions of it.
+- **Kept the palette out of it.** The mockup is blue-accented; the application ships five colour
+  schemes and the user's own Brand Crimson is already the near-black the mockup asks for. Copying the
+  mockup's colours would have quietly deleted a shipped feature, so the theme takes structure,
+  density and type, and leaves colour to the person using it.
+- **Finished the detail's structure**: *The record* as one list of facts with the dates folded in,
+  *What the client said* as the customer's own words, counts on the tabs, and the composer below it.
+- **Then verified the lot in one pass**: the `data-ui-redesign` attribute is set, the card titles are
+  the mockup's four, the record list renders ten rows, the rail carries the client's brief from
+  `company.notes`, and no page errors.
+
+**Mistakes worth recording**
+- **I broke the file three times in the same way: inserting a declaration before the values it reads.**
+  `tabCounts` and `recordRows` were placed next to the other pre-guard constants while reading
+  `ticket.comments` and `slaTargetRaw`, which are only safe *after* the `if (!ticket) return` guard —
+  and then a later edit deleted the `slaChip` block entirely. `tsc` caught every one in seconds, but
+  the lesson is the same each time: in a 3,000-line component, add code by reading the block it
+  belongs in, not by matching the nearest familiar-looking line.
+- **HMR masks syntax errors as "the page looks old".** The dev server showed `Failed to reload
+  /src/pages/Tickets.tsx` while I was mid-edit, which is the same symptom as a stale page. Reading the
+  console before concluding anything saved a lot of confusion.
+
+**Notes for next time**
+- **When a user repeats the same complaint, the variable you are changing is probably not the one they
+  mean.** Twice they said the screens still look old; twice I had added a feature. What they meant was
+  the theme — density, type, flatness — which no single page change can fix, and which one
+  stylesheet does.
+- **A scoped stylesheet is the cheapest way to make "every page" true.** It cannot drift, it cannot be
+  forgotten on page 27 of 40, and it is the only change in this whole redesign that a reviewer can
+  check by reading forty lines.
