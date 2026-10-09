@@ -8113,3 +8113,65 @@ Both are in the reply and in the briefing's pre-deployment list, and neither was
 - **When every instance of a thing is broken, look for the one rule that outranks them.** Nineteen search
   fields did not each need a fix; they needed the override above them to stop setting a property it had no
   business setting. Fixing them individually would have left the next field to hit the same wall.
+
+### Prompt 338 — Fix what is fixable from the go-live briefing, name the database, and update the reply
+
+**Timestamp:** 2026-10-09 06:50 | **Status:** Complete | **Duration:** ~50 min (two agents + verification)
+
+**BuildNotes IDs:** **2026.10.9.012**.
+
+**Prompt**
+
+> Based on that, fix what you can/what makes sense, then update the reply and doc and show me
+>
+> (then) ignore item 5 for now. Ill turn that off later
+>
+> (then) Update the migration doc so that when the database is create it doesn't use the c7_overwatch
+> name. Before you do that, answer me this: Is it better to use a common name for the db like c7ntax or
+> should it be more secure like a randomly generated name?
+>
+> (then) okay. it will need to be renamed c7ntax then. How much work would it be to rename it now? if it's
+> going to break something, then just hold off until we push it to Azure.
+
+**What I did**
+- **Sorted the checklist into things I could do and things only a person or a subscription can.** Item 1
+  (the first-run hand-off) went to a background agent with a precise spec; item 5 (the least-privilege
+  role) was parked on the operator's instruction — I had started an agent on it and stopped it inside its
+  read-only phase, so it created nothing, ran no SQL and left the local database untouched; items 2-4 are
+  decisions.
+- **The agent implemented option (b) and found its own bug.** `param createApp` plus a conditional app
+  resource, and a two-pass first run in the script. Its first version omitted one line, so pass 2 silently
+  never fired — the `-WhatIf` dry run caught it, which is exactly what that flag is for. It also flagged
+  three caveats I then recorded rather than smoothed over: nothing has run against ARM, pass 1 depends on
+  the default incremental deployment mode (a `Complete`-mode run with `createApp=false` would *delete* the
+  app), and on a first run the health gate does not hold the revision at 0% because there is no serving
+  revision to restate.
+- **Verified the agent's work independently**: re-ran the Bicep compile (0 warnings), the script parse
+  (0 errors), read the two-pass block back from the code, and confirmed the app is referenced in exactly
+  three places in the template — so the change is smaller than I had claimed when I deferred it.
+- **Answered the naming question and then acted on it.** A database name is an identifier, not a control:
+  it is printed in every connection string and log, `pg_database` lists it to anyone who can connect, and
+  what actually protects the server is the private network, passwordless auth, the role, TLS verification
+  and `pgaudit`. Obscurity is paid for in an incident. Recorded as plan section 8.12 so it is not
+  re-litigated.
+- **Renamed the local database for real** rather than leaving the docs to disagree with the machine: API
+  stopped, `ALTER DATABASE c7_overwatch RENAME TO c7ntax`, one line in `apps/api/.env`, API restarted.
+  Verified 119 tables / 104 tickets / 17 users intact and the queue rendering through the interface.
+- **Found and fixed an error in the plan's own §8.1** while preparing that work: it said to create the role
+  with `CREATE SCHEMA c7_overwatch AUTHORIZATION app_c7ntax`, but `c7_overwatch` is a database and the app's
+  tables are in `public` — following it would have left the application with no rights to its own data.
+- Rewrote the reply (new addendum), the briefing (items 4 and 5, the checklist, a new "what production will
+  be created with" table, what is not proven) and the deployment's environment example.
+
+**Notes for next time**
+- **A clean stop is worth asking for.** Stopping the second agent and then asking it *what it had already
+  done* rather than telling it to undo produced a precise "nothing, I was still reading" in one turn, which
+  is what let me proceed without auditing a database.
+- **A check the operator asked for can be done from the files.** "Confirm the production parameters" looked
+  like it needed a subscription; reading the parameter file and the template's defaults produced a table
+  with two placeholders in it — the region and `webOrigin` — neither of which is a defect and both of which
+  would have shipped.
+- **Renaming a database is a five-minute job whose only risk is a missed reference.** Enumerate the
+  references *including hidden files* first (one live one, in `.env`), check nothing creates it, stop the
+  clients, and remember `ALTER DATABASE ... RENAME` is metadata-only — the failure mode is a refusal, never
+  data loss.

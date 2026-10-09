@@ -6,14 +6,19 @@
 // infra/README.md) because they are the ingress layer and are validated against a live
 // subscription before the first production cut-over.
 //
-// PLAN-030 hardened this file for go-live. Two rules it follows on purpose:
+// PLAN-030 hardened this file for go-live. Three rules it follows on purpose:
 //
 //   · Bicep never owns what is *running*. `imageTag` has no default and `deploy-env.ps1` passes
-//     the tag the app is already running (a full public bootstrap image on the first run of an
-//     environment); `activeRevision` is empty unless the script passes the revision that is serving
-//     100% of traffic, which the ingress `traffic` rule below restates. The promotion
-//     path's update → 0%-traffic revision → health gate → traffic shift is still the only thing
-//     that moves either of them.
+//     the tag the app is already running; `activeRevision` is empty unless the script passes the
+//     revision that is serving 100% of traffic, which the ingress `traffic` rule below restates.
+//     The promotion path's update → 0%-traffic revision → health gate → traffic shift is still the
+//     only thing that moves either of them.
+//   · The app is created against the real image, never a placeholder (review §4, option (b)). The
+//     first run of an environment deploys this file twice: once with `createApp=false`, which
+//     creates everything except the app — the registry above all — and once with `createApp=true`
+//     after deploy-env.ps1 has built and pushed the image. Creating the app only when the image
+//     exists is what keeps its probes on the port the application actually listens on from its
+//     first revision.
 //   · A subnet is declared once, inline, with its NSG attached there. Every other resource
 //     refers to the inline subnet through an `existing` handle, so a redeploy does not detach
 //     and re-attach an NSG.
@@ -75,14 +80,41 @@ param postgresStorageGb int = environment == 'prod' ? 128 : 32
 @allowed(['Enabled', 'Disabled'])
 param postgresGeoRedundantBackup string = environment == 'prod' ? 'Enabled' : 'Disabled'
 
+// The database is named for the product. It used to be `c7_overwatch`, a stale product name this one
+// absorbed, and a server first created under that name would leave every connection string, backup
+// and runbook pointing at the wrong database — so the name is declared once here and both the
+// database resource and the DATABASE-URL connection string read it. A .bicepparam may override it;
+// the default is the answer, so the parameter files do not set it.
+@description('Name of the PostgreSQL database created on the server. The database is named for the product; the previous value, c7_overwatch, was a stale product name.')
+param databaseName string = 'c7ntax'
+
 // Required, with no default (PLAN-030 §1.3 and §2.7). deploy-env.ps1 passes the tag the app is
-// already running, so a Bicep run restates the live image instead of introducing one; on the
-// first run of an environment, when there is nothing to restate, it passes a full public
-// bootstrap reference such as mcr.microsoft.com/k8se/quickstart:latest. That is what makes a
-// Bicep-only run unable to move the running image: whatever is passed here is only the starting
-// point for a new revision, and the script's own update is still the only thing that promotes.
+// already running, so a Bicep run restates the live image instead of introducing one. On the first
+// run of an environment it still has to pass something, because this parameter has no default, and
+// that something is the public bootstrap reference mcr.microsoft.com/k8se/quickstart:latest — which
+// the pass with createApp=false below does not consume, because that pass creates no app. That is
+// what makes a Bicep-only run unable to move the running image: whatever is passed here is only the
+// starting point for a new revision, and the script's own update is still the only thing that
+// promotes.
 @description('The image the app starts with: the tag the app is already running in this environment\'s registry, or a full public image reference on the first run. Never a default.')
 param imageTag string
+
+// Whether this deployment creates the container app (review §4, option (b)). The app is created
+// once, against the real image, because a probe's `port` is a required field of the *revision
+// template* rather than part of the ingress: an app first created against a placeholder image keeps
+// probing the placeholder's port, and the ingress-only `az containerapp update --target-port` that
+// later installs the real image cannot move the probes with it — the new revision goes Unhealthy
+// and the first `-Create` run cannot finish. A first run therefore deploys this file twice:
+// `createApp=false` for everything except the app (the registry above all), then `createApp=true`
+// with the tag the script has already built and pushed. False only on that first pass; an ordinary
+// redeploy leaves it true and creates nothing.
+//
+// The only things in this file that name the app are the resource itself and the `containerAppFqdn`
+// output at the bottom, which is why making it conditional is such a small change: there is no Front
+// Door module here (the ingress module from PLAN-016 §4 is a separate file) and no migration job
+// (deploy-env.ps1 owns that), so nothing else has to tolerate the app's absence.
+@description('Create the container app in this deployment. False for the first pass of an environment\'s first run — everything except the app is created so the app can then be created against the real image, on the port it is probed on (review §4).')
+param createApp bool = true
 
 // Which revision is serving, passed by deploy-env.ps1 and restated in the ingress traffic rule
 // below (review §5). A Bicep deployment is a PUT of the whole resource, so *omitting* ingress.traffic
@@ -145,22 +177,22 @@ var subnets = {
 }
 
 // A tag is composed into this environment's registry; a full reference (which always contains a
-// slash) is used as it stands — that is the bootstrap image on the first run of an environment,
-// which has to pull without a registry identity.
+// slash) is used as it stands. On an environment's first run the full reference is the bootstrap
+// image, which pulls without a registry identity and exists only because `imageTag` has no default
+// and pass 1 has to pass something (createApp=false means no resource here consumes it).
 var containerImage = contains(imageTag, '/') ? imageTag : '${acr.properties.loginServer}/c7ntax:${imageTag}'
 
-// The same test decides the port the app is created with (review §4): a full reference is the
-// bootstrap image, which is a plain HTTP server on port 80, while the application itself listens on
-// 4000. Creating the app with the bootstrap image and probing it on 4000 would fail the very
-// liveness probe the bootstrap image exists to satisfy, so the port follows the image. The script
-// moves the app back to 4000 in the update that installs the image it just built.
+// The same test decides the port the app is created with: a full reference is the bootstrap image,
+// which is a plain HTTP server on port 80, while the application itself listens on 4000.
 //
-// A probe's port belongs to the *revision template*, not to the ingress, so only a Bicep run can move
-// it: `az containerapp update --target-port` moves the ingress and leaves the probes as the last
-// deployment declared them. On an environment's first run that means the revision the script creates
-// is still probed on 80 until the next Bicep run — see the KNOWN LIMITATION note in deploy-env.ps1
-// and review §4 option (b), which avoids the hand-off entirely by creating the app against the real
-// tag. The script's own /api/health gate is what protects the promotion in the meantime.
+// This is no longer the normal path (review §4, option (b)). deploy-env.ps1 creates the app in a
+// *second* pass with the real tag — `createApp=true`, `imageTag=<the tag just built>` — so the app is
+// first created on port 4000 with its probes on 4000 and the placeholder is never installed at all.
+// The branch is kept for the one case that still reaches it: a bare `az deployment group create`
+// handed a full public reference. A probe's port belongs to the *revision template*, not to the
+// ingress, so `az containerapp update --target-port` moves the ingress and leaves the probes as the
+// last deployment declared them — a Bicep-only run with a placeholder image has to probe the port
+// that image serves on, or its revision never becomes healthy.
 var appPort = contains(imageTag, '/') ? 80 : 4000
 
 // ── Observability: everything logs here, and diagnostics point at it ──
@@ -217,7 +249,7 @@ resource secretDb 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   name: 'DATABASE-URL'
   parent: keyVault
   properties: {
-    value: 'postgresql://${postgresAdminLogin}:${uriComponent(postgresAdminPassword)}@${postgres.name}.postgres.database.azure.com:5432/c7_overwatch?sslmode=require&connection_limit=10'
+    value: 'postgresql://${postgresAdminLogin}:${uriComponent(postgresAdminPassword)}@${postgres.name}.postgres.database.azure.com:5432/${databaseName}?sslmode=require&connection_limit=10'
     contentType: 'postgres-connection-string'
   }
 }
@@ -464,7 +496,7 @@ resource postgres 'Microsoft.DBforPostgreSQL/flexibleServers@2024-08-01' = {
 }
 
 resource database 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2024-08-01' = {
-  name: 'c7_overwatch'
+  name: databaseName
   parent: postgres
   properties: { charset: 'UTF8', collation: 'en_US.utf8' }
 }
@@ -553,7 +585,10 @@ resource acaEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
   }
 }
 
-resource containerApp 'Microsoft.App/containerApps@2024-03-01' = {
+// Conditional (review §4, option (b)): pass 1 of an environment's first run deploys this file with
+// createApp=false, so everything else — the registry, the database, the vault, the Container Apps
+// environment, the identity and its grants — exists before the app that needs them is created.
+resource containerApp 'Microsoft.App/containerApps@2024-03-01' = if (createApp) {
   name: 'c7ntax-${environment}'
   location: location
   tags: commonTags
@@ -684,7 +719,10 @@ resource kvSecretsUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' 
   }
 }
 
-output containerAppFqdn string = containerApp.properties.configuration.ingress.fqdn
+// Empty when this deployment did not create the app (createApp=false, the first pass of a first
+// run), so nothing ever dereferences a resource that is not there. Nothing in this file consumes it:
+// deploy-env.ps1 reads the FQDN from the CLI once the app exists.
+output containerAppFqdn string = createApp ? containerApp!.properties.configuration.ingress.fqdn : ''
 output keyVaultName string = keyVault.name
 output acrLoginServer string = acr.properties.loginServer
 output postgresFqdn string = postgres.properties.fullyQualifiedDomainName

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.011 | Last Updated: 2026-10-09
+## Version: 2026.10.9.012 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,47 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.012 — The first deployment from empty can finish, and the database is named for the product
+
+Two things the deployment package needed before it could be run for the first time, plus a correction to the
+plan that would have broken the application's own database access if it had been followed.
+
+- **[Fix]** **A first deployment into an empty environment no longer fails at the image hand-off.** The app
+  used to be created against a placeholder image, and the probes could not follow it to the real one: a
+  probe's `port` lives in the **revision template**, while `az containerapp update --target-port` moves only
+  the ingress. `infra/main.bicep` gained `param createApp bool = true` and a conditional app resource, and
+  `deploy-env.ps1` now makes **two passes** on a first run — pass 1 creates everything except the app (the
+  registry above all), the image is built into it, and pass 2 creates the app with the real tag, so it is
+  only ever created on port 4000 with probes on 4000. A normal redeploy is the single pass it always was.
+- **[Update]** **The database is created as `c7ntax`, not `c7_overwatch`** — a stale product name. The name
+  now has one home (`param databaseName`), used by both the database resource and the `DATABASE-URL` secret,
+  so the two cannot drift. The local development instance was renamed too, with data intact (119 tables,
+  104 tickets, 17 users) — a metadata-only rename that needed the dev API stopped for the minute it took.
+- **[Fix]** **A wrong instruction in the plan's §8.1, corrected before anyone followed it.** It said to
+  create the least-privilege role with `CREATE SCHEMA c7_overwatch AUTHORIZATION app_c7ntax`. That is a
+  database, not a schema, and the app's tables are in `public` — following it would have left the
+  application with no rights to its own data, presenting as a permissions mystery the day the role was
+  switched on. The plan now says to own the `public` schema of the database, with the error kept beside the
+  correction.
+- **[Update]** **The go-live briefing carries what production will actually be created with** — read from
+  the parameter file and the template's defaults — including two values that are placeholders rather than
+  choices: the region is inherited from the resource group, and `webOrigin` is still
+  `https://app.c7ntax.example.com`, which is passed as `CORS_ORIGIN` and gates every redirect the
+  application builds.
+
+**Verification:** Bicep CLI 0.48.1 compiles all three templates with **0 warnings**; `deploy-env.ps1` parses
+with **0 errors** and its `-WhatIf` path describes both passes in order; the three cases (first run,
+redeploy, dry run) were read back from the code, and a bug in the first version — pass 2 silently never
+firing — was caught by the dry run and fixed. The database rename was rehearsed locally rather than
+assumed: the API was stopped, the rename ran, and the API answered `/api/health` and served the ticket
+queue from the new name afterwards.
+
+**Not proven, and stated as such everywhere it matters:** nothing in this package has been executed against
+Azure. The two-pass create, pass 2's first revision and the first `what-if` are compiled, parsed and
+reviewed — the dev resource group run is what proves them.
 
 ---
 

@@ -9,7 +9,8 @@
 
       1. preflight            repository, guards, migrations, environment contract
       2. infrastructure       az deployment group create (Bicep); the template is given the image
-                              the app is *already* running, so it cannot move it
+                              the app is *already* running, so it cannot move it. An environment's
+                              first run makes it in two passes - see THE FIRST RUN below
       3. image                docker build + push to ACR (or az acr build)
       4. migration job        same image, overridden command: prisma migrate deploy
       5. revision             new Container App revision, 0% traffic
@@ -34,11 +35,31 @@
     read back from the running dev app, so the artifact production runs is byte-for-byte the
     one dev verified. Nothing is rebuilt, and no commit that dev has not run can reach prod.
 
-    The Bicep step never decides which image runs, and never moves traffic (PLAN-030 §1.3, review
-    §5). It is given the image the app is already serving — or a public bootstrap image on the very
-    first run of an environment — and the revision that is serving 100% of traffic, which the
-    template restates in its ingress traffic rule. Applying infrastructure therefore cannot promote
-    anything: only the revision step below, after the health gate, moves the image and the traffic.
+    The Bicep step never decides which image runs, and never moves traffic (PLAN-030 1.3, review 5).
+    On an ordinary run it is given the image the app is already serving and the revision that is
+    serving 100% of traffic, which the template restates in its ingress traffic rule. Applying
+    infrastructure therefore cannot promote anything: only the revision step below, after the health
+    gate, moves the image and the traffic.
+
+    THE FIRST RUN (PLAN-030 review 4, option (b)). On an environment where nothing of ours is running
+    yet - no app, or an app still on the placeholder image - the container app is created *once,
+    against the real image*, so it is never created against a port the application does not listen
+    on:
+
+        1. pass 1 - everything except the app is deployed (createApp=false): the registry above all,
+           then the database, the vault, the Container Apps environment and the app's identity;
+        2. the Registry and Image steps below build and push the real image into that registry;
+        3. pass 2 - the app itself is deployed (createApp=true), against the tag just built, with no
+           activeRevision because nothing is serving yet.
+
+    The reason the app cannot simply be created first is the defect review 4 records: a probe's
+    `port` is a required field of the container *revision template*, not part of the ingress, so
+    `az containerapp update --target-port` moves the ingress and leaves the probes where the last
+    deployment declared them. An app created against the placeholder image therefore keeps probing
+    the placeholder's port after the real image is installed, its revision goes Unhealthy, and the
+    health gate below stops the run. From pass 2 onwards - and on every later run, where the single
+    pass above is unchanged - the flow is followed by the same revision, gate and traffic steps, so
+    a first run exercises the same promotion path a redeploy does.
 
 .PARAMETER Environment
     dev or prod. dev is deployed automatically by CI; prod only on an explicit push.
@@ -129,15 +150,19 @@ if ($PromoteFrom) { $SkipBuild = $true }
 $postgresPassword = [System.Environment]::GetEnvironmentVariable('POSTGRES_ADMIN_PASSWORD')
 if (-not $postgresPassword) { $postgresPassword = [System.Environment]::GetEnvironmentVariable('PG_ADMIN_PASSWORD') }
 # The image the Bicep step is given: the one the app is already running, so applying infrastructure
-# cannot move it (PLAN-030 §1.3). Replaced below, once the Azure context is known, with the real
-# value — this is only the answer for a dry run or a first deployment. It is also the reason the
-# template creates the app on port 80: this image is a plain HTTP server, not the application
-# (review §4).
+# cannot move it (PLAN-030 1.3). Replaced below, once the Azure context is known, with the real
+# value; this is the answer for a dry run, and for a first run. On a first run it is required
+# whatever happens, because the template's imageTag parameter has no default - but pass 1 creates no
+# app, so nothing consumes it there. The app is created in pass 2 with the image the Image step just
+# built (PLAN-030 review 4, option (b)).
 $bicepImage = 'mcr.microsoft.com/k8se/quickstart:latest'
 # The revision serving 100% of traffic, read before the revision step creates a newer one and passed
 # to the Bicep step, whose ingress traffic rule restates it (review §5). Empty means nothing is
 # serving yet — the first run of an environment.
 $activeRevision = ''
+# Set by the Infrastructure step when this is an environment's first run: the app is then created in
+# a second pass, after the image exists (PLAN-030 review 4, option (b)).
+$createAppAfterImage = $false
 
 # The promotion path, printed the way the operator said it: sync, dev, prod. Seeing which step
 # this run is makes "did I push that to production or only to dev?" a question the output answers.
@@ -256,21 +281,30 @@ if ($PromoteFrom) {
 if (-not $SkipInfrastructure) {
     Write-Step 'Infrastructure (Bicep)'
 
-    # Bicep must not own the running image (PLAN-030 §1.3). The template is given the image the app
-    # is already serving, so applying infrastructure restates the live revision rather than pointing
-    # it at a tag that does not exist yet — the build below, and the update after it, are still the
-    # only things that move the image. On the first run of an environment there is nothing to
-    # restate, so it is given a public image that pulls without credentials; that revision exists
-    # only until this script promotes the real one.
+    # Bicep must not own the running image (PLAN-030 1.3). The template is given the image the app is
+    # already serving, so applying infrastructure restates the live revision rather than pointing it
+    # at a tag that does not exist yet - the build below, and the update after it, are still the only
+    # things that move the image.
+    #
+    # Reading the running image is also how the first run is recognised: no app, or one still on the
+    # placeholder image, means nothing of ours is serving in this environment. That is the run that
+    # must create the app only once the real image exists (PLAN-030 review 4, option (b)), so it
+    # takes two passes.
+    $firstRun = $false
     if ($WhatIf) {
         Write-Info "would pass the image $appName is running as the Bicep imageTag (or $bicepImage when nothing is running yet)"
+        # Nothing is inspected under -WhatIf, so the dry run describes the first-run shape, which is
+        # the one with two passes. A redeploy is the single pass in the else branch below.
+        Write-Info 'would make two passes if nothing of ours is running yet (createApp=false, then createApp=true once the image exists); one pass otherwise'
+        $firstRun = $true
     } elseif ($azAvailable) {
         $runningImage = (& az containerapp show --name $appName --resource-group $ResourceGroup --query "properties.template.containers[0].image" -o tsv 2>$null)
         if ($runningImage -and $runningImage -notlike 'mcr.microsoft.com/*') {
             $bicepImage = ($runningImage -split ':')[-1]
             Write-Info "the app is running $runningImage; Bicep gets imageTag=$bicepImage and does not move it"
         } else {
-            Write-Info "nothing of ours is running yet; Bicep gets the bootstrap image $bicepImage"
+            $firstRun = $true
+            Write-Info 'nothing of ours is running yet: everything except the app is created first, then the app with the image built below'
         }
     }
 
@@ -296,25 +330,56 @@ if (-not $SkipInfrastructure) {
     $env:IMAGE_TAG = $bicepImage
 
     $paramsFile = Join-Path $repoRoot "infra\params\$Environment.bicepparam"
+    # imageTag and createApp are added by each pass below: imageTag has no default, so pass 1 must
+    # still be given the placeholder (no resource consumes it while createApp=false), and pass 2 is
+    # given the tag the Image step builds.
     $bicepParameters = @(
         '--parameters', $paramsFile,
-        '--parameters', "imageTag=$bicepImage",
-        "postgresAdminPassword=$postgresPassword",
+        '--parameters', "postgresAdminPassword=$postgresPassword",
         "jwtSecret=$([System.Environment]::GetEnvironmentVariable('JWT_SECRET_VALUE'))",
         "kumoMasterKey=$([System.Environment]::GetEnvironmentVariable('KUMO_MASTER_KEY_VALUE'))"
     )
     # Only when there is one: an empty value is what the template's own default already provides,
     # and the parameter is not set in the .bicepparam files (it is this script's to pass).
     if ($activeRevision) { $bicepParameters += @('--parameters', "activeRevision=$activeRevision") }
-    Invoke-Az (@('deployment', 'group', 'what-if',
-        '--resource-group', $ResourceGroup,
-        '--template-file', (Join-Path $repoRoot 'infra\main.bicep')) + $bicepParameters) | Out-Null
-    if (-not $WhatIf) {
-        Write-Info 'what-if reviewed; applying (set -WhatIf to only preview)'
+
+    $bicepTemplate = Join-Path $repoRoot 'infra\main.bicep'
+    # A first run creates the app in the second pass below, once the Image step has built the image;
+    # every other run creates nothing and stays the single pass in the else branch.
+    $createAppAfterImage = $firstRun
+    if ($firstRun) {
+        # Pass 1 of a first run: everything except the app (PLAN-030 review 4, option (b)). The
+        # registry is the resource this pass most has to create, because the Image step below builds
+        # into it. createApp=false means the app is not created here, so the placeholder imageTag
+        # passed for completeness is not consumed by anything.
+        # This depends on the default incremental deployment mode (no --mode is passed): a
+        # Complete-mode deployment with createApp=false would *delete* the app.
+        Invoke-Az (@('deployment', 'group', 'what-if',
+            '--resource-group', $ResourceGroup,
+            '--template-file', $bicepTemplate) + $bicepParameters +
+            @('--parameters', "imageTag=$bicepImage", '--parameters', 'createApp=false')) | Out-Null
+        if (-not $WhatIf) {
+            Write-Info 'what-if reviewed; applying everything except the app (set -WhatIf to only preview)'
+        }
+        Invoke-Az (@('deployment', 'group', 'create',
+            '--resource-group', $ResourceGroup,
+            '--template-file', $bicepTemplate) + $bicepParameters +
+            @('--parameters', "imageTag=$bicepImage", '--parameters', 'createApp=false')) | Out-Null
+    } else {
+        # An ordinary redeploy: the single pass it has always been. Nothing here creates the app; it
+        # restates the running image and the serving revision, so it cannot move either.
+        Invoke-Az (@('deployment', 'group', 'what-if',
+            '--resource-group', $ResourceGroup,
+            '--template-file', $bicepTemplate) + $bicepParameters +
+            @('--parameters', "imageTag=$bicepImage")) | Out-Null
+        if (-not $WhatIf) {
+            Write-Info 'what-if reviewed; applying (set -WhatIf to only preview)'
+        }
+        Invoke-Az (@('deployment', 'group', 'create',
+            '--resource-group', $ResourceGroup,
+            '--template-file', $bicepTemplate) + $bicepParameters +
+            @('--parameters', "imageTag=$bicepImage")) | Out-Null
     }
-    Invoke-Az (@('deployment', 'group', 'create',
-        '--resource-group', $ResourceGroup,
-        '--template-file', (Join-Path $repoRoot 'infra\main.bicep')) + $bicepParameters) | Out-Null
 }
 
 Write-Step 'Registry'
@@ -369,6 +434,24 @@ if ($SkipBuild) {
     }
     Invoke-Az @('acr', 'build', '--registry', $Registry, '--image', "c7ntax:$ImageTag", $repoRoot) | Out-Null
     Write-Info "built and pushed $image"
+}
+
+# Pass 2 of a first run (PLAN-030 review 4, option (b)): the app is created here, against the image
+# the Image step has just built and pushed into the registry pass 1 created. That is the whole point
+# of splitting the deployment - the app is only ever created on port 4000 with its probes on 4000, so
+# the port hand-off that made the old first run fail cannot happen. No activeRevision is passed:
+# nothing is serving yet, so the ingress traffic rule starts on the app's own first revision. From
+# here the run continues through the same migration, revision, health-gate and traffic steps every
+# later deployment uses. It sits before the migration step because the migration job is created from
+# the app's identity, which the script reads off the app itself.
+if ($createAppAfterImage) {
+    Write-Step 'Infrastructure (Bicep, create the app)'
+    $env:IMAGE_TAG = $ImageTag
+    Invoke-Az (@('deployment', 'group', 'create',
+        '--resource-group', $ResourceGroup,
+        '--template-file', (Join-Path $repoRoot 'infra\main.bicep')) + $bicepParameters +
+        @('--parameters', "imageTag=$ImageTag", '--parameters', 'createApp=true')) | Out-Null
+    if (-not $WhatIf) { Write-Info "created $appName against $image" }
 }
 
 if (-not $SkipMigrations) {
@@ -446,26 +529,27 @@ $revisionSuffix = "$Environment-$ImageTag".ToLowerInvariant() -replace '[^a-z0-9
 # already taking traffic. The template declares Multiple as well, so this is a restatement — but
 # the script must not depend on the template having been applied.
 Invoke-Az @('containerapp', 'revision', 'set-mode', '--name', $appName, '--resource-group', $ResourceGroup, '--mode', 'multiple') | Out-Null
-# --target-port is what installs the *application's* port (review §4). The template creates the app
-# on port 80 whenever it is given the bootstrap image, because that image is a plain HTTP server
-# there; this update replaces it with the image just built, so the port has to move back to 4000 in
-# the same call — otherwise the new revision's liveness probe on 4000 fails against an ingress that
-# is still routing to 80. Passing it on every run is harmless: 4000 is the same port the template
-# sets for a tagged image.
+# --target-port is what installs the *application's* port. On the normal path it is now a harmless
+# restatement: a first run creates the app in pass 2 (PLAN-030 review 4, option (b)), against the
+# image just built, so the app already has port 4000 here - and so do its probes, because the
+# template set them to 4000 when it was applied with a tagged image. Passing the flag on every run
+# keeps that true whatever the environment's history.
+#
+# It still earns its place on the one path the two-pass create does not cover: an app created by an
+# earlier, broken first run, whose probes are on the bootstrap image's port 80. A probe's `port` is a
+# required field of the revision template (HTTPGet in the Container Apps REST spec), not part of the
+# ingress, so no `az containerapp update` can move it - this flag moves the *ingress* to 4000, which
+# is what lets this revision answer /api/health at all, and the next Bicep pass moves the probes to
+# 4000 with it. That is why the flag is kept rather than dropped.
 # The flag itself is confirmed: `target_port` is declared on the `containerapp` argument context
 # (arg_group 'Ingress') in the CLI's own command module, so `az containerapp update` accepts it; the
-# equivalent if a future CLI disagrees is `az containerapp ingress update --target-port 4000`. What
-# only a dev deployment can confirm is the end-to-end hand-off on the first `-Create` run.
+# equivalent if a future CLI disagrees is `az containerapp ingress update --target-port 4000`.
 #
-# KNOWN LIMITATION of the bootstrap path (review §4), and the reason the first `-Create` run needs
-# watching: the *probe* ports are part of the revision template, not of the ingress, and `port` is a
-# required field of a probe (HTTPGet in the Container Apps REST spec) — so this update moves the
-# ingress port but leaves the probes the last deployment declared, which on a first run means the
-# bootstrap image's port 80. The clean fix is the review's option (b): deploy everything except the
-# app, build into the new registry, then create the app with the real tag so it is only ever created
-# against a port the application actually listens on. Until then the script's own /api/health gate
-# below — which talks to the new revision's FQDN before any traffic moves — is what protects the
-# promotion, and the next deployment declares the probes correctly again.
+# What is still unrun, and why: there is no Azure subscription in this repository's environment, so
+# none of this has been executed - compiling the template (node scripts/azure/validate-bicep.mjs)
+# and parsing this script are all that have run. The part that specifically wants a dev resource
+# group is the second `az deployment group create` (createApp=true) and the first revision it
+# produces: that is the call that was never possible before, and the one this fix turns on.
 Invoke-Az @('containerapp', 'update', '--name', $appName, '--resource-group', $ResourceGroup,
     '--image', $image, '--target-port', '4000', '--revision-suffix', $revisionSuffix) | Out-Null
 if (-not $WhatIf) {

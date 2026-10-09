@@ -1,5 +1,28 @@
 [
   {
+    "version": "2026.10.9.012",
+    "date": "2026-10-09",
+    "title": "The first deployment from empty can finish, and the database is named for the product",
+    "changes": [
+      {
+        "text": "**A first deployment into an empty environment no longer fails at the image hand-off.** The app",
+        "type": "Fix"
+      },
+      {
+        "text": "**The database is created as `c7ntax`, not `c7_overwatch`** — a stale product name. The name",
+        "type": "Update"
+      },
+      {
+        "text": "**A wrong instruction in the plan's §8.1, corrected before anyone followed it.** It said to",
+        "type": "Fix"
+      },
+      {
+        "text": "**The go-live briefing carries what production will actually be created with** — read from",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.011",
     "date": "2026-10-09",
     "title": "A search field keeps its clearance",

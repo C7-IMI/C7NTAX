@@ -20,18 +20,24 @@
 > `ingress.traffic` is **declared** — restating the revision that is serving — instead of omitted (§5);
 > and the private-DNS comment states the actual rule (§6).
 >
+> **Revised again 2026-10-09 (second pass)**, after the reply below was written: the first-run hand-off is
+> now **implemented** as the review's option (b) — the app is created once, against the real image, in two
+> passes — so the failure the review predicted for an empty environment is designed out rather than
+> documented (§8.13); the database is renamed **`c7ntax`** from `c7_overwatch`, in the template, the
+> vault secret, the documentation and the local development instance together (§8.12); and **2.3 is
+> deferred by the operator's decision**, which leaves it the last High item on the bar and not a
+> forgotten one (§8.11).
+>
 > **Confirmed against Microsoft documentation** (these were *(verify)* items, and are not any more):
 > geo-redundant backup storage for Flexible Server is settable **only at server creation**, which is why
 > prod has to have it from the first deployment; and for a VNet-injected server the private DNS zone
 > name only has to *end in* `.postgres.database.azure.com`, so the name used is a choice rather than a
 > requirement (§9.1, §9.3).
 > **Still unverified without a subscription**, and settled by the first `what-if` and the first dev
-> deployment: the port hand-off on the first `-Create` run — the script's `--target-port` is confirmed
-> against the CLI's own command module, but a probe's `port` is a **required** field of the revision
-> template, so the ingress port moves and the probes do not (review §4 option (b) avoids the hand-off
-> altogether; the script's `/api/health` gate covers the promotion until the next Bicep run) —
-> whether the bootstrap image answers the probe's path, a creation-time-only backup property that
-> cannot be *proved* from a template, and the four §3 checks below. Compiling is not deploying.
+> deployment: the two-pass create itself — pass 1 without the app, the image build, pass 2 with it
+> (§8.13) — because no call in this package has ever reached ARM; whether a creation-time-only backup
+> property can be *proved* from a template, which it cannot; and the four §3 checks below. Compiling is
+> not deploying.
 > **Depends on:** nothing. **Gates:** PLAN-016's first deployment of dev and prod.
 
 **Read first:** §1 (it will not deploy as written) and §2.1 (the app is internet-facing with no WAF).
@@ -59,7 +65,7 @@
 |---|---|---|---|
 | 2.1 | **High** | `ingress.external: true` publishes the app on `*.azurecontainerapps.io` with **no WAF**. Front Door and Application Gateway are a separate, unwritten module. Even after they exist, the origin stays reachable directly. | Do not go live before the ingress module (PLAN-016 / `infra/README.md` §4). On the app, add `ipSecurityRestrictions` allowing only the `AzureFrontDoor.Backend` service tag (or the App Gateway subnet). In the API, reject any request whose `X-Azure-FDID` header is not this Front Door's id. |
 | 2.2 | **High** | `jwtSecret`, `kumoMasterKey` and `postgresAdminPassword` are `''` in both `.bicepparam` files. `deploy-env.ps1` refuses to run without them, but a direct `az deployment group create --parameters infra/params/prod.bicepparam` writes an **empty JWT signing key and vault master key** into Key Vault. | `@minLength(32)` on `jwtSecret` and `kumoMasterKey`, and `@minLength(16)` on the password. In the `.bicepparam` files, replace `''` with `readEnvironmentVariable('JWT_SECRET_VALUE')` (and so on), so a missing value fails at compile time. |
-| 2.3 | **High** | The app connects as the **server administrator** (`DATABASE-URL` is built from `postgresAdminLogin`), which is a member of `azure_pg_admin`. | Create an `app_c7ntax` role that owns the `c7_overwatch` schema and has no server-level rights. Run migrations as that role too. Keep the admin for break-glass only. Better still, enable Entra auth (`activeDirectoryAuth: 'Enabled'`) and let the user-assigned identity from 1.2 sign in **without a password**. That needs token acquisition in the API's Prisma connection, so it is a decision (§5, D2). |
+| 2.3 | **High** | The app connects as the **server administrator** (`DATABASE-URL` is built from `postgresAdminLogin`), which is a member of `azure_pg_admin`. | Create an `app_c7ntax` role that owns the **`public` schema of the `c7ntax` database** (renamed from `c7_overwatch` — see §8.12 — and the database is not a schema: see the correction in §8.1) and has no server-level rights. Run migrations as that role too. Keep the admin for break-glass only. Better still, enable Entra auth (`activeDirectoryAuth: 'Enabled'`) and let the user-assigned identity from 1.2 sign in **without a password**. That needs token acquisition in the API's Prisma connection, so it is a decision (§5, D2). **Deferred by decision on 2026-10-09** — see §8.11; the plan of record in §8.1 stands and is now technically correct. |
 | 2.4 | **High** | Key Vault has `publicNetworkAccess: 'Enabled'` with `defaultAction: 'Allow'`, and it holds the vault master key. | Add a private endpoint in `snet-pe` with a `privatelink.vaultcore.azure.net` zone linked to the VNet. Then `publicNetworkAccess: 'Disabled'`. The deploy identity writes secrets through ARM, so this does not affect deploys. |
 | 2.5 | Medium | The Postgres NSG's "allow from ACA" rule restricts nothing, because the default `AllowVnetInBound` (65000) admits **every** subnet. `snet-aca`, `snet-appgw` and `snet-pe` have no NSG. | On `nsg-postgres`: allow 5432 from `snet-aca`, allow all traffic **within** `snet-postgres` (HA replication needs it), then deny `VirtualNetwork` inbound at 4000. Add NSGs to the other subnets. App Gateway v2 needs `GatewayManager` 65200–65535 and `AzureLoadBalancer` inbound. |
 | 2.6 | Medium | No diagnostic settings on Key Vault or ACR, so there is no record of who read a secret. The Postgres comment says "audit", but `pgaudit` is not enabled. These are SOC 2 evidence gaps (PLAN-007). | Send `AuditEvent` (Key Vault) and `ContainerRegistryLoginEvents`/`RepositoryEvents` (ACR) to Log Analytics. Add `configurations` for `shared_preload_libraries=pgaudit`, `pgaudit.log='ddl,role'` and `azure.extensions=pgaudit`. |
@@ -202,11 +208,21 @@ path — a string-built `ORDER BY`, a future raw SQL endpoint, a dependency comp
 server-level rights: create or drop databases, read every schema, `COPY … TO PROGRAM`. Nothing about
 this application needs that. It needs one schema and the tables in it.
 
-- **Do:** `CREATE ROLE app_c7ntax LOGIN PASSWORD …` with `NOINHERIT`; `CREATE SCHEMA c7_overwatch
-  AUTHORIZATION app_c7ntax`; `GRANT CONNECT ON DATABASE`; `REVOKE CREATE ON SCHEMA public FROM PUBLIC`;
+- **Do:** `CREATE ROLE app_c7ntax LOGIN PASSWORD …` with `NOINHERIT`; **make it own the `public` schema
+  of the `c7ntax` database** (`ALTER SCHEMA public OWNER TO app_c7ntax`), `GRANT CONNECT ON
+  DATABASE c7ntax TO app_c7ntax`, and leave `REVOKE CREATE ON SCHEMA public FROM PUBLIC` in place;
   run `prisma migrate deploy` as that role (it needs `CREATE` only inside the schema it owns, which it
   has). Keep the admin credential in Key Vault behind a policy that the *operator* holds and the app
   does not. Write the password like the other secrets, from `deploy-env.ps1`.
+  **Corrected 2026-10-09:** this bullet previously said `CREATE SCHEMA c7_overwatch AUTHORIZATION
+  app_c7ntax`. That is wrong, and following it would produce an application with no rights to its own
+  data: **`c7_overwatch` was the *database* name, not a schema**, and the app's tables are in `public` —
+  Prisma is given a plain `DATABASE_URL` with no `?schema=`, and the local one carries `?schema=public`
+  explicitly. `CREATE SCHEMA c7_overwatch` would have created a second, empty schema beside the real one
+  while the app went on reading `public`, where it would have had no grants. The role must own the schema
+  the application actually uses. *(The database itself has since been renamed `c7ntax` — §8.12 — so the
+  form above is the one to follow; the wrong instruction is kept here only so the correction can be
+  read against what it corrects.)*
 - **Why now:** before data exists this is a five-minute ownership change. After it exists it is a
   migration: every object the admin created must be reassigned (`REASSIGN OWNED BY c7ntaxadmin TO
   app_c7ntax`) and the schema owner changed, in the right order, with a rehearsal.
@@ -370,7 +386,9 @@ with `identityref:`, and updates-then-starts the job when it already exists — 
 Minimum before a production deployment, in this order, leaving 2.8 and secret expiry to follow:
 
 1. **2.3** — the least-privilege role (8.1). Still open, and deliberately not part of the review
-   follow-up (§7 of the review, tracked separately).
+   follow-up (§7 of the review, tracked separately). **Deferred by the operator's decision on
+   2026-10-09** — not dropped, and not to be forgotten: it is the last High item, and after production
+   holds data it becomes a credential rotation as well as a change of grants.
 2. **2.9** — `verify-full` with the bundle in the image (8.4).
 3. **2.1 + D1** — the ingress decided (8.6) and the origin not publicly reachable, with the
    `X-Azure-FDID` check in the API.
@@ -378,6 +396,98 @@ Minimum before a production deployment, in this order, leaving 2.8 and secret ex
    user-assigned identity, so this is no longer a bar item.
 5. **The four §3 checks** that only a subscription can confirm, run against dev first, then prod with a
    saved `what-if`.
+
+### 8.12 — The database is named `c7ntax`, and why the name is not a secret
+
+**Applied 2026-10-09.** The template created a database called `c7_overwatch`, after a product this one
+absorbed. It is now **`c7ntax`**, named for the product it holds.
+
+The question this answers — *should the database have a common name, or a randomly generated one?* — is
+answered **common name**, and the reasoning belongs here because it is the kind of thing that gets
+re-litigated:
+
+- **A database name is an identifier, not a control.** Reaching this server requires network
+  reachability *and* a credential, and the name is involved in neither. Anyone who can connect can list
+  databases — `pg_database` is readable — and the name is printed in every connection string, diagnostic
+  log and `psql` invocation the moment it is used. A name held only in Key Vault is a name that is not
+  held only in Key Vault.
+- **What protects the server, in the order it matters:** the private network (this server is
+  VNet-injected with no public endpoint — §9.1), authentication without a stored password (Entra, D2),
+  the role the app connects as (2.3/§8.1), `sslmode` verification (2.9/§8.4), and `pgaudit` plus
+  Defender to notice a breach if one happens (2.6).
+- **Obscurity has a cost that is paid in an incident.** A name nobody can reconstruct is a name that
+  lives in fewer heads, and in a restore-at-3am the name is one of the few things you need *before* you
+  can read anything. Predictability is a feature in recovery, and automation, runbooks, dashboards and
+  backup policies all reference this name.
+- **The narrow cases where a random name helps** are a shared server with several tenants' databases on
+  it, and a staging environment that is reachable from the internet and scanned. In both, the correct
+  fix is `REVOKE CONNECT` and a network rule; a random name decorates the problem. This deployment has
+  neither: one database, one server, no public endpoint.
+
+**Blast radius, all updated in the same change:** the `database` resource and the `DATABASE-URL` secret
+in `infra/main.bicep` (now one home: `param databaseName = 'c7ntax'`); the `DATABASE_URL` example in
+`infra/env/.env.production.example`; §8.1 and the 2.3 row above.
+
+**The local development database was renamed as well, on 2026-10-09**, because the alternative was a
+document that says one name while every developer's machine says another. It cost ten minutes and it did
+not need a reseed:
+
+- `ALTER DATABASE c7_overwatch RENAME TO c7ntax` is **metadata-only** — every table and row moved with
+  it. Verified afterwards: 119 tables in `public`, 104 tickets, 17 users, and the API answering
+  `/api/health` with `{"status":"ok"}` and the queue rendering through the interface.
+- It needs **no other session connected** to the database, so the dev API was stopped for it and
+  restarted; a running pool blocks the rename with a clear error rather than doing anything half-way.
+  The failure mode is "it refuses", never "it loses data".
+- One line followed it: `apps/api/.env`, the only live reference to the name outside the templates
+  (`.env` is not in the repository, so this was a local change and not a commit).
+- Nothing in the repository *creates* the local database — no `CREATE DATABASE`, no compose file — so
+  the old name cannot come back by accident. The only other mentions are historical: BuildNotes entries
+  describing the earlier infrastructure work, and the generated copies of that changelog.
+
+### 8.13 — The first-run hand-off: applied as option (b)
+
+**Applied 2026-10-09.** §4 of the review found that a first deployment into an empty environment could
+not finish, and that the fix it recommended — moving the ingress port — was not enough, because a probe's
+`port` belongs to the **revision template** while `--target-port` moves the **ingress**. The reviewer's
+option (b) was recorded as the correct fix and deliberately not implemented then, because a flow change
+wants a real run rather than a second blind edit. It is implemented now; the real run is still owed.
+
+**What it does.** The app is created **once, against the real image**, in two passes:
+
+1. **Pass 1** (`createApp=false`) — everything except the app, the container registry above all, since
+   the image step builds into it.
+2. **Image** — built and pushed, unchanged from before.
+3. **Pass 2** (`createApp=true`, `imageTag=<the tag just built>`, no `activeRevision`) — the app is
+   created with the image it will actually run, so its probes are on port 4000 from its first breath.
+   The port hand-off that made the old first run fail cannot happen, because there is no hand-off.
+4. From there the run continues through the **same** migration, revision, health-gate and traffic steps
+   every later deployment uses — so a first run exercises the normal path rather than a special one.
+
+`infra/main.bicep` gained `param createApp bool = true` and a conditional app resource
+(`if (createApp)`), with the `containerAppFqdn` output tolerating its absence. Checked rather than
+assumed: the app is referenced in exactly three places in the template — its declaration, that output,
+and a comment — because there is **no Front Door module and no migration job in this file** (the script
+owns the job). Every other deployment path is the single pass it was: a normal redeploy never passes
+`createApp`, and the deployment workflow never calls the creation path at all.
+
+**Three caveats, stated because a reader will otherwise assume more than is true:**
+
+- **Nothing has run against Azure.** The two-pass create, pass 2's revision and the first `-WhatIf` are
+  all compiled, parsed and reviewed, not executed. That is the same bar as everything else in this plan.
+- **Pass 1 depends on the default (incremental) deployment mode.** No `--mode` is passed anywhere, and a
+  `Complete`-mode deployment with `createApp=false` would **delete** the app rather than skip it. The
+  comment says so in the script, next to the call.
+- **On a first run the health gate does not hold the revision at 0%.** The gate's guarantee — traffic
+  never moves before a revision has been checked — comes from the template's `traffic` rule restating
+  the *serving* revision, and on a first run there is nothing serving to restate, so the app's first
+  revision takes traffic and is then checked. Nothing that was working is at risk (there is no previous
+  deployment), but the property belongs to redeploys and should not be claimed for first runs.
+
+**Verified here:** the templates compile with Bicep CLI 0.48.1 and **0 warnings**; `deploy-env.ps1`
+parses with **0 errors** under Windows PowerShell 5.1; the `-WhatIf` path describes both passes in order;
+and the three cases — first run, redeploy, dry run — were read back from the code. The infrastructure
+contract guards still pass (`imageTag` with no default, `activeRevision` defaulting to `''` and used as
+`revisionName`, `activeRevisionsMode: 'Multiple'`, the script still reading `properties.trafficWeight`).
 
 ## 9. Two review comments, assessed
 

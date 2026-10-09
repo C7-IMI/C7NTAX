@@ -138,7 +138,10 @@ It is not applied here for one reason: **the role has to be created on the serve
 yet.** It needs a subscription, the first deployment, then a role and a grant, then `DATABASE_URL` moved to
 that login — and doing it before there is a server to do it on is not work, it is a plan. It is the first
 item after the first deployment, and §8.1 of the plan now says so with your standard: an `app_c7ntax` role
-owning the `c7_overwatch` schema, no server-level rights, used by both the app and the migration job.
+owning the **`public` schema of the `c7ntax` database**, no server-level rights, used by both the app and
+the migration job. *(Two corrections landed here after this reply was written, both in §8.1 rather than in
+your review: the database is not a schema — see the addendum below — and it is no longer called
+`c7_overwatch`.)*
 
 ---
 
@@ -176,3 +179,77 @@ applied to the plan's status line. The current position:
 Your order is the one I followed, with one adjustment: **§2 landed in the same commit as §1** rather than
 after it. They are both text-and-default changes in the same two files, and §2's figure feeds §1's cost
 comment, so splitting them would have left a commit whose comment quoted a number the next commit changed.
+
+---
+
+# Addendum, 2026-10-09 — what happened after this reply
+
+Four things, one of which is a correction to **the plan** rather than to your review. Filed here so the
+reply and the work do not diverge.
+
+## 1. §4's option (b) is implemented (plan §8.13)
+
+You were right that option (a) does not get a first run through, and I recorded then that (b) — build
+first, create the app only against the real image — was the correct fix while deliberately not
+implementing it, because a flow change wants a real run rather than a second blind edit. It is now
+implemented, with the caveats written into the plan rather than argued away:
+
+- The app is created **once, against the real image**, in two passes: pass 1 `createApp=false` (everything
+  else, the registry above all), the image build, then pass 2 `createApp=true` with the tag just built. The
+  probe-port hand-off cannot happen because there is no hand-off. From pass 2 the run continues through the
+  same migration, revision, gate and traffic steps every later deployment uses.
+- `infra/main.bicep` gained `param createApp bool = true` and a conditional app resource. The app is
+  referenced in exactly **three** places in that template — its declaration, the `containerAppFqdn` output
+  (now `createApp ? … : ''`) and a comment — because there is no Front Door module and no migration job in
+  this file. I had assumed otherwise when I deferred this; the change is smaller than I said it would be.
+- **Three things a reader should not assume.** Nothing has been run against ARM. Pass 1 depends on the
+  default *incremental* deployment mode — a `Complete`-mode deployment with `createApp=false` would delete
+  the app, which is now a comment beside the call. And **on a first run the health gate does not hold the
+  revision at 0%**: that guarantee comes from the template restating the *serving* revision, and on a first
+  run there is nothing serving to restate, so the app's first revision takes traffic and is then checked.
+  Nothing that was working is at risk, but the property belongs to redeploys and should not be claimed for
+  first runs.
+
+## 2. The database is renamed `c7ntax` (plan §8.12)
+
+`c7_overwatch` is a product this one absorbed. The name was corrected in the template (as one parameter,
+`databaseName`, used by both the database resource and the `DATABASE-URL` secret), the `.env` example, the
+plan and the local development instance. The operator's question was whether a database should instead
+carry a random name; the answer recorded in §8.12 is no, and the reason is the useful part: a database name
+is an **identifier, not a control** — reaching the server needs network reach and a credential, the name is
+printed in every connection string and diagnostic log the moment it is used, and `pg_database` is readable
+by anyone who can connect at all. The protections that matter are the private network, authentication
+without a stored password, the least-privilege role this reply's §7 discusses, TLS verification and
+`pgaudit`. Obscurity, meanwhile, is paid for in an incident: in a restore, the name is one of the few
+things you need *before* you can read anything.
+
+## 3. A correction to the plan's §8.1, found while preparing that work
+
+§8.1 said to create the role with `CREATE SCHEMA c7_overwatch AUTHORIZATION app_c7ntax`. **That is wrong,
+and following it would have produced an application with no rights to its own data.** `c7_overwatch` was
+the **database**, not a schema, and the app's tables live in **`public`** — Prisma is handed a plain
+`DATABASE_URL` with no `?schema=`, and the local one carries `?schema=public` explicitly. Following that
+instruction literally would have created a second, empty schema beside the real one while the app went on
+reading `public`, where it would have held no grants: a permissions mystery whose most likely reading
+would have been "Prisma is broken". §8.1 and the 2.3 row now say to own the `public` schema of the
+database, with the wrong instruction kept alongside the correction so the two can be read against each
+other. Your review did not raise this; it is my error, of the same family as the `SameZone` figure — a
+concrete-sounding instruction that nobody had executed.
+
+## 4. 2.3 is deferred by decision, not by drift (plan §8.11)
+
+The operator has parked the least-privilege role for now. It stays the **last High item on the bar**,
+marked as a decision rather than an open finding, and it should be read next to §8.1's correction: whoever
+picks it up inherits the corrected SQL rather than the version that would have quietly broken the
+application's access to its own tables. It cannot be done before the first deployment in any case, because
+the role is created on a server that does not exist yet.
+
+## 5. One more thing for the go-live checklist, found while reading production's parameters
+
+`infra/params/prod.bicepparam` sets `webOrigin = 'https://app.c7ntax.example.com'`, and the template passes
+that value as **both `WEB_ORIGIN` and `CORS_ORIGIN`**. Per the deployment's own environment example, those
+"gate CORS **and every redirect the app builds** (SSO callback, desktop hand-off, reset links)". A
+production deployment with that placeholder would therefore block browser calls from the real origin and
+put a dead hostname into password-reset and notification links. I did not invent a replacement — that is a
+value only the operator has — but it is now a named must-confirm item in the briefing, rather than a value
+that looks finished because it is spelled correctly.
