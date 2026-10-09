@@ -1,5 +1,16 @@
 [
   {
+    "version": "2026.10.8.068",
+    "date": "2026-10-08",
+    "title": "Contacts onto the same chrome",
+    "changes": [
+      {
+        "text": "**Contacts** gained the shared views strip — **All**, **Primary**, **Inactive** and",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.8.067",
     "date": "2026-10-08",
     "title": "How a list reads",

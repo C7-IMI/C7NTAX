@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.8.067 | Last Updated: 2026-10-08
+## Version: 2026.10.8.068 | Last Updated: 2026-10-08
 
 ---
 
@@ -11,6 +11,19 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.8.068 — Contacts onto the same chrome
+
+- **[Update]** **Contacts** gained the shared views strip — **All**, **Primary**, **Inactive** and
+  **No email**, each with its live count — a count line (*21 contacts · 5 primary*), and the filter
+  relabelled *Client: any* so it says what it filters by. The list-and-detail arrangement, the
+  right-click menu, the deep-link selection and the editor are unchanged.
+
+**Verification:** `tsc --noEmit` clean; at `/clients/contacts` the strip reads *All 21 · Primary 5 ·
+Inactive 0 · No email 0*, the count line *21 contacts · 5 primary*, and the 21 contact cards and
+detail panel render as before.
 
 ---
 

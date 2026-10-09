@@ -7091,3 +7091,17 @@ reported failure and the script nevertheless ended with *"All checks passed. App
   Billing as invoices with views, Reports as figures plus a board table, Kumo as its own branded
   surface), then the utility screens, and the report designer last with a mockup first.
 
+### Prompt 311 (continued) — Keep going: Contacts
+
+**BuildNotes IDs:** **2026.10.8.068**.
+
+**What I did**
+- **Contacts onto the shared chrome**: views with counts (All 21, Primary 5, Inactive 0, No email 0),
+  the count line *21 contacts · 5 primary*, and the company filter relabelled *Client: any* in the
+  redesigned interface. The list-and-detail layout, right-click menu, deep-link selection and editor
+  are untouched.
+
+**Notes for next time**
+- **I tested the wrong URL for a while.** Contacts lives at `/clients/contacts`, not `/contacts` — the
+  empty `<main>` was the route not existing, not the page failing. Check `App.tsx` for the path before
+  debugging a page that renders nothing, and trust `App.tsx` over the rail's label.

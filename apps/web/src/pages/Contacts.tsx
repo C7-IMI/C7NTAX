@@ -8,7 +8,8 @@ import { copyText, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { Search, Mail, Phone, Building2, Star, Edit3, Save, X, MapPin, Briefcase, Globe, MessageSquare, UserPlus, Clock, Plus, Ticket, Users, ExternalLink, UserCheck, UserX, Copy, Download, RotateCw, Eraser } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
-import { PageHeader } from "../components/ui";
+import { PageHeader, ListViews } from "../components/ui";
+import { useRedesign } from "../hooks/useNavigationStyle";
 
 interface Contact {
   id: string; firstName: string; lastName: string; email: string;
@@ -22,6 +23,8 @@ export function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [view, setView] = useState("all");
+  const redesign = useRedesign();
   const [companyFilter, setCompanyFilter] = useState("");
   const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([]);
   const [selected, setSelected] = useState<Contact | null>(null);
@@ -60,8 +63,21 @@ export function ContactsPage() {
   const filtered = contacts.filter(c => {
     if (search && !`${c.firstName} ${c.lastName} ${c.email} ${c.title || ""}`.toLowerCase().includes(search.toLowerCase())) return false;
     if (companyFilter && c.company?.id !== companyFilter) return false;
+    if (redesign) {
+      if (view === "primary" && !c.isPrimary) return false;
+      if (view === "inactive" && c.isActive !== false) return false;
+      if (view === "no email" && c.email) return false;
+    }
     return true;
   });
+
+  // The same facts the rows carry, counted rather than searched for.
+  const contactViews = [
+    { id: "all", label: "All", count: contacts.length },
+    { id: "primary", label: "Primary", count: contacts.filter(c => c.isPrimary).length },
+    { id: "inactive", label: "Inactive", count: contacts.filter(c => c.isActive === false).length },
+    { id: "no email", label: "No email", count: contacts.filter(c => !c.email).length },
+  ];
 
   const selectContact = (c: Contact) => { setSelected(c); setEditing(false); };
 
@@ -206,8 +222,10 @@ export function ContactsPage() {
       <div className="flex items-center justify-between"><PageHeader variant="section" title="Contacts" subtitle={<>{filtered.length} contacts</>} /><button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} />Add Contact</button></div>
 
       <div className="flex gap-2 flex-wrap">
+        {redesign && <ListViews views={contactViews} value={view} onChange={setView} label="Contact views" />}
         <div className="relative flex-1 min-w-[200px]"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input ref={searchRef} className="input-field pl-9" placeholder="Search contacts..." value={search} onChange={e => setSearch(e.target.value)} /></div>
-        <select className="input-field text-sm py-1.5 w-auto" value={companyFilter} onChange={e => setCompanyFilter(e.target.value)}><option value="">All Companies</option>{companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+        <select className="input-field text-sm py-1.5 w-auto" value={companyFilter} onChange={e => setCompanyFilter(e.target.value)}><option value="">{redesign ? "Client: any" : "All Companies"}</option>{companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+        {redesign && <span className="text-xs text-gray-500">{filtered.length} contact{filtered.length === 1 ? "" : "s"} · {filtered.filter(c => c.isPrimary).length} primary</span>}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
