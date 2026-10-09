@@ -265282,6 +265282,19 @@
     "createdAt": "2026-10-09T22:56:10.950Z"
   },
   {
+    "id": "cb3864b6-3aaf-4349-810b-d465e99a03cd",
+    "action": "brand.asset_uploaded",
+    "entity": "brand",
+    "entityId": "6ac94c83-f0d0-4049-89e5-c0b7e0204263",
+    "changes": {
+      "kind": "logo",
+      "byteSize": 3223
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:45:53.990Z"
+  },
+  {
     "id": "1fa7edc7-d34c-4ad9-a674-22cd382141b8",
     "action": "oauth_app.deployed",
     "entity": "oauth_app",
@@ -294239,6 +294252,32 @@
     "createdAt": "2026-10-09T23:04:30.995Z"
   },
   {
+    "id": "99e16526-15b5-4a1f-a2d2-763f598ae093",
+    "action": "brand:create",
+    "entity": "brand",
+    "entityId": "6ac94c83-f0d0-4049-89e5-c0b7e0204263",
+    "changes": {
+      "kind": "logo",
+      "dataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWgAAAB4CAYAAADfRGj6AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAwsSURBVHhe7Zy9jtw2F4Z9BylzDV+uxYXr1L6EAAa2CRYuXfgONilc+AYWSLdrIM..."
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:45:53.998Z"
+  },
+  {
+    "id": "340d77db-469e-4433-8d11-7e4aa0e8dd87",
+    "action": "brand.asset_uploaded",
+    "entity": "brand",
+    "entityId": "2e810d76-089c-4689-9007-61b57d8a3e6b",
+    "changes": {
+      "kind": "icon",
+      "byteSize": 3223
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:48:40.548Z"
+  },
+  {
     "id": "661d4f4e-b1d8-4ac8-b54a-cb4b9f11056e",
     "action": "email:create",
     "entity": "email",
@@ -295723,5 +295762,128 @@
     "userId": "632e5daf-5190-4f6c-8352-ce24896d4e41",
     "ipAddress": "::1",
     "createdAt": "2026-10-09T23:15:27.421Z"
+  },
+  {
+    "id": "9e56a634-e87f-4cc9-8391-a1161a81b7c4",
+    "action": "brand.updated",
+    "entity": "brand",
+    "entityId": "brand",
+    "changes": {
+      "icon": [
+        null,
+        null
+      ],
+      "logo": [
+        null,
+        "/api/brand/asset/6ac94c83-f0d0-4049-89e5-c0b7e0204263"
+      ],
+      "companyName": [
+        "Cyber 7 Group, LLC",
+        "Cyber 7 Group, LLC"
+      ],
+      "primaryColor": [
+        "#c00000",
+        "#c00000"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:46:05.879Z"
+  },
+  {
+    "id": "c55ac628-c968-400b-b7c2-b4f0d3a300b1",
+    "action": "brand:update",
+    "entity": "brand",
+    "entityId": "brand",
+    "changes": {
+      "iconUrl": "",
+      "logoUrl": "/api/brand/asset/6ac94c83-f0d0-4049-89e5-c0b7e0204263",
+      "replyTo": "",
+      "tagline": "",
+      "website": "",
+      "fromName": "",
+      "wordmark": "C7NTAX",
+      "fromEmail": "",
+      "legalText": "",
+      "accentColor": "#00c0f4",
+      "companyName": "Cyber 7 Group, LLC",
+      "contactLine": "",
+      "logoDarkUrl": "",
+      "productName": "C7NTAX",
+      "addressLines": [],
+      "primaryColor": "#c00000",
+      "documentFooter": ""
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:46:05.895Z"
+  },
+  {
+    "id": "92ce5ef6-e4d3-4952-90c2-056993f5d88f",
+    "action": "brand:create",
+    "entity": "brand",
+    "entityId": "2e810d76-089c-4689-9007-61b57d8a3e6b",
+    "changes": {
+      "kind": "icon",
+      "dataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAWgAAAB4CAYAAADfRGj6AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAwsSURBVHhe7Zy9jtw2F4Z9BylzDV+uxYXr1L6EAAa2CRYuXfgONilc+AYWSLdrIM..."
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:48:40.555Z"
+  },
+  {
+    "id": "60578dee-50a1-4c7e-958f-0b545474792f",
+    "action": "brand.updated",
+    "entity": "brand",
+    "entityId": "brand",
+    "changes": {
+      "icon": [
+        null,
+        "/api/brand/asset/2e810d76-089c-4689-9007-61b57d8a3e6b"
+      ],
+      "logo": [
+        "/api/brand/asset/6ac94c83-f0d0-4049-89e5-c0b7e0204263",
+        "/api/brand/asset/6ac94c83-f0d0-4049-89e5-c0b7e0204263"
+      ],
+      "companyName": [
+        "Cyber 7 Group, LLC",
+        "Cyber 7 Group, LLC"
+      ],
+      "primaryColor": [
+        "#c00000",
+        "#c00000"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:48:42.604Z"
+  },
+  {
+    "id": "0ee6a531-3caa-4fa7-a58b-624ed9e75e1b",
+    "action": "brand:update",
+    "entity": "brand",
+    "entityId": "brand",
+    "changes": {
+      "iconUrl": "/api/brand/asset/2e810d76-089c-4689-9007-61b57d8a3e6b",
+      "logoUrl": "/api/brand/asset/6ac94c83-f0d0-4049-89e5-c0b7e0204263",
+      "replyTo": "",
+      "tagline": "",
+      "website": "",
+      "fromName": "",
+      "wordmark": "C7NTAX",
+      "fromEmail": "",
+      "legalText": "",
+      "accentColor": "#00c0f4",
+      "companyName": "Cyber 7 Group, LLC",
+      "contactLine": "",
+      "logoDarkUrl": "",
+      "productName": "C7NTAX",
+      "addressLines": [],
+      "primaryColor": "#c00000",
+      "documentFooter": ""
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:48:42.609Z"
   }
 ]
