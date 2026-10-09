@@ -8631,3 +8631,57 @@ Both are in the reply and in the briefing's pre-deployment list, and neither was
   ever means "no damage of *this* kind".
 - **Do not round-trip a UTF-8 file through PowerShell to edit it.** `Get-Content -Raw` → `WriteAllText`
   double-encodes the whole file; `Out-File -Encoding utf8` adds a BOM. The `edit` tool, Node or Python.
+
+---
+
+### Prompt 348 — Checking the app is working
+
+**Timestamp:** 2026-10-09 10:15 | **Status:** Complete | **Duration:** ~35 min
+
+**BuildNotes IDs:** none — this prompt changed no product code, so no BuildNotes entry applies. The one
+file it touched is this log.
+
+**Prompt**
+
+> Check the app to make sure it's working
+
+**What I did**
+- **Found it not working, and fixed the cause rather than the symptom.** The web server was up on :3010 and
+  serving, but nothing was listening on :4000: the API process from earlier in the session was gone, so
+  every page behind a sign-in was failing its data calls. Started it (`npx tsx src/index.ts` in `apps/api`)
+  and the login page's own four status tiles — Web Server, API Server, Database, WebSocket — all came up
+  green, which is the quickest honest answer to "is it working" this application has.
+- **Signed in and walked the screens rather than reading the routes.** Today, the ticket list, a ticket
+  detail, Service Boards, the three sign-in-audit tabs, Help and a walkthrough, C7NC → Email, the
+  Configuration hub — in the modern interface and again in the classic one, and in light mode as well as
+  dark.
+- **Swept all 62 navigation destinations** in the browser, collecting console and page errors on each:
+  **62/62 returned 200 with content and none was empty.** These are the real destinations from the
+  navigation tree, not guessed paths — a first sweep of guessed ones produced eight "blank pages" that
+  were simply routes that do not exist.
+- **Checked the API from outside the UI**: `/api/health`, `/api/ready`, `/api/ready?deep=1` (the
+  migration comparison), the add-in, a sign-in, and eight authenticated endpoints. Then the log: **70,367
+  lines, 0 ERROR entries, 0 5xx responses.**
+- **Confirmed the recent work still behaves**: NOC Alerts reads "closes without emailing the client" in
+  the board list and its edit form shows the switch **off** while the other three boards' boxes are on;
+  the sign-in audit contains the sign-ins I had just made, with device, IP and method; all 17 Help
+  screenshots and all four brand marks are served; the changelog still parses 314 versions with the new
+  one at the top.
+
+**Notes for next time**
+- **A page that will not load is usually the API, not the page.** The web server answering 200 is not the
+  application working. The login screen's status tiles are the cheapest real health check, because they
+  test all four dependencies the way a user's browser does.
+- **Sweep the navigation tree, not invented paths.** The first pass "found" eight blank screens that were
+  routes no one has ever linked to. A blank screen at an unrouteable path is not a bug worth reporting;
+  a blank screen at a row in the rail would be.
+- **The console mangles UTF-8 and the file is fine** — the same trap as Prompt 347, one turn later. A
+  Help subtitle printed through PowerShell showed an em dash as mojibake, and checking the bytes in Node
+  settled it: a real em dash, no damage. Judge encoding by bytes, never by a terminal.
+- **Do not close a real ticket to test a default.** The close-notification behaviour was left to the
+  configuration screens and the earlier probe tickets rather than by closing live client work.
+
+**One pre-existing defect found and deliberately not fixed:** `/kumo/checklists` logs a React
+`validateDOMNesting` warning — `SortableHeader` renders a `<th>` and `Checklists.tsx` wraps it in another
+`<th>` (lines 434–438, added in `4e290e5` on 2026-10-06, before this session). React recovers, so the
+table works; it is reported here rather than swept into an unrelated commit.
