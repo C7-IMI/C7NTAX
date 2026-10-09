@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.019 | Last Updated: 2026-10-09
+## Version: 2026.10.9.020 | Last Updated: 2026-10-09
 
 ---
 
@@ -13,6 +13,32 @@
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
 
 ---
+
+## 2026.10.9.020 — Screenshots in the walkthroughs, where a picture answers faster than a sentence
+
+The Help is written prose, and prose is how you describe a decision — but not how you find a control.
+Fourteen of the walkthroughs now carry a picture of the screen they are about, with a caption that does
+the pointing the picture cannot.
+
+- **[New]** **A `figure` block** in the Help renderer: the image, then a caption line, themed by the same
+  tokens as everything else (so it reads in both schemes) and lazy-loaded, because a walkthrough with
+  four figures should not fetch all of them to show one.
+- **[Update]** **Fourteen walkthroughs gained a picture**: the navigation rail, the ticket list, the close
+  dialog (on the NOC Alerts board, where the default is the interesting part), Service Boards with the
+  close-notification switch in view, the configuration hub, the email connector mapping and the Microsoft
+  365 app panel, the three sign-in-audit screens, API Access, C7NC, the outage board and uptime monitors.
+- **[Update]** **`apps/web/public/help/README.md`** records how they were taken — the running application,
+  the dark scheme, 1440 wide at device scale 2, clipped to the region the caption is about — and what to
+  do when a screen changes, so the next person re-taking one does not have to guess the recipe.
+
+**Verification:** `check-help-links` passes (88 routes, 30 walkthroughs, 57 internal links — every figure's
+path included). Every existing Help text block was diffed against the previous commit and comes out
+identical: the change adds lines and alters none, which matters because inserting a figure next to a
+paragraph is exactly the kind of edit that quietly eats the end of a sentence — and did, twice, before
+the diff caught it.
+
+---
+
 
 ## 2026.10.9.019 — A sign-in audit, live sessions you can end, and the devices on each account
 

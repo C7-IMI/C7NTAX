@@ -208,6 +208,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     description: "Reference for the settings, dialogs, and options available in C7NTAX.",
     blocks: [
       { kind: "h", text: "Service Boards" },
+      { kind: "figure", src: "/help/service-boards.png", alt: "The Service Boards page with one board open for editing and the close-notification switch visible", caption: "**Service Boards.** Each board's settings in one place — ticket code, SLAs, auto-close, follow-up — including **Email the client when a ticket on this board is closed**, which is what the close dialog defaults to. **NOC Alerts** carries *closes without emailing the client* on its summary line, because its tickets arrive from monitoring systems at no-reply addresses." },
       { kind: "p", text: "Administration → Service Boards configures boards, SLA policies, categories, and email connectors. Drag board tiles to reorder and pin preferred elements to the top; the layout is saved per board." },
       { kind: "table", headers: ["Setting", "What it decides"], rows: [
         ["Name / description", "What the board is called and what it is for; the name is what the close dialog reads back when it explains a default."],
@@ -629,6 +630,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     description: "Configure website, SSL-expiry, and DNS checks with alerting.",
     blocks: [
       { kind: "h", text: "Add a monitor" },
+      { kind: "figure", src: "/help/uptime-monitors.png", alt: "The uptime monitors page listing website, SSL and DNS checks with their state", caption: "**Uptime monitors.** Website, SSL-expiry and DNS checks side by side, each with its target, its interval and the state it is in. A monitor that fails raises an alert on the Service Alerts board rather than a ticket of its own, so the board stays the one place incidents live." },
       { kind: "steps", items: [
         "Switch on **Uptime monitors** under Administration → Configuration → Service Alerts & Monitoring.",
         "Open Service Alerts → Uptime Monitors.",
@@ -663,6 +665,7 @@ export const HELP_SECTIONS: HelpSection[] = [
         "The monitor polls on the interval shown on the page and classifies outage, degraded and restored keywords.",
       ] },
       { kind: "h", text: "The Outage Board" },
+      { kind: "figure", src: "/help/service-alerts.png", alt: "The Service Alerts board: summary tiles, a source filter and the list of active alerts", caption: "**The outage board.** Four tiles (Outages, Degraded, Operational, Monitored services), the **Active / Resolved / Source** filters, then one row per alert with its **degraded** chip, how long ago it was detected and where it was read from. **Live** and **Outage Board** switch between working an incident and watching the feed." },
       { kind: "p", text: "The second tab is a **triage board**: one row per monitored service, the problems sorted to the top, each with its most recent observation and the time it was seen. It counts outages and degradations at the top, refreshes on the same poll as the rest of the page, and only while the tab is visible — so a board left open in a background tab is not quietly polling." },
       { kind: "steps", items: [
         "Scan the outage and degraded counts first; they are the only numbers that need a decision.",
@@ -929,6 +932,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     description: "Connect third-party services, test connections, and fix credentials inline.",
     blocks: [
       { kind: "h", text: "The five tabs" },
+      { kind: "figure", src: "/help/cloudconnect.png", alt: "The C7NC overview page with its connection health summary and the five tabs", caption: "**C7NC in one screen.** The summary line says how many services are connected, which model is in use and how many need attention; the tiles below count what is connected, what answers and what does not. The tab is in the address, so any of the five can be linked to." },
       { kind: "p", text: "C7NC answers several different questions, so it is split up, and the tab is in the address so any of them can be linked to. **Overview** is the summary: whether anything needs attention, and the fix for it. **Services** is the connectors — what is configured, whether each connection is healthy, where its data comes from — and it carries the configure view for one connection, so *Connected* and *Configuration* are the same tab now. **AI Models** is where a model is connected so the application can use one. **Email** holds the mailbox connectors, which are configured differently from the API connectors. **Companion apps** is what a person installs on their own machine." },
       { kind: "h", text: "Add a connector" },
       { kind: "steps", items: [
@@ -1120,6 +1124,7 @@ export const HELP_SECTIONS: HelpSection[] = [
         "If **Close** is one of the ticked actions, the other actions run and the same closing dialog opens for the selection: closing always asks whether the client is told, whether it is one ticket or thirty.",
       ] },
       { kind: "h", text: "Closing a ticket" },
+      { kind: "figure", src: "/help/close-dialog.png", alt: "The close dialog over the ticket list, with Close silently chosen and a line explaining why", caption: "**Closing a ticket.** One dialog, four decisions: who is told, how it is closed, the reason, and the button that says what will happen. Here it is a NOC Alerts ticket, so the board has set **Close silently** as the default and the line under the choices says why — **Email the client** is one click away when that default is wrong." },
       { kind: "p", text: "Closing is two actions in one — the ticket settles, and somebody tells the client — so it asks which of the two you mean rather than assuming. The same dialog appears from the list's right-click **Close ticket**, the row's own menu, the bulk **Quick Actions** choice, and the record's **Status** pill, in both interfaces." },
       { kind: "steps", items: [
         "Choose **Close** (or set the record's Status pill to Closed or Resolved). The dialog opens with the ticket it is about.",
@@ -1148,6 +1153,7 @@ export const HELP_SECTIONS: HelpSection[] = [
       ] },
       { kind: "tip", text: "A client's reply finds its ticket by the number in the subject, so renumbering changes the reference in any email still in somebody's inbox. The map the script writes is what you would reconcile against if a client ever asks about an old number." },
       { kind: "h", text: "Ticket list columns" },
+      { kind: "figure", src: "/help/tickets-list.png", alt: "The ticket list: board tabs, filter controls and the column header row", caption: "**The ticket list.** Board tabs across the top of the table, the view strip and search above it, and **Choose Columns** beside **Filter** on the right. The header row is the list's own: every column can be reordered, resized and hidden, and the two timestamps — **Date Created** and **Last Updated** — are shown by default because \"when was it raised\" and \"when did anything last happen to it\" are different questions." },
       { kind: "steps", items: [
         "Select Choose Columns above the ticket card to open the column picker.",
         "Check or uncheck any column (Ticket #, Summary, Status, Board, Client, Technician, Age, SLA, Priority, Date Created, Last Updated) — Priority, Board and SLA are available but unchecked by default.",
@@ -1217,6 +1223,7 @@ export const HELP_SECTIONS: HelpSection[] = [
         ["Choose it", "The default.", "Administration → Configuration → Workspace → **Navigation pane** → *Single tree (classic)* for everyone, or **My Account → Appearance → Navigation** for just you."],
       ] },
       { kind: "h", text: "The rail" },
+      { kind: "figure", src: "/help/rail.png", alt: "The navigation rail with the Service Desk domain open beside it", caption: "**The rail and the panel beside it.** The rail is the spine — one row per domain, Favorites first, Kumo at the foot above the utilities — and clicking a row opens its destinations in the column beside it. The row you are on stays highlighted while the panel is open, so the rail answers *where am I* without anything being opened." },
       { kind: "p", text: "The first row is **Favorites** — everything you have pinned, in your own order — and below it each row is a **domain**: a group of destinations that belong to the same job rather than to the same part of the database. **Clicking one opens its destinations; clicking it again closes them.** Clicking a different row moves the panel to that domain — one gesture, one meaning, so browsing several domains is quick — and while the panel is closed the rail costs a click and nothing else. The row for the page you are on stays highlighted, so the rail still answers *where am I* without opening anything. **Home** and **Today** are the two rows that navigate instead of opening, because each is a single page rather than a group." },
       { kind: "table", headers: ["Rail row", "What is in it"], rows: [
         ["**Favorites**", "What you have pinned, at length and in your order — see below. Always the first row, whether or not anything is pinned, because a row you only find after you have pinned something is a row nobody finds."],
@@ -1534,6 +1541,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     title: "Configuration",
     description: "Every setting the application reads, where its value comes from, and how to change one.",
     blocks: [
+      { kind: "figure", src: "/help/settings-hub.png", alt: "The Configuration hub: a search over every setting, tiles counting areas and settings, and one card per area", caption: "**The settings hub.** The search covers every setting by name, the tiles say how many areas your role can read and how many settings you can change, and each card is one area with its count and its badges — **restart required**, or **unmet requirement**. **Administration → Configuration** is the whole of it." },
       { kind: "p", text: "**Administration → Configuration** is the one screen for application settings. Its areas are generated from the same declaration the server enforces, so a field can only appear if something reads it — the reason the older screens, on which most controls did nothing, are gone." },
       { kind: "h", text: "How a value is decided" },
       { kind: "p", text: "In this order: **a saved setting, then the deployment's environment variable, then the documented default.** A deployment configured the old way therefore keeps behaving exactly as it did, and a saved value always wins over the variable." },
@@ -1823,6 +1831,7 @@ export const HELP_SECTIONS: HelpSection[] = [
     description: "Issue an API key for an RMM, a SIEM, a monitoring platform or your own script, and choose where the alerts it sends are filed.",
     blocks: [
       { kind: "h", text: "What this is for" },
+      { kind: "figure", src: "/help/api-access.png", alt: "The API Access page: key list, scopes and the event intake board", caption: "**API Access.** Keys on the left with the scopes each was issued, **Issue a key** above them, and the **event intake board** at the foot — where an alert that names no board of its own lands. The secret is shown once, at issue; afterwards there is only Rotate and Revoke." },
       { kind: "p", text: "Every screen in C7NTAX is backed by the same REST API, so another system can do anything the application can — raise tickets, log time, read invoices — if it has a credential. **Administration → API Access** is where those credentials are issued and where the one setting the event gateway needs is kept. C7NC is the other direction: that is where *this* instance reads from other systems." },
       { kind: "p", text: "The recommended path for anything that reports incidents — an RMM, an SIEM, an uptime monitor, a status-page bridge — is the **event gateway**: one endpoint they all post to, which opens one ticket per condition and closes it when the recovery arrives." },
       { kind: "h", text: "Issue a key" },

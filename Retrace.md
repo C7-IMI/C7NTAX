@@ -8520,3 +8520,45 @@ Both are in the reply and in the briefing's pre-deployment list, and neither was
   audit screen can give.
 - **Do not tidy away the evidence.** The probe's rows are the first entries of the audit trail, so they
   were left in place — the opposite of the usual instruction to clean up after a test.
+
+---
+
+### Prompt 346 — Screenshots in the walkthroughs
+
+**Timestamp:** 2026-10-09 11:20 | **Status:** Complete | **Duration:** ~45 min
+
+**BuildNotes IDs:** **2026.10.9.020**.
+
+**Prompt**
+
+> Can you add relevant screenshots to the walkthroughs where it makes sense to better indicate what to look for?
+
+**What I did**
+- **Added a `figure` block** to the Help renderer — image, then a caption — rather than pasting images into
+  the prose blocks, so the fourteen pictures have one place to live and one set of styling. It is lazy
+  loaded, because a walkthrough with four figures should not fetch all four to show one.
+- **Captured from the running application**, fifteen screens, dark scheme, device scale 2, then clipped to
+  the region each caption is about: the rail, the ticket list, the close dialog (chosen on the NOC board,
+  where the default is the interesting part), Service Boards with the new close-notification switch in
+  view, the configuration hub, the email mapping and the Microsoft 365 app panel, the three sign-in-audit
+  screens, API Access, C7NC, the outage board and uptime monitors.
+- **Put the pointing in the caption, not on the picture.** No arrows or highlights: the caption says what
+  to look at ("**Email the client** is one click away when that default is wrong"), which keeps the image
+  honest and the annotation translatable.
+- **Wrote `apps/web/public/help/README.md`** with the recipe — viewport, scale, scheme, what to clip —
+  and what to do when a screen changes, so re-taking one is not folklore.
+- **Caught my own damage with a diff.** Inserting a figure beside a paragraph is exactly the edit that
+  quietly eats the end of a sentence: two Help paragraphs lost their tails (one truncated, one with the
+  remainder duplicated after it). `git diff -U0` showed both, they were restored from `git show HEAD:…`,
+  and the whole file's text blocks were then compared against the previous commit — 483 before, 483
+  after, nothing altered, nine lines added.
+
+**Notes for next time**
+- **Do not use a truncated line as an edit anchor.** Three times in this task I anchored on the first
+  sixty characters of a long single-line JSX block and re-emitted it truncated, which silently cut the
+  paragraph. The lesson is mechanical: when the anchor is a long line, read it first and paste all of it.
+- **A diff of the *content*, not the file, is the check that matters.** The first verification attempt
+  keyed blocks by their first 60 characters and reported zero missing — the damage was in the tails it
+  was not looking at. Comparing complete block texts is what found it.
+- **A screenshot is part of the change.** `README.md` in the folder says so, because the failure mode is a
+  picture of a control that has moved, which a reader trusts and then cannot find.

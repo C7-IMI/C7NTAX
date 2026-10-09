@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.9.020",
+    "date": "2026-10-09",
+    "title": "Screenshots in the walkthroughs, where a picture answers faster than a sentence",
+    "changes": [
+      {
+        "text": "**A `figure` block** in the Help renderer: the image, then a caption line, themed by the same",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Fourteen walkthroughs gained a picture**: the navigation rail, the ticket list, the close",
+        "type": "Update"
+      },
+      {
+        "text": "**`apps/web/public/help/README.md`** records how they were taken — the running application,",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.019",
     "date": "2026-10-09",
     "title": "A sign-in audit, live sessions you can end, and the devices on each account",
