@@ -202,8 +202,19 @@ const DOMAIN_SPECS: DomainSpec[] = [
     ],
   },
   {
+    /**
+     * The settings domain, and the one place where the label had to agree with the prose.
+     *
+     * This is the area the Help, `docs/API.md` and the API guide all call **Administration** — "issue a
+     * key on Administration → API access", "set the board on Administration → Service Boards" — while the
+     * rail alone called it **Platform**, which reads as a thing this instance runs on rather than the place
+     * its settings live. So the row wears the name the rest of the product already used for it.
+     *
+     * The `id` stays `platform`: it is the key the stored row order and every favorite are filed under, and
+     * a rename there would move the row and drop the pins of everybody who has used the pane.
+     */
     id: "platform",
-    label: "Platform",
+    label: "Administration",
     icon: Shield,
     what: "How this instance is wired: connections, access, and every setting behind them.",
     rows: [
@@ -251,8 +262,8 @@ const DOMAIN_SPECS: DomainSpec[] = [
      *
      * Two reasons, and the second one is the one that shows. It is a product inside this one rather
      * than a part of the service-desk flow — the mark it carries says so — so it reads better beside
-     * the utilities than in the middle of the delivery rows. And where it stood, between Platform and
-     * Service alerts, a wordmark the height of a heading sat above two ordinary rows and made them
+     * the utilities than in the middle of the delivery rows. And where it stood, between Administration
+     * and Service alerts, a wordmark the height of a heading sat above two ordinary rows and made them
      * look like its children; at the end it abuts the utilities, which are separated by their own
      * heading, so nothing can be mistaken for its contents.
      */

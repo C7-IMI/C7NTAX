@@ -277,7 +277,7 @@ export function NavPaneModern({
   const hasUsage = rest.visible.some((item) => usage[item.id]);
 
   // The badge belongs to the alert board, not to the page that configures it: the settings row lives
-  // under Platform and must not put a count on Platform's rail row.
+  // under Administration and must not put a count on Administration's rail row.
   const badgeFor = (id: string) => (id === "service-alerts" ? alertCount : 0);
 
   const row = (item: NavDestination) => {

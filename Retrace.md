@@ -8279,3 +8279,38 @@ Both are in the reply and in the briefing's pre-deployment list, and neither was
   which is what kept the operator's browser session intact.
 - **A per-ticket-create requirement chain is worth probing early**: `Ticket` needed `board`, `company`,
   `createdBy` as relations (not the `boardId`/`companyId` scalars) before the probe would run at all.
+
+---
+
+### Prompt 341 — The settings domain is called Administration
+
+**Timestamp:** 2026-10-09 07:35 | **Status:** Complete | **Duration:** ~15 min
+
+**BuildNotes IDs:** **2026.10.9.015**.
+
+**Prompt**
+
+> What other name can you come up with besides Platform that will indicate it is for configuring various settings of the application? Platform is confusing.
+
+**What I did**
+- **Answered it out of the product's own prose rather than inventing a word.** The Help sends readers to
+  "Administration → API access" and "Administration → Service Boards", `docs/API.md` does it four times,
+  and the walkthrough index has an **Administration** row — while the rail alone said **Platform**. The
+  rename is therefore not a preference but a reconciliation: the label now matches the name every other
+  surface already uses for the same area.
+- **Asked, then chose on the user's behalf when they were not available.** The options offered were
+  Administration, System, Instance and Configuration; Administration was recommended because it is the
+  word the documentation already ships, and that is the option taken.
+- **Left the row's `id` alone on purpose.** It is `platform` and stays `platform`: the stored row order
+  and every favorite are filed under it, so renaming the id would move the row and drop the pins of
+  everyone who has used the pane. The mismatch is commented in `navModel.ts` so the next reader knows it
+  is deliberate.
+- Renamed the label, updated the two comments that named the section, and updated the Help's rail-row
+  table so the navigation walkthrough matches the navigation.
+
+**Notes for next time**
+- **A label that disagrees with the documentation is a bug in one of them.** The cheapest way to choose
+  a name is to find the one the rest of the product already uses; inventing a better word costs every
+  reader a translation.
+- **Renaming a navigation label is not renaming its key.** Ids in `navModel.ts` are persisted (row order,
+  favorites, usage counts), so a "clean" rename would quietly reset people's panes.
