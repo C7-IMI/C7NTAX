@@ -234,7 +234,7 @@ eventsRouter.post("/", requirePermission(Permission.TicketCreate), async (req: A
     const boardId = await resolveBoard(event);
     if (!boardId) throw new AppError("No service board exists to file this against. Create one, or send boardId.", 400);
 
-    const ticketNumber = await generateTicketNumber(companyId);
+    const ticketNumber = await generateTicketNumber({ companyId, boardId });
     const ticket = await prisma.ticket.create({
       data: {
         ticketNumber,

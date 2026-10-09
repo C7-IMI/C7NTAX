@@ -226,8 +226,8 @@ ticketsRouter.post("/", requirePermission(Permission.TicketCreate), async (req: 
     const board = await prisma.serviceBoard.findUnique({ where: { id: boardId } });
     if (!board) throw new AppError("Service board not found", 404);
 
-    // Generate ticket number: ClientType-ClientID-Sequential (e.g. MSP-1001-1003)
-    const ticketNumber = await generateTicketNumber(companyId || null);
+    // The number names the board it was raised on, the client, and the ticket (e.g. MSP-04-1005)
+    const ticketNumber = await generateTicketNumber({ companyId: companyId || null, boardId });
     const autoPriority = priority || extractPriority(title, description || "");
 
     const ticket = await prisma.ticket.create({

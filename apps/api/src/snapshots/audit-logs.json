@@ -192049,6 +192049,18 @@
     "createdAt": "2026-10-09T04:15:33.592Z"
   },
   {
+    "id": "320636db-cf65-407c-bc77-304c1957f0fa",
+    "action": "procurement:update",
+    "entity": "procurement",
+    "entityId": "8e9b288f-257c-4996-a989-58efee651240",
+    "changes": {
+      "status": "ordered"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T04:15:48.935Z"
+  },
+  {
     "id": "a8a65de9-4efb-418e-b990-e2cd9ed913b4",
     "action": "billing:create",
     "entity": "billing",
@@ -199832,6 +199844,30 @@
     "createdAt": "2026-10-08T22:44:05.554Z"
   },
   {
+    "id": "72c07aa1-a0e2-4bab-b377-1096f413eb0d",
+    "action": "procurement:update",
+    "entity": "procurement",
+    "entityId": "8e9b288f-257c-4996-a989-58efee651240",
+    "changes": {
+      "lineItems": [
+        {
+          "id": "95389c7b-1933-4141-bb6d-0fdd7fa65c0d",
+          "sku": null,
+          "poId": "8e9b288f-257c-4996-a989-58efee651240",
+          "total": 2000,
+          "assetId": null,
+          "quantity": 12,
+          "productId": null,
+          "unitPrice": 200,
+          "description": "1TB NVMe SSD"
+        }
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T04:15:52.000Z"
+  },
+  {
     "id": "ac83dfcd-1695-4e5d-a030-435d0c567cf0",
     "action": "reports:create",
     "entity": "reports",
@@ -201496,6 +201532,26 @@
     "createdAt": "2026-10-08T23:12:00.136Z"
   },
   {
+    "id": "58fb16d4-805f-47e6-b6fc-f9225584fe3a",
+    "action": "procurement:update",
+    "entity": "procurement",
+    "entityId": "683cde29-08f6-41b2-83b2-a6f63d5c17dd",
+    "changes": {
+      "name": "TechSupply Co",
+      "email": "sales@techsupply.example",
+      "notes": "",
+      "phone": "",
+      "taxId": "",
+      "address": "",
+      "website": "",
+      "contactName": "Dana Reyes",
+      "paymentTerms": "Net 30"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T04:15:55.734Z"
+  },
+  {
     "id": "3a42fd20-b7a0-45b6-90df-f00906d3ec12",
     "action": "reports:create",
     "entity": "reports",
@@ -201922,6 +201978,18 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-08T23:12:20.803Z"
+  },
+  {
+    "id": "e41a45fc-59c8-42d3-8f91-4fb55b848584",
+    "action": "procurement:update",
+    "entity": "procurement",
+    "entityId": "8e9b288f-257c-4996-a989-58efee651240",
+    "changes": {
+      "status": "shipped"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T04:32:14.938Z"
   },
   {
     "id": "6cc54326-8d50-46f6-b79a-3d6f9e5e0403",
@@ -203249,6 +203317,30 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-09T03:21:57.060Z"
+  },
+  {
+    "id": "27e8c21c-6b35-4b43-9056-0a5722f15c6a",
+    "action": "procurement:update",
+    "entity": "procurement",
+    "entityId": "8e9b288f-257c-4996-a989-58efee651240",
+    "changes": {
+      "status": "received"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T04:32:23.803Z"
+  },
+  {
+    "id": "e651a571-4fab-484e-983b-860da123f206",
+    "action": "procurement:update",
+    "entity": "procurement",
+    "entityId": "8e9b288f-257c-4996-a989-58efee651240",
+    "changes": {
+      "status": "shipped"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T04:32:39.722Z"
   },
   {
     "id": "5260f9c7-9143-404a-a6a2-d21a66fae905",
@@ -208628,6 +208720,18 @@
     "createdAt": "2026-10-09T03:24:09.088Z"
   },
   {
+    "id": "d1e8b426-f87d-46ba-84d8-4a20a05c5355",
+    "action": "procurement:update",
+    "entity": "procurement",
+    "entityId": "8e9b288f-257c-4996-a989-58efee651240",
+    "changes": {
+      "status": "received"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T04:32:41.935Z"
+  },
+  {
     "id": "5cbaf6ee-141e-43b9-acd4-94e63b73ba01",
     "action": "company:update",
     "entity": "company",
@@ -210802,6 +210906,36 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-09T03:27:20.065Z"
+  },
+  {
+    "id": "d711c283-4cb5-43f0-9ff4-c545b0200da1",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "6d0db574-0163-4022-ad85-e260b234be3e",
+    "changes": {
+      "title": "Numbering check — VPN will not connect",
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "priority": "low",
+      "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T04:53:10.378Z"
+  },
+  {
+    "id": "c2443994-dd76-49d7-a964-e0770226009b",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "033a42b6-b1d6-4e4f-a8d1-d0a7a466f5bb",
+    "changes": {
+      "title": "Numbering check two — printer offline",
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "priority": "low",
+      "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T04:53:21.648Z"
   },
   {
     "id": "60476a31-9ee8-4398-9a16-91d977c90864",
@@ -213426,6 +213560,21 @@
     "createdAt": "2026-10-08T19:24:46.717Z"
   },
   {
+    "id": "c9bf914f-0aec-4ea7-98bf-ef10ea663896",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "441f3518-905e-42b6-a698-5943a27ae98e",
+    "changes": {
+      "title": "Numbering check three — disk space",
+      "boardId": "81f12ded-6039-4c63-81b5-3d520ea1e854",
+      "priority": "low",
+      "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T04:53:21.666Z"
+  },
+  {
     "id": "719f0460-5355-48f0-9f88-f1b70e4744de",
     "action": "company:update",
     "entity": "company",
@@ -215176,6 +215325,21 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-09T03:24:27.068Z"
+  },
+  {
+    "id": "9c2a36c8-641a-4a44-a2e1-10543f92e757",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "2b4ddb9c-7d3a-4c01-80e7-8e39cb624756",
+    "changes": {
+      "title": "Sequence check one",
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "priority": "low",
+      "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T04:55:05.515Z"
   },
   {
     "id": "a9125f80-f8e4-4ed6-8712-adc4abafccc2",
@@ -216961,6 +217125,36 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-09T03:25:22.057Z"
+  },
+  {
+    "id": "d74ee1e5-cccc-4e46-b2eb-1c3fc70497de",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "6e806029-3a79-4da8-bae9-5e0a92cdafc0",
+    "changes": {
+      "title": "Sequence check two",
+      "boardId": "6fbcb958-ff6c-430c-817a-c1aa4767a9e0",
+      "priority": "low",
+      "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T04:55:05.559Z"
+  },
+  {
+    "id": "94e441c2-ebb4-4e37-85ad-a41885bc93ed",
+    "action": "tickets:create",
+    "entity": "tickets",
+    "entityId": "56c2677a-9c92-4b17-bbc0-bfb3b676221f",
+    "changes": {
+      "title": "Sequence check three",
+      "boardId": "8be4cb6f-9838-4715-99e0-501d083de0b5",
+      "priority": "low",
+      "companyId": "f4206e19-ff22-416d-ada6-b9c818d32195"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T04:55:05.592Z"
   },
   {
     "id": "76a0f5b5-f78e-413a-8b6c-bc6190496aab",

@@ -284,7 +284,7 @@ portalRouter.post("/tickets", requirePortalWrite, async (req: Request, res: Resp
       for (let attempt = 0; ; attempt++) {
         try {
           return await prisma.$transaction(async (tx) => {
-            const ticketNumber = await generateTicketNumber(principal.companyId, attempt);
+            const ticketNumber = await generateTicketNumber({ companyId: principal.companyId, boardId, attempt });
             const ticket = await tx.ticket.create({
               data: {
                 ticketNumber,

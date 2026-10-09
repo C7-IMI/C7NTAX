@@ -417,7 +417,7 @@ async function createTicketWithNumber(
   for (let attempt = 0; ; attempt++) {
     try {
       return await prisma.$transaction(async (tx) => {
-        const ticketNumber = await generateTicketNumber(companyId, attempt);
+        const ticketNumber = await generateTicketNumber({ companyId, boardId, attempt });
         const created = await tx.ticket.create({
           data: {
             ticketNumber,
@@ -495,6 +495,31 @@ async function senderIsTicketClient(
 }
 
 /**
+ * Resolve the tag in a reply's subject to a ticket.
+ *
+ * An exact match on the number first — a ticket number is now short enough (`MSP-04-1005`) to be a
+ * substring of a longer one, and resolving by `contains` alone would put a client's answer on whichever
+ * ticket happened to match first. Then an exact match on the id, for a caller that passes one through.
+ * Only then the substring case, which is what a number looks like when a subject arrives with words
+ * still attached to it — longest match wins, so a longer number is never shadowed by a shorter one
+ * inside it.
+ */
+async function resolveTicketByTag(tag: string) {
+  const value = tag.trim().replace(/^\[|\]$/g, "");
+  if (!value) return null;
+  const byNumber = await prisma.ticket.findUnique({ where: { ticketNumber: value } });
+  if (byNumber) return byNumber;
+  const byId = await prisma.ticket.findUnique({ where: { id: value } });
+  if (byId) return byId;
+  const candidates = await prisma.ticket.findMany({
+    where: { ticketNumber: { contains: value } },
+    select: { id: true, ticketNumber: true, status: true, companyId: true, contactId: true },
+    take: 10,
+  });
+  return candidates.sort((a, b) => b.ticketNumber.length - a.ticketNumber.length)[0] ?? null;
+}
+
+/**
  * Append an email as a comment to an existing ticket. Returns false when the
  * quoted reference does not resolve, so the caller can raise a new ticket
  * instead of dropping the message.
@@ -505,9 +530,7 @@ async function senderIsTicketClient(
  * and were not, and the reply itself is the first thing the technician reads.
  */
 export async function appendEmailToTicket(ticketId: string, email: ParsedEmail): Promise<boolean> {
-  const ticket = await prisma.ticket.findFirst({
-    where: { OR: [{ id: ticketId }, { ticketNumber: { contains: ticketId } }] },
-  });
+  const ticket = await resolveTicketByTag(ticketId);
   if (!ticket) return false; // tag didn't resolve to a real ticket
   const systemUser = await resolveSystemUser();
   const body = emailBody(email).slice(0, 20000) || "(no message body)";

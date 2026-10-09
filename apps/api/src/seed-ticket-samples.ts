@@ -259,7 +259,8 @@ async function main() {
       const ageMs = isStale ? daysAgo! * DAY : Math.floor(1 + Math.random() * 47) * HOUR;
       const ts = new Date(now - ageMs);
       return {
-        ticketNumber: `${board.ticketCode}-${seqStart + i}`,
+        // The same shape the generator produces: board code, the client's octet, the sequence.
+        ticketNumber: `${board.ticketCode}-${clientOctet(company.clientId!)}-${seqStart + i}`,
         title: s.title,
         description: `Sample ${s.status.replace(/_/g, " ")} ticket for ${board.name} (seeded by seed-ticket-samples).`,
         status: s.status,
