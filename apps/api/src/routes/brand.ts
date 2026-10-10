@@ -55,6 +55,15 @@ brandRouter.get("/asset/:id", async (req, res, next) => {
     if (!asset) throw new AppError("That image is not here", 404);
     res.setHeader("Content-Type", asset.contentType);
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    /*
+     * `cross-origin`, against helmet's `same-origin` default, and it is required rather than generous:
+     * the document this logo appears on is fetched from this API and then rendered by the *web app*, so
+     * the image is cross-origin by construction and `same-origin` blocks it (the browser reports
+     * `ERR_BLOCKED_BY_RESPONSE.NotSameOrigin`) — a broken logo on an invoice, which is the one thing
+     * this route exists to prevent. The asset is a brand mark, not a document: it is addressed by an
+     * opaque id, it is already public by nature, and nothing about it is secret.
+     */
+    res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
     res.send(asset.bytes);
   } catch (e) { next(e); }
 });

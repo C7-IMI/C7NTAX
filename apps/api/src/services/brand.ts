@@ -174,6 +174,7 @@ export async function loadBrand(): Promise<BrandKit> {
     fromName: row.fromName,
     fromEmail: row.fromEmail,
     replyTo: row.replyTo,
+    documentPresentation: presentationMap(row.documentPresentation),
   } satisfies Partial<BrandKit>);
 }
 
@@ -209,11 +210,12 @@ export async function brandForDocument(
   companyId?: string | null,
   reportKey?: string | null,
 ): Promise<DocumentBrand> {
-  const row = await readBrandRow();
   const kit = await loadBrand();
   const override = companyId ? await loadCompanyOverride(companyId) : null;
   const reportPresentation = reportKey ? (await loadReportPresentation(reportKey))?.presentation ?? null : null;
-  return documentBrandFor(kit, family, override, presentationFor(family, row?.documentPresentation, reportPresentation));
+  // The kit already carries the per-family map, so the precedence (family ← client ← report) lives in
+  // one place in the shared contract rather than being re-derived here and in the browser.
+  return documentBrandFor(kit, family, override, reportPresentation);
 }
 
 /** The nickname a person is known by, for the "who generated it" line and the settings' history. */
@@ -330,10 +332,13 @@ function presentationPatch(value: unknown): Partial<DocumentPresentation> | null
   for (const flag of ["showFooter", "showPageNumbers", "showBasis"] as const) {
     if (typeof input[flag] === "boolean") patch[flag] = input[flag] as boolean;
   }
-  patch.title = optionalText(input.title, 200);
-  patch.subtitle = optionalText(input.subtitle, 200);
-  patch.footerNote = optionalText(input.footerNote, 500);
-  return patch;
+  // Only the keys actually sent. Writing `title: null` for a body that never mentioned a title is how a
+  // reset turns into an override — an empty patch must stay empty so it can be recognised as "no
+  // override at all" and deleted rather than stored.
+  for (const key of ["title", "subtitle", "footerNote"] as const) {
+    if (Object.prototype.hasOwnProperty.call(input, key)) patch[key] = optionalText(input[key], key === "footerNote" ? 500 : 200);
+  }
+  return Object.keys(patch).length ? patch : null;
 }
 
 /**

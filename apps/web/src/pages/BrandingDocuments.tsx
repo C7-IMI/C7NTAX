@@ -64,7 +64,7 @@ export const BRAND_DOCUMENTS_SUBTITLE =
   "What each family of document wears — the letterhead, the paper, the footer and the basis block.";
 
 const CARRIED_NOTE =
-  "The letterhead, the paper size and the orientation are read by every renderer, and the basis block by the report print and PDF paths. The footer, the page numbers and the three text overrides are stored and resolved by the API and read by no renderer yet, so changing one records the choice rather than changing a page. Each control below says which it is.";
+  "The brand itself — the logo, the icon, the name, the colours, the contact details, the footer and the legal text — is read by every renderer, so uploading a logo changes every document. These presentation settings are read by the API's own documents, which are drawn through brandForDocument(): an invoice, a statement and a quote take the family's letterhead and paper size from this record. The web print and PDF paths do not read this record yet — they resolve a family's presentation from the code's own defaults — and the orientation or the footer, page numbers and text overrides are read by nothing at all. Each control below says which it is, and the gap is reported rather than dressed up.";
 
 const NEEDS_MANAGE = "Changing a document's presentation is branding:manage, which this account does not hold.";
 

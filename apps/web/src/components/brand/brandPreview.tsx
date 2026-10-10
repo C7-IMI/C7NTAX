@@ -26,6 +26,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   documentBrandFor,
+  DOCUMENT_PALETTE,
   normaliseBrand,
   type BrandKit,
   type BrandOverride,
@@ -280,8 +281,17 @@ export function DocumentPreview({
         <iframe
           title={`A specimen ${PAPER_SIZES[brand.presentation.pageSize].label.split(" — ")[0]} sheet, ${brand.presentation.orientation}`}
           srcDoc={settled}
-          className="border border-surface-border bg-white"
-          style={{ width: `${widthPx}px`, height: `${heightPx}px`, transform: `scale(${scale})`, transformOrigin: "top left" }}
+          className="border border-surface-border"
+          /* The frame is the paper: the sheet inside draws its own paper colour, and this is the same
+             value behind it while the frame loads. `bg-white` is not white in this product — it is the
+             themed text token — so the paper comes from the document palette. */
+          style={{
+            width: `${widthPx}px`,
+            height: `${heightPx}px`,
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+            background: DOCUMENT_PALETTE.paper,
+          }}
         />
       </div>
     </div>

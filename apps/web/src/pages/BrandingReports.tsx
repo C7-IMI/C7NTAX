@@ -57,7 +57,7 @@ export const BRAND_REPORTS_SUBTITLE =
   "The reports that have a presentation of their own, laid over their family's.";
 
 const CARRIED_NOTE =
-  "A report's presentation is a patch over its family's: the letterhead, the paper and the orientation are read by every renderer, and the basis block by the report print and PDF paths. The footer, the page numbers and the three text overrides are stored and resolved and read by no renderer yet. Each control says which it is.";
+  "A report's presentation is a patch over its family's, and it is stored and resolved — GET /api/brand/reports returns exactly the rows that differ. Nothing produced today reads one: brandForDocument() takes a report key and lays the report over its family, but no caller passes a key yet, so the report print and PDF paths still resolve from the code's defaults and an invoice is drawn from its family alone. That is a gap between this screen and the renderers, and it is said here rather than discovered later.";
 
 const NEEDS_MANAGE = "Changing a report's presentation is branding:manage, which this account does not hold.";
 
@@ -317,7 +317,7 @@ export function BrandingReportsPage() {
                 metaLine={specimenMetaLine("Prepared for a specimen client", at)}
                 blocks={blocks}
                 footerLeft={specimenFooterLeft(preview, at)}
-                note={`The figures are a specimen. This report's own choices are laid over ${familyTitle(chosenFamily).toLowerCase()}, which is what makes the page its own.`}
+                note="The figures are a specimen. What is drawn is this report's record — its own choices laid over its family's — and the band above says which renderers read it."
               />
             ) : null}
           </aside>
@@ -467,7 +467,7 @@ export function BrandingReportsPage() {
           metaLine={specimenMetaLine("Prepared for a specimen client", at)}
           blocks={blocks}
           footerLeft={specimenFooterLeft(preview, at)}
-          note={`The figures are a specimen. This report's own choices are laid over ${familyTitle(chosenFamily).toLowerCase()}, which is what makes the page its own.`}
+          note={`The figures are a specimen. What is drawn is this report's record — its own choices laid over ${familyTitle(chosenFamily).toLowerCase()} — and the band above says which renderers read it.`}
         />
       ) : null}
 

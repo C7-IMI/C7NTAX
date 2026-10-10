@@ -74,7 +74,7 @@ export const IDENTITY_SUBJECTS: IdentitySubjectSpec[] = [
 ];
 
 /** Which subject each field is read under. Keyed by `keyof BrandKit`, so a new field cannot be missed. */
-const SUBJECT_OF: Record<keyof BrandKit, IdentitySubject> = {
+const SUBJECT_OF: Record<Exclude<keyof BrandKit, "documentPresentation">, IdentitySubject> = {
   productName: "name",
   companyName: "name",
   tagline: "name",

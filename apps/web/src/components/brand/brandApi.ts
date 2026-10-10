@@ -24,7 +24,6 @@
 import {
   BRAND_UPLOAD_MAX_BYTES,
   BRAND_UPLOAD_TYPES,
-  DOCUMENT_FAMILY_LABELS,
   type BrandKit,
   type BrandOverride,
   type DocumentFamily,
@@ -305,11 +304,6 @@ export function useLastGood<T>(read: Read<T>): T | null {
     if (read.status === "ok" && read.data) setLast(read.data);
   }, [read.status, read.data]);
   return read.status === "ok" ? read.data : last;
-}
-
-/** `DOCUMENT_FAMILY_LABELS` reached through one helper, so a screen never indexes the record by hand. */
-export function familyLabels(family: DocumentFamily): { title: string; what: string } {
-  return DOCUMENT_FAMILY_LABELS[family];
 }
 
 /**

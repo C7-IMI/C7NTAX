@@ -28,6 +28,9 @@ export function PrintLetterhead({
   family?: "ticket";
 }) {
   const brand = useDocumentBrand(family);
+  // A designed report sets its own header, and `letterhead: "none"` is its author's decision rather than
+  // an absence — drawing ours above their bands would overrule the person who laid the page out.
+  if (brand.presentation.letterhead === "none") return null;
   return (
     <header className="print-letterhead">
       {brand.mark.kind === "image" && <img src={brand.mark.src} alt="" />}

@@ -476,10 +476,16 @@ export function renderPrintDocument(input: PrintDocumentInput): string {
     ? `<img src="${esc(brand.mark.src)}" alt="">`
     : "";
 
-  const firstHead = `<div class="letterhead">${markHtml}`
-    + `<span class="letterhead__mark" style="color:${esc(ink)}">${esc(brand.wordmark)}</span>`
-    + `<span class="letterhead__who"><strong style="color:${esc(accent)}">${esc(brand.company)}</strong><br>`
-    + `${esc(brand.tagline ?? brand.product)}</span></div>`
+  // `letterhead: "none"` means the document begins with its own title, 18mm down: the author of a
+  // designed report placed its header by hand, and the instance's mark above it would be an overrule.
+  const letterhead = presentation.letterhead === "none"
+    ? ""
+    : `<div class="letterhead">${markHtml}`
+      + `<span class="letterhead__mark" style="color:${esc(ink)}">${esc(brand.wordmark)}</span>`
+      + `<span class="letterhead__who"><strong style="color:${esc(accent)}">${esc(brand.company)}</strong><br>`
+      + `${esc(brand.tagline ?? brand.product)}</span></div>`;
+
+  const firstHead = letterhead
     + `<h1 class="doc-title">${esc(input.title)}</h1>`
     + `<p class="doc-meta">${esc(input.metaLine)}</p>`
     + `<div class="doc-rule"></div>`;

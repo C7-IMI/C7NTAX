@@ -101,7 +101,6 @@ export function BrandWriteError({ message }: { message: string | null }) {
 
 /**
  * The specimen sheet, with its caption and its own note — the one shared piece of the four screens.
- *
  * `caption` says what this particular sheet is (a report's shape, an invoice for one client, the family
  * page), and `specimen` says which blocks are drawn; the paper, the letterhead and the footer are the
  * brand's, which is the whole point of showing it.
@@ -135,9 +134,4 @@ export function PreviewPanel({
       <PreviewNote brand={brand} note={note} />
     </div>
   );
-}
-
-/** "1 row" / "4 rows", so a countable sentence stays a sentence. */
-export function plural(n: number, one: string, many = `${one}s`): string {
-  return `${n} ${n === 1 ? one : many}`;
 }

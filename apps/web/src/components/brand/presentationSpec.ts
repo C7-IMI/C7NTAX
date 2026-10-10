@@ -5,14 +5,22 @@
  * The words and the choices live here so the Documents screen and the Reports screen describe a
  * `DocumentPresentation` the same way; the arrangement belongs to the pages, the description does not.
  *
- * **The `carried` sentences are the honest part of this file.** The branding record holds nine
- * presentation settings, and they are not equally wired up: the letterhead, the paper size and the
- * orientation are read by every renderer — the print document, the PDF, the invoice, the statement and
- * the quote — and `showBasis` is read by the report print and PDF paths, while the footer, the page
- * numbers and the three text overrides are stored, resolved by `GET /api/brand`, and read by nothing
- * yet. That is the API's state rather than this screen's choice, and a settings screen that drew the
- * nine as though they were all enforced would be promising a page nobody gets. Each control therefore
- * carries the sentence saying what reads it, and the page says it once more at the top.
+ * **The `carried` sentences are the honest part of this file.** The record holds nine presentation
+ * settings and they are not equally wired up, which was established by reading the renderers rather
+ * than by assuming:
+ *
+ *  - the **letterhead** and the **paper size** reach the API's own documents — an invoice, a statement
+ *    and a quote are drawn through `brandForDocument()`, which lays the family's row (and a report's own
+ *    patch) over the code's default, and then set their sheet from `presentation.pageSize`;
+ *  - the **basis block** is read by the report print and PDF paths (`reportKit.basisOf`);
+ *  - the **orientation**, and the footer, page numbers and three text overrides, are read by **no**
+ *    renderer: they are stored and resolved and nothing consumes them;
+ *  - and the **web** print and PDF paths (`reportKit`, the ticket sheet) read the family's presentation
+ *    from the *code's* default rather than from this record, because the browser's brand cache
+ *    (`hooks/useBrandKit`) carries the brand and not the per-family map.
+ *
+ * A settings screen that drew all nine as though they were all enforced would be promising a page nobody
+ * gets, so each control says which it is and the page says it once more at the top.
  */
 import {
   DEFAULT_DOCUMENT_PRESENTATION,
@@ -69,7 +77,8 @@ export interface FlagSpec {
   carried: string;
 }
 
-const EVERY_RENDERER = "Read by every renderer — the print document, the PDF, the invoice, the statement and the quote.";
+const API_DOCUMENTS =
+  "Read by the API's own documents — an invoice, a statement and a quote are drawn through brandForDocument(), which lays this row over the code's default.";
 const RECORDED_ONLY =
   "Recorded and resolved, and read by no renderer yet: changing it stores the choice rather than changing a page.";
 
@@ -90,9 +99,20 @@ export const FLAG_SPECS: FlagSpec[] = [
     key: "showBasis",
     label: "The basis block",
     help: "“How this is measured, and what it cannot say”, printed from the endpoint's own sentences. Leaving it out is a decision somebody should make on purpose.",
-    carried: "Read by the report print and PDF paths. The invoice, the statement and the quote never carry one.",
+    carried: "Read by the report print and PDF paths, and stored as the family's default so those two agree. The invoice, the statement and the quote never carry one.",
   },
 ];
+
+/** What the letterhead choice actually reaches, in one sentence, for the control's note. */
+export const LETTERHEAD_CARRIED = API_DOCUMENTS;
+
+/** The paper size, and the one path that takes its paper from somewhere else. */
+export const PAPER_CARRIED =
+  `${API_DOCUMENTS} The report print and PDF paths take their paper from the choice made at the moment of export, not from this record.`;
+
+/** The orientation, which nothing reads. */
+export const ORIENTATION_CARRIED =
+  "Stored and resolved and read by no renderer yet: the API's documents set their paper size and leave the orientation to the sheet's own layout, and the export dialog carries its own choice.";
 
 /** The three text overrides. The sentence says what a value reaches, and what a blank means. */
 export interface TextSpec {

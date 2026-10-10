@@ -57,6 +57,11 @@ import { DeveloperPurgePage } from "./pages/DeveloperPurge";
 import { DeveloperDeploymentPage } from "./pages/DeveloperDeployment";
 import { DeveloperDangerPage } from "./pages/DeveloperDanger";
 import { RequireDeveloper } from "./components/developer/RequireDeveloper";
+import { BrandingIdentityPage } from "./pages/BrandingIdentity";
+import { BrandingDocumentsPage } from "./pages/BrandingDocuments";
+import { BrandingClientsPage } from "./pages/BrandingClients";
+import { BrandingReportsPage } from "./pages/BrandingReports";
+import { RequireBranding } from "./components/brand/RequireBranding";
 import { ProductCatalogPage } from "./pages/ProductCatalog";
 import { OutlookAddInPage } from "./pages/OutlookAddIn";
 import { C7NCFlexpointPage } from "./pages/C7NCFlexpoint";
@@ -134,6 +139,12 @@ function ProtectedRoutes() {
         <Route path="/admin/email" element={<EmailStudioPage />} />
         <Route path="/admin/email/brand" element={<EmailBrandPage />} />
         <Route path="/admin/email/log" element={<EmailLogPage />} />
+        {/* Branding: the identity every document and message inherits. Gated like the navigation row,
+            so a typed URL shows the not-found screen rather than announcing a hidden section. */}
+        <Route path="/admin/branding" element={<RequireBranding><BrandingIdentityPage /></RequireBranding>} />
+        <Route path="/admin/branding/documents" element={<RequireBranding><BrandingDocumentsPage /></RequireBranding>} />
+        <Route path="/admin/branding/clients" element={<RequireBranding><BrandingClientsPage /></RequireBranding>} />
+        <Route path="/admin/branding/reports" element={<RequireBranding><BrandingReportsPage /></RequireBranding>} />
         <Route path="/ai-actions" element={<AiActionsPage />} />
         {/* The console as a page: the same component as the popup, plus a URL worth sharing. */}
         <Route path="/console" element={<ConsolePage />} />

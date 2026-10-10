@@ -183,7 +183,10 @@ export function drawableMarkSrc(src: string): string | null {
   const value = src.trim();
   if (!value) return null;
   if (/^data:image\//i.test(value)) return value;
-  if (/^\/uploads\//i.test(value)) return `${API_ORIGIN}${value}`;
+  // An uploaded logo or icon is stored as bytes and served from this API's own `/api/brand/asset/<id>`,
+  // which is why it can be drawn here at all: the route is public, so a mail client with no session can
+  // fetch it, and an id cannot escape a directory because there is no directory.
+  if (/^\/(uploads|api\/brand\/asset)\//i.test(value)) return `${API_ORIGIN}${value}`;
   if (/^https?:\/\//i.test(value)) return value.startsWith(API_ORIGIN) ? value : null;
   return null;
 }
@@ -519,7 +522,10 @@ export function letterhead(brand: DocumentBrand, title: string, statusHtml?: str
   return {
     kind: "html",
     mm: 15.5,
-    html: `<div class="dh-lh">${letterheadMark(brand)}<div class="dh-lh__id">${wordmarkHtml(brand.wordmark)}<div class="dh-lh__who">${who}${contact ? `<br>${contact}` : ""}</div></div><div class="dh-lh__right"><div class="dh-title">${escapeHtml(title)}</div>${statusHtml ? `<div style="margin-top:2mm;">${statusHtml}</div>` : ""}</div></div>`,
+    // `letterhead: "none"` is a decision rather than an absence: a designed report's author placed its
+    // own header bands, so the mark, the wordmark and the company line are all left out and the title
+    // simply takes the space.
+    html: `<div class="dh-lh">${brand.presentation.letterhead === "none" ? "" : `${letterheadMark(brand)}<div class="dh-lh__id">${wordmarkHtml(brand.wordmark)}<div class="dh-lh__who">${who}${contact ? `<br>${contact}` : ""}</div></div>`}<div class="dh-lh__right"><div class="dh-title">${escapeHtml(title)}</div>${statusHtml ? `<div style="margin-top:2mm;">${statusHtml}</div>` : ""}</div></div>`,
   };
 }
 

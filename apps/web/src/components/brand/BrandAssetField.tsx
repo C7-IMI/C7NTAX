@@ -1,5 +1,5 @@
 /**
- * One image field â€” the logo, the dark-background lockup or the icon â€” in both interfaces.
+ * One image field — the logo, the dark-background lockup or the icon — in both interfaces.
  *
  * These three fields are the ones people come to Branding for, and the control is deliberately more than
  * a file input: it shows **the image that is there**, states what is there when there is nothing, names
@@ -7,7 +7,7 @@
  * offers a **Remove** that clears the field rather than a delete nobody can undo.
  *
  * The upload and the save are two steps and that is not an accident of the API: picking a file posts its
- * bytes and receives a URL, and the URL becomes a *draft* value like anything typed on the form â€” so
+ * bytes and receives a URL, and the URL becomes a *draft* value like anything typed on the form — so
  * Save still means "make this true", and Cancel still means nothing happened. An instance's documents
  * only change when the save lands.
  *
@@ -17,8 +17,9 @@
  */
 import { useRef, useState } from "react";
 import { AlertTriangle, ImageOff, Loader2, Trash2, Upload } from "lucide-react";
+import { BRAND_COLOR_DEFAULTS, DOCUMENT_PALETTE } from "@C7NTAX/shared";
 import { useRedesign } from "../../hooks/useNavigationStyle";
-import { COLOUR_SWATCHES, type BrandFieldSpec } from "./brandFields";
+import { COLOUR_PATTERN, COLOUR_SWATCHES, type BrandFieldSpec } from "./brandFields";
 import {
   UPLOAD_ACCEPT,
   UPLOAD_TYPES_SENTENCE,
@@ -36,7 +37,7 @@ function kindOf(key: string): "logo" | "logoDark" | "icon" {
 
 /**
  * The upload behaviour, shared by the control below and by any screen that wants the same three steps in
- * a shape of its own â€” the client-override form does, because a client's logo is a deliberate rarity
+ * a shape of its own — the client-override form does, because a client's logo is a deliberate rarity
  * rather than the headline job the Identity screen exists for.
  *
  * Picking a file is one call that ends in a URL (`POST /api/brand/assets`), and the URL becomes a *draft*
@@ -110,7 +111,7 @@ export function BrandAssetField({
   };
 
   /**
-   * The file input, rendered once per arrangement with the class that belongs to it â€” hidden behind a
+   * The file input, rendered once per arrangement with the class that belongs to it — hidden behind a
    * button in the modern interface, a labelled control in the classic one. It is one element with one
    * ref in either case, so picking the *same* file twice still fires a change.
    */
@@ -128,7 +129,7 @@ export function BrandAssetField({
 
   const rules = (
     <p className="text-[11px] leading-relaxed text-gray-500">
-      {UPLOAD_TYPES_SENTENCE} Â· {uploadLimitSentence()} An SVG is refused: it is a script with an image's extension, and a
+      {UPLOAD_TYPES_SENTENCE} · {uploadLimitSentence()} An SVG is refused: it is a script with an image's extension, and a
       logo is fetched by somebody else's mail client.
     </p>
   );
@@ -153,7 +154,12 @@ export function BrandAssetField({
         <div
           className={`mt-3 flex items-center justify-center rounded-lg border border-dashed border-surface-border ${
             hero ? "h-28" : "h-16"
-          } ${value ? "bg-white" : "bg-surface-lighter"}`}
+          } ${value ? "" : "bg-surface-lighter"}`}
+          /* A mark is shown on the paper it is printed on, which is white in both themes. Not `bg-white`
+             — `white` is this product's themed *text* token (near-black on the light theme), and a logo
+             drawn on that would be a logo misrepresented. The paper colour comes from the document
+             palette, which is the contract's own value rather than a hex typed here. */
+          style={value ? { background: DOCUMENT_PALETTE.paper } : undefined}
         >
           {value ? (
             <img src={value} alt={`${spec.label}, as it is set now`} className={hero ? "max-h-24 max-w-[90%]" : "max-h-14 max-w-[80%]"} />
@@ -188,7 +194,11 @@ export function BrandAssetField({
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-start gap-4">
-        <div className="flex h-20 w-32 shrink-0 items-center justify-center rounded-lg border border-surface-border bg-white">
+        <div
+          className="flex h-20 w-32 shrink-0 items-center justify-center rounded-lg border border-surface-border"
+          /* The paper a mark is printed on: see the note in the modern arrangement above. */
+          style={{ background: DOCUMENT_PALETTE.paper }}
+        >
           {value ? (
             <img src={value} alt={`${spec.label}, as it is set now`} className="max-h-16 max-w-[7rem]" />
           ) : (
@@ -213,7 +223,7 @@ export function BrandAssetField({
             {busy ? (
               <span className="flex items-center gap-1.5 text-[11px] text-gray-500">
                 <Loader2 size={12} className="animate-spin" />
-                Uploadingâ€¦
+                Uploading…
               </span>
             ) : null}
           </div>
@@ -229,7 +239,7 @@ export function BrandAssetField({
 }
 
 /**
- * The colour field â€” a hex box, a native colour well, and the swatches.
+ * The colour field — a hex box, a native colour well, and the swatches.
  *
  * The warning beside it is not decoration: this is the only place in the product where a person can
  * choose something that looks right on a monitor and is gone on paper, and the sentence is written by
@@ -249,7 +259,7 @@ export function BrandColourField({
   disabled?: boolean;
   /** `contrastSentence`'s answer, when this colour is the one a printed page uses. */
   warning: { survives: boolean; text: string } | null;
-  /** The swatches to offer â€” used by the modern arrangement. */
+  /** The swatches to offer — used by the modern arrangement. */
   onDraft?: (value: string) => void;
 }) {
   const redesign = useRedesign();
@@ -274,7 +284,7 @@ export function BrandColourField({
         <input
           type="color"
           className="h-9 w-10 shrink-0 cursor-pointer rounded-lg border border-surface-border bg-surface"
-          value={/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value) ? value : "#c00000"}
+          value={COLOUR_PATTERN.test(value) ? value : BRAND_COLOR_DEFAULTS.primaryColor}
           disabled={disabled}
           aria-label={`Pick ${spec.label.toLowerCase()}`}
           onChange={(event) => onChange(event.target.value)}

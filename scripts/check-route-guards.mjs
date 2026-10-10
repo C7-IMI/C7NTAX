@@ -55,6 +55,11 @@ const EXEMPTIONS = [
     reason: "the customer portal signs in a Contact with an emailed one-time code and its own cookie; a Contact is not a staff User and holds no permissions, so every route carries `requirePortalSession`/`requirePortalWrite` and scopes reads to the contact's own tickets",
   },
   { file: "tenants.ts", match: /.*/, reason: "multi-tenant stubs — PLAN-003 is deferred by decision" },
+  {
+    file: "brand.ts",
+    match: /GET \/asset\/:id$/,
+    reason: "an uploaded logo is an image inside an email and on a printed page, so it must be fetchable by a mail client that holds no session here; the asset is addressed by an opaque id and served from the database, so there is no filename to trust and no directory to traverse, and a logo is public by nature",
+  },
 ];
 
 const files = [];

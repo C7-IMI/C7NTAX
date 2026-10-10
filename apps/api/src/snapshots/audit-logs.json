@@ -295885,5 +295885,305 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-09T23:48:42.609Z"
+  },
+  {
+    "id": "6b7d39fe-602f-44fc-9bcc-47262e5fa50f",
+    "action": "brand.updated",
+    "entity": "brand",
+    "entityId": "brand",
+    "changes": {
+      "icon": [
+        "/api/brand/asset/2e810d76-089c-4689-9007-61b57d8a3e6b",
+        "/api/brand/asset/2e810d76-089c-4689-9007-61b57d8a3e6b"
+      ],
+      "logo": [
+        "/api/brand/asset/6ac94c83-f0d0-4049-89e5-c0b7e0204263",
+        "/api/brand/asset/6ac94c83-f0d0-4049-89e5-c0b7e0204263"
+      ],
+      "companyName": [
+        "Cyber 7 Group, LLC",
+        "Cyber 7 Group, LLC"
+      ],
+      "primaryColor": [
+        "#c00000",
+        "#c00000"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:50:15.999Z"
+  },
+  {
+    "id": "f1a2912f-7177-48fb-9dfe-051dde029212",
+    "action": "brand:update",
+    "entity": "brand",
+    "entityId": "brand",
+    "changes": {
+      "documentPresentation": {
+        "report.standard": {
+          "letterhead": "logo"
+        }
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:50:16.006Z"
+  },
+  {
+    "id": "aefedef6-8766-41d3-8cb0-a9bce400664b",
+    "action": "brand.updated",
+    "entity": "brand",
+    "entityId": "brand",
+    "changes": {
+      "icon": [
+        "/api/brand/asset/2e810d76-089c-4689-9007-61b57d8a3e6b",
+        "/api/brand/asset/2e810d76-089c-4689-9007-61b57d8a3e6b"
+      ],
+      "logo": [
+        "/api/brand/asset/6ac94c83-f0d0-4049-89e5-c0b7e0204263",
+        "/api/brand/asset/6ac94c83-f0d0-4049-89e5-c0b7e0204263"
+      ],
+      "companyName": [
+        "Cyber 7 Group, LLC",
+        "Cyber 7 Group, LLC"
+      ],
+      "primaryColor": [
+        "#c00000",
+        "#c00000"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:52:13.732Z"
+  },
+  {
+    "id": "c42b43c5-d540-46e3-bad2-1a4599ead1a5",
+    "action": "brand:update",
+    "entity": "brand",
+    "entityId": "brand",
+    "changes": {
+      "documentPresentation": {}
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:52:13.737Z"
+  },
+  {
+    "id": "c60a4d53-0af7-4a0f-93d7-56110b0a6cdc",
+    "action": "brand.updated",
+    "entity": "brand",
+    "entityId": "brand",
+    "changes": {
+      "icon": [
+        "/api/brand/asset/2e810d76-089c-4689-9007-61b57d8a3e6b",
+        null
+      ],
+      "logo": [
+        "/api/brand/asset/6ac94c83-f0d0-4049-89e5-c0b7e0204263",
+        null
+      ],
+      "companyName": [
+        "Cyber 7 Group, LLC",
+        "Cyber 7 Group, LLC"
+      ],
+      "primaryColor": [
+        "#c00000",
+        "#c00000"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:58:27.677Z"
+  },
+  {
+    "id": "b36f7d41-eb9d-4871-92a0-ed050657f22c",
+    "action": "brand:update",
+    "entity": "brand",
+    "entityId": "brand",
+    "changes": {
+      "iconUrl": "",
+      "logoUrl": "",
+      "replyTo": "",
+      "tagline": "",
+      "website": "",
+      "fromName": "",
+      "wordmark": "C7NTAX",
+      "fromEmail": "",
+      "legalText": "",
+      "accentColor": "#00c0f4",
+      "companyName": "Cyber 7 Group, LLC",
+      "contactLine": "",
+      "logoDarkUrl": "",
+      "productName": "C7NTAX",
+      "addressLines": [],
+      "primaryColor": "#c00000",
+      "documentFooter": ""
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:58:27.680Z"
+  },
+  {
+    "id": "8ebd67d0-e6be-40a1-becd-9dcdb77f506d",
+    "action": "brand.client_override",
+    "entity": "brand",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "client": "Acme Corporation Pty Ltd",
+      "cleared": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:58:53.179Z"
+  },
+  {
+    "id": "00600f03-c31c-43b9-bab6-725077cc6ff0",
+    "action": "brand:update",
+    "entity": "brand",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "companyName": "Acme Corporation Pty Ltd"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:58:53.182Z"
+  },
+  {
+    "id": "1f4e3ed5-fb92-4fdb-8366-ee1b5576c739",
+    "action": "brand.client_override",
+    "entity": "brand",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "client": null,
+      "cleared": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:59:10.643Z"
+  },
+  {
+    "id": "33076db2-19d3-4907-b9f4-b160ac741b22",
+    "action": "brand:update",
+    "entity": "brand",
+    "entityId": "964aab06-a1d2-4376-b63a-ea41205f6f2b",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:59:10.645Z"
+  },
+  {
+    "id": "182fdc6e-c421-414f-acc1-25ab0429623c",
+    "action": "brand.report_presentation",
+    "entity": "brand",
+    "entityId": "ticket-volume",
+    "changes": {
+      "cleared": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:59:27.854Z"
+  },
+  {
+    "id": "c45906f4-5b93-4afc-8ad2-b52501deab79",
+    "action": "brand:update",
+    "entity": "brand",
+    "entityId": "ticket-volume",
+    "changes": {
+      "pageSize": "letter"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:59:27.858Z"
+  },
+  {
+    "id": "b3e50dc5-c9e3-4486-b71a-b337e4a4806e",
+    "action": "brand.report_presentation",
+    "entity": "brand",
+    "entityId": "ticket-volume",
+    "changes": {
+      "cleared": true
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:59:45.606Z"
+  },
+  {
+    "id": "45ec7677-3256-4792-b150-ed92aefaee2b",
+    "action": "brand:update",
+    "entity": "brand",
+    "entityId": "ticket-volume",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-09T23:59:45.607Z"
+  },
+  {
+    "id": "fa6d43a2-7a75-4482-b371-1fbb1f0085f3",
+    "action": "brand.asset_uploaded",
+    "entity": "brand",
+    "entityId": "6a223b6f-9374-43c7-af08-38f55ed8101f",
+    "changes": {
+      "kind": "logo",
+      "byteSize": 45643
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T00:22:27.646Z"
+  },
+  {
+    "id": "7a5a6712-6abe-4a20-a84a-108c4cdae7d2",
+    "action": "brand:create",
+    "entity": "brand",
+    "entityId": "6a223b6f-9374-43c7-af08-38f55ed8101f",
+    "changes": {
+      "kind": "logo",
+      "dataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAALHgSURBVHhe7H2FdxxX8rXFOMzTw8yg0YiZGSzLTHHQYccBO2R2mHfDHCcxhpmZwX..."
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T00:22:27.649Z"
+  },
+  {
+    "id": "c319aea6-6b3c-46b4-b869-064b8f748f48",
+    "action": "brand.updated",
+    "entity": "brand",
+    "entityId": "brand",
+    "changes": {
+      "icon": [
+        null,
+        null
+      ],
+      "logo": [
+        null,
+        "/api/brand/asset/6a223b6f-9374-43c7-af08-38f55ed8101f"
+      ],
+      "companyName": [
+        "Cyber 7 Group, LLC",
+        "Cyber 7 Group, LLC"
+      ],
+      "primaryColor": [
+        "#c00000",
+        "#c00000"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T00:22:27.658Z"
+  },
+  {
+    "id": "92530108-21ed-48b1-8ff2-caabea006896",
+    "action": "brand:update",
+    "entity": "brand",
+    "entityId": "brand",
+    "changes": {
+      "logoUrl": "/api/brand/asset/6a223b6f-9374-43c7-af08-38f55ed8101f"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T00:22:27.661Z"
   }
 ]

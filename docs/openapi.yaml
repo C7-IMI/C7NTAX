@@ -34,6 +34,8 @@ tags:
     description: "31 operations"
   - name: "Boards"
     description: "12 operations"
+  - name: "Brand"
+    description: "8 operations"
   - name: "Bulk"
     description: "5 operations"
   - name: "CRM"
@@ -1550,6 +1552,133 @@ paths:
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["board:view"]
       x-source: "boards.ts · boardsRouter.get"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/brand":
+    get:
+      tags: ["Brand"]
+      operationId: "getBrand"
+      summary: "Read brand"
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["branding:view"]
+      x-source: "brand.ts · brandRouter.get"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+    put:
+      tags: ["Brand"]
+      operationId: "putBrand"
+      summary: "Replace brand"
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["branding:manage"]
+      x-source: "brand.ts · brandRouter.put"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/brand/asset/{id}":
+    get:
+      tags: ["Brand"]
+      operationId: "getBrandassetbyId"
+      summary: "Read brand/asset/the one named"
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: []
+      x-permission-note: "No permission is required beyond being signed in."
+      x-source: "brand.ts · brandRouter.get"
+      parameters:
+        - name: "id"
+          in: path
+          required: true
+          schema: { type: "string" }
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/brand/assets":
+    post:
+      tags: ["Brand"]
+      operationId: "postBrandassets"
+      summary: "Create or act on brand/assets"
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["branding:manage"]
+      x-source: "brand.ts · brandRouter.post"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/brand/clients":
+    get:
+      tags: ["Brand"]
+      operationId: "getBrandclients"
+      summary: "Read brand/clients"
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["branding:view"]
+      x-source: "brand.ts · brandRouter.get"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/brand/clients/{companyId}":
+    put:
+      tags: ["Brand"]
+      operationId: "putBrandclientsbyCompanyId"
+      summary: "Replace brand/clients/the one named"
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["branding:manage"]
+      x-source: "brand.ts · brandRouter.put"
+      parameters:
+        - name: "companyId"
+          in: path
+          required: true
+          schema: { type: "string" }
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/brand/reports":
+    get:
+      tags: ["Brand"]
+      operationId: "getBrandreports"
+      summary: "Read brand/reports"
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["branding:view"]
+      x-source: "brand.ts · brandRouter.get"
+      responses:
+        "200": { description: "OK" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  "/api/brand/reports/{reportKey}":
+    put:
+      tags: ["Brand"]
+      operationId: "putBrandreportsbyReportKey"
+      summary: "Replace brand/reports/the one named"
+      security: [{ "bearerAuth": [] }]
+      x-required-permissions: ["branding:manage"]
+      x-source: "brand.ts · brandRouter.put"
+      parameters:
+        - name: "reportKey"
+          in: path
+          required: true
+          schema: { type: "string" }
       responses:
         "200": { description: "OK" }
         "400": { $ref: "#/components/responses/BadRequest" }
@@ -7831,5 +7960,5 @@ components:
         occurredAt: { type: string, format: date-time }
         data: { type: object, description: "Kept as it arrived, on the ticket." }
 
-# 105 of 461 operations carry a curated summary from docs/api-operations.json;
+# 105 of 469 operations carry a curated summary from docs/api-operations.json;
 # the rest are described from their own path, which is still enough to call them correctly.

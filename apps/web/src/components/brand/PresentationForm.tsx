@@ -18,8 +18,11 @@ import type { DocumentPresentation } from "@C7NTAX/shared";
 import { useRedesign } from "../../hooks/useNavigationStyle";
 import {
   FLAG_SPECS,
+  LETTERHEAD_CARRIED,
   LETTERHEAD_OPTIONS,
+  ORIENTATION_CARRIED,
   ORIENTATION_OPTIONS,
+  PAPER_CARRIED,
   PAPER_OPTIONS,
   TEXT_SPECS,
 } from "./presentationSpec";
@@ -81,7 +84,7 @@ export function PresentationForm({
               </button>
             ))}
           </div>
-          {carried("Every renderer draws the mark this chooses — the print document, the PDF, the invoice, the statement and the quote.")}
+          {carried(LETTERHEAD_CARRIED)}
         </div>
 
         <div className="grid gap-3.5 sm:grid-cols-2">
@@ -101,7 +104,7 @@ export function PresentationForm({
                 </button>
               ))}
             </div>
-            {carried("Every renderer sets its sheet to this, including the invoice's own page.")}
+            {carried(PAPER_CARRIED)}
           </div>
           <div>
             <p className="text-xs font-semibold text-white">Orientation</p>
@@ -119,7 +122,7 @@ export function PresentationForm({
                 </button>
               ))}
             </div>
-            {carried("The type does not shrink for landscape — a nine-column table fits or the document is read in portrait.")}
+            {carried(`${ORIENTATION_CARRIED} The type does not shrink for landscape — a nine-column table fits or the document is read in portrait.`)}
           </div>
         </div>
 

@@ -144,6 +144,15 @@ export interface BrandKit {
   fromName: string | null;
   fromEmail: string | null;
   replyTo: string | null;
+
+  /**
+   * What each family of document wears, as stored — `{ [family]: Partial<DocumentPresentation> }`.
+   *
+   * On the record rather than fetched separately because the browser needs it to resolve a document's
+   * paper and letterhead, and a second request is a document that prints before its settings arrive.
+   * Absent keys mean the family's default, so this map being empty is the same as it not existing.
+   */
+  documentPresentation: Record<string, Partial<DocumentPresentation>>;
 }
 
 /**
@@ -172,6 +181,7 @@ export const DEFAULT_BRAND: BrandKit = {
   fromName: null,
   fromEmail: null,
   replyTo: null,
+  documentPresentation: {},
 };
 
 /** Every document this instance can produce. Used as the key for per-family settings. */
@@ -302,6 +312,12 @@ function clean(value: string | null | undefined): string | null {
   return trimmed.length ? trimmed : null;
 }
 
+/** The stored per-family presentation, coerced to the shape a renderer can merge. */
+function storedPresentations(value: unknown): Record<string, Partial<DocumentPresentation>> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return value as Record<string, Partial<DocumentPresentation>>;
+}
+
 /** The stored brand with every field decided. This is what a form edits and what the API returns. */
 export function normaliseBrand(row: Partial<BrandKit> | null | undefined): BrandKit {
   const source = row ?? {};
@@ -332,6 +348,7 @@ export function normaliseBrand(row: Partial<BrandKit> | null | undefined): Brand
     fromName: clean(source.fromName),
     fromEmail: clean(source.fromEmail),
     replyTo: clean(source.replyTo),
+    documentPresentation: storedPresentations(source.documentPresentation),
   };
 }
 
@@ -381,8 +398,14 @@ export interface DocumentBrand {
   contactLine: string | null;
   addressLines: string[];
   website: string | null;
-  /** The mark for the letterhead, already chosen: never a broken image, because it is checked. */
-  mark: { kind: "image"; src: string; alt: string } | { kind: "wordmark"; text: string };
+  /**
+   * The mark for the letterhead, already chosen.
+   *
+   * `none` is a real answer and not an absence: a designed report whose author placed its own header
+   * bands must have nothing drawn above them, and a renderer that treated `none` as "draw the wordmark
+   * anyway" would overrule the person who laid the page out.
+   */
+  mark: { kind: "image"; src: string; alt: string } | { kind: "wordmark"; text: string } | { kind: "none" };
   wordmark: string;
   primaryColor: string;
   /**
@@ -436,7 +459,7 @@ export function resolveDocumentBrand(
 
   const mark: DocumentBrand["mark"] =
     presentation.letterhead === "none"
-      ? { kind: "wordmark", text: wordmark }
+      ? { kind: "none" }
       : presentation.letterhead === "wordmark"
         ? { kind: "wordmark", text: wordmark }
         : presentation.letterhead === "icon"
@@ -465,15 +488,27 @@ export function resolveDocumentBrand(
   };
 }
 
-/** The whole chain in one call: the instance's brand, a client's override, one family's settings. */
+/**
+ * The whole chain in one call: the instance's brand, a client's override, one family's settings, and a
+ * single report's own settings.
+ *
+ * The order is the order of specificity, and it is the reason a client can be invoiced portrait while
+ * one report is drawn landscape: the family's stored settings are the instance's answer, a client's
+ * override is an answer about *that client's* documents, and a report's own row is an answer about one
+ * document. The last one wins.
+ */
 export function documentBrandFor(
   kit: BrandKit,
   family: DocumentFamily,
   override?: BrandOverride | null,
-  stored?: Partial<DocumentPresentation> | null,
+  reportPresentation?: Partial<DocumentPresentation> | null,
 ): DocumentBrand {
   const merged = mergeBrandOverride(kit, override);
-  const presentation = { ...(override?.presentation ?? {}), ...(stored ?? {}) };
+  const presentation = {
+    ...(kit.documentPresentation?.[family] ?? {}),
+    ...(override?.presentation ?? {}),
+    ...(reportPresentation ?? {}),
+  };
   return resolveDocumentBrand(merged, family, presentation);
 }
 
@@ -484,13 +519,22 @@ export const BRAND_UPLOAD_MAX_BYTES = 2 * 1024 * 1024;
 export const BRAND_UPLOAD_TYPES = ["image/png", "image/jpeg", "image/webp"] as const;
 
 /**
+ * The fields a person edits in the Branding settings.
+ *
+ * `documentPresentation` is deliberately not one of them: paper size, orientation and the letterhead are
+ * chosen **per family of document**, on the Documents screen, rather than as a single value on the
+ * identity form — which is what makes an invoice portrait and a report landscape.
+ */
+export type BrandFieldKey = Exclude<keyof BrandKit, "documentPresentation">;
+
+/**
  * What each field is, in the words the settings screen uses.
  *
  * Here rather than in the page for the reason the email fields are: the API validates against the same
  * list, so a field that gains a rule gains it in one place, and the settings screen cannot drift into
  * describing a field differently from the way it behaves.
  */
-export const BRAND_FIELDS: { key: keyof BrandKit; label: string; help: string; kind: "text" | "lines" | "color" | "image" }[] = [
+export const BRAND_FIELDS: { key: BrandFieldKey; label: string; help: string; kind: "text" | "lines" | "color" | "image" }[] = [
   { key: "productName", label: "Product name", help: "The application's own name, used in the interface and the footer of a document.", kind: "text" },
   { key: "companyName", label: "Company name", help: "The legal entity a document is issued by.", kind: "text" },
   { key: "tagline", label: "Tagline", help: "One line under the company name, such as the practice you run.", kind: "text" },
@@ -514,4 +558,4 @@ export const BRAND_FIELDS: { key: keyof BrandKit; label: string; help: string; k
  * The logo and the icon are the two people actually came here to change, so they are named as such
  * rather than buried among the seventeen fields above.
  */
-export const BRAND_HEADLINE_FIELDS: (keyof BrandKit)[] = ["logoUrl", "iconUrl"];
+export const BRAND_HEADLINE_FIELDS: BrandFieldKey[] = ["logoUrl", "iconUrl"];

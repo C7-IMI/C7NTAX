@@ -15,7 +15,7 @@ import {
   Target, FolderKanban, Monitor, BookOpen, Shield, FileText, Wrench, Cpu, Activity, TrendingUp, ClipboardList, BarChart3, Receipt, CreditCard, Timer,
   Database, Server, Sparkles, PanelLeftClose, PanelLeftOpen, Search, Calendar, Clock, HelpCircle, Home,
   AlertTriangle, XCircle, Settings2, ListOrdered, Globe, Package, Presentation, Filter, Radio, Bot,
-  MonitorSmartphone, Mail, KeyRound, Plug, ShieldAlert,
+  MonitorSmartphone, Mail, KeyRound, Plug, ShieldAlert, Palette, LayoutTemplate,
   Star, StarOff, Link2, AppWindow, SquareArrowOutUpRight, ChevronsUpDown, ChevronsDownUp, ChevronUp,
   SquareTerminal, Bug, Trash2, Rocket,
   type LucideIcon,
@@ -79,6 +79,13 @@ export const NAV_TREE: NavNode[] = [
       { id: "admin-logs", to: "/admin/logs", icon: FileText, label: "Audit Logs", permission: Permission.SystemConfig },
       { id: "admin-api", to: "/admin/api", icon: KeyRound, label: "API Access", permission: Permission.UserManage },
       { id: "admin-email", to: "/admin/email", icon: Mail, label: "Email Studio", permission: Permission.EmailView },
+      // Branding sits here rather than inside the Studio because it is neither an email setting nor a
+      // report setting: the logo, the letterhead and the colours are inherited by every document *and*
+      // every message this instance produces.
+      { id: "admin-branding", to: "/admin/branding", icon: Palette, label: "Branding", permission: Permission.BrandingView },
+      { id: "admin-branding-documents", to: "/admin/branding/documents", icon: FileText, label: "Document Branding", permission: Permission.BrandingView },
+      { id: "admin-branding-clients", to: "/admin/branding/clients", icon: Building2, label: "Client Branding", permission: Permission.BrandingView },
+      { id: "admin-branding-reports", to: "/admin/branding/reports", icon: LayoutTemplate, label: "Report Branding", permission: Permission.BrandingView },
       { id: "admin-security", to: "/admin/security", icon: ShieldAlert, label: "Sign-in Audit", permission: Permission.SecurityManage },
       { id: "admin-ai-actions", to: "/ai-actions", icon: Sparkles, label: "AI Actions", permission: Permission.SystemConfig },
       { id: "admin-changelog", to: "/admin/changelog", icon: Sparkles, label: "What's New" },
@@ -401,6 +408,10 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   "/activity": "Your own changes, and the pages you stayed on.",
   "/console": "Run commands against this instance, or via the c7ntax CLI.",
   "/admin/email": "Every message this instance sends: the words, who receives it, and what happened to the last few.",
+  "/admin/branding": "Your company's identity: the logo, the icon, the colours and the details every document and email carries.",
+  "/admin/branding/documents": "What each kind of document wears — its letterhead, its paper and whether it carries the basis block.",
+  "/admin/branding/clients": "The clients billed under their own name, and the documents that go out wearing it.",
+  "/admin/branding/reports": "The reports whose appearance differs from their family's, and what they print instead.",
   "/admin/email/brand": "What every message inherits — the logo, the colours, the footer and the address it is sent from.",
   "/admin/email/log": "What was sent, to whom, which template version, and what happened to it.",
 
