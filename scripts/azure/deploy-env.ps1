@@ -519,15 +519,24 @@ if (-not $SkipMigrations) {
             '--env-vars', 'DATABASE_URL=secretref:database-url') | Out-Null
         Write-Info "created $jobName"
     }
-    Invoke-Az @('containerapp', 'job', 'start', '--name', $jobName, '--resource-group', $rg) | Out-Null
+    # Poll the execution `start` created, by name. `job execution list --query "[0]"` is not documented
+    # as newest-first, so on a second deploy the newest row is still the *previous* run — which succeeded
+    # — and the gate would report success before the migration had begun. `job start` returns the
+    # execution it started (`JobExecutionBase`: name, id), so wait on that one.
+    $execution = Invoke-Az @('containerapp', 'job', 'start', '--name', $jobName, '--resource-group', $rg,
+        '--query', 'name', '-o', 'tsv')
     if (-not $WhatIf) {
-        Write-Info 'waiting for the migration job…'
+        if (-not $execution) { throw 'az containerapp job start returned no execution name, so there is nothing to wait on.' }
+        Write-Info "waiting for migration job execution $execution…"
+        $state = ''
         for ($i = 0; $i -lt 30; $i++) {
             Start-Sleep -Seconds 10
-            $state = (& az containerapp job execution list --name $jobName --resource-group $rg --query "[0].properties.status" -o tsv 2>$null)
-            if ($state -in @('Succeeded', 'Failed')) { break }
+            $state = (& az containerapp job execution show --name $jobName --resource-group $rg --job-execution-name $execution --query "properties.status" -o tsv 2>$null)
+            if ($state -in @('Succeeded', 'Failed', 'Degraded', 'Stopped')) { break }
         }
-        if ($state -ne 'Succeeded') { throw "Migration job ended as '$state' — the previous revision keeps serving. Inspect: az containerapp job execution list --name $jobName --resource-group $rg" }
+        if ($state -ne 'Succeeded') {
+            throw "Migration job execution '$execution' did not succeed (last status: '$state') — the previous revision keeps serving. Inspect: az containerapp job execution show --name $jobName --resource-group $rg --job-execution-name $execution"
+        }
         Write-Info 'migration applied'
     }
 }

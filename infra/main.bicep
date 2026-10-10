@@ -103,7 +103,7 @@ param imageTag string
 // once, against the real image, because a probe's `port` is a required field of the *revision
 // template* rather than part of the ingress: an app first created against a placeholder image keeps
 // probing the placeholder's port, and the ingress-only `az containerapp ingress update --target-port`
-// that later installs the real image cannot move the probes with it — the new revision goes Unhealthy
+// that a later deployment runs cannot move the probes with it — the new revision goes Unhealthy
 // and the first `-Create` run cannot finish. A first run therefore deploys this file twice:
 // `createApp=false` for everything except the app (the registry above all), then `createApp=true`
 // with the tag the script has already built and pushed. False only on that first pass; an ordinary
@@ -190,7 +190,7 @@ var containerImage = contains(imageTag, '/') ? imageTag : '${acr.properties.logi
 // first created on port 4000 with its probes on 4000 and the placeholder is never installed at all.
 // The branch is kept for the one case that still reaches it: a bare `az deployment group create`
 // handed a full public reference. A probe's port belongs to the *revision template*, not to the
-// ingress, so `az containerapp update --target-port` moves the ingress and leaves the probes as the
+// ingress, so `az containerapp ingress update --target-port` moves the ingress and leaves the probes as the
 // last deployment declared them — a Bicep-only run with a placeholder image has to probe the port
 // that image serves on, or its revision never becomes healthy.
 var appPort = contains(imageTag, '/') ? 80 : 4000

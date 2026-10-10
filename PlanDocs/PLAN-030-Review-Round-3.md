@@ -8,6 +8,9 @@
 > placeholder names. See §2 for what that does and does not prove.
 > **Answered by:** `PLAN-030-Response-to-Review-Round-3.md` — the reply from whoever applied the fixes,
 > including the two places this review's own wording was imprecise (§10).
+> **Answered again in round 4:** `PLAN-030-Review-Round-4.md` found that one of the round-3 fixes
+> introduced a blocker of its own — a `#` comment written inside a backslash-continued `az` command —
+> and `PLAN-030-Response-to-Review-Round-4.md` is the reply. Read that pair after this one.
 
 ## 1. Verdict
 

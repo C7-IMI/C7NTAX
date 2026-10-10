@@ -50,6 +50,7 @@ built again. PLAN-016 §16 is the full description of that model.
 | `infra/env/.env.production.example` | Every environment variable the API reads, with the ones that must be set in Key Vault called out. |
 | `scripts/azure/preflight.mjs` | Fails before a deploy does: stale lockfile, missing migration, undocumented env var, unguarded route, new advisory, non-root image — and a template that could move the running image or the traffic (an `imageTag` default, an `activeRevision` the script does not pass, a revisions mode that is not `Multiple`). |
 | `scripts/azure/deploy-env.ps1` | The local push tool: preflight → infrastructure → image → schema → 0%-traffic revision → health gate → traffic shift, with `-WhatIf`, `-Create` and `-PromoteFrom`. |
+| `scripts/azure/check-workflow-shell.mjs` | Runs the workflow shell through a shell: every `run:` block parses, no `#` comment sits inside a backslash-continued command, no group of flags has lost its command, and nothing in a block tries to execute a flag. The last two are the round-4 defect — `az containerapp job create` was called with `--image` and nothing else — which YAML, `az` and `bash -n` are all happy to pass. |
 | `.github/workflows/deploy-azure.yml` | CI/CD: build once, deploy **dev** on every push to `main`; a prod dispatch **promotes the tag dev is running** (copying the image between registries) instead of building, so prod only ever receives an artifact dev has served. Prod runs only from a manual dispatch, behind the `prod` environment's reviewers. |
 | `.github/workflows/security.yml` | The gate from PLAN-018: route guards, typechecks, the dependency baseline, gitleaks, trivy. |
 | `apps/api/prisma/migrations/0_init` | The schema baseline. Production schema moves with `prisma migrate deploy`, never `db push`. |
@@ -261,6 +262,7 @@ with no rotation runbook is an outage with a date on it. Calendar the rotations 
 
 - [ ] `node scripts/azure/preflight.mjs` passes
 - [ ] `node scripts/azure/validate-bicep.mjs` (or `az bicep build --file infra/main.bicep`) reports no warnings
+- [ ] `node scripts/azure/check-workflow-shell.mjs` passes (needs a bash; `BASH_PATH` if it is not on `PATH`)
 - [ ] `deploy-env.ps1 -Environment dev -WhatIf` output reviewed
 - [ ] `what-if` for **both** environments reviewed and saved alongside the change
 - [ ] Dev deploys from `main` and the pipeline goes green end to end

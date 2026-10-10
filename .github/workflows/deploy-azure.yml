@@ -207,14 +207,22 @@ jobs:
               --image "$IMAGE" \
               --only-show-errors
           else
+            # `--command` is a list of space-separated values, not one string (az containerapp job
+            # create --help: "A list of supported commands on the container that will executed during
+            # startup. Space-separated values e.g. '/bin/queue' 'mycommand'"). Quoted as one argument
+            # it becomes a single argv entry and the container tries to exec a program named
+            # "npx prisma migrate deploy", so the job fails with the previous revision still serving.
+            #
+            # This comment belongs ABOVE the command, and that is not tidiness. Written between the
+            # continued arguments below, the `#` ends the backslash chain: bash joins the next line,
+            # the comment swallows it, and `az` is invoked with everything up to `--image` and none
+            # of the flags after it — no command, no registry, no identity, no secrets — while those
+            # flag lines run as a command of their own. It fails once, in the environment being
+            # created, and a re-run takes the update branch above and never sees it.
+            # `scripts/azure/check-workflow-shell.mjs` fails on exactly that shape.
             az containerapp job create \
               --name "$JOB" --resource-group "$RG" --environment "aca-c7ntax-${ENVIRONMENT}" \
               --image "$IMAGE" \
-              # `--command` is a list of space-separated values, not one string (az containerapp job
-              # create --help: "A list of supported commands on the container that will executed during
-              # startup. Space-separated values e.g. '/bin/queue' 'mycommand'"). Quoted as one argument
-              # it becomes a single argv entry and the container tries to exec a program named
-              # "npx prisma migrate deploy", so the job fails with the previous revision still serving.
               --command npx prisma migrate deploy \
               --cpu 0.5 --memory 1.0Gi --replica-timeout 900 --replica-retry-limit 1 \
               --registry-server "${{ needs.build.outputs.registry }}" \
@@ -223,14 +231,28 @@ jobs:
               --env-vars "DATABASE_URL=secretref:database-url" \
               --only-show-errors
           fi
-          az containerapp job start --name "$JOB" --resource-group "$RG" --only-show-errors
+
+          # Poll the execution `start` created, by name. `job execution list --query "[0]"` is not
+          # documented as newest-first, and on a second deploy the newest row is still the *previous*
+          # run — which succeeded — so the gate would report success before the migration had begun.
+          EXECUTION=$(az containerapp job start --name "$JOB" --resource-group "$RG" --query "name" -o tsv --only-show-errors)
+          if [ -z "$EXECUTION" ]; then
+            echo "::error::the migration job did not return an execution name, so there is nothing to wait on"
+            exit 1
+          fi
           for i in $(seq 1 60); do
-            state=$(az containerapp job execution list --name "$JOB" --resource-group "$RG" --query "[0].properties.status" -o tsv)
-            [ "$state" = "Succeeded" ] && exit 0
-            [ "$state" = "Failed" ] && { echo "migration job failed"; exit 1; }
+            state=$(az containerapp job execution show --name "$JOB" --resource-group "$RG" \
+              --job-execution-name "$EXECUTION" --query "properties.status" -o tsv --only-show-errors)
+            if [ "$state" = "Succeeded" ]; then echo "migration applied"; exit 0; fi
+            case "$state" in
+              Failed|Degraded|Stopped)
+                echo "::error::migration job $EXECUTION ended as $state — the previous revision keeps serving"
+                exit 1 ;;
+            esac
             sleep 10
           done
-          echo "migration job did not finish in 10 minutes"; exit 1
+          echo "::error::migration job $EXECUTION did not finish in 10 minutes (last status: $state)"
+          exit 1
 
   deploy:
     name: Deploy (${{ github.event.inputs.environment || 'dev' }})

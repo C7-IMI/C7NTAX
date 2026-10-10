@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.036 | Last Updated: 2026-10-09
+## Version: 2026.10.10.001 | Last Updated: 2026-10-10
 
 ---
 
@@ -11,6 +11,47 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.10.001 — A comment is not always a comment
+
+The command that runs `prisma migrate deploy` in CI was rewritten from one string into four tokens, and the
+explanation of *why* was written where it seemed to belong: between the continued arguments of the `az`
+call. In shell a trailing `\` joins the next line, so the `#` turned the rest of that joined line into a
+comment and ended the command there. The invocation arrived with `--image` and nothing else — no command,
+no registry, no identity, no secrets — while the flag lines below ran as a command of their own.
+
+- **[Fix]** **The comment moved above the command, and says why it has to stay there.** Nothing else
+  changed about the call. Before: the create was invoked with `--image` alone and the step printed
+  `--command: command not found`. After: the whole argv reaches `az` and the step reports
+  `migration applied`. It would have failed exactly once — in the environment being created — because
+  every later run takes the `update` branch and never reaches the line.
+- **[Fix]** **The migration gate waits on the execution it started, by name.** `job execution list
+  --query "[0]"` is not documented as newest-first, so on a second deploy the newest row is still the
+  *previous* run — which succeeded — and the gate could report success before the migration had begun.
+  `job start` returns the execution it started, so both the script and the workflow poll
+  `job execution show --job-execution-name` instead. `Succeeded` is now the only reading that counts as
+  success, and `Failed`, `Degraded` and `Stopped` fail immediately rather than spinning to a timeout —
+  the status list read out of the CLI's own enum rather than its documentation.
+- **[New]** **A check for the whole class, because nothing else could see it.** `deploy:workflow`
+  (`scripts/azure/check-workflow-shell.mjs`) runs every workflow `run:` block through bash: it must
+  parse; no `#` line may sit inside a backslash-continued command; no group of flags may have lost its
+  command; and, with a stub `az` in place, nothing in the block may try to execute a flag. Proved both
+  ways — it fails on the defect with two independent detectors and passes on the fix. What it does not
+  prove is written at the top of the file: that `az` *accepts* the arguments is a different question
+  with a different method.
+- **[Fix]** **The two comments that still named a command that does not exist.** `main.bicep` said
+  `az containerapp update --target-port`; it is `az containerapp ingress update --target-port`. The
+  other one named the right command but credited it with installing the image, which is the
+  `containerapp update`'s job — a sentence that needed tightening rather than deleting, because the
+  point it makes (a probe's port lives in the revision template, so an ingress-only change cannot move
+  it) is true and load-bearing.
+- **[Update]** **The review series is answered.** `PlanDocs/PLAN-030-Review-Round-4.md` is on `main` with
+  its answer beside it, and the round-3 review points forward to it. Three findings from round 3 that
+  were never answered — the revision suffix on a re-run, the discarded `what-if`, and the prod-only paths
+  a dev run cannot prove — are answered in `PLAN-030-Response-to-Review-Round-4.md` §5 instead of being
+  carried forward silently. The `infra/README.md` verification checklist gained the new check.
 
 ---
 

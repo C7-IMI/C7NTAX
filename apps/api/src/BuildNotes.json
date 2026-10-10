@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.10.001",
+    "date": "2026-10-10",
+    "title": "A comment is not always a comment",
+    "changes": [
+      {
+        "text": "**The comment moved above the command, and says why it has to stay there.** Nothing else",
+        "type": "Fix"
+      },
+      {
+        "text": "**The migration gate waits on the execution it started, by name.** `job execution list",
+        "type": "Fix"
+      },
+      {
+        "text": "**A check for the whole class, because nothing else could see it.** `deploy:workflow`",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The two comments that still named a command that does not exist.** `main.bicep` said",
+        "type": "Fix"
+      },
+      {
+        "text": "**The review series is answered.** `PlanDocs/PLAN-030-Review-Round-4.md` is on `main` with",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.036",
     "date": "2026-10-09",
     "title": "The deployment package, run rather than read",

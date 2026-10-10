@@ -10484,3 +10484,89 @@ mode and `prisma migrate deploy` runs it on every environment.
 **The review itself was updated too**, so a reader who opens only that file is not misled: the front matter
 points at the reply, §8 no longer lists the Bicep compile as unprovable, §9 records the compile passing and
 the response document, and a new §10 is the disposition of every finding alongside the two corrections.
+
+---
+
+### Prompt 377 — Round 4: a comment that was not a comment
+
+**Timestamp:** 2026-10-10 01:53 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.10.001** — A comment is not always a comment.
+
+**Prompt**
+
+> Here is Claude's reply. REview and respond accordingly. upadte the docs and give me a reply here to copy
+> and paste:
+>
+> Most of Deepseek's round-3 reply holds up, but one of its fixes added a new bug, so the package still
+> isn't ready to deploy. I checked its work on `main` (the commit `387f2192`), including the new §10 and the
+> response file you mentioned. I wrote this up as `PlanDocs/PLAN-030-Review-Round-4.md` on branch
+> `claude/plan-030-review-round-4`, pushed, and logged it in `Retrace.md`. I haven't changed any code.
+>
+> **What checks out** (by reading the changes, not by running them against Azure): traffic-set flags;
+> revision commands; the `--target-port` fix; the deep readiness check; `TRUST_PROXY` as a hop count;
+> declining to ship `pgaudit` and leaving the replica count to the owner.
+>
+> **New blocker in `.github/workflows/deploy-azure.yml` (lines 212–219).** The new comment explaining
+> `--command` sits as `#` lines between the backslash-continued arguments of `az containerapp job create`.
+> In bash that ends the command at `--image`, and `--command npx prisma migrate deploy` then runs as its own
+> command and fails. I reproduced it with a stand-in `az` that records its arguments: the create call gets
+> no command, registry, identity or secrets. It would fail only on the first run in a new environment,
+> because later runs take the `update` branch. A YAML or `az` parse check can't catch it. The PowerShell
+> script isn't affected. The fix is to move the comment above the command, and I recommend a check that runs
+> each workflow script with a stand-in `az` and asserts the arguments.
+>
+> **Smaller items:** the migration poll still reads `execution list [0]`, which on a second deploy can
+> report the previous run's `Succeeded` before the new run exists — my round-3 fix (§A5) was not adopted.
+> Two comments in `main.bicep` (lines 105 and 193) still repeat the wrong `update --target-port` claim.
+> … The branch is already pushed, so the hook's warning is stale again.
+
+**R4-1 is mine, and I reproduced it before fixing it**
+
+I did not take it on trust. I extracted the workflow's own migrate block, substituted the GitHub
+expressions, and ran it with a stub `az` that records argv:
+
+```
+containerapp job create --name … --environment … --image SUBSTITUTED/c7ntax:SUBSTITUTED
+--command: MISSING  --secrets: MISSING  --registry-server: MISSING  --env-vars: MISSING
+step.sh: line 43: --command: command not found
+```
+
+Both claims exact. The comment now sits above the command, with a note saying why it has to — otherwise the
+next person to tidy that block moves it back. Re-run through the same stub, the argv is whole and the step
+reports `migration applied`.
+
+**The check Claude asked for, and why I built it as a general rule rather than a flag assertion**
+
+`scripts/azure/check-workflow-shell.mjs` (`deploy:workflow`): every `run:` block must parse under `bash -n`;
+no `#` line may follow a backslash-continued line; no continuation group may begin with a `-` (flags that
+have lost their command); and, with stubs on `PATH`, nothing may try to execute a flag. Proved in both
+directions — with the defect restored it fails on the migrate step with **two** independent detectors
+firing, and with the fix it passes 13 blocks over 3 workflows.
+
+Two things cost me time and are now comments in the file, because they will cost the next person the same:
+Git for Windows' bash rebuilds `PATH` with `/mingw64/bin` **ahead** of what the parent process set, so stubs
+prepared outside the shell are shadowed by the real `curl` and `sleep` — which made the health-gate block
+poll a real `curl` twelve times and hang the check for 30 s. And `cygpath` is what makes the stub directory
+addressable at all: a literal `C:/Users/STEPHE~1/…` is not something bash resolves.
+
+**R4-2, fixed by execution name.** `job start --query name -o tsv` then `job execution show
+--job-execution-name`, in both the script and the workflow; `Succeeded` is the only success, and the
+terminal-failure set (`Failed`, `Degraded`, `Stopped`) comes from the installed CLI's own
+`JobExecutionStatus` enum — `Running`, `Processing`, `Stopped`, `Degraded`, `Failed`, `Unknown`,
+`Succeeded` — rather than the documentation. The script's `$state` is initialised because it runs under
+`Set-StrictMode -Version Latest`.
+
+**R4-3, with one correction.** Line 193 was the wrong command and is fixed. Line 105 named the right command
+— `az containerapp ingress update --target-port` — but credited it with installing the image, which is the
+`containerapp update`'s job; that clause is tightened. So one of the two comments was the defect and the
+other was a sentence that needed work, which is one fewer than the review counted.
+
+**The three round-3 B-items I had never seen.** The pasted round-3 summary carried the five blockers and not
+the B-items, so the branch document's B1 (the revision suffix repeats on a re-run), B3 (the what-if is
+discarded and the log says it was reviewed) and B5 (dev cannot prove the prod-only paths) had never been
+answered on `main`. They are answered in the response's §5 rather than carried forward silently. B1 is the
+one worth naming here: if Container Apps *renames* rather than rejects a duplicate suffix, the health gate's
+own suffix filter matches the previous revision and the pipeline goes green without deploying anything — so
+I recorded the decisive guard (assert the resolved revision's image) as a change for the operator to
+approve, since it alters the promotion path on an unverified failure.
