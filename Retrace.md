@@ -10714,3 +10714,55 @@ for the work rather than the work.
 carries a scroll margin, so whichever card is under it is partly hidden while scrolling. That is
 pre-existing and applies to every card on the panel, not to this reorder — the composer was already the
 first card anyone scrolled to — so it is reported rather than fixed here.
+
+---
+
+### Prompt 381 — The pinned bar, and round 7
+
+**Timestamp:** 2026-10-10 05:56 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.10.005** — A card scrolled to is no longer scrolled under the bar;
+**2026.10.10.006** — The scan says what it does not cover.
+
+**Prompt**
+
+> Yes, fix it. And after you're done:
+>
+> Here is Claude's response. Review, update, and reply here:
+>
+> Deepseek's round-6 fixes hold up, and I found nothing new that blocks a deploy. … My round-7 review is
+> `PlanDocs/PLAN-030-Review-Round-7.md` on branch `claude/plan-030-review-round-7` …
+>
+> **Two small items:** (1) the "all N variables are documented" line overclaims — the scan only sees reads
+> written as `process.env.NAME`; three files read the environment dynamically, so it can't see those, and
+> the message should say what the scan doesn't cover. (2) Deepseek's correction about re-runs is
+> unobserved: it says a re-run of the same commit makes a new revision, which may be right, but nobody has
+> seen what Azure does with a duplicate revision suffix; both outcomes are now safe, so it isn't a
+> blocker, but it should be recorded as unobserved and the dev deploy should test it.
+
+**Part one — the pinned bar, measured rather than eyeballed.** The complaint was that a card under the
+pinned toolbar is partly hidden. I reproduced it with a `scrollIntoView({block:'start'})` on the composer
+and measured: bar bottom 196, card top 123 — **73px of the card behind the bar**, which is its whole
+Note / Reply to client / Log time tab row. `scroll-margin-top` on the pane's cards fixed it: the card lands
+at 219 with 23px of clearance, and the screenshot shows the tab row and the textarea entire. Scoped to the
+redesigned interface, because that is where the bar is pinned — the classic toolbar scrolls away, so a
+margin there would only open a gap (verified: 96px/clear modern, 0px/unchanged classic).
+
+**Part two — R7-1, closed rather than described.** The review asked for the pass line to state its blind
+spot. I closed it instead: the invisible reads are not dynamic, they are *aliased* — `const env =
+process.env` — and following that took four lines of scan. The first run then failed with a real finding:
+**`SMTP_SECURE`**, read through an alias, in no environment file. So the round-6 message was not merely
+failing to describe a limit, it was covering for a variable. It is documented now, with the consequence
+that a wrong value hangs rather than fails. What genuinely cannot be enumerated — `process.env[name]`, one
+file — is reported on a line of its own, so the line above no longer says "all".
+
+**Part three — R7-2, recorded where the claim was made.** The round-6 response's §4 asserted that a re-run
+creates a new revision. Nothing has been run against a subscription, so that was reasoning from the shape
+of the API; the paragraph now carries a correction saying so, and the dev deploy is nominated as the
+observation — run one commit twice and record which revision takes the traffic. The scripts were already
+conditional ("**If** Azure reuses or reports that older revision"), so only the reply needed correcting.
+
+**Also noted from the review, and worth keeping:** the two checks that make a green believable — comparing
+the scanned set with and without comment-stripping (the same shape of evidence that just found
+`SMTP_SECURE`), and checking the `AUTH_TEST_BYPASS` allow-list entry against `testBypass.ts:52`, the code
+the entry quotes.

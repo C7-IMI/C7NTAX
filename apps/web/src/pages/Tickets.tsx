@@ -2832,7 +2832,7 @@ export function TicketDetailPage() {
 
           {activeTab === "ticket" && (
       <div className={redesign ? (contextPane ? "grid grid-cols-1 xl:grid-cols-3 gap-5" : "grid grid-cols-1 gap-5") : "grid grid-cols-1 lg:grid-cols-3 gap-5"}>
-        <div className={redesign ? (contextPane ? "xl:col-span-2 space-y-5" : "space-y-5") : "lg:col-span-2 space-y-5"}>
+        <div className={redesign ? (contextPane ? "ticket-pane xl:col-span-2 space-y-5" : "ticket-pane space-y-5") : "ticket-pane lg:col-span-2 space-y-5"}>
           {/* General / The record */}
           <div className="card space-y-3">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{redesign ? "The record" : "General"}</h3>

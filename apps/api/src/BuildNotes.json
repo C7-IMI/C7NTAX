@@ -1,5 +1,39 @@
 [
   {
+    "version": "2026.10.10.006",
+    "date": "2026-10-10",
+    "title": "The scan says what it does not cover",
+    "changes": [
+      {
+        "text": "**`SMTP_SECURE` was reading through an alias and was in no environment file.** A real",
+        "type": "Fix"
+      },
+      {
+        "text": "**The scan follows the alias, and states what it still cannot see.** `process.env[name]` —",
+        "type": "Update"
+      },
+      {
+        "text": "**The reply's own claim about re-runs is now marked unobserved.** The round-6 response",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.10.005",
+    "date": "2026-10-10",
+    "title": "A card scrolled to is no longer scrolled under the bar",
+    "changes": [
+      {
+        "text": "**`scroll-margin-top` on the ticket pane's cards.** It is the right tool rather than a",
+        "type": "Fix"
+      },
+      {
+        "text": "**Scoped to the redesigned interface**, where the bar is actually pinned. The classic",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.10.004",
     "date": "2026-10-10",
     "title": "The composer comes before the list",

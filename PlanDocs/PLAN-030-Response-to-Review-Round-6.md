@@ -109,6 +109,14 @@ traffic ends on an image with the right tag — so the conclusion stands; only t
 differs in the safe direction. The **rollback** case is the one where the suffix genuinely already exists
 with a *different* tag, and that is the case the three assertions cover.
 
+> **Correction, round 7 — this paragraph asserted more than was observed.** Nothing here has been run
+> against a subscription, so "it creates a new revision" is reasoning from the shape of the API, not
+> something anybody has watched Azure do with a duplicate revision suffix. Round 7 is right to call it
+> out, and the honest form of the sentence above is: *the suffix filter is gone, so whichever of the two
+> behaviours Azure has, the gate can no longer read the wrong revision.* Both outcomes are safe, which is
+> why this was never a blocker — but it is unobserved, and the dev deploy should be the thing that
+> observes it: run one commit twice and watch which revision takes the traffic.
+
 ## 5. What has and has not run
 
 | Check | Result |

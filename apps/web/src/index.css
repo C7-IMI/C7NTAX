@@ -602,6 +602,25 @@ html[data-ui-redesign="true"] .card {
 }
 /* Cards that are a table's frame carry no padding at all. */
 html[data-ui-redesign="true"] .card.p-0 { padding: 0; }
+
+/*
+ * The ticket detail's toolbar is pinned — `sticky top-0` — so anything the browser scrolls to
+ * lands *under* it: an anchor, a focus, a `scrollIntoView`, or the focus scroll that a “Add note”
+ * from the header causes. The card arrives with its top 70-odd pixels behind the bar, which is the
+ * difference between reading a card and guessing at it.
+ *
+ * `scroll-margin-top` is the whole fix, and it is the right tool rather than a spacer: it applies
+ * only to scrolling, never to layout, so it costs nothing when nothing is being scrolled to. The
+ * value is the pinned bar's own height plus the gutter it pins below — the bar is two rows with
+ * sub-tabs and one without.
+ *
+ * Every card in the pane carries it rather than only the composer, because whichever card is
+ * scrolled to is the one that needs it, and a scroll margin on the wrong card is invisible.
+ *
+ * Scoped to the redesigned interface, because that is where the bar is pinned: the classic toolbar
+ * scrolls away with everything else, so a margin there would only open a gap above the card.
+ */
+html[data-ui-redesign="true"] .ticket-pane > .card { scroll-margin-top: 6rem; }
 html[data-ui-redesign="true"] .card > h3:first-child,
 html[data-ui-redesign="true"] .card > .flex:first-child > h3 {
   font-size: 11px;

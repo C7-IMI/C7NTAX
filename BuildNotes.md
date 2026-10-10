@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.10.004 | Last Updated: 2026-10-10
+## Version: 2026.10.10.006 | Last Updated: 2026-10-10
 
 ---
 
@@ -11,6 +11,50 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.10.006 — The scan says what it does not cover
+
+The deployment preflight's environment-contract check reported that "all N variables the source reads are
+documented". It could not see a read written through a local alias — `const env = process.env`, then
+`env.SMTP_PORT` — and a scan that does not see a read cannot promise it is documented. Describing that
+limit would have been honest; closing it found something.
+
+- **[Fix]** **`SMTP_SECURE` was reading through an alias and was in no environment file.** A real
+  outbound-mail setting: whether the relay wants TLS from the first byte, which is the difference between
+  port 587 and port 465, and a wrong answer is a connection that hangs rather than one that fails. It is
+  in the production template now with that consequence written beside it, and the count went from 54 to 56.
+- **[Update]** **The scan follows the alias, and states what it still cannot see.** `process.env[name]` —
+  one file, `routes/configuration.ts` — can read anything, so the check reports those files on a line of
+  their own rather than letting the line above claim to have covered them. The comment stripper's `//`
+  rule is a line heuristic that does not know a string from a comment; that is noted beside it, with the
+  comparison that shows it hides nothing today (three names across four source trees, all of them
+  comments).
+- **[Update]** **The reply's own claim about re-runs is now marked unobserved.** The round-6 response
+  asserted that `containerapp update --image` with the same tag creates a new revision; nothing here has
+  been run against a subscription, so that is reasoning from the shape of the API rather than something
+  anybody has watched. The paragraph carries the correction, and the dev deploy is nominated as the thing
+  that observes it — run one commit twice and record which revision takes the traffic. The scripts were
+  already conditional and needed no change.
+
+---
+
+## 2026.10.10.005 — A card scrolled to is no longer scrolled under the bar
+
+The ticket detail's toolbar is pinned, so anything the browser scrolls to — an anchor, a focus, a
+`scrollIntoView` — arrived with its top 70-odd pixels behind the bar. Measured on the composer: the bar's
+bottom sat 73px *below* the card's top.
+
+- **[Fix]** **`scroll-margin-top` on the ticket pane's cards.** It is the right tool rather than a
+  spacer, because it applies only to scrolling and never to layout, so it costs nothing when nothing is
+  being scrolled to. After it, the composer lands 23px clear of the bar and its own Note / Reply to
+  client / Log time tabs are visible — measured, not eyeballed: `scroll-margin-top: 96px`, card top 219,
+  bar bottom 196. Every card in the pane carries it, because whichever card is scrolled to is the one that
+  needs it.
+- **[Update]** **Scoped to the redesigned interface**, where the bar is actually pinned. The classic
+  toolbar scrolls away with everything else, so a margin there would only open a gap above the card —
+  checked in both: 96px and clear in the modern interface, 0px and unchanged in the classic one.
 
 ---
 

@@ -7,6 +7,9 @@
 > **Answered by:** `PLAN-030-Response-to-Review-Round-6.md` — R6-1 fixed, and R6-2 answered with preflight
 > now **green**: the dependency failure was real (three production advisories, fixed), and every variable
 > in the environment contract is either documented or on a reason-carrying list.
+> **Answered again in round 7:** `PLAN-030-Review-Round-7.md` found no defect in this round's changes, and
+> one blind spot in the new scan — reads through an alias were invisible. `PLAN-030-Response-to-Review-Round-7.md`
+> closes it, and doing so found a real undocumented variable.
 
 Addressed to the agent that applied PLAN-030. Scope: the round-5 reply against `origin/main` at `584a96a1`.
 

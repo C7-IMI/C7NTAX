@@ -194,6 +194,26 @@ console.log("\nenvironment contract");
     ]);
     const sources = ["apps/api/src", "packages/email/src", "packages/shared/src", "packages/integrations/src"];
     const used = new Set();
+    /**
+     * The names one file reads out of the environment.
+     *
+     * Two shapes are visible to a scan and both are read, because missing the second one made this
+     * section overclaim: `process.env.NAME`, and `NAME` through a local alias — `const env =
+     * process.env`, which `routes/system.ts` and `services/developerDeployment.ts` both do, and
+     * `services/appSettings.ts` does with a cast. A read through an alias is not rarer or less real
+     * than a direct one; it was simply invisible here.
+     */
+    const readsIn = (body) => {
+      const names = new Set();
+      for (const match of body.matchAll(/process\.env\.([A-Z][A-Z0-9_]*)/g)) names.add(match[1]);
+      for (const match of body.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*process\.env(?!\.)/g)) {
+        const alias = match[1];
+        for (const read of body.matchAll(new RegExp(`\\b${alias}\\.([A-Z][A-Z0-9_]*)\\b`, "g"))) names.add(read[1]);
+      }
+      return names;
+    };
+    /** Files that read the environment *by name* — `process.env[someVariable]` — which no scan can enumerate. */
+    const dynamic = [];
     for (const dir of sources) {
       const files = run(`git ls-files "${dir.replace(/\\/g, "/")}"`).out.split("\n").filter(f => f.endsWith(".ts"));
       for (const file of files) {
@@ -204,18 +224,30 @@ console.log("\nenvironment contract");
         // packages/shared/src/appConfiguration.ts uses to explain a flag test — was being read as a
         // variable named `X` and reported as undocumented. A gate that reports things that are not
         // there is the reason this section stopped being read.
+        //
+        // The `//` rule is a line heuristic and does not know a string from a comment, so a `//`
+        // inside a URL or a regex literal would take the rest of that line with it and a read on it
+        // would go unseen. That is the safe direction for a report of *missing* names — it can only
+        // under-report — and a comparison of the scanned set with and without this stripper shows it
+        // hides nothing today (three names across all four trees, all of them comments).
         const body = readFileSync(path.join(root, file), "utf8")
           .replace(/\/\*[\s\S]*?\*\//g, "")
           .replace(/(^|[^:])\/\/.*$/gm, "$1");
-        for (const match of body.matchAll(/process\.env\.([A-Z][A-Z0-9_]*)/g)) used.add(match[1]);
+        for (const name of readsIn(body)) used.add(name);
+        if (/process\.env\s*\[/.test(body)) dynamic.push(file);
       }
     }
     const undocumented = [...used]
       .filter(name => !documented.has(name) && !ignored.has(name) && !name.startsWith("npm_"))
       .sort();
     undocumented.length === 0
-      ? ok(`all ${used.size} variables the source reads are documented, or on the not-in-production list with a reason (${ignored.size} of those)`)
+      ? ok(`${used.size} variables the source reads are documented, or on the not-in-production list with a reason (${ignored.size} of those)`)
       : fail(`undocumented in the template: ${undocumented.join(", ")} — document each one, or add it to the list in this file with the reason it is not a production setting`);
+    // What the line above cannot promise. Saying so is the difference between a check and a claim:
+    // a file that reads `process.env[name]` can read anything, and only a person can say what.
+    dynamic.length === 0
+      ? ok("no file reads the environment by a computed name")
+      : warn(`read by a computed name, so not covered above: ${dynamic.join(", ")}`);
     for (const name of ["JWT_SECRET", "KUMO_MASTER_KEY", "DATABASE_URL", "WEB_ORIGIN"]) {
       documented.has(name) ? ok(`${name} documented`) : fail(`${name} is missing from the template`);
     }
