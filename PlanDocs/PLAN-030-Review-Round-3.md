@@ -297,6 +297,12 @@ None of the following was proven here, and none should be assumed by whoever rea
 **Verification run for this change:** `generate-openapi.mjs` (469 operations), `check-api-docs.mjs`
 (specification matches the routes), `check-route-guards.mjs` (472 routes), `check-encoding.mjs`,
 `lint-design-tokens.mjs`, `check-help-links.mjs`, and `tsc --noEmit` for `apps/api` and `apps/web` —
-all clean. `scripts/azure/validate-bicep.mjs` needs the Bicep CLI, which is not installed in this
-environment; the `main.bicep` edit is one `env` entry using the same ternary form already used
-elsewhere in the file, and comments. It should be run once the CLI is available, before deployment.
+all clean.
+
+`scripts/azure/validate-bicep.mjs` **passes**, and it took a download to get there: `az bicep install`
+truncated at 6.9 MB of ~124 MB, leaving a corrupt `bicep.exe`, so the standalone `bicep-win-x64.exe`
+v0.48.1 was fetched directly. Against it, with the four deploy-time variables filled in as placeholders,
+`infra/main.bicep`, `infra/params/dev.bicepparam` and `infra/params/prod.bicepparam` all compile **without
+warnings** — which includes the `TRUST_PROXY` `env` entry added in §6. The templates are the part of this
+package a subscription is still needed to exercise, and they now at least parse and type-check against the
+schemas.
