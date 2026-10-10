@@ -10484,3 +10484,6 @@ mode and `prisma migrate deploy` runs it on every environment.
 **The review itself was updated too**, so a reader who opens only that file is not misled: the front matter
 points at the reply, §8 no longer lists the Bicep compile as unprovable, §9 records the compile passing and
 the response document, and a new §10 is the disposition of every finding alongside the two corrections.
+
+### Prompt 379 — Review of Deepseek round-3 reply
+User supplied Deepseek's reply to round 3. Verified fixes on main (387f2192); found the workflow `job create` comment-in-continuation defect and the stale execution poll; wrote `PlanDocs/PLAN-030-Review-Round-4.md`. No code changed.
