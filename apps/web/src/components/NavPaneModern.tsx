@@ -4,7 +4,7 @@ import { AlertTriangle, ChevronDown, Compass, Pin, Rows3, Star, type LucideIcon 
 import type { NavNode } from "./Layout";
 import { KumoWordmark } from "./KumoWordmark";
 import {
-  FAVORITES_NODE_ID, FOLD_THRESHOLD, NAV_STORAGE_KEYS, buildNavPane, orderRows, readNavUsage, recordNavUse,
+  FAVORITES_NODE_ID, NAV_STORAGE_KEYS, buildNavPane, orderRows, readNavUsage, recordNavUse,
   type NavDestination, type NavDomain, type RowOrder, type UseRecord,
 } from "../lib/navModel";
 
@@ -276,6 +276,32 @@ export function NavPaneModern({
    */
   const hasUsage = rest.visible.some((item) => usage[item.id]);
 
+  /**
+   * The section's rows as they are drawn: a leading row outside any group, then one block per group.
+   *
+   * Null for a section that declares no groups — which is most of them — and then the pane draws its
+   * single "In use"/"Sections" list exactly as it always has. A section that does declare groups is
+   * drawn as its own table of contents: each block gets its heading and the hairline the eye needs to
+   * see where one subject stops and the next begins.
+   */
+  const rowGroups = useMemo(() => {
+    const items = rest.visible;
+    if (!items.some((item) => item.group)) return null;
+    const blocks: { key: string; label: string; items: NavDestination[] }[] = [];
+    const leadItems: NavDestination[] = [];
+    for (const item of items) {
+      if (!item.group) {
+        // A row with no group leads the section; anything else group-less follows the block above it.
+        if (!blocks.length) leadItems.push(item);
+        continue;
+      }
+      const last = blocks[blocks.length - 1];
+      if (last && last.label === item.group) last.items.push(item);
+      else blocks.push({ key: item.group, label: item.group, items: [item] });
+    }
+    return { leadItems, blocks };
+  }, [rest.visible]);
+
   // The badge belongs to the alert board, not to the page that configures it: the settings row lives
   // under Administration and must not put a count on Administration's rail row.
   const badgeFor = (id: string) => (id === "service-alerts" ? alertCount : 0);
@@ -336,7 +362,11 @@ export function NavPaneModern({
     const isActive = domain.id === activeId || (domain.to ? isPathIn(domain.to) : false);
     const isOpen = domain.id === openId;
     const isKumo = domain.id === KUMO_DOMAIN_ID;
-    const badge = domain.items.reduce((n, item) => n + badgeFor(item.id), 0);
+    // A domain that is a page has no rows to count, so its count is named rather than summed — see
+    // `NavDomain.badgeId`.
+    const badge = domain.badgeId
+      ? badgeFor(domain.badgeId)
+      : domain.items.reduce((n, item) => n + badgeFor(item.id), 0);
     // A domain that is a page stands for the tree node behind that page rather than for a node named
     // after itself, so the row's own menu — where pinning lives — has something to open.
     const node = nodeById.get(domain.nodeId ?? domain.id);
@@ -662,6 +692,17 @@ export function NavPaneModern({
                 {order === "learned" ? <Rows3 size={14} /> : <Compass size={14} />}
               </button>
             </div>
+            {/*
+              The ordering note gets a line of its own rather than a corner of the first heading: it
+              describes the whole list, and in a heading it wrapped to two lines against the group's own
+              label. It also has to say how to stop it — an ordering somebody cannot turn off is a list
+              that moves for no visible reason.
+            */}
+            {hasUsage && order === "learned" && (
+              <p className="mt-1.5 px-1 text-[10px] text-gray-700">
+                Ordered by what you open — the button above keeps it still.
+              </p>
+            )}
           </div>
 
           <div className="flex-1 overflow-y-auto py-1 min-h-0">
@@ -674,16 +715,27 @@ export function NavPaneModern({
             ) : (
               <>
                 {group("pinned", "Pinned", pinned)}
-                {group(
-                  "rows",
-                  hasUsage && order === "learned" ? "In use" : "Sections",
-                  rest.visible,
-                  hasUsage && openDomain.items.length > FOLD_THRESHOLD && order === "learned" ? (
-                    <span className="ml-auto text-[10px] text-gray-700" title="Rows are folded only once you have opened something in this section">
-                      ordered by what you open
-                    </span>
-                  ) : null,
-                )}
+                {(() => {
+                  if (!rowGroups) {
+                    return group("rows", hasUsage && order === "learned" ? "In use" : "Sections", rest.visible);
+                  }
+                  return (
+                    <>
+                      {rowGroups.leadItems.map(row)}
+                      {rowGroups.blocks.map((block, index) => (
+                        <div
+                          key={block.key}
+                          /* The hairline, and only where it separates something from something: a rule
+                             above the very first block of a section with no lead row would be a line
+                             between a heading and the filter box. */
+                          className={index > 0 || rowGroups.leadItems.length > 0 ? "mt-1 border-t border-surface-border/60 pt-1" : "mt-1"}
+                        >
+                          {group(block.key, block.label, block.items)}
+                        </div>
+                      ))}
+                    </>
+                  );
+                })()}
                 {rest.folded.length > 0 && (
                   <div className="mt-1 border-t border-surface-border/60 pt-1">
                     <button

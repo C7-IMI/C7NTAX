@@ -10175,7 +10175,6 @@ and the two parts cannot disagree about a figure.
 anywhere**, which is why `invoice.send` is shown in the Studio as a message with no sender behind it rather
 than as a working one; and the ticket composer appended a **hard-coded footer paragraph** to every note it
 sent, which the template and the brand kit now own.
-
 ---
 
 ### Prompt 371 — Branding into a section, and away from "Other"
@@ -10226,3 +10225,58 @@ its first crumb with `getPageTitle("/admin")`, and `/admin` is a real page — t
 Studio, the audit log and System Branding alike. The bar's comment says it shows "the section you are in", so
 it now takes the section from the breadcrumb trail, which already knew it; the trail is computed once for the
 three things that draw it.
+
+---
+
+### Prompt 372 — Group Administration, pin Overview, and make Service Alerts a page
+
+**Timestamp:** 2026-10-09 21:21 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.9.034** — Administration grouped into subjects, and a section that stops moving.
+
+**Prompt**
+
+> Group the Items in the Adminstration menu in a bit more logical order. Also Overview should always be at
+> the top. I don't necessarily mind the items shifting as you click on them, but it start to get confusing and
+> easy to lose your place after a while. Reorder/regroup them with dividers like (Pasted Image 2) and then I'll
+> decide if I want to disable the automatic shifting to the top of the selected subsection. Keep the gradient
+> highlight of the selected one, though. That looks fantastic.
+>
+> I also think Alert Webhooks and Uptime Monitors should be moved to the Administration section (Pasted Image
+> 3). Do that as part of the regrouping/reodering.
+>
+> Make the Service Alerts act like Today, where clicking on the parent just takes you to the Service Alerts
+> page, with no flyout menu
+
+**The diagnosis**
+
+Thirteen rows in one list, ranked globally by what had been opened last, tail folded into "Everything else".
+Nothing was wrong with any single row; the section had no shape. So the reader could not learn what it
+contained, and it reordered under their hand — "the third one down" was a different page each week. The pane
+already had every mechanism this needed: `DomainSpec.rows` could nest children, `group()` drew a heading with
+a count, `orderRows` took an `az | learned` mode, and the toggle for it was already in the panel header.
+
+**What I built**
+
+- `DomainSpec.rows` gained `group` (the subject a row belongs to, by its label) and `lead` (the row a section
+  is entered through). A child inherits its parent's group, because a hub's pages are part of the hub's subject.
+- `orderRows` became subject-aware: ranking happens **inside** a subject, and a section that declares subjects
+  is never folded. Sections with no subjects — most of them — behave exactly as before, fold included, so
+  nothing else in the application changed behaviour.
+- The pane draws each subject's heading and a hairline above it, and the "ordered by what you open" note moved
+  to a line of its own under the filter, where it has room to say *the button above keeps it still* — which is
+  the answer to the owner's next question.
+
+**The one thing I chose for them, and why.** The threshold for folding is per-section, and a section that
+declares subjects no longer folds at all. A heading is a promise that the rows beneath it are that subject's
+rows; hiding some of them in "Everything else" at the foot of the panel breaks the promise, and the bucket was
+the thing the grouping was introduced to replace. Folding stays exactly as it was for ungrouped sections.
+
+**The badge nearly went with it.** Service Alerts became a page-domain, and the rail row's count was computed
+by summing the domain's rows — which is now zero. `NavDomain.badgeId` names the node the count comes from, so
+the one alarming number on the rail survives the section becoming a single click.
+
+**Verified** on the running app: the five subjects with their rows, Overview first and outside every subject,
+both A–Z and learned modes (A–Z sorts inside each subject and keeps the hub ahead of its own children),
+Service Alerts navigating to `/service-alerts` with no panel, its badge still reading 4, and the classic
+sidebar unchanged — it reads the tree, which never moved.

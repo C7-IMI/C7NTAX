@@ -35,6 +35,21 @@ export interface NavDestination {
   danger?: boolean;
   /** Filled in by the caller: the live service-alert count. */
   badge?: number;
+  /**
+   * The group this row belongs to, by its label.
+   *
+   * A row that names a group is kept inside it — ordered with its neighbours and never folded away from
+   * them — and the pane draws the group's name above it and a hairline between it and the group before.
+   * The label is the whole declaration: there is no separate list of groups to keep in step.
+   */
+  group?: string;
+  /**
+   * The row that leads a section: always first, never reordered and never folded.
+   *
+   * For the one row a section is entered through — Overview in Administration, say — where being moved
+   * down the list by somebody else's usage is the same as disappearing.
+   */
+  lead?: boolean;
 }
 
 export interface NavDomain {
@@ -65,6 +80,14 @@ export interface NavDomain {
    * have nothing to offer.
    */
   nodeId?: string;
+  /**
+   * The node whose count this domain's rail row reports.
+   *
+   * Read from the node rather than summed over `items`, because a domain that **is a page** has no rows
+   * to sum: Service Alerts became a page with the badge still on its rail row, and a count computed from
+   * its contents would have silently become zero at exactly the moment the section mattered.
+   */
+  badgeId?: string;
 }
 
 interface DomainSpec {
@@ -86,7 +109,19 @@ interface DomainSpec {
     note?: string;
     /** The fallback hint for a child that names none — the hub rows' phrase. */
     childNote?: string;
+    /**
+     * The group this row sits in, by its label — see `NavDestination.group`.
+     *
+     * A child inherits the group of the row that owns it, because a hub's pages are part of the hub's
+     * subject: Configuration's two settings rows belong under Configuration's heading, not adrift below
+     * it.
+     */
+    group?: string;
+    /** See `NavDestination.lead`. */
+    lead?: boolean;
   }>;
+  /** See `NavDomain.badgeId`. */
+  badgeId?: string;
   /** See `NavDomain.to` — a domain that navigates rather than opens. */
   to?: string;
 }
@@ -245,57 +280,74 @@ const DOMAIN_SPECS: DomainSpec[] = [
     icon: Shield,
     what: "How this instance is wired: connections, access, and every setting behind them.",
     rows: [
-      { id: "c7nc-overview" },
-      { id: "c7nc-services" },
-      { id: "c7nc-models" },
-      { id: "c7nc-email" },
-      { id: "c7nc-flexpoint" },
-      { id: "c7nc-apps" },
-      { id: "users-list" },
-      { id: "users-roles" },
-      { id: "admin-api" },
-      { id: "admin-email" },
-      { id: "admin-security" },
-      { id: "admin-sso" },
-      { id: "admin-logs" },
-      { id: "admin-system" },
-      // System Branding is a section rather than four rows beside the settings, and it is the same shape
-      // Configuration already has: a parent row that **is** a page — here the Identity page — with the rest
-      // of its views indented beneath it. The parent is the identity because that is the page people come
-      // for, so a fourth "Identity" child repeating the row above it would be a click for nothing.
+      // Overview leads, always: it is how the section is entered, and the one row whose movement costs
+      // somebody their bearings.
+      { id: "c7nc-overview", lead: true },
+
+      // What this instance is connected to — the C7NC product's own tabs, in the order its own tab strip
+      // uses, so the navigation and the page cannot disagree about the shape of it.
+      { id: "c7nc-services", group: "Connections" },
+      { id: "c7nc-models", group: "Connections" },
+      { id: "c7nc-email", group: "Connections" },
+      { id: "c7nc-flexpoint", group: "Connections" },
+      { id: "c7nc-apps", group: "Connections" },
+
+      // Who may get in, and with what.
+      { id: "users-list", group: "Access" },
+      { id: "users-roles", group: "Access" },
+      { id: "admin-api", group: "Access" },
+      { id: "admin-sso", group: "Access" },
+      { id: "admin-security", group: "Access" },
+
+      // What the outside sees of us: the record every document and every message wears, and then the
+      // messages themselves. One group because they are one question — what does a client see when it
+      // looks at us — asked about paper and about mail.
       {
         id: "admin-branding",
+        group: "Identity & messages",
         children: [
           { id: "admin-branding-documents", note: "each family's own" },
           { id: "admin-branding-clients", note: "one client's" },
           { id: "admin-branding-reports", note: "one report's" },
         ],
       },
-      // Thirteen setting rows become one destination. The hub already exists and already presents
-      // these as sections; the navigation was the only place that insisted on listing them all.
-      { id: "admin-configuration", children: ["admin-boards", "admin-service-alerts"] },
+      { id: "admin-email", group: "Identity & messages" },
+
+      // The settings themselves. Thirteen setting rows became one destination — the hub already exists and
+      // already presents these as sections; the navigation was the only place that insisted on listing
+      // them all.
+      { id: "admin-configuration", group: "Settings", children: ["admin-boards", "admin-service-alerts"] },
+      { id: "admin-system", group: "Settings" },
+      { id: "admin-logs", group: "Settings" },
+
+      // What watches, and where it reports.
+      //
+      // These two arrived from the Service Alerts domain when that became a single page. A monitor, the
+      // endpoint an alert is posted to and the board an alert lands on are three parts of one story, but
+      // they are two different questions: *what is wrong right now* is the board, and *what is watching
+      // and where does it post* is a setting. The board kept the rail; the settings came here.
+      { id: "admin-monitors", group: "Monitoring" },
+      { id: "admin-webhooks", group: "Monitoring" },
     ],
   },
   {
     /**
-     * Service Alerts keeps a parent-level row, and it sits as a section of its own rather than being
-     * buried in the settings drawer.
+     * Service Alerts is a **page**, like Today, and its row navigates instead of opening a column.
      *
-     * The reason is the badge. This is the only row in the navigation that reports the state of the
-     * instance rather than the shape of it: burying it one level inside a domain means the count is
-     * invisible until somebody opens that domain, which is the wrong trade for the one alarming
-     * number on the screen. The two rows that raise the alerts came with it rather than staying
-     * behind in the settings drawer, because a monitor and the alert it opens are one story.
+     * It used to open a three-row panel, which is a click to reach a list of one destination you have
+     * already decided to look at: the board *is* the answer to "what is wrong right now", and the two
+     * rows that raise its alerts moved to Administration, where the rest of what watches and posts
+     * lives. The badge stays, and it is why `badgeId` exists — a domain that is a page has no rows to
+     * count, and a count summed over nothing is zero, which would have taken the one alarming number on
+     * the rail away at exactly the moment the section became useful.
      */
     id: "alerts",
     label: "Service Alerts",
     icon: AlertTriangle,
-    what: "What is currently wrong, and the checks and endpoints that raise it.",
-    rows: [
-      { id: "service-alerts" },
-      { id: "admin-monitors" },
-      { id: "admin-webhooks" },
-    ],
+    what: "What is currently wrong: the outage board, what raised each alert, and where it was read from.",
+    to: "/service-alerts",
+    badgeId: "service-alerts",
+    rows: [],
   },
   {
     /**
@@ -416,7 +468,17 @@ export function buildNavPane(
 
   const claimed = new Set<string>();
 
-  const toDestination = (id: string, extra?: { child?: boolean; note?: string }): NavDestination | null => {
+  const toDestination = (
+    id: string,
+    extra?: { child?: boolean; note?: string; group?: string; lead?: boolean },
+  ): NavDestination | null => {
+    /** The three fields every destination may carry, whichever kind of node it came from. */
+    const common = {
+      ...(extra?.child ? { child: true } : {}),
+      ...(extra?.note ? { note: extra.note } : {}),
+      ...(extra?.group ? { group: extra.group } : {}),
+      ...(extra?.lead ? { lead: true } : {}),
+    };
     const node = byId.get(id);
     if (node && !node.children && node.to) {
       claimed.add(id);
@@ -425,8 +487,7 @@ export function buildNavPane(
         to: node.to,
         label: LABEL_OVERRIDES[id] ?? node.label,
         icon: node.icon,
-        ...(extra?.child ? { child: true } : {}),
-        ...(extra?.note ? { note: extra.note } : {}),
+        ...common,
         ...(node.danger ? { danger: true } : {}),
       };
     }
@@ -438,8 +499,7 @@ export function buildNavPane(
         to: extraNode.to,
         label: extraNode.label,
         icon: extraNode.icon,
-        ...(extra?.child ? { child: true } : {}),
-        ...(extra?.note ? { note: extra.note } : {}),
+        ...common,
       };
     }
     return null;
@@ -448,13 +508,18 @@ export function buildNavPane(
   const buildDomain = (spec: DomainSpec): NavDomain => {
     const items: NavDestination[] = [];
     for (const row of spec.rows) {
-      const destination = toDestination(row.id, { note: row.note });
+      const destination = toDestination(row.id, { note: row.note, group: row.group, lead: row.lead });
       if (!destination) continue;
       items.push(destination);
       for (const child of row.children ?? []) {
         const childId = typeof child === "string" ? child : child.id;
         const note = typeof child === "string" ? undefined : child.note;
-        const nested = toDestination(childId, { child: true, note: note ?? row.childNote ?? "in the hub" });
+        // A child is filed under the row that owns it, group and all.
+        const nested = toDestination(childId, {
+          child: true,
+          note: note ?? row.childNote ?? "in the hub",
+          group: row.group,
+        });
         if (nested) items.push(nested);
       }
     }
@@ -479,6 +544,7 @@ export function buildNavPane(
       ...(byId.get(spec.id)?.danger ? { danger: true } : {}),
       ...(spec.to ? { to: spec.to } : {}),
       ...(nodeId ? { nodeId } : {}),
+      ...(spec.badgeId ? { badgeId: spec.badgeId } : {}),
     };
   };
 
@@ -632,18 +698,53 @@ export function orderRows(
   order: RowOrder,
 ): OrderedRows {
   const units = toUnits(items);
+  /**
+   * The rows that lead a section: held in the order they were declared, above everything, whatever the
+   * usage says. A section's own entrance moving down the list because somebody has been opening a
+   * settings page all week is the pane losing the reader's place on their behalf.
+   */
+  const leads = units.filter((unit) => unit.parent.lead);
+  const body = units.filter((unit) => !unit.parent.lead);
+  const withLeads = (rest: RowUnit[]): NavDestination[] => flattenUnits([...leads, ...rest]);
+
+  /**
+   * A section that declares groups is **ordered inside them and never folded**.
+   *
+   * Inside, because ranking across groups pulls a row out of the group it was deliberately put in and
+   * scatters the headings. Never folded, because a heading is a promise that the rows under it are that
+   * group's rows: hiding some of them into a bucket at the foot of the panel breaks the promise, and the
+   * bucket is what the grouping was introduced to replace. Folding stays exactly as it was for the
+   * sections that have no groups — where it is still the only thing keeping a long list short.
+   */
+  if (body.some((unit) => unit.parent.group)) {
+    const groups: RowUnit[][] = [];
+    for (const unit of body) {
+      const last = groups[groups.length - 1];
+      // Groups are taken in declared order, so a group's position is a decision rather than an accident.
+      if (last && last[0]?.parent.group === unit.parent.group) last.push(unit);
+      else groups.push([unit]);
+    }
+    const sorted = groups.flatMap((group) => {
+      if (order === "az") return [...group].sort((a, b) => a.parent.label.localeCompare(b.parent.label));
+      const used = group.filter((unit) => [unit.parent, ...unit.children].some((item) => usage[item.id]));
+      const unused = group.filter((unit) => !used.includes(unit));
+      // A stable sort, so equally-used rows keep the order the section declared.
+      return [...used.sort((a, b) => unitUse(b, usage) - unitUse(a, usage)), ...unused];
+    });
+    return { visible: withLeads(sorted), folded: [] };
+  }
 
   if (order === "az") {
     return {
-      visible: flattenUnits([...units].sort((a, b) => a.parent.label.localeCompare(b.parent.label))),
+      visible: withLeads([...body].sort((a, b) => a.parent.label.localeCompare(b.parent.label))),
       folded: [],
     };
   }
 
-  const used = units.filter((unit) => [unit.parent, ...unit.children].some((item) => usage[item.id]));
+  const used = body.filter((unit) => [unit.parent, ...unit.children].some((item) => usage[item.id]));
   if (used.length === 0) return { visible: items, folded: [] };
 
-  const unused = units.filter((unit) => !used.includes(unit));
+  const unused = body.filter((unit) => !used.includes(unit));
   used.sort((a, b) => unitUse(b, usage) - unitUse(a, usage));
 
   // What is left of the budget after the rows actually in use, spent on whole units.
@@ -655,7 +756,7 @@ export function orderRows(
   }
   const folded = unused.filter((unit) => !kept.includes(unit));
 
-  return { visible: flattenUnits([...used, ...kept]), folded: flattenUnits(folded) };
+  return { visible: withLeads([...used, ...kept]), folded: flattenUnits(folded) };
 }
 
 export const NAV_STORAGE_KEYS = {

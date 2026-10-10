@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.033 | Last Updated: 2026-10-09
+## Version: 2026.10.9.034 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,43 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.034 — Administration grouped into subjects, and a section that stops moving
+
+Thirteen rows in one flat list, ranked by what you had opened last, with the tail folded into "Everything else".
+It worked row by row and failed as a whole: there was no way to learn what the section *contained*, and the list
+reordered itself underneath the reader, so "the third one down" was a different page every week.
+
+- **[New]** **A section can declare subjects**, and Administration now does: **Connections** (the C7NC
+  connections and models, in the product's own tab order), **Access** (users, roles, API access, single
+  sign-on, the sign-in audit), **Identity & messages** (System Branding with its three views, and the Email
+  Studio), **Settings** (the settings hub with its two pages, system settings, the audit trail) and
+  **Monitoring** (uptime monitors and alert webhooks). Each subject gets its own heading, its count and a
+  hairline above it, so the section reads as a table of contents rather than a list.
+- **[New]** **A row can lead its section.** Overview is always first in Administration: never reordered,
+  never folded, whatever anybody has been opening. It is how the section is entered, and the one row whose
+  movement costs somebody their bearings.
+- **[Update]** **Ordering and folding are now subject-aware.** Ranking happens **inside** a subject rather
+  than across the whole section, so use can still bring a page up without the subjects moving under your
+  hand — the list adapts while staying recognisable, which was the actual complaint. A section that declares
+  subjects is **not folded**: a heading is a promise that the rows beneath it are that subject's rows, and
+  hiding some of them in a bucket at the foot of the panel breaks it. Sections with no subjects behave
+  exactly as before, fold included.
+- **[Update]** **The ordering note says how to stop it.** "Ordered by what you open" now sits on a line of
+  its own under the filter — where it has room to say *the button above keeps it still* — instead of being
+  squeezed into the first heading, where it wrapped to two lines against the subject's name. The A–Z button
+  was already there; it is now discoverable at the moment somebody wonders why the list moved.
+- **[Update]** **Alert Webhooks and Uptime Monitors moved to Administration → Monitoring.** A monitor, the
+  endpoint an alert posts to and the board an alert lands on are one story, but they answer two different
+  questions: *what is wrong right now* is the board, and *what is watching, and where does it post* is a
+  setting. The board kept the rail; the settings now live with the rest of the settings.
+- **[Update]** **Service Alerts is a page, like Today.** Its rail row navigates instead of opening a
+  three-row panel — a click to reach a list of one destination you had already decided to look at. The live
+  count still rides the row, which is why `NavDomain.badgeId` now exists: a domain that is a page has no rows
+  to sum, and a count computed from nothing would have quietly become zero at exactly the moment the section
+  mattered most.
 
 ---
 

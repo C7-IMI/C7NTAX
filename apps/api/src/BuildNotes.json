@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.9.034",
+    "date": "2026-10-09",
+    "title": "Administration grouped into subjects, and a section that stops moving",
+    "changes": [
+      {
+        "text": "**A section can declare subjects**, and Administration now does: **Connections** (the C7NC",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A row can lead its section.** Overview is always first in Administration: never reordered,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Ordering and folding are now subject-aware.** Ranking happens **inside** a subject rather",
+        "type": "Update"
+      },
+      {
+        "text": "**The ordering note says how to stop it.** \"Ordered by what you open\" now sits on a line of",
+        "type": "Update"
+      },
+      {
+        "text": "**Alert Webhooks and Uptime Monitors moved to Administration → Monitoring.** A monitor, the",
+        "type": "Update"
+      },
+      {
+        "text": "**Service Alerts is a page, like Today.** Its rail row navigates instead of opening a",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.033",
     "date": "2026-10-09",
     "title": "Branding gets a section, and the rail stops saying \"Other\"",
