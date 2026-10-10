@@ -10678,3 +10678,6 @@ revision" is right about the name and wrong about the mechanism: `containerapp u
 tag creates a new revision, and `latestRevisionName` is that new one. The conclusion stands and differs in
 the safe direction; the rollback case is the one where the suffix already exists with a different tag, and
 that is what the three assertions cover.
+
+### Prompt 382 — Review of Deepseek round-6 reply
+Verified round-6 fixes on main (104edcf9): PowerShell image check, handlebars floor, preflight green, env scan. Wrote `PlanDocs/PLAN-030-Review-Round-7.md`. No code changed.
