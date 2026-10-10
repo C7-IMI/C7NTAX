@@ -22,6 +22,33 @@ first deployment, because afterwards they are migrations.
 
 ---
 
+## Update — round 3 (read this before the rest)
+
+**The package is not ready to deploy.** A third review ran the deployment commands through the real Azure
+CLI's parser, which needs no subscription, and found that **neither the deploy script nor the CI workflow
+can complete a deployment as written**. The templates compile and the scripts parse as PowerShell and YAML,
+which is why every earlier check passed: the defects are in the *arguments* of `az` commands.
+
+| What fails | Why it matters |
+|---|---|
+| The revision step, `az containerapp update --target-port` | The flag does not exist on that command. Every script run stops here. An earlier note recorded it as confirmed; it was not. |
+| The health check on the new revision | It looks for a property revisions do not have, so it can never see the revision become healthy. Script and workflow. |
+| The traffic shift (and the printed rollback command) | `--revision` and `--weight` are not options of `ingress traffic set`. A new revision is never promoted. Script, workflow and rollback. |
+| The migration job | Its command is passed as one word instead of four, so the container is asked to run a program that does not exist. Script and workflow. |
+
+None of these puts anything at risk — the old revision keeps serving, which is the design working — but no
+deployment can finish. Round 2's two fixes (the `job update` flags and the new `/api/ready` check) are
+correct. The review also found that the new readiness check would **refuse a rollback**, that dev cannot
+prove the production-only settings, and two application items the go-live bar did not list: the app does not
+yet know it sits behind a proxy (so every user shares one rate-limit bucket and every audit row records the
+proxy's address), and production is set to **two replicas** although the plan says not to run more than one
+until in-memory state and background workers are made safe for it.
+
+**Nothing has been fixed yet.** The review is findings only. See
+`PlanDocs/PLAN-030-Review-Round-3.md` for each defect with the exact correction, and plan §8.15.
+
+---
+
 ## The five things to know
 
 | # | Thing | Why it matters |
@@ -57,6 +84,17 @@ yet, and both look finished because they are spelled correctly.
 ## Before the first production deployment
 
 These are the items that must be settled first. Everything else can follow.
+
+- [ ] **Fix the promotion path's `az` commands** — the five defects in the round-3 review (§A1–A5, plus the
+      stale-execution poll A6), in the script and the workflow together. Then add the CLI-syntax guard to
+      preflight so it cannot return. Nothing deploys until this is done.
+- [ ] **Make the readiness check allow a rollback** (round-3 §B2): "everything this image ships has been
+      applied", not "the newest applied equals the newest shipped".
+- [ ] **Decide the replica count and the proxy setting** (round-3 §C1, §C2). Recommended for the first
+      deployment: one replica, and the proxy hop count set so client addresses are real.
+- [ ] **Rehearse the production parameter set once in a throwaway resource group** (round-3 §B5): it is the
+      only run that can prove the closed Key Vault, zone-redundant HA and the creation-time geo-redundant
+      backup, none of which dev exercises.
 
 - [x] **Fix the first-run image hand-off** — **done in the template** (plan §8.13). The app is now created
       once, against the real image, in two passes, so the probe-port hand-off that made a deployment from
@@ -101,7 +139,12 @@ Being explicit, because "applied" and "working" are different words:
 - **The two-pass first-run create is unrun**, which is the one thing that changed most recently: pass 1
   without the app, the image build, pass 2 with it. It is designed to remove the failure the previous
   briefing predicted, and it has not been executed against ARM.
-- **No CI run has happened since the workflow fix.**
+- **No CI run has happened since the workflow fix — and the workflow would not complete if one did.** Round 3
+  found that its health check, traffic shift, rollback step and migration command use arguments the Azure CLI
+  rejects or mishandles (see the update above). The same is true of the script.
+- **The script's `az` calls had never been through the CLI's own parser until round 3.** "Compiled and
+  parsed" meant the Bicep compiler and the PowerShell parser, which cannot see a wrong flag on an `az`
+  command.
 - **Review round 2's two findings are fixed and exercised locally, not run against Azure**: the
   `az containerapp job update` flags (the update path now moves only the image) and the readiness
   endpoint (`GET /api/ready`, with `?deep=1` checking that the newest migration in the image has been
@@ -119,7 +162,8 @@ Being explicit, because "applied" and "working" are different words:
 | `PlanDocs/PLAN-030-Response-to-Review.md` | The point-by-point reply to the second review, including where the earlier reasoning was wrong and why — and an addendum covering the first-run fix, the database rename, a correction to the plan's own §8.1, and the parked security item. |
 | `PlanDocs/PLAN-030-Review-Round-2.md` | Review round 2 (on the branch that produced it): the `job update` flags and the health gate that cannot see the database. |
 | `PlanDocs/PLAN-030-Response-to-Review-Round-2.md` | The reply to that round, with the verification that the readiness check can actually fail. |
-| `PlanDocs/PLAN-030-Review-of-Applied-Changes.md` | The second review itself (on the branch that produced it). |
+| `PlanDocs/PLAN-030-Review-Round-3.md` | Review round 3: the deployment commands run through the Azure CLI's parser, the five defects that stop a deployment completing, the rollback flaw in the readiness check, and the replica and proxy items. Findings only. |
+| `PlanDocs/PLAN-030-Review-of-Applied-Changes.md` | The second review itself. **Not in the repository** — it is on neither `main` nor `claude/plan-030-bicep-go-live`, though several documents refer to it. Its findings survive in the response above and in plan §7–§9. Restore it or remove the references. |
 | `infra/README.md` | The operational runbook: what to run, secret rotation, the ingress checklist, the cost table and the open items. |
 | `docs/API.md` §13 | The maintenance rule for the API documentation, for whoever integrates with this next. |
 

@@ -9,6 +9,14 @@
 > **compile** against the real Bicep CLI (0.48.1, no warnings). Four items were deliberately **not**
 > applied and six decisions are still the operator's: see *§7 What landed, and what did not* below.
 >
+> **Round 3 (2026-10-09, `PLAN-030-Review-Round-3.md`): not ready to deploy.** The templates compile,
+> but the commands that *promote* a revision had never been run through the Azure CLI's parser, and five
+> of them fail it: `az containerapp update --target-port`, the health query on `properties.revisionSuffix`,
+> `revision show` by suffix, `ingress traffic set --revision/--weight`, and the migration job's
+> one-argument `--command` — in the script, the workflow, or both. The round-2 fixes (the `job update`
+> flags and `/api/ready`) are correct, with one flaw in the deep check that blocks rollbacks. Findings
+> only: nothing has been applied yet. See §8.15.
+>
 > **Revised against the review of the applied changes** (`PLAN-030-Review-of-Applied-Changes.md`, §1–§6
 > applied; §7 there — the least-privilege Postgres role, this plan's 2.3 — is tracked separately and
 > deliberately not applied):
@@ -452,6 +460,10 @@ not finish, and that the fix it recommended — moving the ingress port — was 
 option (b) was recorded as the correct fix and deliberately not implemented then, because a flow change
 wants a real run rather than a second blind edit. It is implemented now; the real run is still owed.
 
+*(Round 3 correction: the sentence above is right about probes and wrong about the flag. `--target-port`
+is an argument of `az containerapp ingress update`, not of `az containerapp update` — CLI 2.91.0 rejects it
+there. The conclusion, option (b), stands, and the flag turns out to be unnecessary. See §8.15.)*
+
 **What it does.** The app is created **once, against the real image**, in two passes:
 
 1. **Pass 1** (`createApp=false`) — everything except the app, the container registry above all, since
@@ -521,6 +533,50 @@ exercised locally — **compiled and run against the dev instance, not against A
 (436 routes); `validate-bicep.mjs` compiles all three files with **0 warnings**; `preflight.mjs` reports
 only the two known pre-existing failures; and the endpoint was exercised live in all three states above.
 **Not run:** the runner's CLI version, and any real deployment.
+
+### 8.15 — Review round 3: the promotion path had never met the CLI
+
+**Written 2026-10-09, findings only — nothing below is applied.** The full review is
+`PLAN-030-Review-Round-3.md`; this is what the plan needs to carry from it.
+
+Rounds 1 and 2 read the code. Round 3 **ran the commands**: Azure CLI 2.91.0 in a scratch virtualenv (no
+subscription is needed to *parse* a command), every `az` call in `deploy-env.ps1` and `deploy-azure.yml`
+run with placeholder values, and the installed CLI's own source and models read where the help text did not
+settle a question. The Bicep compile reproduced (0.48.1, 0 warnings).
+
+**Five defects stop the deployment from completing — on both paths or one** — each in a command that
+compiles and parses as PowerShell or YAML, which is why nothing so far could see it:
+
+| # | Defect | Where |
+|---|---|---|
+| A1 | `az containerapp update` has **no `--target-port`** (`ingress update` does). This also falsifies the "confirmed" recorded in the first response, the script comments and the README | script, every run |
+| A2 | The health query filters on `properties.revisionSuffix`; a revision has no such property (only `template.revisionSuffix`), so the poll never matches and times out after ten minutes | script and workflow |
+| A3 | `revision show --revision` takes the revision **name** (`<app>--<suffix>`), not the suffix | script and workflow |
+| A4 | `ingress traffic set` has **no `--revision` or `--weight`**: it is `--revision-weight <name>=<weight>`. The printed rollback hint has the same error | script, workflow, rollback step |
+| A5 | The migration job's `--command 'npx prisma migrate deploy'` is a one-element list: a program literally named that. It must be `--command npx --args prisma migrate deploy` | script and workflow |
+
+Round 2 itself stands: `job update` takes only `--image` (confirmed against the parser), and `/api/ready`
+is the right design. Its deep check has one flaw: it demands that the newest migration the image ships
+**equals** the newest applied, so a rollback to an older image after a newer migration is refused by the
+gate that exists to protect it. The check should be "everything the image ships has been applied"
+(containment), with a test for each direction.
+
+**Before the first production deployment, beyond the five:** the revision suffix repeats on a re-run or a
+rollback (B1); the `what-if` output is discarded while the log says it was reviewed (B3); pgaudit is
+loaded and configured but never created in the database, so §2.6's "pgaudit on" is overstated until a
+statement is seen in Log Analytics (B4); and dev cannot prove the prod-only paths — the closed Key Vault,
+zone-redundant HA and Container Apps, and creation-time geo-redundant backup — so the prod parameter set
+should be rehearsed once in a throwaway resource group (B5). Two application items are not on the go-live
+bar and should be: `trust proxy` is unset, so behind Container Apps every caller shares one rate-limit
+bucket and every audit row records the proxy (C1); and prod is set to **two** replicas while PLAN-016 and
+PLAN-019 say not to run more than one until in-memory state moves out of process, a rule that also covers
+the background workers, the WebSocket registry and the mailbox poller (C2). The recommendation is
+`minReplicas: 1`, `maxReplicas: 1` for the first deployment, stated as a decision.
+
+**Hold the bar:** until §A is fixed, a `scripts/azure/check-cli-syntax.mjs` guard is in `preflight.mjs`,
+and one create-from-empty run has completed on a throwaway dev resource group, the status of the
+promotion path is **fails the CLI's parser in five places, and has not been run** — not "compiled and
+reviewed".
 
 ## 9. Two review comments, assessed
 ### 9.1 — "Probably don't need geo redundancy. That'll shave the cost."

@@ -34,6 +34,14 @@ built again. PLAN-016 §16 is the full description of that model.
 > against the CLI's own command module, but a probe's `port` belongs to the revision template, so the
 > ingress port moves and the probes do not until the next Bicep run. Review §4's option (b) — create
 > the app only against the real tag — avoids the hand-off altogether and is the cleaner fix.
+>
+> **Round 3 correction (`PlanDocs/PLAN-030-Review-Round-3.md`): the package is not ready to deploy.** The
+> sentence above is wrong about the flag: `--target-port` is **not** an argument of `az containerapp
+> update` (Azure CLI 2.91.0 rejects it; it belongs to `az containerapp ingress update`). Four more `az`
+> invocations in the script and the workflow fail the CLI's parser or misuse it — the health query, `revision
+> show`, `ingress traffic set` and the migration job's `--command` — so neither path can complete a
+> deployment yet. The templates compile; the *commands that promote a revision* had never been run through
+> the CLI. Findings only; the fixes are listed there.
 
 ## What is in the package
 
@@ -256,6 +264,14 @@ with no rotation runbook is an outage with a date on it. Calendar the rotations 
 
 - [ ] `node scripts/azure/preflight.mjs` passes
 - [ ] `node scripts/azure/validate-bicep.mjs` (or `az bicep build --file infra/main.bicep`) reports no warnings
+- [ ] **Every `az` command in `deploy-env.ps1` and `deploy-azure.yml` parses** against the current Azure CLI
+      (run each with placeholder values; `Please run 'az login'` is a pass, `unrecognized arguments` is a
+      failure — no subscription needed). Compiling the Bicep and parsing the PowerShell do not check this
+- [ ] A dev run **completes**: create-from-empty on a throwaway resource group, through migration, the
+      health gate and the traffic shift — and a second run, and a rollback to the previous tag
+- [ ] **The prod parameter set rehearsed once in a throwaway resource group** (different `uniqueSuffix`):
+      closed Key Vault with the private endpoint, zone-redundant HA and Container Apps, geo-redundant
+      backup. Dev exercises none of them
 - [ ] `deploy-env.ps1 -Environment dev -WhatIf` output reviewed
 - [ ] `what-if` for **both** environments reviewed and saved alongside the change
 - [ ] Dev deploys from `main` and the pipeline goes green end to end

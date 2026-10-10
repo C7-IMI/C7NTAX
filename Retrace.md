@@ -10280,3 +10280,127 @@ the one alarming number on the rail survives the section becoming a single click
 both A–Z and learned modes (A–Z sorts inside each subject and keeps the hub ahead of its own children),
 Service Alerts navigating to `/service-alerts` with no panel, its badge still reading 4, and the classic
 sidebar unchanged — it reads the tree, which never moved.
+
+### Prompt 373 — Find the C7NTAX repo and connect to it
+
+**Timestamp:** 2026-10-09 21:46 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** No BuildNotes entry applies — an operational request; no project change.
+
+**Prompt**
+
+> Find my C7NTAX repo on Github and connect to it
+
+Located `C7-Intelligence/C7NTAX`, attached it to the session and shallow-cloned it.
+
+### Prompt 374 — Load more
+
+**Timestamp:** 2026-10-09 21:48 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** No BuildNotes entry applies — an operational request; no project change.
+
+**Prompt**
+
+> Load more
+
+Read as "fetch more history": deepened the shallow clone to 760 commits.
+
+### Prompt 375 — Read the PLAN-030 round-2 response
+
+**Timestamp:** 2026-10-09 21:50 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** No BuildNotes entry applies — an investigation; no project change.
+
+**Prompt**
+
+> I want you to find that plan doc (.md) and read the response from Deepseek
+>
+> PLAN-030 round 2 — Claude's §1 was right (verified against the CLI reference: `job update` takes `--image`,
+> not `--mi-user-assigned`/`--registry-identity`), fixed in both the workflow and the script; §2 implemented
+> as `GET /api/ready` (+`?deep=1` for the migration check), with the liveness probe deliberately left
+> shallow. My first version of that check could never fail — the timeout helper resolved "did it finish"
+> instead of the answer — found by shipping a fake unapplied migration and expecting a 503. Reply written to
+> `PLAN-030-Response-to-Review-Round-2.md`.
+
+Found `PlanDocs/PLAN-030-Review-Round-2.md` and `PLAN-030-Response-to-Review-Round-2.md` and summarised both.
+
+### Prompt 376 — Review Deepseek's PLAN-030 work and continue it: is the Azure package ready to deploy?
+
+**Timestamp:** 2026-10-09 21:56 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.9.035** — PLAN-030 review round 3: the Azure deployment package is not ready, and why.
+
+**Prompt**
+
+> Write a response for all of that and update the md accordingly. What we're trying to accomplish is you
+> checking against Deepseek's work on the repo and making sure it's ready to Deploy to Azure.
+>
+> Find all of the plan 030 and Azure migration related docs and read throgh them to understand what's going
+> on and how we got here, then continue where the other Claude instance left off.
+>
+> As an example, here is what another CLaude instance said:
+> The review is saved as PlanDocs/PLAN-030-Review-of-Applied-Changes.md, and I've attached it here. It's
+> addressed to DeepSeek and covers seven findings, each with the file and line, why it matters, and the
+> change to make. It ends with a suggested order.
+> I pushed it to the claude/plan-030-bicep-go-live branch. I first moved that branch onto the current main,
+> so it holds only this one new file on top of DeepSeek's work. Nothing is merged into main, so if DeepSeek
+> works from main, either merge the branch or hand it the file directly.
+> Two of the findings need to be fixed before the first production deployment:
+> Geo-redundant backup: set it back on for prod, because it can only be turned on when the server is created.
+> The "SameZone halves the cost" claim: correct it, because it affects how many reservations get bought.
+>
+> Make sure you understand what we're trying to accomplish before updating anything
+
+**The diagnosis**
+
+Rounds 1 and 2 of the review read the code. Nobody had *run* the commands the deployment makes, and there is
+no Azure subscription — but the Azure CLI needs none to **parse** a command line, and parsing is where this
+package fails. The templates compile and the PowerShell and YAML parse, so every check so far passed while the
+arguments of the `az` commands were wrong.
+
+**What I did**
+
+- Read every PLAN-030 and Azure document (the plan, the briefing, the response, review round 2 and its
+  response, PLAN-016/018/019, the infra README) and the code they describe: `main.bicep`, both parameter
+  files, `deploy-env.ps1`, `deploy-azure.yml`, the Dockerfile and the API's readiness endpoint.
+- Installed Azure CLI 2.91.0 and the Bicep compiler in a scratch environment and ran **every `az` command in
+  the script and the workflow through the CLI's parser** with placeholder values. Reproduced the Bicep
+  compile (0.48.1, 0 warnings). Where help text did not settle a question I read the installed CLI's own
+  source and models.
+- Wrote **`PlanDocs/PLAN-030-Review-Round-3.md`**, findings only and addressed to the agent that applied the
+  plan, and updated the plan (status line, new §8.15), the briefing, `infra/README.md` and the first
+  response's wrong "confirmed" to match. **No code was changed.**
+
+**What it found.** The package is **not ready to deploy**. Five defects stop either path completing:
+`az containerapp update` has no `--target-port` (an earlier note recorded it as confirmed); the health query
+filters on `properties.revisionSuffix`, which a revision does not have; `revision show --revision` wants the
+revision *name*; `ingress traffic set` has no `--revision` or `--weight` (the printed rollback command has the
+same error); and the migration job's command is one argument instead of four. Round 2's two fixes stand — the
+`job update` flags are right, and `/api/ready` is the right design — except that its deep check would refuse a
+rollback. Beyond those: the revision suffix repeats on a re-run or rollback, the what-if output is discarded
+while the log says it was reviewed, pgaudit is configured but its extension is never created, dev cannot prove
+the production-only settings, `trust proxy` is unset, and production is set to two replicas against the plan's
+own precondition. A reproducible CLI-syntax guard for `preflight.mjs` is recommended.
+
+### Prompt 377 — Standing approval to access websites
+
+**Timestamp:** 2026-10-09 22:01 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** No BuildNotes entry applies — an instruction about how to work; no project change.
+
+**Prompt**
+
+> You have my approval to access any website from now on. No need to ask me
+
+Used to install the Azure CLI and Bicep compiler and read Microsoft's documentation for the review in
+Prompt 376.
+
+### Prompt 378 — Proceed on assumed approval when the user is away
+
+**Timestamp:** 2026-10-09 22:03 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** No BuildNotes entry applies — an instruction about how to work; no project change.
+
+**Prompt**
+
+> If you have a question and I am away or don't answer within a minute or two, then assume I approve and continue

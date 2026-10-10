@@ -101,6 +101,12 @@ another argument for (b) over (a).
 `containerapp` argument context (`arg_group 'Ingress'`), so no fallback is needed and I removed the
 `verify` note I had put there.
 
+> **Corrected in round 3 (`PLAN-030-Review-Round-3.md`, §A1).** This was wrong. A shared argument context
+> does not mean every command in the group accepts the argument: `az containerapp update --target-port 4000`
+> fails on Azure CLI 2.91.0 with `unrecognized arguments: --target-port 4000`. The flag belongs to `az
+> containerapp ingress update`. The `verify` note should not have been removed. The statement is kept here so
+> the correction can be read against it.
+
 ## 5. Omitting `traffic` — **accepted; your fix is strictly better than my omission**
 
 **Applied.** `param activeRevision string = ''` with
@@ -155,7 +161,7 @@ applied to the plan's status line. The current position:
 | The creation-time constraint on geo-redundant backup | **Confirmed** from Microsoft's documentation |
 | `SameZone` costs the same as `ZoneRedundant` | **Confirmed** by pricing documentation; the earlier claim was wrong |
 | The quickstart bootstrap image listens on port 80 | **Confirmed** (the image is documented as serving on 80) |
-| `az containerapp update --target-port` moves the ingress port | **Confirmed** — the CLI declares `target_port` on that command |
+| `az containerapp update --target-port` moves the ingress port | ~~**Confirmed** — the CLI declares `target_port` on that command~~ **Wrong (round 3 §A1):** `containerapp update` rejects the flag; it is an `ingress update` argument |
 | **That the first `-Create` run completes** | **No — expected to still fail at the promotion step.** Probes live in the revision template, so the port fix moves the ingress and leaves the probes on the bootstrap image's port. Recommended fix: deploy everything except the app, build into the registry, then create the app with the real tag. See §4 of the response document. |
 | The bootstrap image's probe *path* | **Unverified, and likely a second failure** — it is a static-file server, so `/api/health` probably 404s and ACA counts only 2xx–3xx as success |
 | Whether omitting `ingress.traffic` resets it | **No longer a question** — the field now states the serving revision explicitly |

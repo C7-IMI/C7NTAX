@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.034 | Last Updated: 2026-10-09
+## Version: 2026.10.9.035 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,53 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.035 — PLAN-030 review round 3: the Azure deployment package is not ready, and why
+
+Two reviews of the Azure package read the code, and the templates compile cleanly. Nobody had *run* the
+commands a deployment makes — and there is no subscription to run them against. But the Azure CLI needs none
+to **parse** a command, and parsing is where the package fails: the deploy script and the CI workflow each
+contain `az` calls whose arguments the CLI rejects or mishandles. This change records that, with the exact
+corrections, and corrects the documents that had called the package verified. **No code was changed.**
+
+- **[New]** **`PlanDocs/PLAN-030-Review-Round-3.md`**, a findings-only review addressed to the agent that
+  applied PLAN-030, run against Azure CLI 2.91.0 and Bicep 0.48.1. Five defects stop a deployment
+  completing: `az containerapp update` has no `--target-port`; the health query filters on a revision
+  property that does not exist (`properties.revisionSuffix`); `revision show --revision` takes the revision
+  *name*; `ingress traffic set` has no `--revision` or `--weight` (the printed rollback command has the same
+  error); and the migration job's command is one argument instead of four. A sixth, lower-odds one: the
+  migration poll can read a previous run's result.
+- **[New]** The review's second tier, for before production: the revision suffix repeats on a re-run or a
+  rollback; the what-if output is discarded while the log says it was reviewed; pgaudit is loaded and
+  configured but its extension is never created; dev cannot prove the production-only settings, so the
+  production parameter set should be rehearsed once in a throwaway resource group. And two application items
+  the go-live bar did not list: `trust proxy` is unset, so behind Container Apps every caller shares one
+  rate-limit bucket and every audit row records the proxy's address; and production is set to **two
+  replicas** against PLAN-016 and PLAN-019's own precondition — a rule that also covers the background
+  workers, the WebSocket registry and the mailbox poller.
+- **[Update]** Round 2 is assessed and **stands**: the `job update` flags fix is correct (confirmed against the
+  CLI's parser) and `/api/ready` is the right design. One flaw: its deep check demands that the newest
+  migration the image ships *equals* the newest applied, so a rollback to an older image after a newer
+  migration is refused by the gate. The review specifies "everything the image ships has been applied", with
+  a test for each direction.
+- **[Update]** `PLAN-030-Azure-Bicep-Go-Live-Hardening.md` gains a round-3 status paragraph and **§8.15**;
+  `PLAN-030-Go-Live-Briefing.md` opens with the verdict and its checklist and "not proven" lists change to
+  match; `infra/README.md` carries the correction and three new verification-checklist items (every `az`
+  command parses, a dev run that completes, the prod parameter set rehearsed).
+- **[Fix]** **A claim recorded as confirmed was wrong.** `PLAN-030-Response-to-Review.md` said
+  `az containerapp update --target-port` was confirmed because the CLI declares the argument on a shared
+  context. It is rejected by the command. The original text is kept, struck through or quoted, next to the
+  correction, as §8.1 did for its own error. The same claim in `deploy-env.ps1`, `main.bicep` and the README is
+  listed in the review for correction. The briefing also notes that `PLAN-030-Review-of-Applied-Changes.md`,
+  which several documents cite, is not in the repository.
+
+**Verified** by installing the Azure CLI and the standalone Bicep compiler and running **every `az` command in
+`deploy-env.ps1` and `deploy-azure.yml`** through the CLI's parser (a `Please run 'az login'` error means the
+arguments parsed; `unrecognized arguments` means they did not), each proposed correction the same way, and
+reading the installed CLI's own source where its help text did not settle a question. The Bicep compile
+reproduced: 0.48.1, three files, 0 warnings.
 
 ---
 

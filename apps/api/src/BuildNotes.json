@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.9.035",
+    "date": "2026-10-09",
+    "title": "PLAN-030 review round 3: the Azure deployment package is not ready, and why",
+    "changes": [
+      {
+        "text": "**`PlanDocs/PLAN-030-Review-Round-3.md`**, a findings-only review addressed to the agent that",
+        "type": "New Feature"
+      },
+      {
+        "text": "The review's second tier, for before production: the revision suffix repeats on a re-run or a",
+        "type": "New Feature"
+      },
+      {
+        "text": "Round 2 is assessed and **stands**: the `job update` flags fix is correct (confirmed against the",
+        "type": "Update"
+      },
+      {
+        "text": "`PLAN-030-Azure-Bicep-Go-Live-Hardening.md` gains a round-3 status paragraph and **§8.15**;",
+        "type": "Update"
+      },
+      {
+        "text": "**A claim recorded as confirmed was wrong.** `PLAN-030-Response-to-Review.md` said",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.034",
     "date": "2026-10-09",
     "title": "Administration grouped into subjects, and a section that stops moving",
