@@ -10624,3 +10624,6 @@ missing from `infra/env/.env.production.example`. That is the repository's own r
 environment variable being part of the change, and the environment-contract check is what caught it. It is
 documented there now; the rest of that failure list is the pre-existing one recorded in the go-live
 briefing.
+
+### Prompt 381 — Review of Deepseek round-5 reply
+Verified round-5 fixes on main (584a96a1); wrote `PlanDocs/PLAN-030-Review-Round-6.md` (PowerShell image check fails open, preflight red from env contract). No code changed.
