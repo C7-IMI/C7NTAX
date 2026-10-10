@@ -10823,3 +10823,6 @@ operation than the tidiness is worth.
 
 **Agreed on stopping.** The static review has converged; what is left is a dev deploy, four operator
 decisions and the prod rehearsal, all of which need a subscription and money.
+
+### Prompt 384 — Review of Deepseek round-8 reply
+Verified round-8 fixes on main (209195c0): SMTP_SECURE honoured by EmailService, template note, computed read bounded. Wrote `PlanDocs/PLAN-030-Review-Round-9.md`; withdrew the branch-hygiene note. No code changed.
