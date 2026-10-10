@@ -30,7 +30,7 @@ systemRouter.get("/failover/status", requirePermission(Permission.SystemConfig),
   } catch (e) { next(e); }
 });
 
-systemRouter.post("/failover/reset", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res, next) => {
+systemRouter.post("/failover/reset", requirePermission(Permission.InstanceMaintenance), async (_req: AuthRequest, res, next) => {
   try {
     await prisma.systemConfig.upsert({
       where: { key: FAILOVER_KEY },
@@ -373,7 +373,7 @@ systemRouter.get("/poller/status", requirePermission(Permission.SystemConfig), a
   res.json({ paused: isPaused(), retryCount: getRetryCount(), maxRetries: 10, recoveryLog: getRecoveryLog() });
 });
 
-systemRouter.post("/poller/reset", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res) => {
+systemRouter.post("/poller/reset", requirePermission(Permission.InstanceMaintenance), async (_req: AuthRequest, res) => {
   resetPoller();
   res.json({ success: true, message: "Poller reset successfully" });
 });
@@ -387,7 +387,7 @@ systemRouter.get("/snapshot-poller/status", requirePermission(Permission.SystemC
   } catch { res.json({ error: "Snapshot poller not loaded" }); }
 });
 
-systemRouter.post("/snapshot-poller/force", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res) => {
+systemRouter.post("/snapshot-poller/force", requirePermission(Permission.InstanceMaintenance), async (_req: AuthRequest, res) => {
   try {
     const { forcePoll } = await import("../services/snapshotPoller");
     await forcePoll();
@@ -395,7 +395,7 @@ systemRouter.post("/snapshot-poller/force", requirePermission(Permission.SystemC
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
-systemRouter.post("/snapshot-poller/pause", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res) => {
+systemRouter.post("/snapshot-poller/pause", requirePermission(Permission.InstanceMaintenance), async (_req: AuthRequest, res) => {
   try {
     const { setPaused } = await import("../services/snapshotPoller");
     setPaused(true);
@@ -403,7 +403,7 @@ systemRouter.post("/snapshot-poller/pause", requirePermission(Permission.SystemC
   } catch (e: any) { res.status(500).json({ error: e.message }); }
 });
 
-systemRouter.post("/snapshot-poller/resume", requirePermission(Permission.SystemConfig), async (_req: AuthRequest, res) => {
+systemRouter.post("/snapshot-poller/resume", requirePermission(Permission.InstanceMaintenance), async (_req: AuthRequest, res) => {
   try {
     const { setPaused } = await import("../services/snapshotPoller");
     setPaused(false);

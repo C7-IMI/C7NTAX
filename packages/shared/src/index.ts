@@ -5,6 +5,7 @@ export * from "./features";
 export * from "./constants";
 export * from "./passwordStrength";
 export * from "./passwordPolicy";
+export * from "./mfa";
 export * from "./reportFormat";
 export * from "./reportExpression";
 export * from "./reportTemplate";

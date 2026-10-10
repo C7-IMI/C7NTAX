@@ -109,6 +109,36 @@ webauthnRouter.post("/register/verify", authenticate, async (req: AuthRequest, r
       },
     });
     challenges.delete(userId);
+
+    /*
+     * Registering a passkey is an enrolment.
+     *
+     * It counts towards any requirement, because a passkey is a second factor that happens to replace
+     * the password as well — an account that signs in with a credential cannot be said to lack one. So
+     * the enrolment date is stamped and the grace deadline cleared.
+     *
+     * `mfaMethod` is only set to `passkey` when the account does **not** already have a second factor
+     * it has to be asked for. An account that enrolled an authenticator app first keeps `totp` as its
+     * method, because otherwise the sign-in screen would promise a passkey step it cannot perform —
+     * the passkey is an extra way in, not a replacement for the factor the password form still asks
+     * for. Ordering the two facts wrongly here would break the sign-in for exactly the accounts that
+     * took the most care.
+     */
+    const account = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { mfaEnabled: true, mfaEnrolledAt: true, mfaGraceUntil: true, mfaMethod: true },
+    });
+    if (account && !account.mfaEnrolledAt) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          mfaEnrolledAt: new Date(),
+          mfaGraceUntil: null,
+          ...(account.mfaEnabled ? {} : { mfaMethod: "passkey" }),
+        },
+      });
+    }
+
     res.status(201).json(passkeySummary(record));
   } catch (e) { next(e); }
 });

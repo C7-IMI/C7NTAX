@@ -1,11 +1,11 @@
-﻿import { Router } from "express";
+import { Router } from "express";
 import bcrypt from "bcryptjs";
 import speakeasy from "speakeasy";
 import QRCode from "qrcode";
 import { randomInt, timingSafeEqual } from "node:crypto";
 import { prisma } from "../index";
 import { authenticate, signToken, signMfaToken, JWT_SECRET, effectivePermissions, PERMISSION_SUBJECT_INCLUDE, type AuthRequest } from "../middleware/auth";
-import { ROLE_PERMISSIONS, SystemRole, Permission, validatePassword, LANDING_PAGES, resolveLandingPagePath } from "@C7NTAX/shared";
+import { ROLE_PERMISSIONS, SystemRole, Permission, validatePassword, LANDING_PAGES, resolveLandingPagePath, MFA_METHODS, isMfaMethodId, type MfaMethodId } from "@C7NTAX/shared";
 import jwt from "jsonwebtoken";
 import { rateLimiter, isLoopback } from "../middleware/rateLimiter";
 import { logger } from "../services/logger";
@@ -13,6 +13,27 @@ import { codeEmailContext, sendEmailTemplate } from "../services/emailTemplateSe
 import { isBypassAccount, isBypassLoginAttempt, logBypassSignIn } from "../services/testBypass";
 import { startSession, endSessionsForUser } from "../services/signIn";
 import { newestSessionId, recordSignIn } from "../services/signInAudit";
+import { browserIsTrusted, rememberBrowser } from "../services/mfaTrust";
+import { historyAfterChange, passwordReuseMessage, passwordWasUsedRecently } from "../services/passwordHistory";
+import { enforcementPossible, mfaPolicyFor, mfaPolicyForUser, mfaRememberDays, offeredMfaMethods, permissionsIncludeInstanceSecurity } from "../services/mfaPolicy";
+
+/**
+ * The account record with the one extra fact the policy needs to answer "may the gate shut on this
+ * person".
+ *
+ * It is derived from the **effective** permissions rather than from the account's own override list,
+ * because the question is what the caller actually holds: an instance permission granted by a role
+ * counts, and one granted to the account but withheld by a role's removals does not.
+ */
+function withInstanceAwareness<T extends Parameters<typeof mfaPolicyFor>[0]>(user: T): T & { holdsInstanceSecurity: boolean } {
+  const record = user as unknown as { role?: unknown; permissions?: string[]; deniedPermissions?: string[] };
+  return {
+    ...user,
+    holdsInstanceSecurity: permissionsIncludeInstanceSecurity(
+      effectivePermissions(record as Parameters<typeof effectivePermissions>[0]),
+    ),
+  };
+}
 import {
   clearSessionCookies,
   getSessionTimeoutMs,
@@ -190,10 +211,30 @@ authRouter.post("/login", credentialLimiter, async (req, res, next) => {
 
     // If MFA is enabled, send back a temporary token. Nothing is recorded yet: the sign-in has not
     // happened, and the MFA step writes its own row — success, or an outright failure.
+    //
+    // Unless this browser has already proved a factor for *this* enrolment. The cookie carries the
+    // enrolment's timestamp, so an administrator's reset — which clears it — retires the trust and the
+    // next sign-in asks again. `mfaMethod` travels with the challenge so the client shows the right
+    // screen rather than always offering an authenticator field to somebody whose method is an email.
     if (user.mfaEnabled) {
-      const mfaToken = signMfaToken(user.id);
-      res.json({ mfaRequired: true, mfaToken, mustChangePassword: user.mustChangePassword });
-      return;
+      if (!browserIsTrusted(req, user)) {
+        const mfaToken = signMfaToken(user.id);
+        res.json({
+          mfaRequired: true,
+          mfaToken,
+          mfaMethod: user.mfaMethod ?? "totp",
+          rememberDays: mfaRememberDays(),
+          mustChangePassword: user.mustChangePassword,
+        });
+        return;
+      }
+      await recordSignIn(req, {
+        email: user.email,
+        userId: user.id,
+        result: "success",
+        method: isMfaMethodId(user.mfaMethod) ? user.mfaMethod : "totp",
+        reason: "Second factor skipped — this browser was already trusted for this enrolment",
+      });
     }
 
     const token = await startSession(req, res, {
@@ -232,6 +273,7 @@ authRouter.post("/login", credentialLimiter, async (req, res, next) => {
       permissions: effectivePermissions(user),
       landingPage,
       mustChangePassword: user.mustChangePassword,
+      mfaPolicy: mfaPolicyFor(withInstanceAwareness(user)),
     });
   } catch (e) { next(e); }
 });
@@ -262,12 +304,27 @@ authRouter.post("/change-password", authenticate, credentialLimiter, async (req:
     const problem = validatePassword(String(newPassword), user);
     if (problem) { res.status(400).json({ error: { message: problem } }); return; }
 
+    /*
+     * The half of the policy a pure function cannot answer: has this password been used here before?
+     *
+     * The current hash is passed in with the history, so "not the one you have" and "not one of the last
+     * five" are one comparison and one refusal rather than two of each — they are the same rule with the
+     * same remedy, and the message says which list it was checked against.
+     */
+    if (await passwordWasUsedRecently(user.previousPasswordHashes, String(newPassword), user.passwordHash)) {
+      res.status(400).json({ error: { message: passwordReuseMessage() } });
+      return;
+    }
+
     await prisma.user.update({
       where: { id: user.id },
       data: {
         passwordHash: await bcrypt.hash(String(newPassword), 12),
         passwordChangedAt: new Date(),
         mustChangePassword: false,
+        // The password being replaced goes into the history — not the new one, which is now the current
+        // hash and would otherwise spend one of the five slots on itself.
+        previousPasswordHashes: historyAfterChange(user.previousPasswordHashes, user.passwordHash),
         // Retires every token issued before this change.
         tokenVersion: { increment: 1 },
       },
@@ -289,8 +346,21 @@ authRouter.post("/change-password", authenticate, credentialLimiter, async (req:
 });
 
 // ── POST /api/auth/mfa/setup ────────────────────────────────────────
+/**
+ * Begin an authenticator enrolment: mint a seed and hand back the QR code.
+ *
+ * Refused when the deployment does not offer this method. The check is here as well as in the
+ * wizard because the wizard is a client and a client is not a control — a method switched off on the
+ * configuration screen must not be enrolable by anyone who kept a tab open, or by anyone posting
+ * directly.
+ */
 authRouter.post("/mfa/setup", authenticate, async (req: AuthRequest, res, next) => {
   try {
+    if (!offeredMfaMethods().includes("totp")) {
+      res.status(403).json({ error: "Authenticator apps are not offered by this deployment" });
+      return;
+    }
+
     const user = await prisma.user.findUnique({ where: { id: req.user!.userId } });
     if (!user) { res.status(404).json({ error: "User not found" }); return; }
 
@@ -307,6 +377,37 @@ authRouter.post("/mfa/setup", authenticate, async (req: AuthRequest, res, next) 
   } catch (e) { next(e); }
 });
 
+/**
+ * Ten single-use recovery codes, shown once.
+ *
+ * They are stored as bcrypt hashes, which is what the schema has always claimed and what nothing
+ * ever wrote — so the recovery path below could never have matched anything. Hashed rather than
+ * stored plainly because a code that gets somebody past a second factor is a credential, and a
+ * database dump that contains one is a database dump that contains the second factor.
+ *
+ * Ten is a compromise with no arithmetic behind it: enough that losing one is not a problem, few
+ * enough that somebody writes them down rather than storing them where the password already is.
+ */
+const BACKUP_CODE_COUNT = 10;
+
+function generateBackupCodes(): string[] {
+  // Base32-free, unambiguous alphabet: no 0/O, no 1/I/L, because these get read off paper.
+  const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  const codes: string[] = [];
+  for (let i = 0; i < BACKUP_CODE_COUNT; i += 1) {
+    let code = "";
+    for (let c = 0; c < 10; c += 1) code += alphabet[randomInt(alphabet.length)];
+    codes.push(`${code.slice(0, 5)}-${code.slice(5)}`);
+  }
+  return codes;
+}
+
+async function storeBackupCodes(userId: string, codes: string[]): Promise<string[]> {
+  const hashed = await Promise.all(codes.map(code => bcrypt.hash(code, 10)));
+  await prisma.user.update({ where: { id: userId }, data: { mfaBackupCodes: hashed } });
+  return codes;
+}
+
 // ── POST /api/auth/mfa/verify-setup ─────────────────────────────────
 authRouter.post("/mfa/verify-setup", authenticate, async (req: AuthRequest, res, next) => {
   try {
@@ -317,9 +418,139 @@ authRouter.post("/mfa/verify-setup", authenticate, async (req: AuthRequest, res,
     const verified = speakeasy.totp.verify({ secret: user.mfaSecret, encoding: "base32", token: code, window: 1 });
     if (!verified) { res.status(400).json({ error: "Invalid code" }); return; }
 
-    await prisma.user.update({ where: { id: user.id }, data: { mfaEnabled: true } });
+    /*
+     * Enrolment is stamped in one write, and the three fields matter separately:
+     *
+     *   · `mfaMethod` — what the sign-in should ask for from now on;
+     *   · `mfaEnrolledAt` — the fact that makes the account "done" for the policy, and the version
+     *     every trusted-browser cookie is bound to, so a reset revokes them all;
+     *   · `mfaGraceUntil` cleared — the deadline has been met, and leaving it behind would have the
+     *     banner count down to a date that no longer applies.
+     */
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        mfaEnabled: true,
+        mfaMethod: "totp",
+        mfaEnrolledAt: new Date(),
+        mfaGraceUntil: null,
+      },
+    });
 
-    res.json({ verified: true });
+    // Issued at the moment of enrolment, when somebody is already looking at the screen and has a
+    // reason to write them down. Regenerating them later is possible by resetting the account.
+    const backupCodes = await storeBackupCodes(user.id, generateBackupCodes());
+
+    const policy = await mfaPolicyForUser(user.id);
+    res.json({ verified: true, method: "totp", backupCodes, policy });
+  } catch (e) { next(e); }
+});
+
+// ── GET /api/auth/mfa/policy ────────────────────────────────────────
+/**
+ * What this account has to do, and what it may choose from.
+ *
+ * Read by the enrolment wizard, the reminder banner and the Account screen, so all three describe
+ * the same deadline. The method list carries `available` and `offered` separately because they are
+ * different questions: `available` is "may this be enrolled here", and a method that is not offered
+ * is shown greyed with the reason rather than hidden, since "why can I not use my passkey" is the
+ * question the screen exists to answer.
+ */
+authRouter.get("/mfa/policy", authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const policy = await mfaPolicyForUser(req.user!.userId);
+    const offered = policy.methods;
+    res.json({
+      ...policy,
+      catalogue: MFA_METHODS.map(method => ({
+        id: method.id,
+        label: method.label,
+        summary: method.summary,
+        offered: offered.includes(method.id),
+        standalone: method.standalone,
+        // A passkey is governed by the Sessions & Security switch, so the screen that would change
+        // it is not this one. Naming the place keeps the wizard from offering a control it cannot honour.
+        governedBy: method.governedBy,
+      })),
+      enforcementPossible: enforcementPossible(),
+    });
+  } catch (e) { next(e); }
+});
+
+// ── POST /api/auth/mfa/enrol/email/start ────────────────────────────
+/**
+ * Send a short-lived code to the signed-in account's own address, as an enrolment.
+ *
+ * Distinct from `/send-mfa-email`, which continues a **sign-in** that has already proved a password
+ * and carries an `mfaToken`. This one is for a session that is already open and is choosing a method,
+ * so it proves the same thing by a different door — and it is why enrolment can be completed by
+ * somebody who cannot install an app.
+ */
+authRouter.post("/mfa/enrol/email/start", authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    if (!offeredMfaMethods().includes("email_code")) {
+      res.status(403).json({ error: "Emailed codes are not offered by this deployment" });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user!.userId } });
+    if (!user) { res.status(404).json({ error: "User not found" }); return; }
+
+    const code = String(randomInt(100000, 1000000));
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { mfaEmailCode: code, mfaEmailCodeExpires: new Date(Date.now() + 15 * 60 * 1000) },
+    });
+
+    const outcome = await sendEmailTemplate({ key: "auth.mfa_code", to: user.email, context: codeEmailContext({ code }) });
+    // A code nobody can read is worse than a refused enrolment: the caller is told not to wait for it.
+    if (!outcome.ok) {
+      logger.warn("auth.mfaEnrol", "Could not email the enrolment code", { userId: user.id, error: outcome.error });
+      res.status(502).json({ error: "The code could not be emailed — check the SMTP configuration or choose another method" });
+      return;
+    }
+
+    res.json({ sent: true, expiresInMinutes: 15, email: user.email });
+  } catch (e) { next(e); }
+});
+
+// ── POST /api/auth/mfa/enrol/email/verify ───────────────────────────
+authRouter.post("/mfa/enrol/email/verify", authenticate, async (req: AuthRequest, res, next) => {
+  try {
+    const { code } = req.body;
+    if (!code) { res.status(400).json({ error: "Code required" }); return; }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user!.userId } });
+    if (!user?.mfaEmailCode || !user.mfaEmailCodeExpires) {
+      res.status(400).json({ error: "Ask for a code first" });
+      return;
+    }
+    if (user.mfaEmailCodeExpires.getTime() < Date.now()) {
+      res.status(400).json({ error: "That code has expired — ask for another" });
+      return;
+    }
+
+    // Compared with the same helper the sign-in path uses, so the two cannot drift: a constant-time
+    // compare, because a plain `===` on a six-digit secret leaks how many leading digits were right.
+    if (!codesMatch(user.mfaEmailCode, String(code))) {
+      res.status(400).json({ error: "Invalid code" });
+      return;
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        mfaEnabled: true,
+        mfaMethod: "email_code",
+        mfaEnrolledAt: new Date(),
+        mfaGraceUntil: null,
+        mfaEmailCode: null,
+        mfaEmailCodeExpires: null,
+      },
+    });
+
+    const policy = await mfaPolicyForUser(user.id);
+    res.json({ verified: true, method: "email_code", policy });
   } catch (e) { next(e); }
 });
 
@@ -337,18 +568,52 @@ authRouter.post("/mfa/verify", credentialLimiter, async (req, res, next) => {
     const user = await prisma.user.findUnique({ where: { id: payload.userId }, include: { ...PERMISSION_SUBJECT_INCLUDE } });
     if (!user?.mfaSecret) { res.status(400).json({ error: "MFA not configured" }); return; }
 
+    /**
+     * Which method was actually used, for the sign-in row.
+     *
+     * A recovery code is recorded as `totp` because the column enumerates methods and a recovery code
+     * is a way through the authenticator step rather than a fourth method — but the reason string says
+     * it plainly, because "signed in with a recovery code" is the single most interesting thing a
+     * sign-in log can tell an administrator.
+     */
+    let signInMethod: "totp" = "totp";
+    let usedRecoveryCode = false;
+
     const verified = speakeasy.totp.verify({ secret: user.mfaSecret, encoding: "base32", token: code, window: 1 });
     if (!verified) {
-      // Check backup codes
-      const codes = (user.mfaBackupCodes as string[]) || [];
-      const codeIndex = codes.indexOf(code);
-      if (codeIndex === -1) {
+      /*
+       * A recovery code, compared against the stored hashes.
+       *
+       * This is the branch that has never worked. The codes were documented as hashed and compared as
+       * plain text with `indexOf`, and nothing generated them in the first place — so recovery was
+       * unreachable, and an account whose phone was lost needed an administrator. Both halves are now
+       * true of the same implementation: enrolment issues them, and this matches them with bcrypt.
+       *
+       * Every stored code is tried because they are individually salted, so there is no hash to look
+       * up by value. Ten comparisons is an acceptable cost on the one path that matters when somebody
+       * has lost their second factor, and the endpoint is rate limited.
+       */
+      const codes = (user.mfaBackupCodes as string[]) ?? [];
+      let usedIndex = -1;
+      for (let i = 0; i < codes.length; i += 1) {
+        const stored = codes[i];
+        if (stored && (await bcrypt.compare(String(code).trim().toUpperCase(), stored))) {
+          usedIndex = i;
+          break;
+        }
+      }
+
+      if (usedIndex === -1) {
         await recordSignIn(req, { email: user.email, userId: user.id, result: "mfa_failed", method: "totp", reason: "Wrong authenticator code" });
         res.status(400).json({ error: "Invalid MFA code" }); return;
       }
-      // Remove used backup code
-      codes.splice(codeIndex, 1);
-      await prisma.user.update({ where: { id: user.id }, data: { mfaBackupCodes: codes } });
+
+      // Single use, and spent before the session is issued: a recovery code that still works after
+      // it was used is a password with a longer life than the person thinks it has.
+      const remaining = codes.filter((_, i) => i !== usedIndex);
+      await prisma.user.update({ where: { id: user.id }, data: { mfaBackupCodes: remaining } });
+      signInMethod = "totp";
+      usedRecoveryCode = true;
     }
 
     const token = await startSession(req, res, {
@@ -359,6 +624,12 @@ authRouter.post("/mfa/verify", credentialLimiter, async (req, res, next) => {
       tokenVersion: user.tokenVersion,
     });
 
+    // Grant the trust *here*, after the factor has been proved — never before, or the cookie would
+    // be a credential that skips the very check that issues it. The client clears the box by sending
+    // `remember: false`, so the default only applies to a caller that expressed no preference.
+    if (req.body?.remember !== false) rememberBrowser(res, user);
+
+    const policy = mfaPolicyFor(withInstanceAwareness(user));
     await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
 
     // The method, not just the result: this is the row that says a second factor was actually used.
@@ -366,11 +637,12 @@ authRouter.post("/mfa/verify", credentialLimiter, async (req, res, next) => {
       email: user.email,
       userId: user.id,
       result: "success",
-      method: "totp",
+      method: signInMethod,
+      reason: usedRecoveryCode ? "Signed in with a single-use recovery code" : undefined,
       sessionId: await newestSessionId(user.id),
     });
 
-    res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role }, mustChangePassword: user.mustChangePassword });
+    res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role }, mustChangePassword: user.mustChangePassword, mfaPolicy: policy });
   } catch (e) { next(e); }
 });
 
@@ -386,6 +658,20 @@ authRouter.post("/send-mfa-email", credentialLimiter, async (req, res, next) => 
 
     const user = await prisma.user.findUnique({ where: { id: payload.userId } });
     if (!user) { res.status(404).json({ error: "User not found" }); return; }
+
+    /*
+     * Refused when the deployment does not offer emailed codes.
+     *
+     * This guard was missing here while the *enrolment* endpoint had it, and the asymmetry was a real
+     * hole rather than an inconsistency: an administrator who switched emailed codes off did it because
+     * the second factor must not travel on the same channel as a password reset, and this path sent it
+     * there anyway. It is the one method a deployment can turn off, so it is the one that has to be
+     * refused on both doors.
+     */
+    if (!offeredMfaMethods().includes("email_code")) {
+      res.status(403).json({ error: "Emailed codes are not offered by this deployment" });
+      return;
+    }
 
     // Generate 6-digit code — CSPRNG, not Math.random
     const code = String(randomInt(100000, 1000000));
@@ -442,6 +728,9 @@ authRouter.post("/mfa/verify-email", credentialLimiter, async (req, res, next) =
       tokenVersion: user.tokenVersion,
     });
 
+    if (req.body?.remember !== false) rememberBrowser(res, user);
+
+    const policy = mfaPolicyFor(withInstanceAwareness(user));
     await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
 
     await recordSignIn(req, {
@@ -452,7 +741,7 @@ authRouter.post("/mfa/verify-email", credentialLimiter, async (req, res, next) =
       sessionId: await newestSessionId(user.id),
     });
 
-    res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role }, mustChangePassword: user.mustChangePassword });
+    res.json({ token, user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role }, mustChangePassword: user.mustChangePassword, mfaPolicy: policy });
   } catch (e) { next(e); }
 });
 
@@ -461,10 +750,16 @@ authRouter.get("/me", authenticate, async (req: AuthRequest, res, next) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.user!.userId },
-      select: { id: true, email: true, firstName: true, lastName: true, role: true, companyId: true, mfaEnabled: true, mustChangePassword: true, lastLoginAt: true, createdAt: true },
+      select: { id: true, email: true, firstName: true, lastName: true, role: true, companyId: true, mfaEnabled: true, mfaMethod: true, mfaState: true, mfaEnrolledAt: true, mfaGraceUntil: true, mustChangePassword: true, lastLoginAt: true, createdAt: true },
     });
     if (!user) { res.status(404).json({ error: "User not found" }); return; }
-    res.json({ ...user, testBypass: isBypassAccount(user.email) });
+    /*
+     * The policy travels with the account because every screen that has to mention it needs the same
+     * answer: the wizard, the countdown banner, and the sign-in redirect. Carrying it here means the
+     * client does not have to decide for itself what the settings imply — which is the disagreement
+     * that would let a banner say "five days left" while the gate had already closed.
+     */
+    res.json({ ...user, mfaPolicy: mfaPolicyFor({ ...user, holdsInstanceSecurity: permissionsIncludeInstanceSecurity(req.user!.permissions) }), testBypass: isBypassAccount(user.email) });
   } catch (e) { next(e); }
 });
 

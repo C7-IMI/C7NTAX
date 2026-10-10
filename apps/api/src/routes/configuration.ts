@@ -30,6 +30,8 @@ import {
 } from "@C7NTAX/shared";
 import {
   clearConfigValue,
+  configFlag,
+  configNumber,
   configText,
   configValue,
   environmentSupplied,
@@ -47,6 +49,8 @@ import {
 } from "../services/portalPolicy";
 import { listPortalTickets, loadPortalTicket } from "../services/portalTickets";
 import { oidcConfigured } from "../services/ssoSettings";
+import { enforcementAfterWrite, startMfaGrace } from "../services/mfaPolicy";
+import { logger } from "../services/logger";
 
 export const configurationRouter = Router();
 configurationRouter.use(authenticate);
@@ -590,8 +594,71 @@ configurationRouter.patch(
       throw new AppError("That setting is managed by the deployment and cannot be changed here", 403);
     }
 
+    /*
+     * Read the value that is about to be replaced **before** it is replaced.
+     *
+     * The settings snapshot is updated by the write itself, so asking afterwards returns the new
+     * answer and a "restore" would faithfully put back the value that was just refused. Reading it
+     * first is the only ordering that works, and it is the kind of thing that looks like it cannot
+     * matter.
+     */
+    const previousValue = section.id === "mfa" ? savedValue(section.id, fieldId) : undefined;
+
     const result = await writeConfigValue(section.id, fieldId, req.body?.value);
     if (!result.ok) throw new AppError(result.message, 400);
+
+    /*
+     * The two things a change to the MFA section has to do beyond storing a value.
+     *
+     * **Refuse the state that stops everybody signing in.** Requiring a second factor while offering
+     * none is a door with no handle: the enrolment wizard would have nothing to draw and the gate would
+     * still be shut. The check is against the state the save is about to produce, so switching the last
+     * method off while enforcement is on is refused just as switching enforcement on with no method is —
+     * the second of those two is the one that is easy to forget, because it is not the field the
+     * administrator thinks they are changing.
+     *
+     * **Start the clock, once.** The grace period is meant to begin when a requirement begins, and this
+     * is the only moment the deployment knows that has happened, so the deadlines are stamped here and
+     * only here. `startMfaGrace` leaves accounts that already have a deadline alone, so switching
+     * enforcement off and on again does not hand a fresh period to the people already on notice.
+     */
+    if (section.id === "mfa") {
+      const enforcement = enforcementAfterWrite(section.id, fieldId, result.value);
+      if (!enforcement.ok) {
+        /*
+         * The value is already stored, so the refusal has to put back **what was there** — and that is
+         * the whole subtlety: `clearConfigValue` is not the same thing. It removes the row, which
+         * restores the *default*, not the previous answer. For a field whose default happens to equal
+         * the value being refused the two are indistinguishable and the bug is invisible; for one whose
+         * default is the opposite (the emailed-code switch ships off) clearing the row left the refused
+         * change fully in effect while returning a refusal, which is the worst of both. So the old value
+         * is read first and written back, and the row is only cleared when there was no row.
+         */
+        const previous = previousValue;
+        if (previous === undefined) await clearConfigValue(section.id, fieldId);
+        else await writeConfigValue(section.id, fieldId, previous);
+
+        // Proving the restore worked rather than assuming it: if the state is still the refused one,
+        // the caller is told the truth about it instead of being told it was prevented.
+        const after = enforcementAfterWrite(null, null, undefined);
+        if (!after.ok) {
+          throw new AppError(
+            "That setting could not be stored safely and was left as it was, but the deployment is now in a state that would stop every account from signing in. Add an authentication method immediately.",
+            500,
+          );
+        }
+        throw new AppError(enforcement.reason ?? "That setting cannot be stored", 400);
+      }
+
+      const nowEnforced = configFlag("mfa", "enabled") && configText("mfa", "mode") === "enforced";
+      if (nowEnforced) {
+        const stamped = await startMfaGrace(req.user?.userId ?? null, { restamp: fieldId === "graceDays" });
+        logger.info(
+          "mfa",
+          `Enforcement is on — a deadline of ${configNumber("mfa", "graceDays", 7)} day(s) is in force; ${stamped} account(s) were given or re-given one`,
+        );
+      }
+    }
 
     res.json({ ok: true, section: section.id, field: fieldId, value: result.value });
   } catch (e) { next(e); }

@@ -81,6 +81,8 @@ import { UI_KUMO_ORGS } from "./lib/uiFlags";
 import { ChecklistsPage } from "./pages/Checklists";
 import { ChecklistDetailPage } from "./pages/ChecklistDetail";
 import { ChangePasswordForm } from "./components/users/ChangePasswordForm";
+import { MfaEnrolWizard } from "./components/mfa/MfaEnrolWizard";
+import { MfaReminderBanner } from "./components/mfa/MfaReminderBanner";
 import { PortalApp } from "./pages/portal/PortalApp";
 
 /**
@@ -96,6 +98,34 @@ function PasswordChangeGate() {
         firstName={user?.firstName}
         email={user?.email}
         onChanged={markPasswordChanged}
+        onSignOut={logout}
+      />
+    </div>
+  );
+}
+
+/**
+ * Held in front of the whole app while a second factor is owed and enforcement is in force.
+ *
+ * The same held-front position as the password-change gate, and deliberately **after** it in the
+ * chain: a person can owe both at once, and the password is what proves the account is theirs — asking
+ * for a second factor before the password has been replaced would be asking somebody to protect an
+ * account with a password they were told not to keep.
+ *
+ * The API is the reason this cannot be a routed page: every route outside a short exempt list answers
+ * `403 MFA_ENROLMENT_REQUIRED` while it applies, so there is nothing behind it to render. The wizard's
+ * own calls are on that list, which is what makes "stopped until you set one up" different from
+ * "locked out".
+ */
+function MfaEnrolmentGate() {
+  const { mfaPolicy, refreshMfaPolicy, logout } = useAuth();
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-navy-900 p-4">
+      <MfaEnrolWizard
+        mode="gate"
+        policy={mfaPolicy}
+        // Refreshed on acknowledgement: the gate opens on the answer, not on the request that enrolled.
+        onEnrolled={() => void refreshMfaPolicy()}
         onSignOut={logout}
       />
     </div>
@@ -118,13 +148,18 @@ function ProtectedRoutes() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [navigate]);
-  const { user, loading } = useAuth();
+  const { user, loading, mfaPolicy } = useAuth();
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
   if (user.mustChangePassword) return <PasswordChangeGate />;
+  if (mfaPolicy?.mustEnrolNow) return <MfaEnrolmentGate />;
   return (
     <Layout>
       <DesktopNavBridge />
+      {/* Above the page, on every screen: a deadline that is only mentioned on one page is a deadline
+          most people are never told about. Absent when it does not apply, and absent entirely once the
+          gate above has the screen. */}
+      <MfaReminderBanner />
       <Routes>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/home" element={<HomePage />} />

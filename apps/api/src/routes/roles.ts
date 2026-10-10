@@ -4,6 +4,7 @@ import { authenticate, requirePermission, type AuthRequest } from "../middleware
 import {
   Permission, ROLE_PERMISSIONS, SystemRole,
   developerPermissionsIn, developerRefusalMessage, isDeveloperRole, isSuperAdminRole, withoutDeveloperPermissions,
+  instancePermissionsIn, instanceRefusalMessage, withoutInstancePermissions,
 } from "@C7NTAX/shared";
 import { AppError } from "../middleware/errorHandler";
 
@@ -30,6 +31,24 @@ function developerRefusal(offending: string[]): AppError {
   return new AppError(developerRefusalMessage(offending), 403);
 }
 
+/**
+ * The refusal for a role edit that would touch the **instance tier**.
+ *
+ * A separate sentence from the developer one because it is a different rule with a different audience:
+ * the developer surface is refused to everybody but a Super Admin, and the instance tier is refused to
+ * everybody but a Super Admin **including** Developer Admin's ordinary neighbours — and, unlike the
+ * developer rule, it is about a permission an administrator can otherwise see plenty of. Saying which
+ * one was refused, by name, is what makes the answer diagnosable.
+ */
+function instanceRefusal(offending: string[]): AppError {
+  return new AppError(instanceRefusalMessage(offending), 403);
+}
+
+/** Both strips, for a caller who may not see either restricted surface. */
+function visiblePermissions(permissions: string[]): string[] {
+  return withoutInstancePermissions(withoutDeveloperPermissions(permissions));
+}
+
 // ── List all roles ──
 rolesRouter.get("/", requirePermission(Permission.RoleManage), async (req: AuthRequest, res, next) => {
   try {
@@ -48,7 +67,7 @@ rolesRouter.get("/", requirePermission(Permission.RoleManage), async (req: AuthR
     res.json({
       data: roles
         .filter((role) => !isDeveloperRole(role.systemRole))
-        .map((role) => ({ ...role, permissions: withoutDeveloperPermissions(role.permissions) })),
+        .map((role) => ({ ...role, permissions: visiblePermissions(role.permissions) })),
     });
   } catch (e) { next(e); }
 });
@@ -66,7 +85,7 @@ rolesRouter.get("/:id", requirePermission(Permission.RoleManage), async (req: Au
       // to a caller who may not see the Developer Admin role, it is a role that does not exist. The
       // developer permissions of any other role are removed for the same reason the list removes them.
       if (isDeveloperRole(role.systemRole)) throw new AppError("Role not found", 404);
-      return res.json({ ...role, permissions: withoutDeveloperPermissions(role.permissions) });
+      return res.json({ ...role, permissions: visiblePermissions(role.permissions) });
     }
     res.json(role);
   } catch (e) { next(e); }
@@ -86,8 +105,14 @@ rolesRouter.post("/", requirePermission(Permission.RoleManage), async (req: Auth
       const offending = [
         ...(isDeveloperRole(systemRole) ? [String(systemRole)] : []),
         ...developerPermissionsIn(permissions),
+        // The instance tier is refused to *everybody* but a Super Admin, so it is checked here rather
+        // than inside the `isDeveloperRole` halves above — the caller may not be a developer anything.
+        ...instancePermissionsIn(permissions),
       ];
-      if (offending.length) throw developerRefusal(offending);
+      if (offending.length) {
+        if (instancePermissionsIn(permissions).length) throw instanceRefusal(offending);
+        throw developerRefusal(offending);
+      }
     }
 
     const existing = await prisma.role.findUnique({ where: { name } });
@@ -136,8 +161,20 @@ rolesRouter.patch("/:id", requirePermission(Permission.RoleManage), async (req: 
         ...(typeof data.systemRole === "string" && isDeveloperRole(data.systemRole) ? [data.systemRole] : []),
         ...developerPermissionsIn(data.permissions),
         ...developerPermissionsIn(target.permissions),
+        ...instancePermissionsIn(data.permissions),
+        // A role that already holds a tier permission is refused even for an edit that does not mention
+        // it, because the caller was never shown the key — so their submitted list would silently
+        // withdraw it, exactly the stripping this rule exists to prevent.
+        ...instancePermissionsIn(target.permissions),
       ];
-      if (offending.length) throw developerRefusal(offending);
+      if (offending.length) {
+        const instanceKeys = [
+          ...instancePermissionsIn(data.permissions),
+          ...instancePermissionsIn(target.permissions),
+        ];
+        if (instanceKeys.length) throw instanceRefusal(offending);
+        throw developerRefusal(offending);
+      }
     }
 
     const role = await prisma.role.update({

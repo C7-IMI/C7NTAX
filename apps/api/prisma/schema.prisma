@@ -36,6 +36,15 @@ model User {
   mustChangePassword Boolean   @default(false)
   passwordChangedAt  DateTime?
   tokenVersion       Int       @default(0)
+  /// The hashes of the passwords this account has had, most recent first, capped at
+  /// `PASSWORD_HISTORY_DEPTH` (5). A new password is refused if it matches one of them, so somebody
+  /// cannot cycle a small set of passwords and defeat the expiry that keeps them changing.
+  ///
+  /// **Hashed rather than remembered in clear**, and deliberately so: a history is a list of credentials
+  /// that used to work, and the only reason it is kept at all is to answer "is this one of them" — which
+  /// bcrypt can answer without the database ever holding the password itself. The list is never returned
+  /// by any route; it exists to be compared against and appended to.
+  previousPasswordHashes String[] @default([])
 
   // Placement — parity with Autotask "Resources" and Asio "Members"
   department      String?
@@ -56,12 +65,29 @@ model User {
   reportsTo       User?     @relation("UserReportsTo", fields: [reportsToId], references: [id], onDelete: SetNull)
   directReports   User[]    @relation("UserReportsTo")
 
-  // MFA
+  // MFA — what the account has enrolled. These four are the sign-in's facts: `mfaEnabled` is what
+  // makes a second factor be asked for, `mfaSecret` is the authenticator seed, and the email code is
+  // the short-lived fallback that is sent on demand.
   mfaEnabled        Boolean  @default(false)
   mfaSecret         String?
-  mfaBackupCodes    String[] @default([]) // hashed
+  /// Hashed (bcrypt), one per code. The plaintext is shown once, at generation, and never stored —
+  /// which is why nothing can display them again and why the reset below exists.
+  mfaBackupCodes    String[] @default([])
   mfaEmailCode      String?
   mfaEmailCodeExpires DateTime?
+
+  // MFA — the policy, which is a different question from the facts above. `mfaState` says whether
+  // this account is required to have a second factor: `default` follows the instance setting,
+  // `disabled` exempts the account from a requirement, `enforced` requires it regardless. The words
+  // are Entra's, so an administrator who has used Entra already knows them. `mfaMethod` records which
+  // method they chose, so the sign-in asks for the right second factor and the administrator knows
+  // what to tell them to use. `mfaGraceUntil` is the deadline given to an account when a requirement
+  // was first switched on; a future date means "remind, do not block yet", which is what allows the
+  // requirement to be turned on without locking out everyone who has not enrolled.
+  mfaState          String    @default("default") // default | disabled | enforced
+  mfaMethod         String?                        // totp | passkey | email_code
+  mfaEnrolledAt     DateTime?
+  mfaGraceUntil     DateTime?
 
   // Relationships
   roleId          String

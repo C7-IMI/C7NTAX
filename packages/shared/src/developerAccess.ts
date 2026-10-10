@@ -1,4 +1,4 @@
-import { Permission, SystemRole } from "./enums";
+import { Permission, SystemRole, SUPER_ADMIN_ONLY } from "./enums";
 
 /**
  * The rule for the **Developer Admin** role, the two permissions it holds, and the accounts wearing it:
@@ -85,4 +85,50 @@ export function developerRefusalMessage(offending: readonly string[]): string {
 /** The same, for an action aimed at a person who wears the role rather than at the role itself. */
 export function developerAccountRefusalMessage(name: string): string {
   return `Refused: ${name}. ${DEVELOPER_ACCOUNT_REFUSAL}`;
+}
+
+/*
+ * ── The instance tier ───────────────────────────────────────────────────────────────────────────────
+ *
+ * `instance:security`, `instance:config` and `instance:maintenance` are reserved to the **Super Admin**,
+ * and the rule is the same shape as the developer rule above for a different reason. The developer keys
+ * decide whether the application keeps its contents; these decide who may reach it at all, what it is
+ * for everybody, and which instance-wide processes may be paused, forced or reset. Neither is a decision
+ * an administrator should be able to take, and — the part that matters — neither is one an
+ * administrator may **grant**, which is why the refusals below exist rather than only a hidden picker.
+ *
+ * The difference from the developer rule is who is *left out*: the developer surface belongs to
+ * `Developer Admin` as well as to Super Admin, while the instance tier belongs to Super Admin alone.
+ * `Admin` is a tier below both.
+ */
+
+/** The instance-tier keys, so a refusal can name what it refused. */
+export const INSTANCE_PERMISSION_KEYS: string[] = [...SUPER_ADMIN_ONLY];
+
+/** The sentence a non-Super-Admin is shown when they reach for one of them. */
+export const INSTANCE_REFUSAL =
+  "Only a Super Admin may change what the whole instance does — who may sign in, how, and what this " +
+  "application is for everybody. An administrator can still manage people's own accounts, including " +
+  "resetting one person's second factor.";
+
+/** The instance-tier keys present in a submitted list. */
+export function instancePermissionsIn(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((entry): entry is string => typeof entry === "string" && INSTANCE_PERMISSION_KEYS.includes(entry));
+}
+
+/**
+ * The same list with those keys removed.
+ *
+ * Applied to **reads** as well as writes: an administrator should not be shown a permission they cannot
+ * hold, for the same reason the developer keys are stripped from a picker — a checkbox that cannot be
+ * ticked is a question the interface should not ask.
+ */
+export function withoutInstancePermissions(permissions: readonly string[] | null | undefined): string[] {
+  return (permissions ?? []).filter(permission => !INSTANCE_PERMISSION_KEYS.includes(permission));
+}
+
+/** The refusal, naming the keys, so the answer is diagnosable rather than a flat "forbidden". */
+export function instanceRefusalMessage(offending: readonly string[]): string {
+  return `Refused: ${[...new Set(offending)].join(", ")}. ${INSTANCE_REFUSAL}`;
 }

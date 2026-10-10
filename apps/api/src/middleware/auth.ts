@@ -1,10 +1,11 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import type { SignOptions } from "jsonwebtoken";
-import { Permission, ROLE_PERMISSIONS, type SystemRole } from "@C7NTAX/shared";
+import { Permission, ROLE_PERMISSIONS, SystemRole, isSuperAdminOnly } from "@C7NTAX/shared";
 import { bypassTokenTtl, isBypassAccount } from "../services/testBypass";
 import { clearSessionCookies, csrfTokenValid, resolveSession, sessionAuthEnabled, sessionExpiredResponse, touchSession } from "./sessionAuth";
 import { looksLikeApiKey, verifyApiKey } from "../services/apiKeys";
+import { mfaPolicyFor, permissionsIncludeInstanceSecurity } from "../services/mfaPolicy";
 
 const JWT_SECRET = process.env.JWT_SECRET || "C7NTAX-dev-secret-change-in-prod";
 
@@ -33,10 +34,43 @@ export interface AuthRequest extends Request {
 /** Routes a signed-in user may still reach while they owe a password change. */
 const PASSWORD_CHANGE_EXEMPT = ["/api/auth/me", "/api/auth/change-password", "/api/users/me"];
 
+/**
+ * Routes a signed-in user may still reach while they owe a multi-factor enrolment.
+ *
+ * The list is the password-change list — a person can owe both at once, and blocking the password
+ * change behind the enrolment would leave them unable to satisfy either — plus everything the
+ * enrolment itself needs: reading the policy, pairing an authenticator, registering a passkey,
+ * proving an emailed code, seeing the recovery codes, and signing out. Nothing here can be used to
+ * reach application data, so the state is "stopped until you set one up" rather than "locked out":
+ * the door is shut on everything except the room where the key is cut.
+ *
+ * Matched exactly, not by prefix. A prefix would exempt whatever happened to start with it, and the
+ * point of the list is that it is short enough to read.
+ */
+const MFA_ENROLMENT_EXEMPT = [
+  "/api/auth/me",
+  "/api/auth/logout",
+  "/api/auth/change-password",
+  "/api/auth/mfa/policy",
+  "/api/auth/mfa/setup",
+  "/api/auth/mfa/verify-setup",
+  "/api/auth/mfa/enrol/email/start",
+  "/api/auth/mfa/enrol/email/verify",
+  "/api/users/me",
+  "/api/auth/webauthn/register/options",
+  "/api/auth/webauthn/register/verify",
+];
+
 /** Session state that the token itself cannot carry — read fresh on every request. */
 interface SessionContext {
   tokenVersion: number;
   mustChangePassword: boolean;
+  /**
+   * True when the account is required to hold a second factor and sign-in can no longer be allowed
+   * without one. Resolved from the MFA policy on every request, so switching enforcement off — or
+   * exempting one account — takes effect on that account's next call rather than at its next sign-in.
+   */
+  mfaEnrolmentRequired: boolean;
 }
 
 /** Payload accepted by signToken — a subset of the fields that get packed into the JWT */
@@ -234,6 +268,30 @@ function completeAuthentication(req: AuthRequest, res: Response, next: NextFunct
         });
         return;
       }
+      /*
+       * The second gate, and it is deliberately second: a person can owe both a password change and
+       * an enrolment, and the password screen has to come first because it is the one that proves the
+       * account is theirs.
+       *
+       * A key holder is not stopped. An API key is a credential an administrator issued to a system
+       * that cannot open a browser, so asking it to complete an interactive enrolment would break the
+       * integration rather than protect it, and the key's own scopes are the control that applies. The
+       * same reasoning exempts the test account the deployment has explicitly opted into bypassing.
+       */
+      if (
+        state.mfaEnrolmentRequired &&
+        !req.apiKey &&
+        !MFA_ENROLMENT_EXEMPT.includes(path) &&
+        !isBypassAccount(req.user?.email)
+      ) {
+        res.status(403).json({
+          error: {
+            message: "Set up multi-factor authentication before continuing",
+            code: "MFA_ENROLMENT_REQUIRED",
+          },
+        });
+        return;
+      }
       next();
     })
     .catch(() => {
@@ -242,7 +300,7 @@ function completeAuthentication(req: AuthRequest, res: Response, next: NextFunct
     });
 }
 
-async function refreshSessionContext(user: AuthUser, apiKeyScopes?: string[]): Promise<{ valid: boolean; mustChangePassword: boolean }> {
+async function refreshSessionContext(user: AuthUser, apiKeyScopes?: string[]): Promise<{ valid: boolean; mustChangePassword: boolean; mfaEnrolmentRequired: boolean }> {
   let dbUser;
   try {
     const { prisma } = await import("../index");
@@ -253,27 +311,46 @@ async function refreshSessionContext(user: AuthUser, apiKeyScopes?: string[]): P
         deniedPermissions: true,
         mustChangePassword: true,
         tokenVersion: true,
+        mfaEnabled: true,
+        mfaMethod: true,
+        mfaState: true,
+        mfaEnrolledAt: true,
+        mfaGraceUntil: true,
         role: { select: { systemRole: true, permissions: true } },
         company: { select: { consoleEnabled: true } },
       },
     });
   } catch {
     // A database we cannot read is a session we cannot vouch for.
-    return { valid: false, mustChangePassword: false };
+    return { valid: false, mustChangePassword: false, mfaEnrolmentRequired: false };
   }
   try {
-    if (!dbUser) return { valid: false, mustChangePassword: false };
+    if (!dbUser) return { valid: false, mustChangePassword: false, mfaEnrolmentRequired: false };
+
+    /*
+     * The account's permissions are assembled **before** the session state, because the policy needs
+     * them: whether this caller can change the enrolment policy decides whether the gate may shut on
+     * them. See the note on `mfaPolicyFor` — an account that can fix a mistake must not be locked out of
+     * reaching the screen that fixes it.
+     */
+    const fresh = effectivePermissions(dbUser);
 
     const state: SessionContext = {
       tokenVersion: dbUser.tokenVersion,
       mustChangePassword: dbUser.mustChangePassword,
+      // Recomputed from the settings and this account's own row on every request, so an exemption
+      // granted to one person — or enforcement switched off entirely — opens their door on the next
+      // call instead of at their next sign-in. Cheap: the settings are a cached snapshot.
+      mfaEnrolmentRequired: mfaPolicyFor({
+        ...dbUser,
+        holdsInstanceSecurity: permissionsIncludeInstanceSecurity(fresh),
+      }).mustEnrolNow,
     };
     // A password change bumps the version, which retires every token issued before it.
     if ((user.tokenVersion ?? 0) !== state.tokenVersion) {
-      return { valid: false, mustChangePassword: state.mustChangePassword };
+      return { valid: false, mustChangePassword: state.mustChangePassword, mfaEnrolmentRequired: false };
     }
 
-    const fresh = effectivePermissions(dbUser);
     /*
      * A key holder gets the intersection, recomputed here rather than only at verification, so a
      * scope it may no longer use — because the owner's role changed, or the intersection simply
@@ -294,10 +371,10 @@ async function refreshSessionContext(user: AuthUser, apiKeyScopes?: string[]): P
       user.permissions = effective;
     }
 
-    return { valid: true, mustChangePassword: state.mustChangePassword };
+    return { valid: true, mustChangePassword: state.mustChangePassword, mfaEnrolmentRequired: state.mfaEnrolmentRequired };
   } catch {
     // Anything unexpected while verifying the session is treated as unverified.
-    return { valid: false, mustChangePassword: false };
+    return { valid: false, mustChangePassword: false, mfaEnrolmentRequired: false };
   }
 }
 
@@ -354,13 +431,25 @@ export { JWT_SECRET };
 /**
  * Compute the effective permission set for a user.
  * Merges role-based permissions with individual overrides (additive).
+ *
+ * The Super Admin tier is then subtracted for any role that is not *meant* to hold it, and that
+ * subtraction is a control rather than tidiness. A role's permissions live in a database row and are
+ * editable, so without this a stored row — or a role an administrator built with `role:manage` — could
+ * carry `instance:security` in its list and the picker's refusal would have been presentation only.
+ *
+ * "Meant to hold it" is decided by the role's **own default** rather than by naming Super Admin here:
+ * a role whose declared set includes an instance permission is a tier role, and any other role has it
+ * removed however it got there. That way a role added later with the tier works without this function
+ * being edited, and a role that merely had one written into it does not.
  */
 export function computePermissions(roleSystemRole: SystemRole, rolePermissions: string[], userOverrides: string[]): Permission[] {
-  const base = rolePermissions.length > 0 ? rolePermissions : (ROLE_PERMISSIONS[roleSystemRole] || []);
+  const roleDefault = ROLE_PERMISSIONS[roleSystemRole] || [];
+  const base = rolePermissions.length > 0 ? rolePermissions : roleDefault;
   const merged = new Set([...base, ...userOverrides]);
-  return [...merged] as Permission[];
+  return ([...merged] as Permission[]).filter(
+    permission => !isSuperAdminOnly(permission) || roleDefault.includes(permission),
+  );
 }
-
 /** The shape `effectivePermissions` needs: a loaded user with its role, its client and its override lists. */export interface PermissionSubject {
   role: { systemRole: string; permissions?: string[] | null };
   /** Individual grants, added to the role. */

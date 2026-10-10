@@ -43,7 +43,7 @@ export type DocumentLetterhead =
  *
  * Fixed literals rather than theme tokens, for the reason stated at the top of this file and in
  * DESIGN.md §8: a printed page is a third surface with no CSS variables to resolve, and it is read as
- * paper — often in greyscale, often photocopied. These values are the ones the redesigned documents
+ * paper — often in greyscale, often photocopied. These values are the ones the Modern documents
  * were drawn against.
  */
 export const DOCUMENT_PALETTE = {

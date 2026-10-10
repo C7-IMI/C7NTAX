@@ -10,6 +10,18 @@ import { passwordStrengthLevel } from "./passwordStrength";
 /** Shortest password accepted anywhere. */
 export const MIN_PASSWORD_LENGTH = 12;
 
+/**
+ * How many previous passwords an account may not reuse.
+ *
+ * Five is a compromise with a reason rather than a round number: it has to be long enough that cycling
+ * back to a favourite is refused, and short enough that somebody changing a password seasonally is not
+ * eventually forced into a password they cannot remember. The list is kept **hashed** — see
+ * `User.previousPasswordHashes` — and the comparison happens on the server, which is why the reuse rule
+ * cannot appear in `passwordPolicyChecks` below: those checks are pure functions of the candidate
+ * password, and this one is a fact about the account.
+ */
+export const PASSWORD_HISTORY_DEPTH = 5;
+
 /** Passwords that show up first in every credential-stuffing list. */
 const COMMON_PASSWORDS = [
   "password", "passw0rd", "letmein", "welcome", "qwerty", "qwerty123",

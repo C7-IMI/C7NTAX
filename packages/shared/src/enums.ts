@@ -229,6 +229,23 @@ export enum Permission {
   SecurityManage = "security:manage",
   MFAEnforce = "mfa:enforce",
 
+  /*
+   * ── Instance — the Super-Admin tier ──
+   *
+   * These three are separated from everything else because their blast radius is the **whole
+   * deployment** rather than a record: one wrong value locks every account out, weakens every account,
+   * or overwrites state nobody can recover. See `SUPER_ADMIN_ONLY` for the rule and why the tier has to
+   * exist at all.
+   *
+   * The split inside the tier is by *kind of decision*, not by audience — one role holds all three
+   * today. It is by kind because the reason each is protected is different, and the reason is what a
+   * reviewer needs to read: `InstanceSecurity` is about who may get in, `InstanceConfig` about what the
+   * application is for everybody, `InstanceMaintenance` about operations that pause, force or destroy.
+   */
+  InstanceSecurity = "instance:security",
+  InstanceConfig = "instance:config",
+  InstanceMaintenance = "instance:maintenance",
+
   // ── Inference / AI ──
   InferenceView = "inference:view",
   InferenceManage = "inference:manage",
@@ -417,6 +434,10 @@ export const PERMISSION_CATEGORIES: { key: string; label: string; permissions: P
     ],
   },
   {
+    key: "instance", label: "Instance (Super Admin only)",
+    permissions: [Permission.InstanceSecurity, Permission.InstanceConfig, Permission.InstanceMaintenance],
+  },
+  {
     key: "admin", label: "Administration",
     permissions: [Permission.UserManage, Permission.RoleManage, Permission.SystemConfig],
   },
@@ -473,18 +494,64 @@ export const PERMISSION_CATEGORIES: { key: string; label: string; permissions: P
  */
 const DEVELOPER_PERMISSIONS: Permission[] = [Permission.DeveloperView, Permission.DeveloperPurge];
 
+/**
+ * The permissions only a Super Admin may hold.
+ *
+ * **Why this exists.** `Admin` and `Super Admin` used to differ by two developer permissions and
+ * nothing else, which meant an ordinary administrator could turn multi-factor authentication on *and
+ * enforce it* for the whole instance, raise the session ceiling, switch authentication hardening off,
+ * enable the test-bypass exemption, change what every client sees in the portal, or pause the
+ * instance's background workers. Those are all decisions about the deployment itself — an operator's
+ * decisions — and an administrator is a tier below that, not equal to it.
+ *
+ * **What it is not.** This is not "administrators are untrusted": everything an administrator needs to
+ * do their job stays theirs. Crucially, the per-account half of multi-factor authentication stays with
+ * `mfa:enforce` and `security:manage`, because an administrator resetting one person's second factor is
+ * ordinary support, while deciding that *everybody* must have one is policy.
+ *
+ * **The rule that has to hold.** A non-Super-Admin must not be able to grant one of these — not to
+ * themselves, not to a role they are building, and not through an API key. That is enforced in three
+ * places rather than one, because hiding a permission in a picker is presentation and not a control:
+ *
+ *   1. here, so `Admin` does not hold them (and a stored role row that lists one does not either);
+ *   2. `computePermissions` subtracts them for any role that is not Super Admin or Developer Admin, so
+ *      a stored permission list cannot smuggle one in;
+ *   3. the user and role editors omit them from the grantable catalogue *and* their route handlers
+ *      refuse them by name, so a request that never went through the picker is refused too.
+ *
+ * An API key needs no special case: a key's scopes are intersected with its owner's permissions on
+ * every request, so once its owner does not hold a tier permission the key cannot carry it.
+ */
+export const SUPER_ADMIN_ONLY: Permission[] = [
+  Permission.InstanceSecurity,
+  Permission.InstanceConfig,
+  Permission.InstanceMaintenance,
+];
+
+/** Whether holding this permission is reserved to the Super Admin tier. */
+export function isSuperAdminOnly(permission: Permission): boolean {
+  return SUPER_ADMIN_ONLY.includes(permission);
+}
+
 /** Default role → permission mapping */
 export const ROLE_PERMISSIONS: Record<SystemRole, Permission[]> = {
   /*
    * Super Admin and Admin are **not** the same thing here, and this is the one place in the product
-   * where they are deliberately different. A Super Admin holds everything, including the developer
-   * surface; **Admin** holds everything except it. So the Developer section is invisible to an ordinary
-   * administrator — no rail row, no permission in a picker, no route behind a typed URL — while the two
-   * roles that are meant to have it (Super Admin and Developer Admin) do. `Developer Admin` is the
-   * narrower of the two: it can operate the section, but it cannot administer its own role.
+   * where they are deliberately different. A Super Admin holds everything: the developer surface *and*
+   * the instance tier. **Admin** holds everything except both — so it is a real tier below, not an
+   * alias. The Developer section is invisible to an ordinary administrator (no rail row, no permission
+   * in a picker, no route behind a typed URL), and the switches that decide what the whole deployment
+   * does are not his to throw.
+   *
+   * `Developer Admin` deliberately still holds everything, instance tier included. It is the role that
+   * can operate the developer surface, it already held every instance switch before this tier existed,
+   * and narrowing it here would be a change nobody asked for. If it should be narrowed, that is a
+   * separate decision about that role rather than a consequence of this one.
    */
   [SystemRole.SuperAdmin]: Object.values(Permission),
-  [SystemRole.Admin]: Object.values(Permission).filter(p => !DEVELOPER_PERMISSIONS.includes(p)),
+  [SystemRole.Admin]: Object.values(Permission).filter(
+    p => !DEVELOPER_PERMISSIONS.includes(p) && !SUPER_ADMIN_ONLY.includes(p),
+  ),
   [SystemRole.DeveloperAdmin]: Object.values(Permission),
   [SystemRole.Manager]: [
     Permission.TicketViewAll, Permission.TicketView, Permission.TicketCreate,

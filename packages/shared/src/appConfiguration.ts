@@ -196,7 +196,8 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
     summary: "Instance identity, the default landing page, and the interface options that apply to everyone.",
     icon: "Wrench",
     readPermission: Permission.SystemConfig,
-    writePermission: Permission.SystemConfig,
+    // What the application is called and how it looks for everybody is instance policy.
+    writePermission: Permission.InstanceConfig,
     governs: "What the application calls itself and where people land when they sign in.",
     fields: [
       {
@@ -239,15 +240,15 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
       {
         id: "interfaceStyle",
         label: "Interface",
-        summary: "The redesigned screens, or the classic ones this application had before them.",
+        summary: "The Modern screens, or the classic ones this application had before them.",
         detail:
-          "Redesign is the default: the reworked ticket screen (five grouped tabs, a context column, and less to scroll), and the plainer chrome around every other page while they are rebuilt in turn. Classic is the interface exactly as it was — same routes, same permissions, same data, same colour schemes — which is what makes this safe to try and safe to refuse. A person can override it for their own browser with the c7_ui_redesign flag, in either direction, and the navigation pane keeps its own separate setting: which screens and which nav are different questions.",
+          "Modern is the default: the reworked ticket screen (five grouped tabs, a context column, and less to scroll), and the plainer chrome around every other page while they are rebuilt in turn. Classic is the interface exactly as it was — same routes, same permissions, same data, same colour schemes — which is what makes this safe to try and safe to refuse. A person can override it for their own browser with the c7_ui_modern flag, in either direction, and the navigation pane keeps its own separate setting: which screens and which nav are different questions.",
         type: "select",
         source: "setting",
         env: "UI_INTERFACE_STYLE",
-        default: "redesign",
+        default: "modern",
         choices: [
-          { value: "redesign", label: "Redesign (default)" },
+          { value: "modern", label: "Modern (default)" },
           { value: "classic", label: "Classic" },
         ],
         store: { key: CONFIG_STORE_KEYS.appSettings, path: "appearance.interfaceStyle" },
@@ -306,7 +307,10 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
     summary: "Idle timeout, the hard session ceiling, and the sign-in methods this deployment offers.",
     icon: "Shield",
     readPermission: Permission.SystemConfig,
-    writePermission: Permission.SecurityManage,
+    // Who may sign in and for how long is instance policy, so it is the Super Admin tier's to change.
+    // An administrator can still see these values — read stays on `system:config` — which is what lets
+    // them answer "why was I signed out" without being able to change the answer for everybody.
+    writePermission: Permission.InstanceSecurity,
     governs: "How long a signed-in person stays signed in, and which sign-in methods are accepted.",
     requirements: [
       {
@@ -437,6 +441,107 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
     ],
   },
 
+  // ── Multi-factor authentication ──────────────────────────────────
+  {
+    id: "mfa",
+    label: "Multi-factor authentication",
+    summary: "Whether a second factor is available, whether it is required, and which methods are accepted.",
+    icon: "KeyRound",
+    readPermission: Permission.SystemConfig,
+    // Instance policy, so it is the Super Admin tier's to change. An administrator keeps the
+    // *per-account* half of this feature (`mfa:enforce`, `security:manage`), because resetting one
+    // person's second factor is support; deciding that everybody must have one is not.
+    writePermission: Permission.InstanceSecurity,
+    governs: "If, when, and how a signed-in person has to prove a second factor.",
+    requirements: [
+      {
+        label: "An outbound mail server",
+        env: ["SMTP_HOST"],
+        whenField: "allowEmailCode",
+        detail:
+          "An emailed code is the one method that needs something outside the application to work. Without a relay it can be offered and never delivered, which is worse than not offering it.",
+      },
+    ],
+    fields: [
+      {
+        id: "enabled",
+        label: "Multi-factor authentication",
+        summary: "Offer a second factor at sign-in, and let people enrol one.",
+        detail:
+          "Off means the application never asks for a second factor and never offers to enrol one. An account that has already enrolled stops being asked and signs in with its password alone, so turning this off is a real weakening of every one of those accounts rather than a pause. The enrolment it recorded is kept, and switching this back on restores it.",
+        type: "boolean",
+        source: "setting",
+        default: false,
+        affects: ["Sign-in", "My Account", "Every enrolled account"],
+      },
+      {
+        id: "mode",
+        label: "When it applies",
+        summary: "Optional lets people choose; Enforced requires it.",
+        detail:
+          "Optional is the default and asks for nothing on its own: people enrol from My Account if they want to. Enforced requires every account to have a second factor, and the grace period below decides how long an account has to get one before sign-in stops it. Individual accounts can be exempted or required on the Users screen either way.",
+        type: "select",
+        source: "setting",
+        default: "optional",
+        choices: [
+          { value: "optional", label: "Optional — people may enrol" },
+          { value: "enforced", label: "Enforced — everyone must enrol" },
+        ],
+        affects: ["Sign-in", "The first sign-in after enforcement", "Users"],
+      },
+      {
+        id: "graceDays",
+        label: "Grace period",
+        summary: "Days an account is given to enrol after a requirement starts.",
+        detail:
+          "Zero means the requirement bites at the next sign-in. Anything else lets the account sign in while a warning counts the days down, which is what stops an instance being locked out of itself the moment enforcement is switched on. Exempt accounts are not counted. An administrator who has not enrolled is never blocked — see the note on the enrolment screen.",
+        type: "number",
+        source: "setting",
+        default: 7,
+        min: 0,
+        max: 90,
+        unit: "days",
+        affects: ["Sign-in", "Users who have not enrolled"],
+      },
+      {
+        id: "allowAuthenticator",
+        label: "Authenticator app",
+        summary: "Codes from an authenticator app, the default method.",
+        detail:
+          "A time-based code, six digits, thirty seconds, from any authenticator app. This is the only method that works with no dependency on the deployment and no dependency on a second device being reachable, which is why it is on by default and why an instance with no other method still has one. Turning it off stops it being offered to accounts that have not enrolled; an account that already has one keeps it until its second factor is reset on its own screen, because deciding at sign-in that a working method is no longer acceptable is a lockout rather than a change of policy.",
+        type: "boolean",
+        source: "setting",
+        default: true,
+        affects: ["Sign-in", "The enrolment wizard", "Users"],
+      },
+      {
+        id: "allowEmailCode",
+        label: "Emailed code",
+        summary: "A short-lived code sent to the account's address.",
+        detail:
+          "The weakest of the three, because it moves the second factor onto the same channel as a password reset. It is offered because some accounts have no phone, and it is off by default for that reason. It needs a working mail relay to be worth offering.",
+        type: "boolean",
+        source: "setting",
+        default: false,
+        affects: ["Sign-in", "The enrolment wizard", "Mail delivery"],
+      },
+      {
+        id: "rememberBrowser",
+        label: "Remember a browser",
+        summary: "Days a browser may skip the second factor after it has been proved once.",
+        detail:
+          "Zero asks for a second factor at every sign-in. Anything else issues a cookie to that browser alone after a successful second factor, so a person on their own machine is not asked every morning. The cookie carries no password and is refused when the account's MFA is reset, so an administrator's reset takes effect on the next sign-in rather than in a month.",
+        type: "number",
+        source: "setting",
+        default: 30,
+        min: 0,
+        max: 365,
+        unit: "days",
+        affects: ["Sign-in", "Trusted browsers"],
+      },
+    ],
+  },
+
   // ── Customer Portal ──────────────────────────────────────────────
   {
     id: "portal",
@@ -444,7 +549,9 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
     summary: "The customer-facing sign-in, what a customer may see and do, and how it looks.",
     icon: "Globe",
     readPermission: Permission.ClientView,
-    writePermission: Permission.SystemConfig,
+    // The customer-facing surface of the whole instance: whether it exists, and what every client gets
+    // by default. A per-client override stays where it was — that is client administration.
+    writePermission: Permission.InstanceConfig,
     governs: "Whether customers have a portal at all, and what it lets them do.",
     requirements: [
       {
@@ -1049,7 +1156,8 @@ export const CONFIG_SECTIONS: ConfigSectionSpec[] = [
     summary: "The Outlook add-in, push notification devices, and the companion clients this deployment serves.",
     icon: "Monitor",
     readPermission: Permission.SystemConfig,
-    writePermission: Permission.SystemConfig,
+    // Which companion clients this deployment serves is a decision about the instance, made once.
+    writePermission: Permission.InstanceConfig,
     governs: "Which companion clients this deployment serves, and how it reaches a phone.",
     fields: [
       {

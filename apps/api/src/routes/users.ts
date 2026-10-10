@@ -4,7 +4,8 @@ import { authenticate, requirePermission, computePermissions, type AuthRequest }
 import {
   Permission, ROLE_PERMISSIONS, SystemRole, validatePassword,
   DEVELOPER_ACCOUNT_REFUSAL, developerPermissionsIn, developerRefusalMessage, isDeveloperRole,
-  isSuperAdminRole, wearsDeveloperRole, withoutDeveloperPermissions,
+  isMfaState, isSuperAdminRole, wearsDeveloperRole, withoutDeveloperPermissions,
+  instancePermissionsIn, instanceRefusalMessage, withoutInstancePermissions,
 } from "@C7NTAX/shared";
 import bcrypt from "bcryptjs";
 import { randomInt } from "node:crypto";
@@ -12,6 +13,8 @@ import { sendEmailTemplate } from "../services/emailTemplateSend";
 import { AppError } from "../middleware/errorHandler";
 import { endSessionsForUser } from "../services/signIn";
 import { developerRoleIds } from "../services/developerAccounts";
+import { mfaGraceDays, mfaPolicyFor } from "../services/mfaPolicy";
+import { historyAfterChange, passwordReuseMessage, passwordWasUsedRecently } from "../services/passwordHistory";
 
 export const usersRouter = Router();
 usersRouter.use(authenticate);
@@ -30,6 +33,30 @@ function developerRefusal(offending: string[]): AppError {
   return new AppError(developerRefusalMessage(offending), 403);
 }
 
+/** The one refusal for naming an instance-tier permission, which is reserved to a Super Admin. */
+function instanceRefusal(offending: string[]): AppError {
+  return new AppError(instanceRefusalMessage(offending), 403);
+}
+
+/**
+ * Drop every credential field from a user record before it goes out.
+ *
+ * **One place, because there are now five of them.** This used to be written out at each call site and
+ * each site remembered a different subset: `passwordHash` and `mfaSecret` everywhere, and that was all —
+ * so `mfaBackupCodes`, the **plaintext** pending `mfaEmailCode` and the new `previousPasswordHashes`
+ * were handed to anybody holding `user:manage`, from a route whose whole purpose is to show one person's
+ * record. A list of every credential an account has ever had, returned by a screen that only wanted to
+ * show a job title, is the kind of leak nobody notices because nothing breaks.
+ *
+ * A history and a set of recovery codes are credentials in exactly the sense a password is: bcrypt
+ * protects them so they cannot be read *as* passwords, but returning them is still handing over
+ * something that gets somebody in. Nothing on the client has ever had a use for any of the five.
+ */
+function withoutCredentials<T extends Record<string, unknown>>(user: T): Omit<T, "passwordHash"> {
+  const { passwordHash, mfaSecret, mfaBackupCodes, mfaEmailCode, previousPasswordHashes, ...rest } = user;
+  return rest as Omit<T, "passwordHash">;
+}
+
 /**
  * The refusal for acting on a person rather than on a role — see `DEVELOPER_ACCOUNT_REFUSAL`.
  *
@@ -40,6 +67,33 @@ function developerRefusal(offending: string[]): AppError {
  */
 function developerAccountRefusal(name: string): AppError {
   return new AppError(`Refused: ${name}. ${DEVELOPER_ACCOUNT_REFUSAL}`, 403);
+}
+
+/**
+ * Record a change to somebody's second factor.
+ *
+ * Written directly rather than through a shared helper because the only two callers are the two MFA
+ * routes below, and it swallows its own failure for the same reason every other audit write here
+ * does: a history that is missing an entry is a smaller problem than a reset that did not happen.
+ */
+async function recordMfaChange(
+  req: AuthRequest,
+  action: string,
+  entityId: string,
+  changes: Record<string, unknown>,
+): Promise<void> {
+  try {
+    await prisma.auditLog.create({
+      data: {
+        action,
+        entity: "user",
+        entityId,
+        changes: changes as never,
+        userId: req.user!.userId,
+        ipAddress: req.ip || req.socket?.remoteAddress || null,
+      },
+    });
+  } catch { /* the change stands either way */ }
 }
 
 /** Only the fields the redaction below touches, so a record keeps everything else the query selected. */
@@ -60,9 +114,9 @@ interface DeveloperPermissionsCarrier {
 function hideDeveloperPermissions<T extends DeveloperPermissionsCarrier>(user: T): T {
   return {
     ...user,
-    ...(user.role ? { role: { ...user.role, permissions: withoutDeveloperPermissions(user.role.permissions) } } : {}),
-    ...(user.permissions !== undefined ? { permissions: withoutDeveloperPermissions(user.permissions) } : {}),
-    ...(user.deniedPermissions !== undefined ? { deniedPermissions: withoutDeveloperPermissions(user.deniedPermissions) } : {}),
+    ...(user.role ? { role: { ...user.role, permissions: withoutInstancePermissions(withoutDeveloperPermissions(user.role.permissions)) } } : {}),
+    ...(user.permissions !== undefined ? { permissions: withoutInstancePermissions(withoutDeveloperPermissions(user.permissions)) } : {}),
+    ...(user.deniedPermissions !== undefined ? { deniedPermissions: withoutInstancePermissions(withoutDeveloperPermissions(user.deniedPermissions)) } : {}),
   } as T;
 }
 
@@ -158,6 +212,10 @@ usersRouter.get("/", requirePermission(Permission.UserManage), async (req: AuthR
           // it, a screen that draws the grants alone would look like the removal had not been saved.
           deniedPermissions: true,
           isActive: true, isLocked: true, mfaEnabled: true, mustChangePassword: true,
+          // The policy columns travel with the list because the screen that draws them is the one place
+          // an administrator can see who is overdue — a count that cannot be assembled from `mfaEnabled`
+          // alone, since "enrolled" and "required" are different questions with different answers.
+          mfaState: true, mfaMethod: true, mfaEnrolledAt: true, mfaGraceUntil: true,
           lastLoginAt: true, createdAt: true, company: { select: { id: true, name: true } },
         },
       }),
@@ -184,8 +242,20 @@ usersRouter.get("/me", async (req: AuthRequest, res, next) => {
       include: { company: true, role: true },
     });
     if (!user) throw new AppError("User not found", 404);
-    const { passwordHash, mfaSecret, ...safe } = user;
-    res.json(safe);
+    /*
+     * Three things are stripped rather than returned.
+     *
+     * `passwordHash` and `mfaSecret` have always been. `mfaBackupCodes` and `mfaEmailCode` are added
+     * here because they are credentials too — the recovery-code hashes and, worse, a **plaintext**
+     * pending emailed code, which is a live second factor for as long as it is in the window. Nothing
+     * on the client has a use for either: the codes are shown once at the moment they are issued, and
+     * the pending code is only ever meant to be typed by the person who received it by email.
+     *
+     * `mfaPolicy` is added for the same reason `/api/auth/me` carries it: the account screen and the
+     * reminder read it, and without it here they would have to make a second call — which is how two
+     * screens come to disagree about a deadline.
+     */
+    res.json({ ...withoutCredentials(user), mfaPolicy: mfaPolicyFor(user) });
   } catch (e) { next(e); }
 });
 
@@ -206,13 +276,11 @@ usersRouter.get("/:id", requirePermission(Permission.UserManage), async (req: Au
       // would confirm it does. The same answer as the list gives, which is the point — an id learned
       // from somewhere else must not be a way around it.
       if (wearsDeveloperRole(user)) throw new AppError("User not found", 404);
-      const { passwordHash, mfaSecret, ...visible } = user;
       // The same redaction as the list, for the same reason: one record must not become the way around it.
-      res.json(hideDeveloperPermissions(visible));
+      res.json(hideDeveloperPermissions(withoutCredentials(user)));
       return;
     }
-    const { passwordHash, mfaSecret, ...safe } = user;
-    res.json(safe);
+    res.json(withoutCredentials(user));
   } catch (e) { next(e); }
 });
 
@@ -255,7 +323,12 @@ usersRouter.post("/", requirePermission(Permission.UserManage), async (req: Auth
       const offending = [
         ...(isDeveloperRole(roleRecord.systemRole) ? [roleRecord.name] : []),
         ...developerPermissionsIn(permissions),
+        // Creating an account is the other way a tier permission could be handed out, so it is refused
+        // here as well as on the edit path.
+        ...instancePermissionsIn(permissions),
       ];
+      const instanceKeys = instancePermissionsIn(permissions);
+      if (instanceKeys.length) throw instanceRefusal(offending);
       if (offending.length) throw developerRefusal(offending);
     }
 
@@ -330,9 +403,9 @@ usersRouter.post("/", requirePermission(Permission.UserManage), async (req: Auth
       }
     }
 
-    const { passwordHash: _, mfaSecret: __, ...safe } = user;
+    const visible = withoutCredentials(user);
     res.status(201).json({
-      ...(isSuperAdminRole(req.user!.role) ? safe : hideDeveloperPermissions(safe)),
+      ...(isSuperAdminRole(req.user!.role) ? visible : hideDeveloperPermissions(visible)),
       // Shown once so the administrator can hand it over; never sent for an invite.
       temporaryPassword: mode === "invite" ? undefined : plainPassword,
       mustChangePassword: !!mustChangePassword,
@@ -364,6 +437,18 @@ usersRouter.post("/:id/reset-password", requirePermission(Permission.SecurityMan
       if (await bcrypt.compare(temporaryPassword, user.passwordHash)) {
         throw new AppError("The new password must be different from the current one", 400);
       }
+      /*
+       * An administrator setting a password is held to the same history as the person would be, and
+       * deliberately so. "Reset it back to what it was" is the exact instruction that would otherwise
+       * undo a change somebody made because their old password had been exposed, and the administrator
+       * doing the reset has no way to know which of the account's previous passwords that was.
+       *
+       * A **generated** password skips both checks: it is random, so it cannot be a reuse, and refusing
+       * it would leave an administrator with no way to reset an account at all.
+       */
+      if (await passwordWasUsedRecently(user.previousPasswordHashes, temporaryPassword, user.passwordHash)) {
+        throw new AppError(passwordReuseMessage(), 400);
+      }
     }
 
     await prisma.user.update({
@@ -372,6 +457,8 @@ usersRouter.post("/:id/reset-password", requirePermission(Permission.SecurityMan
         passwordHash: await bcrypt.hash(temporaryPassword, 12),
         passwordChangedAt: new Date(),
         mustChangePassword: !!requireChange,
+        // The replaced hash joins the history, so a reset cannot be used to walk a password backwards.
+        previousPasswordHashes: historyAfterChange(user.previousPasswordHashes, user.passwordHash),
         // Retires every session that signed in with the old password.
         tokenVersion: { increment: 1 },
         // Clearing the failed-attempt counter is the point of unlocking here.
@@ -458,8 +545,20 @@ usersRouter.patch("/:id", requirePermission(Permission.UserManage), async (req: 
         ...(touchesPermissions && isDeveloperRole(target.role.systemRole) ? [target.role.name] : []),
         ...developerPermissionsIn(req.body.permissions),
         ...developerPermissionsIn(req.body.deniedPermissions),
+        // The instance tier, on both halves of a user. Granting one is how an administrator would
+        // otherwise step up a tier by editing their own record rather than a role — and the self-check
+        // above does not catch it, because the tier is refused to everybody rather than only to `self`.
+        ...instancePermissionsIn(req.body.permissions),
+        ...instancePermissionsIn(req.body.deniedPermissions),
       ];
-      if (offending.length) throw developerRefusal(offending);
+      if (offending.length) {
+        const instanceKeys = [
+          ...instancePermissionsIn(req.body.permissions),
+          ...instancePermissionsIn(req.body.deniedPermissions),
+        ];
+        if (instanceKeys.length) throw instanceRefusal(offending);
+        throw developerRefusal(offending);
+      }
     }
 
     const updates: Record<string, unknown> = {};
@@ -547,8 +646,8 @@ usersRouter.patch("/:id", requirePermission(Permission.UserManage), async (req: 
     // A password change or a deactivation must end live sessions, not just retire tokens:
     // a session cookie would otherwise keep working after either.
     if (passwordReset || req.body.isActive === false) await endSessionsForUser(user.id);
-    const { passwordHash, mfaSecret, ...safe } = user;
-    res.json(isSuperAdminRole(req.user!.role) ? safe : hideDeveloperPermissions(safe));
+    const visible = withoutCredentials(user);
+    res.json(isSuperAdminRole(req.user!.role) ? visible : hideDeveloperPermissions(visible));
   } catch (e) { next(e); }
 });
 
@@ -579,6 +678,19 @@ usersRouter.post("/:id/lock", requirePermission(Permission.UserManage), async (r
 });
 
 // ── Reset MFA for user ───────────────────────────────────────────────
+/**
+ * Take an account's second factor away.
+ *
+ * This is the revocation, and it has to take *everything* away: the seed, the recovery codes, the
+ * email fallback code, the enrolled method, and — the part that is easy to forget — **the enrolment
+ * date**, which is the version every trusted-browser cookie is bound to. Clearing it is what revokes
+ * those cookies, so the next sign-in on a machine that had been trusted asks for a factor again.
+ *
+ * A fresh deadline is stamped at the same time. The account is now unenrolled, and if the deployment
+ * requires a second factor then its next request would otherwise be the one that stops it — without a
+ * warning and without a countdown. Giving it the grace period means a reset is a "set it up again"
+ * rather than a lockout, and the date is only ever consulted when a requirement actually applies.
+ */
 usersRouter.post("/:id/reset-mfa", requirePermission(Permission.SecurityManage), async (req: AuthRequest, res, next) => {
   try {
     const target = await prisma.user.findUnique({ where: { id: req.params.id }, include: { role: true } });
@@ -586,8 +698,88 @@ usersRouter.post("/:id/reset-mfa", requirePermission(Permission.SecurityManage),
     if (!isSuperAdminRole(req.user!.role) && wearsDeveloperRole(target)) throw developerAccountRefusal(target.email);
     await prisma.user.update({
       where: { id: req.params.id },
-      data: { mfaEnabled: false, mfaSecret: null, mfaBackupCodes: [] },
+      data: {
+        mfaEnabled: false,
+        mfaSecret: null,
+        mfaBackupCodes: [],
+        mfaMethod: null,
+        mfaEnrolledAt: null,
+        mfaEmailCode: null,
+        mfaEmailCodeExpires: null,
+        mfaGraceUntil: new Date(Date.now() + mfaGraceDays() * 24 * 60 * 60 * 1000),
+      },
     });
-    res.json({ message: "MFA reset" });
+    await recordMfaChange(req, "mfa.reset", target.id, { method: target.mfaMethod });
+    const updated = await prisma.user.findUnique({
+      where: { id: target.id },
+      select: { email: true, mfaEnabled: true, mfaMethod: true, mfaState: true, mfaEnrolledAt: true, mfaGraceUntil: true },
+    });
+    /*
+     * The resolved policy comes back with the reset, matching `PATCH /:id/mfa`.
+     *
+     * A reset is the change whose *consequence* is hardest to guess — the account is now unenrolled, so
+     * whether it is about to be stopped depends on the instance's setting and on the deadline that was
+     * just stamped. Returning the answer means the screen can say what will happen next instead of
+     * re-reading the record and inferring it, and the two MFA routes answer alike.
+     */
+    res.json({
+      message: "MFA reset",
+      mfaEnabled: updated?.mfaEnabled ?? false,
+      mfaMethod: updated?.mfaMethod ?? null,
+      mfaState: updated?.mfaState ?? target.mfaState,
+      mfaEnrolledAt: updated?.mfaEnrolledAt ?? null,
+      mfaGraceUntil: updated?.mfaGraceUntil ?? null,
+      policy: mfaPolicyFor(updated ?? target),
+    });
+  } catch (e) { next(e); }
+});
+
+// ── Set whether a user must have MFA ─────────────────────────────────
+/**
+ * Per-account policy: follow the instance, exempt, or require.
+ *
+ * This is what `Permission.MFAEnforce` was declared for and never used — until now no route read it,
+ * so the permission existed only as a checkbox on a role editor. The three values are Entra's
+ * `default` / `disabled` / `enforced` (`MFA_STATES` names them once, for both the API and the screen).
+ *
+ * Requiring an account is deliberately allowed even when the instance does not require anybody: the
+ * point of the state is that it beats the setting, so an administrator can hold one sensitive account
+ * to a higher standard than the deployment without changing it for everyone. Exempting is the
+ * opposite and is why enforcement is safe to switch on at all.
+ *
+ * Changing the state does not touch what the account has enrolled — requiring is not enrolling, and a
+ * person who has not set a factor up is given the grace period rather than stopped on the spot.
+ */
+usersRouter.patch("/:id/mfa", requirePermission(Permission.MFAEnforce), async (req: AuthRequest, res, next) => {
+  try {
+    const target = await prisma.user.findUnique({ where: { id: req.params.id }, include: { role: true } });
+    if (!target) throw new AppError("User not found", 404);
+    if (!isSuperAdminRole(req.user!.role) && wearsDeveloperRole(target)) throw developerAccountRefusal(target.email);
+
+    const state = req.body?.state;
+    if (!isMfaState(state)) throw new AppError("state must be one of default, disabled or enforced", 400);
+
+    /*
+     * An account may exempt itself from a requirement, and that is allowed — but not silently.
+     * Recording who changed it and from what is the whole control here: a state that beats the
+     * instance setting is exactly the kind of change an audit trail exists to make visible.
+     */
+    const data: Record<string, unknown> = { mfaState: state };
+    // Moving off "enforced", or onto it, invalidates any deadline that was given for the old answer:
+    // a newly-required account needs a countdown (not an immediate stop), and a newly-exempt one must
+    // not keep a deadline the banner would still be counting down.
+    if (state === "disabled") data.mfaGraceUntil = null;
+    else if (state === "enforced" && !target.mfaEnrolledAt && !target.mfaGraceUntil) {
+      data.mfaGraceUntil = new Date(Date.now() + mfaGraceDays() * 24 * 60 * 60 * 1000);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: target.id },
+      data,
+      select: { mfaState: true, mfaMethod: true, mfaEnabled: true, mfaEnrolledAt: true, mfaGraceUntil: true },
+    });
+    await recordMfaChange(req, "mfa.state_changed", target.id, { from: target.mfaState, to: state });
+
+    res.json({ ...updated, policy: mfaPolicyFor(updated) });
   } catch (e) { next(e); }
 });
