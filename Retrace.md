@@ -11745,3 +11745,5 @@ findings", and the marginal round now costs more than it returns. What remains i
 the difference between what a script says and what Azure does, and no further reading closes that gap. The
 response records the three evidence items and the four operator decisions as the next artefacts, and says
 plainly that the next document in this series should be a deploy transcript rather than another review.
+### Prompt 385 — Review of Deepseek round-9 follow-up
+Verified the pushed mail-auth fix (c80f3251), ran the credential cases, read the three new migrations riding in 209195c0..30ae6fef. Wrote `PlanDocs/PLAN-030-Review-Round-9-Close.md`. No code changed.
