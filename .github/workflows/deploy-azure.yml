@@ -284,27 +284,51 @@ jobs:
           RG="rg-c7ntax-${ENVIRONMENT}"
           APP="c7ntax-${ENVIRONMENT}"
           SUFFIX="${ENVIRONMENT}-${{ needs.build.outputs.tag }}"
+          TAG="${{ needs.build.outputs.tag }}"
+          IMAGE="${{ needs.build.outputs.registry }}/c7ntax:$TAG"
           az containerapp revision set-mode --name "$APP" --resource-group "$RG" --mode multiple --only-show-errors
-          az containerapp update --name "$APP" --resource-group "$RG" \
-            --image "${{ needs.build.outputs.registry }}/c7ntax:${{ needs.build.outputs.tag }}" \
-            --revision-suffix "$SUFFIX" --only-show-errors
-          # The revision name is `<app>--<suffix>`, but it is read back from the API rather than
-          # assembled, and the health is read from that one revision. `properties.revisionSuffix` is
-          # not a property of a revision (the CLI's Revision serializer carries the suffix only on
-          # properties.template), so the filter that used to be here matched nothing and this step
-          # could never see the new revision become healthy. See scripts/azure/deploy-env.ps1 for the
-          # full note.
-          REVISION=""
+          # The revision is read back from *this call's own answer*, not from a filter over the
+          # revision list. `properties.latestRevisionName` is the revision this update created.
+          #
+          # What it replaced: `revision list --query "[?properties.template.revisionSuffix=='$SUFFIX']"`.
+          # The suffix is `<environment>-<tag>`, so re-running the same commit — a retried workflow, or
+          # a rollback dispatched with the previous tag — asks for a suffix that already names a
+          # revision. If Azure reuses or reports that older revision, the filter matches *it*, the
+          # health gate reads the revision that is already serving, passes, and traffic is shifted to
+          # the image that was already there: a green pipeline that deployed nothing. Reading the name
+          # out of the update removes the filter that could match the wrong revision, and the two
+          # assertions below make the remaining cases loud rather than green.
+          #
+          # The health is read from that one revision. `properties.revisionSuffix` is not a property of
+          # a revision (the CLI's Revision serializer carries the suffix only on properties.template),
+          # so the filter that used to be here matched nothing and this step could never see the new
+          # revision become healthy. See scripts/azure/deploy-env.ps1 for the full note.
+          REVISION=$(az containerapp update --name "$APP" --resource-group "$RG" \
+            --image "$IMAGE" \
+            --revision-suffix "$SUFFIX" --only-show-errors \
+            --query "properties.latestRevisionName" -o tsv)
+          if [ -z "$REVISION" ]; then
+            echo "::error::az containerapp update returned no revision name, so there is nothing to wait on"
+            exit 1
+          fi
+          case "$REVISION" in
+            *--"$SUFFIX") ;;
+            *)
+              echo "::error::the update produced revision '$REVISION', which is not '$APP--$SUFFIX' — a revision with that suffix already exists, so this run may not have created the one it asked for, and the health gate below would have read the older, already-serving revision and passed"
+              exit 1 ;;
+          esac
+          RUNNING_IMAGE=$(az containerapp revision show --name "$APP" --resource-group "$RG" \
+            --revision "$REVISION" --query "properties.template.containers[0].image" -o tsv)
+          case "$RUNNING_IMAGE" in
+            *:"$TAG") ;;
+            *)
+              echo "::error::revision $REVISION is running '$RUNNING_IMAGE', which is not the image this run built (tag $TAG)"
+              exit 1 ;;
+          esac
           state=""
           for i in $(seq 1 60); do
-            if [ -z "$REVISION" ]; then
-              REVISION=$(az containerapp revision list --name "$APP" --resource-group "$RG" \
-                --query "[?properties.template.revisionSuffix=='$SUFFIX'].name | [0]" -o tsv)
-            fi
-            if [ -n "$REVISION" ]; then
-              state=$(az containerapp revision show --name "$APP" --resource-group "$RG" \
-                --revision "$REVISION" --query "properties.healthState" -o tsv)
-            fi
+            state=$(az containerapp revision show --name "$APP" --resource-group "$RG" \
+              --revision "$REVISION" --query "properties.healthState" -o tsv)
             if [ "$state" = "Healthy" ]; then break; fi
             if [ "$state" = "Unhealthy" ]; then echo "new revision $REVISION is unhealthy"; exit 1; fi
             sleep 10

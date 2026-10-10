@@ -10570,3 +10570,57 @@ one worth naming here: if Container Apps *renames* rather than rejects a duplica
 own suffix filter matches the previous revision and the pipeline goes green without deploying anything — so
 I recorded the decisive guard (assert the resolved revision's image) as a change for the operator to
 approve, since it alters the promotion path on an unverified failure.
+
+---
+
+### Prompt 378 — Round 5: the revision that was already there
+
+**Timestamp:** 2026-10-10 03:58 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.10.002** — The revision that was already there.
+
+**Prompt**
+
+> Here is Claude's reply. REview, update docs, and reply here:
+>
+> The round-4 fixes hold up, but the package is still not deployed and not ready. I read Deepseek's changes
+> on `main` (commit `1ab32342`), re-ran its new check, and wrote my reply as
+> `PlanDocs/PLAN-030-Review-Round-5.md` on branch `claude/plan-030-review-round-5`. …
+>
+> **Fixed and verified:** migration job create; the new check (including a mutation test — the original
+> defect put back, the check failing on it with two separate detectors, the file restored); the migration
+> poll; the Bicep comments.
+>
+> **Still open:** (1) image assertion after the health gate — "Deepseek left this as the operator's call. I'd
+> do it now"; (2) the new check isn't wired in — neither `preflight.mjs` nor CI runs it; (3) the `what-if`
+> log line — fix the line either way, saving the output to a dated file is cheap, the second prod
+> confirmation is your call. Plus the three repeated points: cap replicas at one, defer `pgaudit`, and the
+> prod rehearsal.
+
+**R5-1, fixed more completely than it was asked for.** The review asked for an image assertion *after* the
+revision is resolved. Resolving it by suffix is the part that can read the wrong revision, so I removed
+that instead: `az containerapp update` answers with `properties.latestRevisionName`, the revision this call
+created. The suffix filter is gone, and the two surviving cases — Azure rejecting the duplicate, or
+renaming the new revision — are both loud. The requested image assertion is kept as a second guard, as a
+**tag** comparison on the end of the reference rather than whole-string equality: the service returns the
+image, and a normalised registry host would make exact equality fail on a good deploy, which is a false
+failure indistinguishable from the defect it guards.
+
+**Proved with stubs in three cases** — the workflow's own step text, a stub `az`, `sleep` as a no-op: a
+clean update exits 0 with "revision … is healthy"; a renamed revision exits 1 naming both revisions; a
+wrong image exits 1 naming both images.
+
+**R5-2, wired into both gates.** `preflight.mjs` runs it in its existing workflow section — a failure rather
+than a skip when bash is missing, with `BASH_PATH` in the message — and `security.yml`'s guards job runs it
+in CI, which is where the file it guards actually executes. The reviewer's point is the one to keep: a check
+nobody runs would not have saved the round it was written for.
+
+**B3.** Both `what-if` calls captured their output into `Out-Null` while the log said it had been reviewed.
+They now write to `out/deploy/what-if-<environment>-<timestamp>.txt` — git-ignored, one file per attempt —
+and print the path; the false line is gone. The second `prod` prompt stays the operator's call.
+
+**One of mine, found by running preflight after wiring the check in:** `TRUST_PROXY`, added in round 3, was
+missing from `infra/env/.env.production.example`. That is the repository's own rule about a change to an
+environment variable being part of the change, and the environment-contract check is what caught it. It is
+documented there now; the rest of that failure list is the pre-existing one recorded in the go-live
+briefing.

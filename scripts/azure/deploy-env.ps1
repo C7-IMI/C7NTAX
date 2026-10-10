@@ -191,6 +191,17 @@ if (-not $ImageTag -and -not $PromoteFrom) {
 
 function Write-Step([string]$Message) { Write-Host "`n=== $Message" -ForegroundColor Cyan }
 function Write-Info([string]$Message) { Write-Host "    $Message" -ForegroundColor Gray }
+# The what-if output used to go to `Out-Null` while the log said it had been reviewed, and the
+# checklist in `infra/README.md` asks for the preview to be reviewed *and saved*. A preview nobody can
+# read afterwards is not evidence, so it is written down: `out/deploy/`, which is git-ignored, one file
+# per attempt so two runs cannot overwrite each other's proof.
+function Save-WhatIfPreview([string]$Name, [object]$Output) {
+    $dir = Join-Path $repoRoot 'out\deploy'
+    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+    $file = Join-Path $dir ("what-if-$Name-{0}.txt" -f (Get-Date -Format 'yyyy-MM-ddTHH-mm-ss'))
+    ($Output | Out-String) | Set-Content -Path $file -Encoding utf8
+    return $file
+}
 function Invoke-Az([string[]]$Arguments) {
     if ($WhatIf) { Write-Info "would run: az $($Arguments -join ' ')"; return $null }
     $output = & az @Arguments
@@ -355,12 +366,14 @@ if (-not $SkipInfrastructure) {
         # passed for completeness is not consumed by anything.
         # This depends on the default incremental deployment mode (no --mode is passed): a
         # Complete-mode deployment with createApp=false would *delete* the app.
-        Invoke-Az (@('deployment', 'group', 'what-if',
+        $preview = Invoke-Az (@('deployment', 'group', 'what-if',
             '--resource-group', $ResourceGroup,
             '--template-file', $bicepTemplate) + $bicepParameters +
-            @('--parameters', "imageTag=$bicepImage", '--parameters', 'createApp=false')) | Out-Null
+            @('--parameters', "imageTag=$bicepImage", '--parameters', 'createApp=false'))
         if (-not $WhatIf) {
-            Write-Info 'what-if reviewed; applying everything except the app (set -WhatIf to only preview)'
+            $previewFile = Save-WhatIfPreview -Name "first-pass-$Environment" -Output $preview
+            Write-Info "what-if saved to $previewFile"
+            Write-Info 'applying everything except the app now (set -WhatIf to only preview)'
         }
         Invoke-Az (@('deployment', 'group', 'create',
             '--resource-group', $ResourceGroup,
@@ -369,12 +382,14 @@ if (-not $SkipInfrastructure) {
     } else {
         # An ordinary redeploy: the single pass it has always been. Nothing here creates the app; it
         # restates the running image and the serving revision, so it cannot move either.
-        Invoke-Az (@('deployment', 'group', 'what-if',
+        $preview = Invoke-Az (@('deployment', 'group', 'what-if',
             '--resource-group', $ResourceGroup,
             '--template-file', $bicepTemplate) + $bicepParameters +
-            @('--parameters', "imageTag=$bicepImage")) | Out-Null
+            @('--parameters', "imageTag=$bicepImage"))
         if (-not $WhatIf) {
-            Write-Info 'what-if reviewed; applying (set -WhatIf to only preview)'
+            $previewFile = Save-WhatIfPreview -Name "$Environment" -Output $preview
+            Write-Info "what-if saved to $previewFile"
+            Write-Info 'applying now (set -WhatIf to only preview)'
         }
         Invoke-Az (@('deployment', 'group', 'create',
             '--resource-group', $ResourceGroup,
@@ -579,13 +594,23 @@ Invoke-Az @('containerapp', 'revision', 'set-mode', '--name', $appName, '--resou
 # compiling the template (node scripts/azure/validate-bicep.mjs) and parsing this script remain the
 # only whole-file checks. The part that specifically wants a dev resource group is the second
 # `az deployment group create` (createApp=true) and the first revision it produces.
-Invoke-Az @('containerapp', 'update', '--name', $appName, '--resource-group', $ResourceGroup,
-    '--image', $image, '--revision-suffix', $revisionSuffix) | Out-Null
+# The revision is read back from *this call's own answer*, not from a filter over the revision list.
+# `properties.latestRevisionName` is the revision this update created.
+#
+# What it replaced: `revision list --query "[?properties.template.revisionSuffix=='$revisionSuffix']"`.
+# The suffix is `<environment>-<tag>`, so re-running the same commit — a retried pipeline, or the
+# documented `-SkipBuild -ImageTag <previous>` rollback — asks for a suffix that already names a
+# revision. If Azure reuses or reports that older revision, the filter matches *it*, the health gate
+# reads the revision that is already serving, passes, and traffic is shifted to the image that was
+# already there: a green deploy that deployed nothing. Reading the name out of the update removes the
+# filter that could match the wrong revision, and the assertion below makes the remaining case loud.
+$newRevision = Invoke-Az @('containerapp', 'update', '--name', $appName, '--resource-group', $ResourceGroup,
+    '--image', $image, '--revision-suffix', $revisionSuffix,
+    '--query', 'properties.latestRevisionName', '-o', 'tsv')
 # The port, in the call that takes it. This is the line the old `--target-port` was meant to be.
 Invoke-Az @('containerapp', 'ingress', 'update', '--name', $appName, '--resource-group', $ResourceGroup,
     '--target-port', '4000') | Out-Null
 if (-not $WhatIf) {
-    Write-Info 'waiting for the new revision to become healthy…'
     # Wait on the revision by *name*, and read its health from `properties.healthState`.
     #
     # `properties.revisionSuffix` is not a property of a revision. The CLI's own Revision serializer
@@ -599,22 +624,24 @@ if (-not $WhatIf) {
     # stayed empty, and every deploy ended in the throw below - healthy or not.
     #
     # `revision show --revision` wants the revision *name* (`<app>--<suffix>`, required, "Name of the
-    # revision"), not the suffix, which the old call also passed. The name is read back from the API
-    # through the property that does hold the suffix rather than assembled from the two halves here,
-    # so this does not assume the `--` separator either.
+    # revision"), not the suffix, which the old call also passed. The name now comes from the update
+    # itself, so nothing here assembles it from the two halves or assumes the `--` separator.
     #
     # The health vocabulary is Healthy / Unhealthy / None (RevisionHealthState). `Degraded`, which the
     # old test also waited for, is not one of the three.
-    $newRevision = ''
+    if (-not $newRevision) { throw 'az containerapp update returned no revision name, so there is nothing to wait on.' }
+    if ($newRevision -notlike "*--$revisionSuffix") {
+        throw "The update produced revision '$newRevision', which is not '<app>--$revisionSuffix'. A revision with that suffix already exists, so this run may not have created the one it asked for — the health gate below would have read the older, already-serving revision and passed. Inspect with: az containerapp revision list --name $appName --resource-group $ResourceGroup; nothing has been shifted."
+    }
+    $runningImage = (& az containerapp revision show --name $appName --resource-group $ResourceGroup --revision $newRevision --query "properties.template.containers[0].image" -o tsv 2>$null)
+    if ($runningImage -and $runningImage -notlike "*:$ImageTag") {
+        throw "Revision '$newRevision' is running '$runningImage', which is not the image this run deployed ('$image'). Nothing has been shifted."
+    }
+    Write-Info "waiting for $newRevision to become healthy…"
     $state = ''
     for ($i = 0; $i -lt 60; $i++) {
         Start-Sleep -Seconds 10
-        if (-not $newRevision) {
-            $newRevision = (& az containerapp revision list --name $appName --resource-group $ResourceGroup --query "[?properties.template.revisionSuffix=='$revisionSuffix'].name | [0]" -o tsv 2>$null)
-        }
-        if ($newRevision) {
-            $state = (& az containerapp revision show --name $appName --resource-group $ResourceGroup --revision $newRevision --query "properties.healthState" -o tsv 2>$null)
-        }
+        $state = (& az containerapp revision show --name $appName --resource-group $ResourceGroup --revision $newRevision --query "properties.healthState" -o tsv 2>$null)
         if ($state -in @('Healthy', 'Unhealthy')) { break }
     }
     if ($state -ne 'Healthy') { throw "New revision '$newRevision' is '$state'. Traffic was not shifted; the previous revision is still serving." }

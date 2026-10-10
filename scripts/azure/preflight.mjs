@@ -202,6 +202,14 @@ console.log("\nworkflow");
   existsSync(workflow) ? ok("deploy-azure.yml present") : fail(".github/workflows/deploy-azure.yml is missing");
   const security = path.join(root, ".github", "workflows", "security.yml");
   existsSync(security) ? ok("security.yml present") : warn("the security gate workflow is missing");
+  // The shell of the workflow that deploys, run rather than read (PLAN-030 reviews, rounds 4-5). It
+  // needs a bash; `BASH_PATH` points at one that is not on PATH. Deliberately a failure rather than a
+  // skip when there is none: a check that passes by not running is the class of thing this one exists
+  // to find.
+  const shell = run("node scripts/azure/check-workflow-shell.mjs");
+  shell.ok
+    ? ok(shell.out.split("\n").at(-1)?.trim() ?? "passed")
+    : fail(`workflow shell: ${shell.out.split("\n").slice(-4).join(" | ")}`);
 }
 
 console.log(`\n${failures} failure(s), ${warnings} warning(s)`);

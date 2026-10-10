@@ -44,6 +44,15 @@ jobs:
       - name: No file contains double-encoded text
         run: pnpm guard:encoding
 
+      # The deploy workflow's shell is *run*, not read. Round 4 of the PLAN-030 review found that a
+      # `#` comment written inside a backslash-continued `az` command ends the command there: the
+      # invocation arrived with `--image` and none of the flags after it, while those flags ran as a
+      # command of their own. YAML parses it, `az` never sees the broken line, and `bash -n` sees valid
+      # shell — so this is the check that can, and it is here because the file it guards only runs on a
+      # deploy. `scripts/azure/check-workflow-shell.mjs` says what it does not prove.
+      - name: The deploy workflow's shell is intact
+        run: pnpm deploy:workflow
+
       # The console's catalogue is an authorization list by another name, so it is checked the same
       # way: every command's path must resolve to a real route, its permission must be the permission
       # that route checks, and every flag it offers must be a parameter that route reads (PLAN-028 §7).

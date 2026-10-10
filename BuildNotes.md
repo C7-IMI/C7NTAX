@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.10.001 | Last Updated: 2026-10-10
+## Version: 2026.10.10.002 | Last Updated: 2026-10-10
 
 ---
 
@@ -11,6 +11,39 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.10.002 — The revision that was already there
+
+A revision's suffix is `<environment>-<tag>`, so re-deploying the same commit asks for a suffix that
+already names a revision. The deploy then found the new revision by filtering the revision list for that
+suffix — and the filter would match the one the *previous* run created. Its health passed, traffic moved
+to the image that was already serving, and the pipeline went green: a deploy that deployed nothing.
+
+- **[Fix]** **The revision comes from the call that created it.** `az containerapp update` answers with
+  the app, whose `properties.latestRevisionName` is the revision this update made, so the suffix filter —
+  the thing that could match the wrong revision — is gone rather than guarded. A name that does not end in
+  the suffix asked for now stops the deploy with both names printed instead of proceeding quietly.
+- **[Fix]** **And the revision is checked to be running the image this run built**, before the health
+  gate. The comparison is the image *tag* on the end of the reference, not whole-string equality: the
+  service returns the image, and a normalised registry host would make an exact comparison fail on a
+  perfectly good deploy — a false failure that would look exactly like the thing it guards. Proved with
+  stubs in three cases: a clean update passes, a renamed revision fails, a wrong image fails.
+- **[Update]** **The workflow-shell check is in both gates.** It was on the README checklist and in
+  `package.json`, and nothing ran it — a check nobody runs would not have caught what it was written for.
+  `preflight.mjs` now runs it in its existing workflow section, so a local deploy refuses a tree whose CI
+  shell is broken, and `security.yml`'s guards job runs it in CI, which is where the file it guards
+  actually executes. It fails rather than skips when there is no bash, and says how to point at one.
+- **[Fix]** **The deploy log no longer claims the what-if was reviewed.** Both `what-if` calls discarded
+  their output and the script printed "what-if reviewed; applying" — nobody had reviewed anything, and the
+  verification checklist asks for the preview to be reviewed *and saved*. The output now goes to
+  `out/deploy/what-if-<environment>-<timestamp>.txt`, one file per attempt, and the line says where it is.
+  Whether `prod` should stop for a second confirmation is left as the operator's call, because the script
+  already stops once.
+- **[Fix]** **`TRUST_PROXY` was missing from the production environment template** — my own omission from
+  round 3, found by running preflight after wiring the check in. It is documented there now, with the
+  reason it is a hop count rather than `true`.
 
 ---
 

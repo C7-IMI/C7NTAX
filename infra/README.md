@@ -264,7 +264,8 @@ with no rotation runbook is an outage with a date on it. Calendar the rotations 
 - [ ] `node scripts/azure/validate-bicep.mjs` (or `az bicep build --file infra/main.bicep`) reports no warnings
 - [ ] `node scripts/azure/check-workflow-shell.mjs` passes (needs a bash; `BASH_PATH` if it is not on `PATH`)
 - [ ] `deploy-env.ps1 -Environment dev -WhatIf` output reviewed
-- [ ] `what-if` for **both** environments reviewed and saved alongside the change
+- [ ] `what-if` for **both** environments reviewed — `deploy-env.ps1` writes each preview to
+      `out/deploy/what-if-<environment>-<timestamp>.txt` and prints the path; read it, then keep it
 - [ ] Dev deploys from `main` and the pipeline goes green end to end
 - [ ] Login, tickets, billing, service alerts and the invoice PDF work in dev
 - [ ] `prisma migrate status` reports "up to date" against the dev database

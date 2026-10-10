@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.10.002",
+    "date": "2026-10-10",
+    "title": "The revision that was already there",
+    "changes": [
+      {
+        "text": "**The revision comes from the call that created it.** `az containerapp update` answers with",
+        "type": "Fix"
+      },
+      {
+        "text": "**And the revision is checked to be running the image this run built**, before the health",
+        "type": "Fix"
+      },
+      {
+        "text": "**The workflow-shell check is in both gates.** It was on the README checklist and in",
+        "type": "Update"
+      },
+      {
+        "text": "**The deploy log no longer claims the what-if was reviewed.** Both `what-if` calls discarded",
+        "type": "Fix"
+      },
+      {
+        "text": "**`TRUST_PROXY` was missing from the production environment template** — my own omission from",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.10.001",
     "date": "2026-10-10",
     "title": "A comment is not always a comment",

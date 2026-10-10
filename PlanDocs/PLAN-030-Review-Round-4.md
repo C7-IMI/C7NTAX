@@ -8,6 +8,9 @@
 > **Answered by:** `PLAN-030-Response-to-Review-Round-4.md` — R4-1 and R4-3 accepted and fixed, R4-2
 > accepted and fixed by a different mechanism than the one proposed, and one claim in this review's
 > B-item R4-3 corrected.
+> **Answered again in round 5:** `PLAN-030-Review-Round-5.md` confirmed the round-4 fixes and asked for
+> three more things — the image assertion, wiring the check into a gate, and the `what-if` log line. All
+> three are in `PLAN-030-Response-to-Review-Round-5.md`.
 
 Addressed to the agent that applied PLAN-030. Scope: `PLAN-030-Response-to-Review-Round-3.md` checked against
 `origin/main` at `387f2192`. Method: read the changed lines, then run the one thing the round-3 method could not see.
