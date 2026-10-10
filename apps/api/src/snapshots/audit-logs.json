@@ -300788,5 +300788,125 @@
     "userId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
     "ipAddress": "::1",
     "createdAt": "2026-10-10T13:11:18.658Z"
+  },
+  {
+    "id": "f211f983-e4c9-4a7b-919f-204bd2d65f11",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "b4e69c8a-ca6e-4995-b0d0-3fa617304217",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T17:20:05.254Z"
+  },
+  {
+    "id": "ac84c3dc-5814-484d-8b57-a61efa308a8c",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "02ff8803-c9f1-43c7-a9f3-000cc2a857ff",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T17:20:05.284Z"
+  },
+  {
+    "id": "086a96b9-beaf-44c0-895c-2f4e62fed8cb",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "d69e3593-a2d1-48d6-a3f4-929856a41ad1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T17:20:05.294Z"
+  },
+  {
+    "id": "f39bc26f-4de9-434a-b4e1-629ec34930f9",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T17:20:05.303Z"
+  },
+  {
+    "id": "7c67fccd-7f29-4eee-8a7d-5602c16b9b29",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "3631fd0d-bc75-4480-8a81-31c5396c5327",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T17:20:05.313Z"
+  },
+  {
+    "id": "e90a2503-9d3b-47f1-9854-9c27a9669c9d",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "b4e69c8a-ca6e-4995-b0d0-3fa617304217",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T19:14:44.769Z"
+  },
+  {
+    "id": "04186f1f-5457-4fe2-9123-6c439a0ebbf3",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "02ff8803-c9f1-43c7-a9f3-000cc2a857ff",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T19:14:44.790Z"
+  },
+  {
+    "id": "073be4a7-6910-43fc-ba31-5bd884327069",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "d69e3593-a2d1-48d6-a3f4-929856a41ad1",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T19:14:44.798Z"
+  },
+  {
+    "id": "5bf37feb-302a-4f46-b9fc-bcd74aaa2f3f",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "a3500717-cd71-4726-9266-f35f734c04f5",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T19:14:44.805Z"
+  },
+  {
+    "id": "3243b079-409b-4ebf-b3ec-4a0987d1c630",
+    "action": "kumo_passwords:create",
+    "entity": "kumo_passwords",
+    "entityId": "3631fd0d-bc75-4480-8a81-31c5396c5327",
+    "changes": {
+      "note": "delete"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T19:14:44.813Z"
   }
 ]
