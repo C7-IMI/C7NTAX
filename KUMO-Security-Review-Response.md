@@ -62,23 +62,44 @@ rotating `JWT_SECRET` after an incident makes every stored password unreadable.
    and they need separate fixes: the format bug is a defect, the fallback is a decision that should be
    revisited only for production (dev is fine with a warning).
 
-**On the re-encryption step, the review's plan is more expensive than the situation requires.** The review
-says the fix needs "a re-encryption migration". That is true only if some environment holds real credentials
-encrypted under the current derivation. As of `main`:
+**On the re-encryption step, I measured the situation rather than reasoning about it.** The review says the
+fix needs "a re-encryption migration". That is settled by how much real ciphertext exists under the current
+derivation, so I queried the development database and tested the rows against each candidate key:
 
-- Kumo has never been deployed to production.
-- The committed snapshot is sample data, and the reviewer confirmed it cannot be decrypted with the default
-  key — meaning it is not encrypted under the branch anybody can reach.
-- The reveal route's own error path returns `[Seed data — re-encrypt this password to use it]` for values
-  beginning `ENC:`, so seeded rows hold a marker rather than ciphertext.
+| Question | Answer |
+|---|---|
+| `KumoPassword` rows in the dev database | **5** |
+| Rows holding real ciphertext (not an `ENC:` seed marker) | **5** |
+| Rows that decrypt with the key derived from the `.env` `JWT_SECRET` | **5 of 5** |
+| Rows that decrypt with the hardcoded public default | **0 of 5** |
+| Rows with a TOTP secret (finding 5) | 0 |
+| Rows deactivated (finding 7) | 0 |
+| Kumo in production | never deployed |
 
-If that reading is right, there is **no valuable ciphertext to migrate on the dev side either**, and the
-"migration" reduces to re-seeding. That makes this the cheapest moment this fix will ever be: before the
-first production credential exists. If instead some environment does hold real credentials, the migration is
-required and the order is: ship the parsing fix behind the ability to read both derivations, re-encrypt row
-by row stamping a real `encryptionKeyId`, then remove the old path. **This is the one question I need
-answered before writing the fix**, because it decides whether this is a two-hour change or a migration with a
-rollback plan.
+So the answer is **yes, dev holds five real rows encrypted under the current derivation, and no production
+data exists at all.** The migration is therefore real but small: five rows, no production data, and the
+migration order is — ship the parsing fix able to read both derivations, re-encrypt the rows stamping a real
+`encryptionKeyId`, verify by decrypting under the new key, then remove the old path. A five-row migration with
+no production data is materially cheaper than the review implies, and it will never be cheaper than now,
+because the first production credential is when this stops being a script and becomes a change window.
+
+**Two incidental measures, since `encrypt()` was open in front of me.** The IV is `randomBytes(16)`, which
+confirms finding 13's length point (16 bytes, where GCM's standard and most-analysed length is 12). The
+fallback's `hash.slice(0, 32)` is a no-op — SHA-256 already returns exactly 32 bytes — so the fallback key is
+the full digest of `"kumo-vault:" + JWT_SECRET`, and the only thing standing between the vault and a
+JWT-secret holder is that string prefix.
+
+**One hypothesis I tested and am reporting as a non-finding, because it would have been easy to assert and
+wrong to leave unqualified.** `KEY` is computed at module load (`kumoCrypto.ts:19`), and the API loads `.env`
+by no explicit means — there is no `dotenv` import, no `dotenv/config` side-effect import and no
+`--env-file` anywhere in `apps/api`. The hypothesis was that the key is frozen before the environment is
+read, which would make it the hardcoded public default even with a correct `.env`. **I tested it and it is
+not the case today:** `@prisma/client` loads `.env` as a side effect when it is first required, `index.ts:7`
+requires it before the route modules are imported, and the rows decrypt with the `.env` secret (5/5) and not
+with the default (0/5). It works — but it works by accident, resting on Prisma's side effect and on import
+order, and it is one reordered import away from silently deriving the vault key from a constant published in
+this repository. Any fix here should make the environment load explicit rather than depend on a dependency's
+side effect.
 
 ---
 
@@ -194,8 +215,9 @@ The review's order is right. Two amendments and one omission.
 **Amendment — fix #1 first, but make the source visible in the same change.** The parsing fix without an
 honest startup line leaves the same trap armed for the next rotation. The two belong in one commit: decode,
 require exactly 32 bytes, refuse to start in production when a key was supplied but is unusable, warn loudly
-rather than silently in dev, and log *which* derivation produced the key with a fingerprint. Re-encryption
-follows the answer to the data question above.
+rather than silently in dev, and log *which* derivation produced the key with a fingerprint. The
+re-encryption is then five rows, measured, with no production data — so it is part of the same change rather
+than a follow-up.
 
 **Amendment — #7 and #8 are smaller than their severity suggests and are therefore cheap wins.** #7 is one
 clause matching a sibling route. #8 is a write-time computation into a column that already exists. Neither
@@ -220,7 +242,7 @@ point is consistently the sibling route that got it right, not a new abstraction
 
 | # | Severity | Verdict | Note |
 |---|---|---|---|
-| 1 | 🔴 Critical | Confirmed by execution | Plus: the log hides the branch; the length is unvalidated; the fallback is documented, the mismatch is not |
+| 1 | 🔴 Critical | Confirmed by execution | Plus: the log hides the branch; the length is unvalidated; the fallback is documented, the mismatch is not. Live data confirms it — five rows, all under the `JWT_SECRET` derivation |
 | 2 | 🟠 High | Confirmed | `kumo:view_all` declared and read by no route — the machinery exists |
 | 3 | 🟠 High | Confirmed | 9,999/min global vs 300/15min on credentials; keys hold reveal and cannot be stepped up |
 | 4 | 🟠 High | Confirmed, latent | Honoured by the seed script, ignored by storage; every seeded field is `isSensitive: false` |
@@ -236,17 +258,27 @@ point is consistently the sibling route that got it right, not a new abstraction
 
 ---
 
-## The one question that blocks the fix
+## The data question, answered
 
-**Does any environment hold real credentials encrypted under the current key derivation?**
+The review's plan waits on "a re-encryption migration". I measured it instead of asking:
 
-- **No** — then #1 is a small change with no migration, the "re-encryption step" is re-seeding, and it should
-  be done before the first production credential exists.
-- **Yes** — then the fix needs both derivations readable at once, a re-encrypt-and-stamp pass over the rows,
-  a verification query, and a rollback plan before the old path is removed.
+**Yes — the dev database holds five real rows encrypted under the `JWT_SECRET`-derived key, and production
+holds nothing because Kumo has never been deployed.** All five decrypt with the `.env` secret; none decrypts
+with the public default, so the ordering hazard above is latent rather than active.
+
+That makes finding 1 **fixable now, with a five-row migration and no change window**, and it will never be
+cheaper than now — the moment a production credential exists, the same change becomes a migration with a
+rollback plan. The order I would use:
+
+1. Decode `KUMO_MASTER_KEY` as base64 **or** hex, require exactly 32 bytes, and refuse to start when a key was
+   supplied but is unusable — never fall back silently.
+2. Make the environment load explicit rather than relying on Prisma's side effect.
+3. Log which derivation produced the key, with a fingerprint, so the branch is visible from the running system.
+4. Re-encrypt the five rows, stamping a real `encryptionKeyId`, and verify by decrypting under the new key.
+5. Add the negative test: a production boot with a base64 32-byte key must use it or refuse to start.
 
 Everything else in the review's "now" list — #2, #4, #5 — carries no data consequence and can be built
-independently of the answer.
+independently of any of this.
 
 ## What this changes in the product's own prose
 

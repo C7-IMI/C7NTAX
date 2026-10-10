@@ -38,10 +38,18 @@ access-logged and audited, request bodies redacted. The key handling around it i
   by the password list route and not by reveal. Recorded as a pattern rather than six incidents, because the
   enforcement point is consistently the sibling route that got it right — the same shape as `mfa:enforce`
   before the MFA work and `SMTP_SECURE` before the mail fix.
-- **[Update]** **The re-encryption step is smaller than the review believes.** Kumo has never been deployed,
-  the committed snapshot cannot be decrypted with the default key, and seeded rows hold an `ENC:` marker
-  rather than ciphertext — so if no environment holds real credentials the migration reduces to re-seeding,
-  and this is the cheapest moment the fix will ever have.
+- **[Update]** **The re-encryption step was measured rather than assumed, and it is small.** The development
+  database holds **five** `KumoPassword` rows, all with real ciphertext, and all five decrypt with the key
+  derived from the `.env` `JWT_SECRET` and none with the hardcoded public default — so finding 1 is confirmed
+  on live data, not only in source. Kumo has never been deployed, so production holds nothing. The migration
+  is therefore five rows with no change window, and the cheapest moment for this fix is now: the first
+  production credential is when a five-row script becomes a change window.
+- **[Update]** **One hypothesis tested and reported as a non-finding.** `KEY` is computed at module load, and
+  the API has no `dotenv` import, no `dotenv/config` side-effect import and no `--env-file` anywhere. The
+  hypothesis was that the key is frozen before the environment is read, making it the hardcoded default even
+  with a correct `.env`. It is **not** the case today — `@prisma/client` loads `.env` as a side effect, and
+  `index.ts:7` requires it before the route modules are imported. It works by accident, resting on a
+  dependency's side effect and on import order, and any fix should make the load explicit.
 
 **Verification:** the key-derivation gate and the documented key format checked against all four places that
 state it (`.env.production.example`, both `.bicepparam` files, `deploy-env.ps1`); `kumo:view_all` searched

@@ -21,7 +21,11 @@
         "type": "Update"
       },
       {
-        "text": "**The re-encryption step is smaller than the review believes.** Kumo has never been deployed,",
+        "text": "**The re-encryption step was measured rather than assumed, and it is small.** The development",
+        "type": "Update"
+      },
+      {
+        "text": "**One hypothesis tested and reported as a non-finding.** `KEY` is computed at module load, and",
         "type": "Update"
       }
     ]

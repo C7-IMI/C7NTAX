@@ -11844,13 +11844,35 @@ matters for how this is described: `SOC2.Compliance.md:46` and `PLAN-015…:19` 
 `KUMO_MASTER_KEY → JWT_SECRET → hardcoded` fallback as an accepted gap.** Falling back is a documented
 decision. Falling back *while a valid key was supplied* is a defect. Those need separate fixes.
 
-**The re-encryption step is smaller than the review believes, and that is the useful finding.** The review says
-the fix needs a data migration. It does only if some environment holds real credentials under the current
-derivation — and Kumo has never been deployed, the committed snapshot cannot be decrypted with the default key
-(the reviewer checked), and the reveal route's own error path returns `[Seed data — re-encrypt this password to
-use it]` for values beginning `ENC:`, so seeded rows hold a marker rather than ciphertext. If that reading is
-right the migration reduces to re-seeding, which makes this the cheapest moment the fix will ever have: before
-the first production credential exists. I asked the one question that decides it rather than guessing.
+**The re-encryption step was measured rather than argued, and the measurement corrected me twice.** The review
+says the fix needs a data migration; that is settled by how much real ciphertext exists under the current
+derivation, so I probed the development database instead of reasoning about it. It holds **five**
+`KumoPassword` rows, all five hold real ciphertext rather than an `ENC:` seed marker, and all five decrypt with
+the key derived from the `.env` `JWT_SECRET` — **none** decrypts with the hardcoded public default. So finding 1
+is confirmed on live data, not only in source, and the migration is five rows with no production data because
+Kumo has never been deployed. That makes the fix cheapest now: the first production credential is when a
+five-row script becomes a change window.
+
+**The second correction was to my own hypothesis, and it is worth recording as a non-finding.** `KEY` is
+computed at module load (`kumoCrypto.ts:19`) and the API loads `.env` by no explicit means — no `dotenv`
+import, no `dotenv/config` side effect, no `--env-file` anywhere in `apps/api`. So the hypothesis was that the
+key is frozen before the environment is read, which would make it the hardcoded public default even with a
+correct `.env`. Testing both candidates separately showed it is **not** the case: `@prisma/client` loads `.env`
+as a side effect when first required, `index.ts:7` requires it before the route modules are imported, and the
+`.env` secret decrypts 5/5 while the default decrypts 0/5. It works by accident — one reordered import away
+from silently deriving the vault key from a constant published in this repository — so it is reported as a
+robustness point, not a finding. My first probe had also used the default and appeared to succeed, which is
+why testing the candidates separately rather than inferring from one result was the difference between a wrong
+claim and a right one.
+
+**One thing found while committing that is unrelated to Kumo and worth flagging.** The working tree held a
+modified `DESIGN.md` that **reverted the Modern/Classic rename** — `c7_ui_modern` back to `c7_ui_redesign` and
+"what Modern changes" back to "the redesign" — written at 12:10, a minute before this work began. HEAD has the
+rename intact, so it was a stale file rather than a regression in the history, and I discarded it
+(`git checkout -- DESIGN.md`) rather than committing it. The repository lives inside a OneDrive-synced folder,
+which is the plausible cause: a stale copy syncing down over a committed file. It is worth knowing because it
+looks exactly like a code change, and a `git add -A` would have published a revert of a completed rename with
+no trace of where it came from.
 
 **Findings 2, 3, 4, 5, 7 and 8 share one shape, and naming it is worth more than six separate fixes.** In each,
 a permission, a flag or a limit exists in the model and is not enforced on a path: `kumo:view_all` is declared
@@ -11890,6 +11912,7 @@ and fails silently with no toast, which is what makes it a copy bug rather than 
 **Records.** The review is on `main` now with a provenance blockquote, at `KUMO-SECURITY-REVIEW.md`, exactly as
 the reviewer wrote it. I did **not** import its Retrace hunk: the entry on the branch numbers itself 379 and
 `main` already has a Prompt 379 at line 10630, so bringing it across would have created a collision. Mine is
-392, and the reviewer's entry stays on its branch. Nothing is fixed yet — the review is a decision document
-until the data question is answered, and the fixes themselves will each need their Help and `docs/API.md`
-changes in the same commit.
+392, and the reviewer's entry stays on its branch. Both probe scripts were written inside `apps/api` so module
+resolution worked and both were deleted afterwards. Nothing is fixed yet — the review is a decision document
+until the fix is scheduled, and the fixes will each need their Help and `docs/API.md` changes in the same
+commit.
