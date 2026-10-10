@@ -212,7 +212,27 @@ console.log("\nenvironment contract");
       }
       return names;
     };
-    /** Files that read the environment *by name* — `process.env[someVariable]` — which no scan can enumerate. */
+    /**
+     * The names a *computed* read can reach — `process.env[name]`.
+     *
+     * That read is in `routes/configuration.ts`, and `name` comes from a requirement declaration
+     * rather than from the call site, so the set is not unknowable: it is written down in
+     * `packages/shared/src/appConfiguration.ts`, one `env: ["SMTP_HOST", …]` per requirement. Reading
+     * those declarations is what turns the last blind spot into coverage — the same choice the alias
+     * above got, and it is the reason the pass line can say "56" and mean it.
+     */
+    const DECLARATION_FILE = "packages/shared/src/appConfiguration.ts";
+    const declaredNames = (() => {
+      const path_ = path.join(root, DECLARATION_FILE);
+      if (!existsSync(path_)) return [];
+      const names = new Set();
+      for (const match of readFileSync(path_, "utf8").matchAll(/env:\s*\[([^\]]*)\]/g)) {
+        for (const name of match[1].matchAll(/[A-Z][A-Z0-9_]{2,}/g)) names.add(name[0]);
+      }
+      return [...names];
+    })();
+    for (const name of declaredNames) used.add(name);
+    /** Files that read the environment *by name* — which only a declaration can bound. */
     const dynamic = [];
     for (const dir of sources) {
       const files = run(`git ls-files "${dir.replace(/\\/g, "/")}"`).out.split("\n").filter(f => f.endsWith(".ts"));
@@ -243,11 +263,15 @@ console.log("\nenvironment contract");
     undocumented.length === 0
       ? ok(`${used.size} variables the source reads are documented, or on the not-in-production list with a reason (${ignored.size} of those)`)
       : fail(`undocumented in the template: ${undocumented.join(", ")} — document each one, or add it to the list in this file with the reason it is not a production setting`);
-    // What the line above cannot promise. Saying so is the difference between a check and a claim:
-    // a file that reads `process.env[name]` can read anything, and only a person can say what.
-    dynamic.length === 0
-      ? ok("no file reads the environment by a computed name")
-      : warn(`read by a computed name, so not covered above: ${dynamic.join(", ")}`);
+    // What the line above still cannot promise, said out loud rather than assumed away. The one
+    // computed read is a known pair — the route and the declarations that bound it — so a computed
+    // read anywhere *else* is a new fact worth looking at, which is why this reports files rather
+    // than claiming there are none.
+    const KNOWN_COMPUTED_READ = "apps/api/src/routes/configuration.ts";
+    const unexplained = dynamic.filter(file => file.replace(/\\/g, "/") !== KNOWN_COMPUTED_READ);
+    unexplained.length === 0
+      ? ok(`the one computed read (${KNOWN_COMPUTED_READ}) is bounded by ${DECLARATION_FILE}, which is ${declaredNames.length} of the names above`)
+      : warn(`reads the environment by a computed name that no declaration bounds: ${unexplained.join(", ")}`);
     for (const name of ["JWT_SECRET", "KUMO_MASTER_KEY", "DATABASE_URL", "WEB_ORIGIN"]) {
       documented.has(name) ? ok(`${name} documented`) : fail(`${name} is missing from the template`);
     }

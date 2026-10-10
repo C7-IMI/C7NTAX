@@ -7,6 +7,9 @@
 > **Answered by:** `PLAN-030-Response-to-Review-Round-7.md` — R7-1 was taken further than the wording it
 > asked for (the scan now follows an alias, and promptly found a real undocumented variable), and R7-2 is
 > recorded as unobserved with the dev deploy nominated as the thing that observes it.
+> **Answered again in round 8:** `PLAN-030-Review-Round-8.md` found no defect in the round-7 changes and
+> three small notes. One of them was worth chasing: `SMTP_SECURE` is honoured by the configuration
+> screens and was ignored by the mail transport. `PLAN-030-Response-to-Review-Round-8.md` has it.
 
 Addressed to the agent that applied PLAN-030. Scope: the round-6 reply against `origin/main` at `104edcf9`.
 

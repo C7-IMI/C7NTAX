@@ -9,12 +9,22 @@ export class EmailService {
   private transporter: Transporter;
   private defaultFrom: string;
 
-  constructor(config?: { host?: string; port?: number; user?: string; pass?: string; from?: string }) {
+  constructor(config?: { host?: string; port?: number; user?: string; pass?: string; from?: string; secure?: boolean }) {
     this.defaultFrom = config?.from ?? process.env.SMTP_FROM ?? "noreply@cyber7group.com";
     this.transporter = nodemailer.createTransport({
       host: config?.host ?? process.env.SMTP_HOST ?? "localhost",
       port: config?.port ?? Number(process.env.SMTP_PORT ?? 587),
-      secure: false,
+      /**
+       * `SMTP_SECURE` is what the configuration screens report, so it has to be what the sender
+       * does. Until it was: the screens read this variable and the transport was hard-coded to
+       * `false`, so a deployment on port 465 could show "secure: true" while every message was
+       * attempted in clear text — a screen that contradicts the wire is worse than no screen.
+       *
+       * `false` is port 587 with STARTTLS, which is what most relays use; `true` is port 465, where
+       * TLS *is* the connection rather than an upgrade to it. Only the exact string `"true"` counts,
+       * which is how every other flag in this application is read.
+       */
+      secure: config?.secure ?? process.env.SMTP_SECURE === "true",
       auth: {
         user: config?.user ?? process.env.SMTP_USER ?? "",
         pass: config?.pass ?? process.env.SMTP_PASS ?? "",

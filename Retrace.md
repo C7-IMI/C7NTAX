@@ -10766,3 +10766,60 @@ conditional ("**If** Azure reuses or reports that older revision"), so only the 
 the scanned set with and without comment-stripping (the same shape of evidence that just found
 `SMTP_SECURE`), and checking the `AUTH_TEST_BYPASS` allow-list entry against `testBypass.ts:52`, the code
 the entry quotes.
+
+---
+
+### Prompt 382 — Round 8: a screen that contradicts the wire
+
+**Timestamp:** 2026-10-10 06:10 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.10.007** — A screen that contradicts the wire.
+
+**Prompt**
+
+> Here is Claude's response. Review, update, and reply here:
+>
+> Deepseek's round-7 fixes hold, and I found no defect in them. The static review has run out of findings,
+> so I'd stop here. … **Small notes, none blocking:** (a) `SMTP_SECURE` ships as `<true|false>` with no
+> 587/465 rule beside it that I could confirm — the code only treats the exact string `true` as secure, so
+> an unedited template reads as false; (b) unrelated ticket-UI commits were bundled with the readiness
+> work — keep them off the deploy-readiness branch so a rollback of one doesn't take the other; (c)
+> someone should list once, by hand, what `configuration.ts` can read.
+
+**The first "note" was a defect, and it was mine.** Three places had to agree about one setting and only
+two did: the template documented `SMTP_SECURE`, `routes/system.ts` and `services/developerDeployment.ts`
+**reported** it, and `packages/email/src/EmailService.ts` hard-coded `secure: false`. So a deployment on
+465 could show "secure: true" while every message was attempted in clear text — a connection that hangs
+with a screen saying everything is fine. Same shape of failure as the rest of the series, one layer
+further out: the report and the action disagreed. My round-7 change is what made it visible, by documenting
+a variable that only half the system honoured.
+
+Fixed at the end that was wrong. Proved by constructing the service four ways and reading the
+transporter's own options rather than asserting the code path:
+
+    SMTP_SECURE unset    : secure=false port=587
+    SMTP_SECURE=false    : secure=false port=587
+    SMTP_SECURE=TRUE     : secure=false port=587     ← only the exact string counts, as everywhere here
+    SMTP_SECURE=true,465 : secure=true  port=465
+
+The review also asked whether the 587/465 rule was beside the placeholder. It is — it went in with the
+variable in round 7, three lines above it. What was missing is the part its second sentence implies, so
+the template now says only the exact string counts.
+
+**The computed read is bounded rather than listed by hand.** `routes/configuration.ts` does
+`process.env[name]` where `name` comes from a requirement declaration, so the set is *declared*, in
+`packages/shared/src/appConfiguration.ts` — five names, all already documented. Extracting those
+declarations is four lines, and the section's last line went from a warning to a statement of coverage.
+A computed read in any other file still warns. Preflight is back to 0 failures and 2 warnings.
+
+**The commit-hygiene note: half owned, half explained.** The fair half is mine — `e644a18b` carries two
+unrelated changes because the prompt carried both asks, and reverting the deploy-side change would take
+the UI fix with it. The lesson is behavioural: one prompt with two asks gets two commits. The other half
+does not apply here and is worth saying rather than agreeing to: there is no deploy-readiness branch to
+keep anything off. `main` *is* the deploy source, the `claude/plan-030-review-*` branches are the
+reviewer's, and every change in this series lands as its own commit — which is what makes a revert of one
+possible at all. Splitting a pushed commit on a branch a background job also commits to is a riskier
+operation than the tidiness is worth.
+
+**Agreed on stopping.** The static review has converged; what is left is a dev deploy, four operator
+decisions and the prod rehearsal, all of which need a subscription and money.

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.10.006 | Last Updated: 2026-10-10
+## Version: 2026.10.10.007 | Last Updated: 2026-10-10
 
 ---
 
@@ -11,6 +11,30 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.10.007 — A screen that contradicts the wire
+
+Three places had to agree about one setting and only two did: the production template documented
+`SMTP_SECURE`, the configuration screens reported it, and the mail transport hard-coded `secure: false`
+and never read it. A deployment on port 465 could show *"secure: true"* while every message was attempted
+in clear text — a connection that hangs, with a screen saying everything is fine.
+
+- **[Fix]** **The transport honours `SMTP_SECURE`.** `secure: config?.secure ?? process.env.SMTP_SECURE
+  === "true"` — a caller's own config wins when there is one, only the exact string `true` counts, and the
+  default is unchanged because the variable is set nowhere in this repository. Proved by constructing the
+  service four ways and reading the transporter's own options: unset, `"false"` and `"TRUE"` are false;
+  `"true"` on port 465 is true.
+- **[Update]** **The template says which value is which.** `false` is port 587 with STARTTLS, `true` is
+  465 where TLS *is* the connection, and only the exact string counts — so the placeholder stays `false`
+  for a relay on 587 and is changed only for one on 465.
+- **[Update]** **The env scan's last blind spot is bounded rather than described.** The one computed read,
+  `process.env[name]` in `routes/configuration.ts`, takes its names from requirement declarations in
+  `packages/shared/src/appConfiguration.ts` — five of them, all already documented. The scan reads those
+  declarations, so the section's last line is coverage rather than a warning: *"the one computed read is
+  bounded by … which is 5 of the names above"*. A computed read in any other file still warns, because
+  that is a new fact rather than a known pair. Preflight returns to **0 failures, 2 warnings**.
 
 ---
 
