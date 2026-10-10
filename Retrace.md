@@ -12043,3 +12043,89 @@ existing Prompt 379 on `main`.
 **The document now ends with the reply rather than an addendum.** `KUMO-Security-Review-Response.md` keeps its
 analysis sections unchanged and its final section is the reply proper — one place a reader can go for what was
 found, what was verified, what was fixed and what is still wanted.
+
+---
+
+### Prompt 394 — The adversarial read on the vault key fix, answered by fixing all four
+
+**Timestamp:** 2026-10-10 14:22 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.10.019** — The adversarial read's four findings, fixed and proved.
+
+**Prompt**
+
+> Here is Claude's reply. Review, update, and reply here:
+>
+> The vault key fix is sound, and refusing to start in production is the right behaviour. I read the code on `main` (commit `c3d492e4`) but did not run the probe, the job or a database. My write-up is `KUMO-Security-Review-Adversarial-Read.md` on branch `claude/kumo-vault-key-adversarial-read`, pushed and logged in `Retrace.md` as Prompt 394.
+> **Refuse versus warn.** Refuse. Two limits: it depends on `NODE_ENV`, so any non-Azure way of running the API falls back without refusing; and it checks the key's shape, not whether it opens the existing data, so a well-formed but wrong key boots cleanly and fails at the first reveal. Suggests a startup sample trial-decrypt that logs loudly on mismatch, not a boot refusal.
+> **What the re-encryption job's classification misses:** long hex keys (rows encrypted under a truncated key match neither known key, and the new decoder rejects that value with a confusing "decodes to 60 bytes"); the development default (rows written when `JWT_SECRET` was unset look unreadable if the job runs where it is set); a lost-update race (the write is unconditional, so an edit between read and write is overwritten); and partial rows (a row whose password is old but whose TOTP secret is unreadable gets its password re-encrypted while the secret is left pointing at values that no longer exist).
+> **Confirmed fine:** trial decryption is a trustworthy classifier; the job is idempotent and never overwrites what it can't read; the email-connector code is the only other consumer and all three of its fields are covered; the image ships `tsx` and the source; a first deploy has an empty vault. Also rejects degenerate keys such as 32 zero bytes, which currently pass. None of this should hold the commit. Suggested order: the long-hex hint and the conditional write first.
+> One housekeeping note: the earlier PLAN-030 review entries I numbered 379 to 385 live only on review branches, so they never collided with `main`'s Prompt 379.
+
+**Every one of the four recommendations was right, and I fixed all four rather than acknowledging them.** Three
+were code; one was a gap in what the boot check actually establishes.
+
+**The missed generation is real and I proved it by planting a row.** The old code accepted hex of 64 characters
+or more and used the first 32 bytes, so a deployment that supplied 80 or 128 hex characters has rows under a key
+nothing else can derive. The job knew the current key and one JWT-derived key. I added the built-in
+development-secret derivation and the truncated long-hex key, and printed the candidate list so an operator can
+see what was searched. Then I verified it rather than trusting it: a `KumoPassword` row encrypted under the
+development-default generation — precisely the one the previous job could not have read, because this
+environment sets `JWT_SECRET` — was reported as **one value on an older key, zero unreadable**, moved on
+`--apply`, opened afterwards with the master key, and the following run was idempotent. The planted row was
+deleted. A dry run that merely printed the new candidate names would have proved nothing.
+
+**The race was fixed by making every write conditional on what was read, and I tested the guard directly instead
+of arguing it.** `updateMany` guarded on the original ciphertext, iv and tag; a stale guard matched **zero
+rows** and a deliberate concurrent edit survived. That the guard is correct is arithmetic; that the job uses it
+is the part worth checking, and the test checks the mechanism end to end.
+
+**The partial-row hazard is worse than the review could see, and that is the finding I would keep.** The review
+identified the half-migrated case: password moved, bare TOTP left pointing at replaced iv/authTag. The same
+coupling breaks a bare secret under the *correct* key, because re-encrypting the password replaces the columns
+the secret is read against. So the fix is not only "skip a row with an unreadable part" but "always rewrite a
+readable secret in its self-contained `ct:iv:tag` form when the row is touched". No row carries a TOTP secret,
+so both are defensive — and that is exactly the shape of defect that survives every test until the day it does
+not.
+
+**The startup trial-decrypt is in, and deliberately not a refusal.** The reviewer's framing was that a missing
+or malformed key should stop the service and a data-versus-key mismatch should not, and that is right: an
+instance that reads tickets correctly and cannot open the vault is more useful, and more diagnosable, than one
+that will not start. `services/kumoKeyHealth.ts` opens up to 20 rows after the server is listening and warns
+with the fingerprint and the count. Under a well-formed but wrong key it printed *opened 0 of 5 sampled
+passwords*; under the right key it was silent. One limit I stated rather than hid: `logger.warn` writes
+`dev-errors.log`, not stdout, so the warning does not reach `docker logs`. That is the application's existing
+warning channel, and adding an admin-surface count is a larger change than this fix should carry.
+
+**Two limits I addressed in wording rather than behaviour, and I want that on the record as a decision.** The
+refusal depends on `NODE_ENV`, which the Dockerfile and `main.bicep` set and nothing else does. I kept the
+trigger rather than widening it, because the guard immediately above it in `index.ts` already keys off
+`NODE_ENV`, and two security checks that disagree about what production means are worse than one with a
+documented edge. What changed is what the operator is told: the refusal now names `NODE_ENV=production` and says
+what to do if the host should not be treated that way, and the fallback warning says outright that the check
+will not fire. The reviewer suggested keying it off something that varies less by host; I did not, and the
+reason is the neighbour rather than indifference.
+
+**Where the review was loose, and where I was.** The housekeeping note is right: its PLAN-030 entries 379–385
+lived only on review branches, so nothing collided, and `main`'s 379 is the entry for that round's own prompt.
+My conclusion — that importing the Kumo review's 379 would create a duplicate — was correct, and the
+explanation I gave for it was not checked. That is the same class of error this whole review series exists to
+catch, so it is recorded as such rather than quietly corrected.
+
+**One suggestion I declined and said why.** The reviewer proposed a guard that fails when a new file imports
+`kumoCrypto` without being added to the job. It is a good instinct and a poor mechanism: a check that greps for
+imports passes while being wrong in the cases that matter, and it adds a second place where the truth about
+consumers lives. The job's header now lists the two importers and says a new one is a new generation, which is
+read at the point someone would need it.
+
+**Evidence, all of it executed.** `probe:kumo-key` is now fourteen cases with **14 passed / 0 failed** — the
+base64, hex and unpadded-base64 cases resolve to the *same* fingerprint, which is the assertion that they are
+one key, and ten refusals each name their reason. The job: 5 on the current key with nothing to move, a planted
+legacy row found and moved, idempotent afterwards. The conditional write: stale guard matched zero rows and the
+concurrent edit survived. The startup check: warned under a wrong key, silent under the right one. `tsc --noEmit`
+clean. The planted row and both scratch scripts were removed, and the vault is back to five rows, 5/5 open with
+the master key.
+
+**Records.** The review is on `main` with a provenance blockquote, and the reply is
+`KUMO-Security-Review-Adversarial-Read-Response.md`. Its Retrace entry was again not imported — it numbers
+itself 394, which is the number this entry takes, and the two would collide in the same way as before.

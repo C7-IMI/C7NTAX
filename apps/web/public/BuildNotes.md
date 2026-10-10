@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.10.018 | Last Updated: 2026-10-10
+## Version: 2026.10.10.019 | Last Updated: 2026-10-10
 
 ---
 
@@ -14,6 +14,43 @@
 
 ---
 
+## 2026.10.10.019 — The adversarial read's four findings, fixed and proved
+
+A review of the vault key fix found one missed key generation, one race, one partial-row hazard and one gap in
+what the boot check actually checks. All four are fixed, and each fix was verified by running it rather than by
+reading it.
+
+- **[Fix]** **The re-encryption job now knows every generation that can exist.** A `KUMO_MASTER_KEY` given as
+  hex of more than 64 characters had its first 32 bytes used and the rest ignored, so rows from it matched
+  neither key the job knew and were reported unreadable. A row written when `JWT_SECRET` was unset used the
+  built-in development secret, which the job could only reach when `JWT_SECRET` was unset *now*. The job tries
+  both derivations and the truncated long-hex key, prints the candidates it is searching, and the decode error
+  names what was supplied instead of reporting a base64 byte count for a hex value.
+- **[Fix]** **Every write is conditional on what was read**, so a password edited while the job runs is not
+  overwritten by the stale re-encrypted value. A row with any unreadable part is skipped whole.
+- **[Fix]** **A two-factor secret is always rewritten in its self-contained form when its row is touched.** A
+  bare `totpSecret` shares `iv`/`authTag` with the password, so re-encrypting the password replaced the columns
+  the secret was read against — which broke a bare secret even under the correct key, not only in the
+  half-migrated case the review identified. No row carries a TOTP secret today, so this is defensive.
+- **[New]** **The API samples the vault at startup and warns when the key cannot open it.** The boot assertion
+  validates the key's *shape*; a rotated Key Vault value or a database restored from before a rotation is
+  well-formed and opens nothing, and every symptom appeared at the first reveal. `services/kumoKeyHealth.ts`
+  opens up to 20 rows once the server is listening and warns with the fingerprint and the count. Deliberately
+  not a boot refusal: a data mismatch should not take ticketing down.
+- **[Fix]** **A placeholder key is refused.** All-zero bytes, and any single byte repeated 32 times, are
+  well-written values that pass every other check and would silently become the vault key.
+- **[Update]** The production refusal and the non-production warning now name `NODE_ENV`, because the refusal
+  is keyed to it and the Dockerfile and `main.bicep` are the only places that set it.
+
+**Verification.** `probe:kumo-key` **14 cases, 14 passed / 0 failed** — the three accepted formats resolve to
+the same fingerprint and ten refusals each name their reason. The job against the development vault: dry run
+reports 5 on the current key and nothing to move; a planted row under the development-default generation was
+found as *one on an older key*, moved on `--apply`, and the next run was idempotent. The conditional write was
+proved by a deliberate concurrent edit: the stale guard matched **0 rows** and the edit survived. The startup
+check warned *opened 0 of 5 sampled passwords* under a well-formed wrong key and was silent under the right one.
+`tsc --noEmit` clean. The planted row and both scratch scripts were removed.
+
+---
 ## 2026.10.10.018 — A reply to the reviewer, and the document made to carry it
 
 The Kumo security review produced thirteen findings, all of them verified and the Critical fixed. What was

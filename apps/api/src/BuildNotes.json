@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.10.019",
+    "date": "2026-10-10",
+    "title": "The adversarial read's four findings, fixed and proved",
+    "changes": [
+      {
+        "text": "**The re-encryption job now knows every generation that can exist.** A `KUMO_MASTER_KEY` given as",
+        "type": "Fix"
+      },
+      {
+        "text": "**Every write is conditional on what was read**, so a password edited while the job runs is not",
+        "type": "Fix"
+      },
+      {
+        "text": "**A two-factor secret is always rewritten in its self-contained form when its row is touched.** A",
+        "type": "Fix"
+      },
+      {
+        "text": "**The API samples the vault at startup and warns when the key cannot open it.** The boot assertion",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A placeholder key is refused.** All-zero bytes, and any single byte repeated 32 times, are",
+        "type": "Fix"
+      },
+      {
+        "text": "The production refusal and the non-production warning now name `NODE_ENV`, because the refusal",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.10.018",
     "date": "2026-10-10",
     "title": "A reply to the reviewer, and the document made to carry it",

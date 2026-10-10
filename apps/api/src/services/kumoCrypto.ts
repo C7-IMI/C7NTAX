@@ -28,28 +28,65 @@ interface ResolvedKey {
  */
 function decodeMasterKey(raw: string): Buffer {
   const value = raw.trim();
-  if (/^[0-9a-fA-F]{64}$/.test(value)) return Buffer.from(value, "hex");
-  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(value)) {
+  let key: Buffer;
+
+  if (/^[0-9a-fA-F]{64}$/.test(value)) {
+    key = Buffer.from(value, "hex");
+  } else if (/^[0-9a-fA-F]+$/.test(value) && value.length > 64) {
+    // The previous code accepted this and silently kept the first 32 bytes. Reporting a base64 byte
+    // count for a value that was supplied as hex tells the operator nothing about what went wrong.
     throw new Error(
-      `KUMO_MASTER_KEY is not a valid key: expected 32 bytes as base64 (44 characters) or 64 hex characters, ` +
-        `but the value contains characters that are neither.`
+      `KUMO_MASTER_KEY is not a valid key: it is ${value.length} hex characters. The previous code used the ` +
+        `first 64 of them (32 bytes) and ignored the rest, so ciphertext written by that code is under a ` +
+        `truncated key. Supply exactly 64 hex characters or 32 bytes base64, and run \`pnpm kumo:reencrypt\` ` +
+        `if the vault already holds rows.`
+    );
+  } else if (/^[A-Za-z0-9+/]+={0,2}$/.test(value)) {
+    key = Buffer.from(value, "base64");
+    if (key.length !== KEY_BYTES) {
+      throw new Error(
+        `KUMO_MASTER_KEY is not a valid key: expected 32 bytes as base64 (44 characters) or 64 hex ` +
+          `characters, but the value decodes to ${key.length} bytes.`
+      );
+    }
+  } else {
+    throw new Error(
+      `KUMO_MASTER_KEY is not a valid key: expected 32 bytes as base64 (44 characters) or 64 hex ` +
+        `characters, but the value contains characters that are neither.`
     );
   }
-  const decoded = Buffer.from(value, "base64");
-  if (decoded.length !== KEY_BYTES) {
+
+  // All zeros is what a placeholder or a Buffer.alloc(32) produces, and a single repeated byte is what a
+  // template or a typed-in key looks like. Both are well formed, pass every other check here, and would
+  // silently become the vault key.
+  if (key.every((b) => b === 0)) {
     throw new Error(
-      `KUMO_MASTER_KEY is not a valid key: expected 32 bytes as base64 (44 characters) or 64 hex characters, ` +
-        `but the value decodes to ${decoded.length} bytes.`
+      `KUMO_MASTER_KEY is 32 zero bytes, which is a placeholder rather than a key. Generate one with ` +
+        `\`openssl rand -base64 32\`.`
     );
   }
-  return decoded;
+  if (key.every((b) => b === key[0])) {
+    throw new Error(
+      `KUMO_MASTER_KEY is the same byte repeated 32 times, which is a placeholder rather than a key. ` +
+        `Generate one with \`openssl rand -base64 32\`.`
+    );
+  }
+
+  return key;
 }
 
 /** The derivation used before the master key was parsed correctly. Only the re-encryption job needs it. */
 export function legacyVaultKey(): Buffer {
-  const base = process.env.JWT_SECRET || DEV_JWT_FALLBACK;
-  return createHash("sha256").update("kumo-vault:" + base).digest().slice(0, KEY_BYTES);
+  return deriveVaultKeyFrom(process.env.JWT_SECRET || DEV_JWT_FALLBACK);
 }
+
+/** The same derivation for an explicit secret, so a job can reach a generation written under another one. */
+export function deriveVaultKeyFrom(secret: string): Buffer {
+  return createHash("sha256").update("kumo-vault:" + secret).digest().slice(0, KEY_BYTES);
+}
+
+/** Exported so the re-encryption job can name the generation it is looking for rather than restate it. */
+export const DEVELOPMENT_SECRET = DEV_JWT_FALLBACK;
 
 function resolve(): ResolvedKey {
   const envKey = process.env.KUMO_MASTER_KEY;
@@ -58,8 +95,10 @@ function resolve(): ResolvedKey {
   }
   if (process.env.NODE_ENV === "production") {
     throw new Error(
-      "KUMO_MASTER_KEY must be set in production. Refusing to start rather than derive the vault key from " +
-        "JWT_SECRET, which would leave every stored credential readable by anyone holding the signing secret."
+      "KUMO_MASTER_KEY must be set and usable when NODE_ENV=production. Refusing to start rather than " +
+        "derive the vault key from JWT_SECRET, which would leave every stored credential readable by anyone " +
+        "holding the signing secret. If this host should not be treated as production, set NODE_ENV to " +
+        "something else; if it should, supply the key."
     );
   }
   const base = process.env.JWT_SECRET;
@@ -92,8 +131,9 @@ export function assertKumoKeyUsable(): void {
   console.log(`[KumoCrypto] Vault key from ${source}, fingerprint ${fingerprint}`);
   if (source !== "KUMO_MASTER_KEY") {
     console.warn(
-      `[KumoCrypto] KUMO_MASTER_KEY is not set, so the vault key comes from ${source}. That is fine on a ` +
-        `development machine and is refused in production. Ciphertext written now must be re-encrypted ` +
+      `[KumoCrypto] KUMO_MASTER_KEY is not set, so the vault key comes from ${source}. This is refused when ` +
+        `NODE_ENV=production; if this host is a real deployment but NODE_ENV is not "production", the check ` +
+        `will not fire, so set it or set the key. Ciphertext written now must be re-encrypted ` +
         `(pnpm kumo:reencrypt) before the master key can be relied on.`
     );
   }

@@ -14,17 +14,23 @@
  */
 import { spawnSync } from "node:child_process";
 
+/** A key with distinct bytes: a repeated-byte value is now refused as a placeholder. */
+const KEY = Buffer.from(Array.from({ length: 32 }, (_, i) => i + 1));
+
 const CASES: { name: string; env: NodeJS.ProcessEnv; expect: "KUMO_MASTER_KEY" | "JWT_SECRET" | "refuse" }[] = [
-  { name: "base64 key (the documented format)", env: { KUMO_MASTER_KEY: Buffer.alloc(32, 7).toString("base64") }, expect: "KUMO_MASTER_KEY" },
-  { name: "hex key (64 characters)", env: { KUMO_MASTER_KEY: "ab".repeat(32) }, expect: "KUMO_MASTER_KEY" },
-  { name: "base64 key without padding (43 characters)", env: { KUMO_MASTER_KEY: Buffer.alloc(32, 7).toString("base64").replace(/=+$/, "") }, expect: "KUMO_MASTER_KEY" },
-  { name: "base64 key for 16 bytes (too short)", env: { KUMO_MASTER_KEY: Buffer.alloc(16, 7).toString("base64") }, expect: "refuse" },
-  { name: "base64 key for 48 bytes (too long, 64 characters)", env: { KUMO_MASTER_KEY: Buffer.alloc(48, 7).toString("base64") }, expect: "refuse" },
+  { name: "base64 key (the documented format)", env: { KUMO_MASTER_KEY: KEY.toString("base64") }, expect: "KUMO_MASTER_KEY" },
+  { name: "hex key (64 characters)", env: { KUMO_MASTER_KEY: KEY.toString("hex") }, expect: "KUMO_MASTER_KEY" },
+  { name: "base64 key without padding (43 characters)", env: { KUMO_MASTER_KEY: KEY.toString("base64").replace(/=+$/, "") }, expect: "KUMO_MASTER_KEY" },
+  { name: "base64 key for 16 bytes (too short)", env: { KUMO_MASTER_KEY: KEY.subarray(0, 16).toString("base64") }, expect: "refuse" },
+  { name: "base64 key for 48 bytes (too long, 64 characters)", env: { KUMO_MASTER_KEY: Buffer.concat([KEY, KEY.subarray(0, 16)]).toString("base64") }, expect: "refuse" },
   { name: "not a key at all", env: { KUMO_MASTER_KEY: "not-a-key!!!" }, expect: "refuse" },
-  { name: "hex of the wrong length", env: { KUMO_MASTER_KEY: "ab".repeat(20) }, expect: "refuse" },
+  { name: "hex of the wrong length (40 characters)", env: { KUMO_MASTER_KEY: "ab".repeat(20) }, expect: "refuse" },
+  { name: "hex of 120 characters (the old code took the first 32)", env: { KUMO_MASTER_KEY: KEY.toString("hex").repeat(2).slice(0, 120) }, expect: "refuse" },
+  { name: "32 zero bytes", env: { KUMO_MASTER_KEY: Buffer.alloc(32, 0).toString("base64") }, expect: "refuse" },
+  { name: "the same byte repeated 32 times", env: { KUMO_MASTER_KEY: Buffer.alloc(32, 0x41).toString("base64") }, expect: "refuse" },
   { name: "unset outside production", env: { NODE_ENV: "development", JWT_SECRET: "a-development-secret" }, expect: "JWT_SECRET" },
   { name: "unset in production", env: { NODE_ENV: "production", JWT_SECRET: "a-production-secret" }, expect: "refuse" },
-  { name: "set in production", env: { NODE_ENV: "production", KUMO_MASTER_KEY: Buffer.alloc(32, 3).toString("base64") }, expect: "KUMO_MASTER_KEY" },
+  { name: "set in production", env: { NODE_ENV: "production", KUMO_MASTER_KEY: KEY.toString("base64") }, expect: "KUMO_MASTER_KEY" },
   { name: "empty string is treated as unset", env: { NODE_ENV: "development", KUMO_MASTER_KEY: "   ", JWT_SECRET: "a-development-secret" }, expect: "JWT_SECRET" },
 ];
 
@@ -47,7 +53,7 @@ let passed = 0;
 let failed = 0;
 
 for (const c of CASES) {
-  const env = { ...process.env, NODE_ENV: "development", JWT_SECRET: "", KUMO_MASTER_KEY: "", ...c.env };
+  const env: NodeJS.ProcessEnv = { ...process.env, NODE_ENV: "development", JWT_SECRET: "", KUMO_MASTER_KEY: "", ...c.env };
   if (c.env.KUMO_MASTER_KEY === undefined) delete env.KUMO_MASTER_KEY;
   if (c.env.KUMO_MASTER_KEY === undefined && c.env.NODE_ENV === undefined) delete env.NODE_ENV;
 
