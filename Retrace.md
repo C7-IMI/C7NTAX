@@ -10145,7 +10145,6 @@ what makes the route safe to leave public.
 two interfaces arrange the same thing differently the walkthrough shows the one it is describing rather than
 captioning a modern screen as the classic one. `.github/copilot-instructions.md` now says so under the Help
 rule, so the next model to add a walkthrough does it without being asked.
-
 ---
 
 ### Prompt 370 — "Approved. Build them all" — the Email Studio, built
@@ -10177,11 +10176,53 @@ anywhere**, which is why `invoice.send` is shown in the Studio as a message with
 than as a working one; and the ticket composer appended a **hard-coded footer paragraph** to every note it
 sent, which the template and the brand kit now own.
 
+---
 
+### Prompt 371 — Branding into a section, and away from "Other"
 
+**Timestamp:** 2026-10-09 20:41 | **Status:** Complete | **Duration:** —
 
+**BuildNotes IDs:** **2026.10.9.033** — Branding gets a section, and the rail stops saying "Other".
 
+**Prompt**
 
+> Suggest where to place the branding pages in a different location on the nav pane besides "Other"
+>
+> Here's my idea: Create a subsection in Administration called System Branding, then move all of the options
+> into a subsection of that. So, it would be Administration at the Parent level, System Branding a child. and
+> then the different branding pages a child of System Branding. Kind of how it looks for Configuration.
+> Remove the "Other" category. If you think your idea makes more sense then go with yours. I approve you to
+> make the decision.
 
+**What was actually wrong**
 
+The four branding rows were in `NAV_TREE` and nowhere in `navModel.ts`'s domain specs, so the pane — which is
+deliberately honest about not having been told — collected them under **Other**, below Kumo, with 4 beside it.
+The panel's own copy says it is "a prompt, not a resting place", and it was right: nothing was misplaced,
+nothing had been placed.
 
+**The decision, since the owner left it to me**
+
+I took their shape, because **Configuration is already exactly that shape** in this codebase: a tree node that
+is both a page and the parent of its children, with the pane doing the indenting while the tree stays flat. Two
+things I did differently from the sketch, and both for reasons I could check in the code:
+
+- **The parent row is the Identity page**, so there is no fourth child repeating the row above it. The tree has
+  no route-less container that the pane can head a group with — `buildDomain` skips a row it cannot resolve a
+  destination for, and skips that row's children with it — so a container that is not a page would have
+  produced an empty group.
+- **The tree stays flat and the pane nests**, rather than nesting the tree itself. `buildBreadcrumbs` walks
+  exactly two levels, so a genuine grandchild would have *lost* its name from the trail: the breadcrumb for
+  Document Branding would have degraded rather than gained a level.
+
+**"Other" is gone, and not deleted.** It disappears because nothing is orphaned any more, which is how that
+bucket is meant to go — `NavPaneModern` only draws it when there is something in it. I did not remove the
+mechanism, because it is the thing that stops a section added tomorrow from going *silently* missing, and the
+Help already explains it. Removing the category would have traded a visible oddity for an invisible fault.
+
+**One bug found on the way, adjacent and pre-existing.** The redesigned interface's working-set bar labelled
+its first crumb with `getPageTitle("/admin")`, and `/admin` is a real page — the Configuration hub — so
+**every** Administration screen announced itself as "Configuration": Service Boards, Service Alerts, the Email
+Studio, the audit log and System Branding alike. The bar's comment says it shows "the section you are in", so
+it now takes the section from the breadcrumb trail, which already knew it; the trail is computed once for the
+three things that draw it.

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.032 | Last Updated: 2026-10-09
+## Version: 2026.10.9.033 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,38 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.033 — Branding gets a section, and the rail stops saying "Other"
+
+The Branding pages had been added to the navigation tree but never claimed by a domain, so the pane — which
+is deliberately honest about being told nothing — collected all four under **Other**, on the rail, below Kumo.
+That panel's own copy calls itself "a prompt, not a resting place", and it was right: the rows were not
+misplaced, they had simply never been placed.
+
+- **[New]** **System Branding is a section inside Administration**, with the same shape **Configuration**
+  already has: a parent row that *is* the Identity page, and the other three views indented beneath it with
+  their scope beside them — *each family's own*, *one client's*, *one report's*. The child hints are new: the
+  pane's nested rows had one phrase for every group ("in the hub"), which is honest for Configuration's two
+  settings rows and would have been wrong for three different scopes of one record.
+- **[Update]** **"Other" is gone from the rail** — because nothing is orphaned any more, which is how that
+  bucket is meant to disappear. It is deliberately **not** deleted as a mechanism: a section added to the
+  tree and not yet claimed by a domain still appears there rather than going silently missing, and the two
+  sentences in the Help that explain it are still true. An empty bucket draws no rail row.
+- **[Update]** **The three children are named by scope in the pane** — *Documents*, *Clients*, *Reports* —
+  through the pane's existing label overrides, so the row above them is not repeated three times. The tree
+  keeps the descriptive names ("Document Branding"), which is what the classic sidebar and the breadcrumbs
+  read, so the panes differ in wording rather than in structure and both are true.
+- **[Fix]** **Every Administration page announced itself as "Configuration".** The redesigned interface's
+  working-set bar labelled its first crumb with `getPageTitle("/admin")`, and `/admin` is a real page — the
+  Configuration hub — so the section crumb above Service Boards, Service Alerts, the Email Studio, the audit
+  log and System Branding all read "Configuration". The bar's own comment says it shows "the section you are
+  in", so it now reads the section from the breadcrumb trail, which already knew it. The trail is computed
+  once and shared by the three things that draw it.
+- **[Update]** The Help names the new structure: the branding walkthrough explains the section and why the
+  parent row is the identity page, the Getting Started navigation table names **System Branding**, and the
+  twelve places that said "Administration → Branding" now say "Administration → System Branding".
 
 ---
 

@@ -79,10 +79,12 @@ export const NAV_TREE: NavNode[] = [
       { id: "admin-logs", to: "/admin/logs", icon: FileText, label: "Audit Logs", permission: Permission.SystemConfig },
       { id: "admin-api", to: "/admin/api", icon: KeyRound, label: "API Access", permission: Permission.UserManage },
       { id: "admin-email", to: "/admin/email", icon: Mail, label: "Email Studio", permission: Permission.EmailView },
-      // Branding sits here rather than inside the Studio because it is neither an email setting nor a
-      // report setting: the logo, the letterhead and the colours are inherited by every document *and*
-      // every message this instance produces.
-      { id: "admin-branding", to: "/admin/branding", icon: Palette, label: "Branding", permission: Permission.BrandingView },
+      // System Branding sits here rather than inside the Studio because it is neither an email setting nor
+      // a report setting: the logo, the letterhead and the colours are inherited by every document *and*
+      // every message this instance produces. The parent row is the **Identity** page — the one people
+      // come for — and the pane indents its other three views beneath it, so the section reads as one
+      // subject rather than four rows that happen to start with the same word.
+      { id: "admin-branding", to: "/admin/branding", icon: Palette, label: "System Branding", permission: Permission.BrandingView },
       { id: "admin-branding-documents", to: "/admin/branding/documents", icon: FileText, label: "Document Branding", permission: Permission.BrandingView },
       { id: "admin-branding-clients", to: "/admin/branding/clients", icon: Building2, label: "Client Branding", permission: Permission.BrandingView },
       { id: "admin-branding-reports", to: "/admin/branding/reports", icon: LayoutTemplate, label: "Report Branding", permission: Permission.BrandingView },
@@ -514,6 +516,12 @@ export function Layout({ children }: { children: ReactNode }) {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const segments = location.pathname.split("/").filter(Boolean);
+  /**
+   * Where the reader is: [Home, the section, the page]. Computed once because three things draw it —
+   * the breadcrumb trail, Kumo's trail bar, and the working set's first crumb — and a page that named
+   * a different section in each would be worse than one that named none.
+   */
+  const trail = useMemo(() => buildBreadcrumbs(visibleTree, location.pathname), [visibleTree, location.pathname]);
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(loadExpanded);
@@ -1342,7 +1350,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 {(() => { const desc = getSectionDescription(location.pathname, hiddenPaths); return desc ? <span className="text-gray-500 font-normal text-sm ml-2">— {desc}</span> : null; })()}
               </h1>
             </div>
-            <Breadcrumbs segments={buildBreadcrumbs(visibleTree, location.pathname)} />
+            <Breadcrumbs segments={trail} />
           </div>
           )}
           {/* Header toolbar */}
@@ -1430,7 +1438,13 @@ export function Layout({ children }: { children: ReactNode }) {
                 segments.length < 3 ? "border-cyber-500 text-white" : "border-transparent text-gray-500 hover:text-gray-300"
               }`}
             >
-              {getPageTitle(visibleTree, `/${location.pathname.split("/")[1] || ""}`)}
+              {/* The section you are in, named as a section.
+                  This used to be `getPageTitle("/admin")`, and `/admin` is a real page — the
+                  Configuration hub — so every Administration screen announced itself as
+                  "Configuration", including the ones nowhere near it. The trail already knows the
+                  section, so the label comes from it; the link still goes to the section's hub,
+                  which is a reasonable place to land. */}
+              {trail[1]?.label ?? getPageTitle(visibleTree, `/${location.pathname.split("/")[1] || ""}`)}
             </Link>
             {segments.length >= 3 && (
               <Link
@@ -1452,7 +1466,7 @@ export function Layout({ children }: { children: ReactNode }) {
           </div>
         )}
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-          <KumoTrail segments={buildBreadcrumbs(visibleTree, location.pathname)} />
+          <KumoTrail segments={trail} />
           {children}
         </main>
         {/* Pinned rather than trailing the content: a notice that is only reachable by scrolling to

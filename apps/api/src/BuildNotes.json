@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.9.033",
+    "date": "2026-10-09",
+    "title": "Branding gets a section, and the rail stops saying \"Other\"",
+    "changes": [
+      {
+        "text": "**System Branding is a section inside Administration**, with the same shape **Configuration**",
+        "type": "New Feature"
+      },
+      {
+        "text": "**\"Other\" is gone from the rail** — because nothing is orphaned any more, which is how that",
+        "type": "Update"
+      },
+      {
+        "text": "**The three children are named by scope in the pane** — *Documents*, *Clients*, *Reports* —",
+        "type": "Update"
+      },
+      {
+        "text": "**Every Administration page announced itself as \"Configuration\".** The redesigned interface's",
+        "type": "Fix"
+      },
+      {
+        "text": "The Help names the new structure: the branding walkthrough explains the section and why the",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.032",
     "date": "2026-10-09",
     "title": "One document language, and a brand you can actually change",

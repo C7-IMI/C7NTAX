@@ -72,8 +72,21 @@ interface DomainSpec {
   label: string;
   icon: LucideIcon;
   what: string;
-  /** Nodes, in reading order. `children` are rendered indented under the node that owns them. */
-  rows: Array<{ id: string; children?: string[]; note?: string }>;
+  /**
+   * Nodes, in reading order. `children` are rendered indented under the node that owns them.
+   *
+   * A child may carry its own `note`, because one phrase for a whole group is only honest when the
+   * children are alike: Configuration's two settings rows are both "in the hub", while System Branding's
+   * three are three different scopes of the same record ("each family's own", "one client's", "one
+   * report's") and a shared sentence would have said less than nothing.
+   */
+  rows: Array<{
+    id: string;
+    children?: Array<string | { id: string; note?: string }>;
+    note?: string;
+    /** The fallback hint for a child that names none — the hub rows' phrase. */
+    childNote?: string;
+  }>;
   /** See `NavDomain.to` — a domain that navigates rather than opens. */
   to?: string;
 }
@@ -116,6 +129,12 @@ const LABEL_OVERRIDES: Record<string, string> = {
   "admin-service-alerts": "Alert Settings",        // vs the Service Alerts destination
   "help-configuration": "Configuration Reference",  // vs Administration → Configuration
   "billing-reports": "Billing Reports",            // vs Reporting, which is a domain of reports
+  // Under "System Branding" the word "Branding" is already said by the row above, so the three children
+  // name their scope instead: the tree keeps the descriptive names the classic sidebar and the
+  // breadcrumbs read, and the pane — where the nesting is visible — says the shorter true thing.
+  "admin-branding-documents": "Documents",         // System Branding → Documents
+  "admin-branding-clients": "Clients",             // vs the Clients destination, in another domain
+  "admin-branding-reports": "Reports",             // vs the Reporting destination
 };
 
 const DOMAIN_SPECS: DomainSpec[] = [
@@ -240,6 +259,18 @@ const DOMAIN_SPECS: DomainSpec[] = [
       { id: "admin-sso" },
       { id: "admin-logs" },
       { id: "admin-system" },
+      // System Branding is a section rather than four rows beside the settings, and it is the same shape
+      // Configuration already has: a parent row that **is** a page — here the Identity page — with the rest
+      // of its views indented beneath it. The parent is the identity because that is the page people come
+      // for, so a fourth "Identity" child repeating the row above it would be a click for nothing.
+      {
+        id: "admin-branding",
+        children: [
+          { id: "admin-branding-documents", note: "each family's own" },
+          { id: "admin-branding-clients", note: "one client's" },
+          { id: "admin-branding-reports", note: "one report's" },
+        ],
+      },
       // Thirteen setting rows become one destination. The hub already exists and already presents
       // these as sections; the navigation was the only place that insisted on listing them all.
       { id: "admin-configuration", children: ["admin-boards", "admin-service-alerts"] },
@@ -420,9 +451,11 @@ export function buildNavPane(
       const destination = toDestination(row.id, { note: row.note });
       if (!destination) continue;
       items.push(destination);
-      for (const childId of row.children ?? []) {
-        const child = toDestination(childId, { child: true, note: "in the hub" });
-        if (child) items.push(child);
+      for (const child of row.children ?? []) {
+        const childId = typeof child === "string" ? child : child.id;
+        const note = typeof child === "string" ? undefined : child.note;
+        const nested = toDestination(childId, { child: true, note: note ?? row.childNote ?? "in the hub" });
+        if (nested) items.push(nested);
       }
     }
     // A domain that is a page claims the tree node behind it — the one whose route is the same page —
