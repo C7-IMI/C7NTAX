@@ -300774,5 +300774,19 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-10T12:36:45.627Z"
+  },
+  {
+    "id": "284d5829-c733-48f5-8e89-ac51388b1b7d",
+    "action": "nav:update",
+    "entity": "nav",
+    "entityId": "favorites",
+    "changes": {
+      "favorites": [
+        "tickets"
+      ]
+    },
+    "userId": "3d9729a2-baa0-48bb-b536-3da8b08a7269",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T13:11:18.658Z"
   }
 ]
