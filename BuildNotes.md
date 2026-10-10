@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.10.015 | Last Updated: 2026-10-10
+## Version: 2026.10.10.016 | Last Updated: 2026-10-10
 
 ---
 
@@ -14,6 +14,43 @@
 
 ---
 
+## 2026.10.10.016 — Kumo's vault is reviewed for the first time, and the Critical is real
+
+Kumo holds every client's credentials and had never been reviewed. An external review produced thirteen
+findings; all thirteen were checked against the code by exercising it, and all thirteen hold. The encryption
+is sound — AES-256-GCM with a random IV, ciphertext stripped from every list and detail response, each reveal
+access-logged and audited, request bodies redacted. The key handling around it is not.
+
+- **[Fix]** **No code changed.** This entry records a review and its verification. The fixes are a decision,
+  and the biggest of them carries a data consequence that has to be answered first.
+- **[Update]** **`KUMO-SECURITY-REVIEW.md` is on `main` with a provenance blockquote**, and
+  `KUMO-Security-Review-Response.md` answers it finding by finding — stating which findings were confirmed by
+  execution, which by reading, and which were not independently verified.
+- **[New]** **Three things the review did not say, and the first would have hidden this for years.** The
+  startup line `[KumoCrypto] Key initialized (length: 32)` prints 32 on *both* derivation branches, so the
+  running system reports success while ignoring the master key in Key Vault. The hex branch is never
+  length-validated, so a longer key is silently truncated rather than refused. And the fallback is already
+  recorded as an accepted gap in `SOC2.Compliance.md:46` and `PLAN-015…:19`, which separates the two problems:
+  falling back is a documented decision, falling back *while a valid key was supplied* is the defect.
+- **[Update]** **Six of the findings share one shape** — a permission, flag or limit that exists in the model
+  and is not enforced on a path. `kumo:view_all` is declared in `enums.ts:256` and read by no route;
+  `isSensitive` is honoured by the seed generator and ignored by the value write path; `isActive` is filtered
+  by the password list route and not by reveal. Recorded as a pattern rather than six incidents, because the
+  enforcement point is consistently the sibling route that got it right — the same shape as `mfa:enforce`
+  before the MFA work and `SMTP_SECURE` before the mail fix.
+- **[Update]** **The re-encryption step is smaller than the review believes.** Kumo has never been deployed,
+  the committed snapshot cannot be decrypted with the default key, and seeded rows hold an `ENC:` marker
+  rather than ciphertext — so if no environment holds real credentials the migration reduces to re-seeding,
+  and this is the cheapest moment the fix will ever have.
+
+**Verification:** the key-derivation gate and the documented key format checked against all four places that
+state it (`.env.production.example`, both `.bicepparam` files, `deploy-env.ps1`); `kumo:view_all` searched
+across the API, web app and shared packages; the reveal limit read at `index.ts:189` and compared with the
+real limiters on credentials (`auth.ts:73`) and passkeys (`webauthn.ts:27`); the reveal and TOTP routes
+compared line for line for access logging and audit; `secureClear` and every caller read. No code changed, so
+no build or test was required. `Retrace.md` Prompt 392 records the prompt.
+
+---
 ## 2026.10.10.015 — The review is closed, and a check the deploy needs first
 
 The PLAN-030 static review is closed at round 9. Nine rounds took the Azure package from "cannot complete

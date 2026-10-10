@@ -11790,3 +11790,106 @@ commits, which returns **0 files**.
 **The rounds are closed.** The next document in this series should be the transcript of a deploy: one commit
 run twice, a deliberate rollback through the health gate, the prod rehearsal, and the five operator
 decisions. All of it needs an Azure subscription and spending authority, which is why it stops here.
+
+---
+
+### Prompt 392 — The Kumo security review, verified finding by finding
+
+**Timestamp:** 2026-10-10 12:11 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.10.016** — Kumo's vault is reviewed for the first time, and the Critical is real.
+
+**Prompt**
+
+> Claude checked and said this. Review, update, and reply here:
+>
+> Reviewed the Kumo API routes and crypto; now checking auth, roles, audit logging and the database schema.
+> Found a likely key-handling bug in the infra/crypto mismatch; verifying it, then checking committed vault snapshots.
+> Writing the report now.
+> I've written the review to `KUMO-SECURITY-REVIEW.md` in the repo root. Kumo isn't safe yet to hold every client's passwords in production. The encryption itself is sound (AES-256-GCM, reveal logging, redacted audit logs), but how the key is handled and who can reveal what both have serious gaps. I reviewed the code by hand rather than testing a live system.
+> **The most serious problems:**
+> 1. **Critical: the production master key is probably being ignored.** The deployment docs say to supply `KUMO_MASTER_KEY` as 32 bytes in base64, which is 44 characters. The code only accepts a hex value of 64+ characters, so a base64 key is silently skipped. The vault key is then derived from `JWT_SECRET` instead, with no warning. I confirmed this by running the check.
+>   - So the key stored in Azure Key Vault protects nothing. Anyone with `JWT_SECRET` can decrypt every client's passwords.
+>   - Rotating `JWT_SECRET` after an incident would make every stored password unreadable.
+>   - Fixing the key parsing on its own would also make existing passwords unreadable. The fix needs a one-time step that re-encrypts them under the real key.
+> 2. **High: no separation between clients.** None of the Kumo endpoints check which client a password belongs to. Anyone with the reveal permission can read every client's vault. The `kumo:view_all` permission exists, but nothing checks it.
+> 3. **High: one permission unlocks everything.** Revealing a password needs no MFA step-up, there's no per-password access control, and the global rate limit is 9,999 requests a minute, which is effectively none. API keys can also be given the reveal permission. A stolen session or key could empty the vault in seconds.
+> 4. **High: asset fields marked "encrypted" or "sensitive" are stored and returned in plain text.** Anyone with asset view access, a lower permission than reveal, can read them in bulk.
+> 5. **High: the 2FA code is too easy to get.** The live code for a password can be read with view-only permission, and that isn't logged.
+> The report also covers some medium and low issues, including:
+> - One key for every client, with no rotation.
+> - Deleted passwords can still be revealed.
+> - The copied password is never cleared from the clipboard.
+> - The "Reveal and copy" menu item copies nothing, because it reads the wrong field from the response.
+> It ends with a list of what's already done well and a recommended order for the fixes.
+> Following the repo's rules, I also added a Retrace entry (Prompt 379). No code was changed, and nothing is committed or pushed yet. This session's files are deleted when it ends, so tell me if you want it committed to a branch.
+> I committed the review (`KUMO-SECURITY-REVIEW.md`) and the Retrace entry, and pushed them to a new branch, `claude/kumo-security-review`. The session had no branch checked out, so I created that one. I haven't opened a pull request; tell me if you want one.
+
+**The finding is real, and I ran it rather than agreeing with it.** `services/kumoCrypto.ts` gates on
+`envKey && envKey.length >= 64` and then parses with `Buffer.from(envKey, "hex").slice(0, 32)`. A base64
+32-byte key is 44 characters, so the gate rejects the format the deployment instructions require — and I
+checked the instructions in all four places that state them: `.env.production.example:46`
+(`<base64-32-bytes>`), both `.bicepparam` files (`<32 random bytes, base64>`) and `deploy-env.ps1:225`. The
+contradiction is total, and the fallback branch is `SHA-256("kumo-vault:" + JWT_SECRET)`, so the key sitting in
+Azure Key Vault protects nothing.
+
+**Three things the review does not say, and the first is the one that would have hidden this for years.** The
+startup line is `[KumoCrypto] Key initialized (length: 32)` — it prints the length of the *derived* key, which
+is 32 on both branches. An operator who correctly suspected the fallback and went looking for evidence would
+read that line and conclude the master key was in use. **The system does not merely ignore the key, it reports
+success.** Second, the decoded length is never validated: the hex branch truncates with `.slice(0, 32)`, so a
+128-character hex string is accepted and silently halved, and a non-hex string yields a short buffer with no
+error — the gate is "at least 64 characters", not "a valid 32-byte key". Third, and the distinction that
+matters for how this is described: `SOC2.Compliance.md:46` and `PLAN-015…:19` **already record the
+`KUMO_MASTER_KEY → JWT_SECRET → hardcoded` fallback as an accepted gap.** Falling back is a documented
+decision. Falling back *while a valid key was supplied* is a defect. Those need separate fixes.
+
+**The re-encryption step is smaller than the review believes, and that is the useful finding.** The review says
+the fix needs a data migration. It does only if some environment holds real credentials under the current
+derivation — and Kumo has never been deployed, the committed snapshot cannot be decrypted with the default key
+(the reviewer checked), and the reveal route's own error path returns `[Seed data — re-encrypt this password to
+use it]` for values beginning `ENC:`, so seeded rows hold a marker rather than ciphertext. If that reading is
+right the migration reduces to re-seeding, which makes this the cheapest moment the fix will ever have: before
+the first production credential exists. I asked the one question that decides it rather than guessing.
+
+**Findings 2, 3, 4, 5, 7 and 8 share one shape, and naming it is worth more than six separate fixes.** In each,
+a permission, a flag or a limit exists in the model and is not enforced on a path: `kumo:view_all` is declared
+in `enums.ts:256` and **read by no route** (I grepped the API, the web app and shared — the only two hits are
+the declaration and a category listing); `isSensitive` is honoured by `seed-sample-coverage.ts:549,817` and
+ignored by the value write path at `kumo.ts:182-184,242-244`; the list route filters `isActive: true` while the
+reveal route does not. This is the same defect as `mfa:enforce`, which was declared, granted and read by
+nothing until the MFA work gave it a purpose — and the same as `SMTP_SECURE`, reported by the screens while the
+mail sender ignored it. **The enforcement point is consistently the sibling route that got it right, not a new
+abstraction.**
+
+**Two additions that sharpen findings the review got right.** The rate limit is real and it is the global one:
+`index.ts:189` is `rateLimiter(9999, 60 * 1000)` — but `auth.ts:73` gives credentials `rateLimiter(300, 15*60*1000)`
+and `webauthn.ts:27` gives passkeys `rateLimiter(30, 60_000)`. The team writes real limiters for sensitive
+endpoints; the vault simply never got one. And API keys carrying reveal (`auth.ts:359` filters the owner's
+permissions by a scope list with no deny-list) interlocks with the MFA change: keys are **exempt from the MFA
+gate**, correctly, because a non-interactive credential cannot answer a challenge. So a key can hold reveal,
+cannot be stepped up, and has no rate limit — three findings composing into one path, which is the argument
+that MFA step-up on reveal is the compensating control rather than a nicety.
+
+**Two findings I confirmed that are as bad as they look.** `GET /passwords/:id/totp` (`kumo.ts:472`) needs only
+`KumoPasswordsView`, returns the live code, and writes **no access log and no audit entry** — compare the reveal
+route immediately above it at `:397-400`, which does both. Its `catch { res.json({ enabled: false }) }` also
+makes a *decryption failure* indistinguishable from *no 2FA configured*, which fails in the wrong direction. And
+`secureClear(buf) { buf.fill(0); }` is called as `secureClear(Buffer.from(plaintext))` — a fresh copy of an
+immutable JavaScript string — so it zeroes a temporary about to be collected and advertises a protection that
+does not exist. It is worse than a no-op in one way: it sits in the reveal path where an auditor looks for
+exactly this, and finding it invites the conclusion that plaintext lifetime is handled.
+
+**Where I was less certain and said so.** I did not independently verify `GET /organizations/:id:922-927`, the
+document visibility routes at `:579-599`, or each of the four items in finding 13; they share mechanisms I did
+verify, and the response marks them "confirmed in shape" and "plausible, spot-checked" rather than claiming a
+check I did not make. The reviewer's finding 11 is right including its line number — `KumoPasswords.tsx:226`
+reads `r.data?.password` while the API returns `passwordPlaintext` (`kumo.ts:401`), so the copy never happens
+and fails silently with no toast, which is what makes it a copy bug rather than a display bug.
+
+**Records.** The review is on `main` now with a provenance blockquote, at `KUMO-SECURITY-REVIEW.md`, exactly as
+the reviewer wrote it. I did **not** import its Retrace hunk: the entry on the branch numbers itself 379 and
+`main` already has a Prompt 379 at line 10630, so bringing it across would have created a collision. Mine is
+392, and the reviewer's entry stays on its branch. Nothing is fixed yet — the review is a decision document
+until the data question is answered, and the fixes themselves will each need their Help and `docs/API.md`
+changes in the same commit.

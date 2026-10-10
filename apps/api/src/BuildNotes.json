@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.10.016",
+    "date": "2026-10-10",
+    "title": "Kumo's vault is reviewed for the first time, and the Critical is real",
+    "changes": [
+      {
+        "text": "**No code changed.** This entry records a review and its verification. The fixes are a decision,",
+        "type": "Fix"
+      },
+      {
+        "text": "**`KUMO-SECURITY-REVIEW.md` is on `main` with a provenance blockquote**, and",
+        "type": "Update"
+      },
+      {
+        "text": "**Three things the review did not say, and the first would have hidden this for years.** The",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Six of the findings share one shape** — a permission, flag or limit that exists in the model",
+        "type": "Update"
+      },
+      {
+        "text": "**The re-encryption step is smaller than the review believes.** Kumo has never been deployed,",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.10.015",
     "date": "2026-10-10",
     "title": "The review is closed, and a check the deploy needs first",
