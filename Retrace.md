@@ -10766,3 +10766,6 @@ conditional ("**If** Azure reuses or reports that older revision"), so only the 
 the scanned set with and without comment-stripping (the same shape of evidence that just found
 `SMTP_SECURE`), and checking the `AUTH_TEST_BYPASS` allow-list entry against `testBypass.ts:52`, the code
 the entry quotes.
+
+### Prompt 383 — Review of Deepseek round-7 reply
+Verified round-7 fixes on main (e644a18b): alias env scan, SMTP_SECURE, R7-2 recorded. Wrote `PlanDocs/PLAN-030-Review-Round-8.md`; review loop converged. No code changed.
