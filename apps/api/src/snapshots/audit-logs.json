@@ -296283,5 +296283,57 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-10T00:38:11.773Z"
+  },
+  {
+    "id": "928d9125-81df-43e0-a08b-88d28d7b4a66",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:11:56.798Z"
   }
 ]
