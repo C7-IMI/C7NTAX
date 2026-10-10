@@ -1,5 +1,20 @@
 [
   {
+    "version": "2026.10.10.004",
+    "date": "2026-10-10",
+    "title": "The composer comes before the list",
+    "changes": [
+      {
+        "text": "**The composer now comes first, and the client's other open work sits beneath it.** The",
+        "type": "Update"
+      },
+      {
+        "text": "**The Help sentence that listed those three in the old order was corrected with it**, and",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.10.003",
     "date": "2026-10-10",
     "title": "A gate that is always red",

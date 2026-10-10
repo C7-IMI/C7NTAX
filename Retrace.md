@@ -10678,3 +10678,39 @@ revision" is right about the name and wrong about the mechanism: `containerapp u
 tag creates a new revision, and `latestRevisionName` is that new one. The conclusion stands and differs in
 the safe direction; the rollback case is the one where the suffix already exists with a different tag, and
 that is what the three assertions cover.
+
+---
+
+### Prompt 380 — The composer before the client's other open work
+
+**Timestamp:** 2026-10-10 05:47 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.10.004** — The composer comes before the list.
+
+**Prompt**
+
+> Move the Note entry card above the Client's other open work card.
+
+**What it was.** On the ticket detail screen's Overview tab the left column read: The record → What the
+client said → the client's other open work → the composer. So a list of other tickets sat between the
+reader and the thing the panel exists for. The user confirmed the target was the modern interface.
+
+**What changed.** The two cards swapped, by moving the smaller one (the other-open-work block, ~20 lines)
+below the composer rather than moving the composer up — same result, less of the file in the diff. The
+classic interface has no such card, so nothing moved there, and that is said in the code comment rather
+than left for a reader to work out.
+
+**Verified by reading the DOM rather than the source**, because a card can render in an order the source
+implies and CSS does not:
+
+    modern:  The record · What the client said · (composer) · The client's other open work · Activity
+    classic: General · Dates & Times · Notes (composer) · Activity   ← unchanged
+
+**Help corrected in the same change.** The Interface walkthrough's sentence listing "the CONTEXT rail, the
+client's other open work, and the composer" now lists the composer first and says why: the list is context
+for the work rather than the work.
+
+**One thing noticed and not changed.** The ticket page's tab strip is pinned (`sticky top-0`), and no card
+carries a scroll margin, so whichever card is under it is partly hidden while scrolling. That is
+pre-existing and applies to every card on the panel, not to this reorder — the composer was already the
+first card anyone scrolled to — so it is reported rather than fixed here.

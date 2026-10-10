@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.10.003 | Last Updated: 2026-10-10
+## Version: 2026.10.10.004 | Last Updated: 2026-10-10
 
 ---
 
@@ -11,6 +11,23 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.10.004 — The composer comes before the list
+
+On a ticket's Overview, the composer — where a note, a reply to the client and a time entry all start —
+sat below the client's other open work. That is a list of other tickets between you and the thing you
+opened the panel to do.
+
+- **[Update]** **The composer now comes first, and the client's other open work sits beneath it.** The
+  order is the client's own brief in the rail, then the composer, then the other tickets, then Activity.
+  The list is still there and still read *while* working — it is context for the work rather than the
+  work, which is what the order now says.
+- **[Update]** **The Help sentence that listed those three in the old order was corrected with it**, and
+  now says why the composer comes first. Nothing else moved: the card is the same card, with the same
+  five-per-page slice and the same links, and the classic interface never had it — there the composer
+  still follows Dates & Times.
 
 ---
 

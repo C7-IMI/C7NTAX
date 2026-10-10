@@ -2891,28 +2891,6 @@ export function TicketDetailPage() {
           </div>
           )}
 
-          {/* The client's other open work — read while this ticket is open, because the ticket that
-              explains this one is usually already open beside it. */}
-          {redesign && otherOpen.length > 0 && (
-            <div className="card space-y-3">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">The client's other open work</h3>
-              <div className="space-y-2">
-                {otherOpen.slice(0, 5).map(other => (
-                  <Link
-                    key={other.id}
-                    to={`/tickets/${other.id}`}
-                    className="flex items-center gap-3 rounded-lg border border-surface-border px-2.5 py-2 transition-colors hover:bg-surface-lighter"
-                  >
-                    <span className="shrink-0 font-mono text-[11px] text-gray-500">{other.ticketNumber}</span>
-                    <span className="min-w-0 flex-1 truncate text-xs text-gray-200">{other.title}</span>
-                    <span className={`badge shrink-0 text-[10px] ${STATUS_COLORS[other.status] || ""}`}>{other.status.replace(/_/g, " ")}</span>
-                    <span className="shrink-0 text-[11px] text-gray-600" title="Last updated">{relativeAge(other.updatedAt)}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Notes — and, redesigned, the composer: a note, a reply to the client and a time entry
               all start in the same place, because they are the same act of recording what you did.
               The tab is the existing internal/emailed flag, so nothing new is being written. */}
@@ -3058,6 +3036,32 @@ export function TicketDetailPage() {
               ))}
             </div>
           </div>
+
+          {/* The client's other open work — read while this ticket is open, because the ticket that
+              explains this one is usually already open beside it. It sits *after* the composer, on
+              purpose: the composer is what you came to the panel to do, and it used to be one scroll
+              past a list of the client's other tickets. The list is context for the work, not the work.
+              The classic interface has no such card — there the composer follows Dates & Times, and
+              nothing moved. */}
+          {redesign && otherOpen.length > 0 && (
+            <div className="card space-y-3">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">The client's other open work</h3>
+              <div className="space-y-2">
+                {otherOpen.slice(0, 5).map(other => (
+                  <Link
+                    key={other.id}
+                    to={`/tickets/${other.id}`}
+                    className="flex items-center gap-3 rounded-lg border border-surface-border px-2.5 py-2 transition-colors hover:bg-surface-lighter"
+                  >
+                    <span className="shrink-0 font-mono text-[11px] text-gray-500">{other.ticketNumber}</span>
+                    <span className="min-w-0 flex-1 truncate text-xs text-gray-200">{other.title}</span>
+                    <span className={`badge shrink-0 text-[10px] ${STATUS_COLORS[other.status] || ""}`}>{other.status.replace(/_/g, " ")}</span>
+                    <span className="shrink-0 text-[11px] text-gray-600" title="Last updated">{relativeAge(other.updatedAt)}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Activity — the region a recent-activity link from a ticket change points at. */}
           <div className="card space-y-3" data-hl="ticket-activity">
