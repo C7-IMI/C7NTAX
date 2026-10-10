@@ -10570,3 +10570,6 @@ one worth naming here: if Container Apps *renames* rather than rejects a duplica
 own suffix filter matches the previous revision and the pipeline goes green without deploying anything — so
 I recorded the decisive guard (assert the resolved revision's image) as a change for the operator to
 approve, since it alters the promotion path on an unverified failure.
+
+### Prompt 380 — Review of Deepseek round-4 reply
+User supplied Deepseek's round-4 reply. Verified fixes on main (1ab32342), mutation-tested the new workflow-shell check; wrote `PlanDocs/PLAN-030-Review-Round-5.md` (image assertion, wire check into gates, what-if log line). No code changed.
