@@ -286,3 +286,37 @@ None of this is user-visible yet, and Kumo is not deployed, so no Help walkthrou
 triggered by the review itself. Fixes will change behaviour that Help describes, and those changes carry their
 documentation in the same commit as the rule requires — in particular the reveal path (a step-up and a rate
 limit are things a user will meet) and the clipboard timer.
+
+---
+
+## Addendum — finding 1 is fixed
+
+Written after the response above, and left as an addendum rather than edited into it, so the reply still reads
+as the reply it was.
+
+The measurement that answered the data question turned the fix into a small one, and it was cheaper to do it
+now than to schedule it: five dev rows, no production data. What landed, in BuildNotes `2026.10.10.017`:
+
+- **`kumoCrypto.ts` accepts the documented format.** 32 bytes base64 or 64 hex characters; the decoded length
+  must be exactly 32 bytes; a key that is present but unusable is **refused by name and byte count** rather
+  than ignored; and production refuses to start without a usable key instead of deriving one from
+  `JWT_SECRET`.
+- **The startup line names the key.** `Vault key from KUMO_MASTER_KEY, fingerprint 9f47712e5adf` replaces
+  `Key initialized (length:32)` — true of both derivations, so it could not tell them apart.
+- **The key is resolved on first use**, so it no longer depends on `@prisma/client` happening to load `.env`
+  before the route modules are imported.
+- **`pnpm kumo:reencrypt`** moves the vault from the `JWT_SECRET`-derived key to the master key, dry run by
+  default and idempotent; **`pnpm probe:kumo-key`** proves the resolution in eleven cases, each in its own
+  process.
+- **`secureClear` now carries the truth** in a comment: it zeroes a copy of an immutable string and is not a
+  control. The function is unchanged, and finding 12 stands.
+
+**Evidence.** The probe is 11 passed / 0 failed. Against the dev database the dry run found 5 values on the
+legacy key and 0 unreadable; the apply moved them; a second run found 5 on the current key and 0 legacy. The
+move was proved both ways — **5/5 now open with the master key, 0/5 with the old derivation** — and all five
+passwords reveal as plaintext through the running API under the new key.
+
+**Still open, and deliberately so.** Findings 2, 4 and 5 change *who may see what* — cross-client scoping,
+sensitive asset fields, and the two-factor code — so they are the operator's decision rather than a patch to
+apply quietly. Findings 6 and 8 through 13 are unchanged in this change; `secureClear` is the one of them this
+commit touched, and only to stop it being read as a control.

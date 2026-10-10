@@ -81,6 +81,7 @@ import { setupWebSocket } from "./ws";
 import { WEB_ORIGIN } from "@C7NTAX/shared";
 import { startWorkers } from "./worker";
 import { assertTestBypassConfig } from "./services/testBypass";
+import { assertKumoKeyUsable } from "./services/kumoCrypto";
 // ── Startup logging ─────────────────────────────────────────────────
 logger.startup();
 
@@ -97,9 +98,11 @@ if (process.env.NODE_ENV === "production" && (!process.env.JWT_SECRET || process
 if (!process.env.JWT_SECRET) {
   logger.info("startup", "JWT_SECRET is unset — using the development secret. Never do this outside a dev machine.");
 }
-if (!process.env.KUMO_MASTER_KEY) {
-  logger.info("startup", "KUMO_MASTER_KEY is unset — the vault key is derived from JWT_SECRET. Set it explicitly before production.");
-}
+// ── Vault key ───────────────────────────────────────────────────────
+// Resolves KUMO_MASTER_KEY and refuses to start in production without one, rather than deriving the
+// vault key from JWT_SECRET. It reports the source and a fingerprint, because the line it replaces
+// printed only a key length of 32 — true of both derivations, so it could not tell them apart.
+assertKumoKeyUsable();
 
 // ── Development test bypass ─────────────────────────────────────────
 // Refuses to run in production, refuses to run half-configured, and says so loudly

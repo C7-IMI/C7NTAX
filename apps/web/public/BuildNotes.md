@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.10.016 | Last Updated: 2026-10-10
+## Version: 2026.10.10.017 | Last Updated: 2026-10-10
 
 ---
 
@@ -14,6 +14,43 @@
 
 ---
 
+## 2026.10.10.017 — The vault key the deployment documented is now the key the vault uses
+
+`KUMO_MASTER_KEY` is documented as 32 bytes base64 in `infra/env/.env.production.example`, `infra/README.md`
+and both `.bicepparam` files. The code accepted only hex of 64 characters or more, so every documented
+deployment supplied a key that was **silently skipped** and the vault was encrypted under a key derived from
+`JWT_SECRET`. The key in Key Vault protected nothing, and nothing anywhere said so.
+
+- **[Fix]** **A base64 master key is now used.** The key is accepted as 32 bytes base64 (44 characters) or as
+  64 hex characters, the decoded length must be exactly 32 bytes, and a key that is present but unusable is
+  **refused by name and byte count** rather than ignored. In production the API refuses to start without a
+  usable key instead of deriving one from `JWT_SECRET`.
+- **[Fix]** **The startup line no longer hides which key is in use.** It printed `Key initialized (length:32)`,
+  which is true of *both* derivations and so could not tell them apart — an operator checking for exactly this
+  problem would have read it and concluded the master key was in use. It now names the source and a
+  fingerprint: `Vault key from KUMO_MASTER_KEY, fingerprint 9f47712e5adf`.
+- **[New]** **`pnpm kumo:reencrypt`** re-encrypts the vault from the `JWT_SECRET`-derived key to the master
+  key, across password rows, two-factor secrets and the three encrypted email-connector fields. Dry run by
+  default, idempotent, and it never overwrites a value it cannot read.
+- **[New]** **`pnpm probe:kumo-key`** proves the key resolution in eleven cases, each in its own process,
+  because the key is resolved once and cached. The negative cases carry the weight: a supplied-but-unusable
+  key must be refused, not silently ignored.
+- **[Update]** **The vault key is resolved on first use rather than at import.** It was frozen at module load,
+  which worked only because requiring `@prisma/client` loads `.env` as a side effect — one reordered import
+  away from deriving the vault key from a constant published in this repository.
+- **[Update]** **The deployment documentation is now true rather than aspirational.**
+  `.env.production.example` states both accepted formats and the refusal, and the Developer → Environment
+  notes describe the fallback as non-production only.
+
+**Verification.** `probe:kumo-key` **11 passed / 0 failed** — base64, hex and unpadded base64 all resolve to
+`KUMO_MASTER_KEY`; a 16-byte key, a 48-byte key, 40 hex characters and non-base64 garbage are each refused
+with the reason; unset in production is refused; unset in development still derives from `JWT_SECRET`. The
+migration was run against the development database: **5 rows on the legacy key, 0 unreadable**, re-encrypted,
+then a second run reported **5 on the current key, 0 legacy** (idempotent). The move was proved both ways —
+after it, **5/5 rows decrypt with the master key and 0/5 with the old one**. Finally, through the running API,
+all five passwords reveal as plaintext under the new key. `tsc --noEmit` passes for the API.
+
+---
 ## 2026.10.10.016 — Kumo's vault is reviewed for the first time, and the Critical is real
 
 Kumo holds every client's credentials and had never been reviewed. An external review produced thirteen

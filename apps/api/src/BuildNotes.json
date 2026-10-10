@@ -1,5 +1,36 @@
 [
   {
+    "version": "2026.10.10.017",
+    "date": "2026-10-10",
+    "title": "The vault key the deployment documented is now the key the vault uses",
+    "changes": [
+      {
+        "text": "**A base64 master key is now used.** The key is accepted as 32 bytes base64 (44 characters) or as",
+        "type": "Fix"
+      },
+      {
+        "text": "**The startup line no longer hides which key is in use.** It printed `Key initialized (length:32)`,",
+        "type": "Fix"
+      },
+      {
+        "text": "**`pnpm kumo:reencrypt`** re-encrypts the vault from the `JWT_SECRET`-derived key to the master",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`pnpm probe:kumo-key`** proves the key resolution in eleven cases, each in its own process,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The vault key is resolved on first use rather than at import.** It was frozen at module load,",
+        "type": "Update"
+      },
+      {
+        "text": "**The deployment documentation is now true rather than aspirational.**",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.10.016",
     "date": "2026-10-10",
     "title": "Kumo's vault is reviewed for the first time, and the Critical is real",

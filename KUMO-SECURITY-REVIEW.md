@@ -4,7 +4,7 @@
 >
 > **Answered by:** `KUMO-Security-Review-Response.md`.
 >
-> **Status:** every finding was checked against the code on `main` by exercising it, not by reading alone. All thirteen hold; two are corrected in detail (finding 11's field, finding 4's enforcement point) and three are confirmed to be worse or broader than the review describes (findings 1, 5 and 7). Nothing is fixed yet. The one item with a data consequence is finding 1, and the argument for fixing it now rather than after the first production data is in the response.
+> **Status:** every finding was checked against the code on `main` by exercising it, not by reading alone. All thirteen hold; two are corrected in detail (finding 11's field, finding 4's enforcement point) and three are confirmed to be worse or broader than the review describes (findings 1, 5 and 7). **Finding 1 is fixed** — see the addendum in the response and BuildNotes 2026.10.10.017; the other twelve are open and are decisions rather than oversights, because they change who may see what.
 
 ---
 

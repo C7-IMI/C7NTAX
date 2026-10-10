@@ -1,26 +1,107 @@
 import { createCipheriv, createDecipheriv, randomBytes, createHash } from "crypto";
 
 const ALGO = "aes-256-gcm";
+const KEY_BYTES = 32;
 
-// Derive a stable key from JWT_SECRET or use environment variable.
-// KEY is computed once at module load and stays stable across restarts.
-function deriveKey(): Buffer {
-  const envKey = process.env.KUMO_MASTER_KEY;
-  if (envKey && envKey.length >= 64) {
-    return Buffer.from(envKey, "hex").slice(0, 32);
-  }
-  // Fallback: derive from JWT secret (stable across restarts in dev)
-  const base = process.env.JWT_SECRET || "C7NTAX-dev-secret-change-in-prod";
-  const hash = createHash("sha256").update("kumo-vault:" + base).digest();
-  return hash.slice(0, 32);
+/** Stamped on every row this module writes, so a future rotation can tell the generations apart. */
+export const CURRENT_KEY_ID = "v1";
+
+/** The public development secret, used only when nothing else is configured. */
+const DEV_JWT_FALLBACK = "C7NTAX-dev-secret-change-in-prod";
+
+type KeySource = "KUMO_MASTER_KEY" | "JWT_SECRET" | "development-default";
+
+interface ResolvedKey {
+  key: Buffer;
+  source: KeySource;
 }
 
-const KEY = deriveKey();
-console.log("[KumoCrypto] Key initialized (length:" + KEY.length + ")");
+/**
+ * `KUMO_MASTER_KEY` is 32 bytes as base64 — the documented format, 44 characters, in
+ * `infra/README.md`, `infra/env/.env.production.example` and both `.bicepparam` files. Hex is also
+ * accepted because it was the only form the code ever read.
+ *
+ * A key that is present but unusable is a configuration error, and refusing it is the whole point:
+ * the previous test was `length >= 64` with a hex parse, so a documented base64 key was silently
+ * skipped and the vault was encrypted with a key derived from `JWT_SECRET`. The Key Vault key
+ * protected nothing, and nothing anywhere said so (KUMO-SECURITY-REVIEW.md, finding 1).
+ */
+function decodeMasterKey(raw: string): Buffer {
+  const value = raw.trim();
+  if (/^[0-9a-fA-F]{64}$/.test(value)) return Buffer.from(value, "hex");
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(value)) {
+    throw new Error(
+      `KUMO_MASTER_KEY is not a valid key: expected 32 bytes as base64 (44 characters) or 64 hex characters, ` +
+        `but the value contains characters that are neither.`
+    );
+  }
+  const decoded = Buffer.from(value, "base64");
+  if (decoded.length !== KEY_BYTES) {
+    throw new Error(
+      `KUMO_MASTER_KEY is not a valid key: expected 32 bytes as base64 (44 characters) or 64 hex characters, ` +
+        `but the value decodes to ${decoded.length} bytes.`
+    );
+  }
+  return decoded;
+}
+
+/** The derivation used before the master key was parsed correctly. Only the re-encryption job needs it. */
+export function legacyVaultKey(): Buffer {
+  const base = process.env.JWT_SECRET || DEV_JWT_FALLBACK;
+  return createHash("sha256").update("kumo-vault:" + base).digest().slice(0, KEY_BYTES);
+}
+
+function resolve(): ResolvedKey {
+  const envKey = process.env.KUMO_MASTER_KEY;
+  if (envKey !== undefined && envKey.trim() !== "") {
+    return { key: decodeMasterKey(envKey), source: "KUMO_MASTER_KEY" };
+  }
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "KUMO_MASTER_KEY must be set in production. Refusing to start rather than derive the vault key from " +
+        "JWT_SECRET, which would leave every stored credential readable by anyone holding the signing secret."
+    );
+  }
+  const base = process.env.JWT_SECRET;
+  return { key: legacyVaultKey(), source: base ? "JWT_SECRET" : "development-default" };
+}
+
+// Resolved on first use, not at module load. The key was previously frozen at import time, which made
+// it depend on whether the environment happened to be loaded first — it worked only because requiring
+// @prisma/client loads .env as a side effect, and one reordered import would have derived the vault key
+// from a constant in this repository with no error.
+let cached: ResolvedKey | null = null;
+
+function resolved(): ResolvedKey {
+  if (!cached) cached = resolve();
+  return cached;
+}
+
+/** A short identifier for the key in use. Safe to log; it does not reveal the key. */
+export function kumoKeyStatus(): { source: KeySource; fingerprint: string } {
+  const { key, source } = resolved();
+  return { source, fingerprint: createHash("sha256").update(key).digest("hex").slice(0, 12) };
+}
+
+/**
+ * Called once at startup so a broken configuration fails at boot rather than at the first reveal.
+ * The restart is cheap; a vault nobody can decrypt, discovered by a technician mid-incident, is not.
+ */
+export function assertKumoKeyUsable(): void {
+  const { source, fingerprint } = kumoKeyStatus();
+  console.log(`[KumoCrypto] Vault key from ${source}, fingerprint ${fingerprint}`);
+  if (source !== "KUMO_MASTER_KEY") {
+    console.warn(
+      `[KumoCrypto] KUMO_MASTER_KEY is not set, so the vault key comes from ${source}. That is fine on a ` +
+        `development machine and is refused in production. Ciphertext written now must be re-encrypted ` +
+        `(pnpm kumo:reencrypt) before the master key can be relied on.`
+    );
+  }
+}
 
 export function encrypt(plaintext: string): { ciphertext: string; iv: string; authTag: string } {
   const iv = randomBytes(16);
-  const cipher = createCipheriv(ALGO, KEY, iv);
+  const cipher = createCipheriv(ALGO, resolved().key, iv);
   const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
   return {
     ciphertext: encrypted.toString("base64"),
@@ -30,7 +111,12 @@ export function encrypt(plaintext: string): { ciphertext: string; iv: string; au
 }
 
 export function decrypt(ciphertext: string, iv: string, authTag: string): string {
-  const decipher = createDecipheriv(ALGO, KEY, Buffer.from(iv, "base64"));
+  return decryptWithKey(resolved().key, ciphertext, iv, authTag);
+}
+
+/** Decrypt under a caller-supplied key. The re-encryption job uses this to read legacy ciphertext. */
+export function decryptWithKey(key: Buffer, ciphertext: string, iv: string, authTag: string): string {
+  const decipher = createDecipheriv(ALGO, key, Buffer.from(iv, "base64"));
   (decipher as any).setAuthTag(Buffer.from(authTag, "base64"));
   const decrypted = Buffer.concat([
     decipher.update(Buffer.from(ciphertext, "base64")),
@@ -39,6 +125,12 @@ export function decrypt(ciphertext: string, iv: string, authTag: string): string
   return decrypted.toString("utf8");
 }
 
+/**
+ * Zeroes a buffer. It is **not** a control on plaintext lifetime: every caller passes
+ * `Buffer.from(someString)`, a fresh copy, and JavaScript strings are immutable, so the original is
+ * untouched. Kept because callers exist, but do not count it as protection in an audit
+ * (KUMO-SECURITY-REVIEW.md, finding 12).
+ */
 export function secureClear(buf: Buffer): void {
   buf.fill(0);
 }

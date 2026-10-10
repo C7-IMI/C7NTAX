@@ -11798,6 +11798,7 @@ decisions. All of it needs an Azure subscription and spending authority, which i
 **Timestamp:** 2026-10-10 12:11 | **Status:** Complete | **Duration:** —
 
 **BuildNotes IDs:** **2026.10.10.016** — Kumo's vault is reviewed for the first time, and the Critical is real.
+Also **2026.10.10.017** — the vault key the deployment documented is now the key the vault uses.
 
 **Prompt**
 
@@ -11909,10 +11910,68 @@ check I did not make. The reviewer's finding 11 is right including its line numb
 reads `r.data?.password` while the API returns `passwordPlaintext` (`kumo.ts:401`), so the copy never happens
 and fails silently with no toast, which is what makes it a copy bug rather than a display bug.
 
-**Records.** The review is on `main` now with a provenance blockquote, at `KUMO-SECURITY-REVIEW.md`, exactly as
-the reviewer wrote it. I did **not** import its Retrace hunk: the entry on the branch numbers itself 379 and
-`main` already has a Prompt 379 at line 10630, so bringing it across would have created a collision. Mine is
-392, and the reviewer's entry stays on its branch. Both probe scripts were written inside `apps/api` so module
-resolution worked and both were deleted afterwards. Nothing is fixed yet — the review is a decision document
-until the fix is scheduled, and the fixes will each need their Help and `docs/API.md` changes in the same
-commit.
+**The Critical was fixed rather than only reported, because deferring it is the one choice that makes it
+more expensive.** The question I said blocked the fix was answered by measurement, and the answer — five
+rows, no production data — is what turned a migration into a small change. Leaving it would have meant the
+same work later, with a change window instead of a script and with the first real client credential sitting
+in a vault encrypted under a key derived from the signing secret.
+
+**`kumoCrypto.ts` now accepts the format its own deployment documentation specifies.** 32 bytes base64 (44
+characters) or 64 hex characters, the decoded length must be exactly 32 bytes, and a key that is present but
+unusable is refused **by name and byte count** rather than ignored — which was the defect: the old test was
+`length >= 64` with a hex parse, so a documented base64 key was skipped without a word and the vault fell
+back to `SHA-256("kumo-vault:" + JWT_SECRET)`. In production it now refuses to start without a usable key
+instead of deriving one.
+
+**The startup line was the part that made the defect survivable, and it is fixed in the same commit.** It
+read `[KumoCrypto] Key initialized (length:32)`. That is the length of the *derived* key and therefore 32 on
+both branches, so an operator who suspected this exact problem and went looking for evidence would have found
+a line confirming the master key was in use. It now reads
+`[KumoCrypto] Vault key from KUMO_MASTER_KEY, fingerprint 9f47712e5adf` — source named, key identifiable, key
+not revealed. A parsing fix without that line would have left the same trap armed for the next rotation.
+
+**I also removed the ordering hazard I had only tested, rather than leaving it as a curiosity.** `KEY` was
+computed at module load and the API loads `.env` by no explicit means at all — no `dotenv` import, no
+`dotenv/config` side effect, no `--env-file`. It worked because requiring `@prisma/client` loads `.env`, and
+`index.ts:7` requires it before the route modules. The key is now resolved on first use, so the value no
+longer depends on import order, and startup calls `assertKumoKeyUsable()` to fail at boot rather than at the
+first reveal.
+
+**The migration is a script, not a manual step, because the next person needs to be able to run it.** `pnpm
+kumo:reencrypt` walks password rows, two-factor secrets and the three encrypted email-connector fields; it is
+a dry run by default, idempotent, and it never overwrites a value neither key can read. Two details worth
+recording: GCM authentication is what makes trial decryption a safe way to tell the generations apart (a
+wrong key fails rather than returning rubbish), and a two-factor secret is written back in its
+self-contained `ct:iv:tag` form because the bare form shares the row's `iv`/`authTag` with the password,
+which re-encrypting the password would change underneath it. That case has no live data — zero rows carry a
+TOTP secret — so it is defensive, and it is the kind of thing that would only ever surface years later.
+
+**Verified by running it, on the real data, in the order that proves the mechanism.** The probe is eleven
+cases each in its own process, because the key is resolved once and cached and a different environment means
+a different key: base64, hex and unpadded base64 resolve to `KUMO_MASTER_KEY`; a 16-byte key, a 48-byte key,
+40 hex characters and non-base64 garbage are each refused with the reason; unset in production is refused;
+unset in development still derives from `JWT_SECRET`; and whitespace is treated as unset. **11 passed / 0
+failed.** Against the development database: the dry run found **5 values on the legacy key and 0 unreadable**,
+the apply re-encrypted them, and a second run reported **5 on the current key, 0 legacy** — idempotent and
+proof that the rows moved rather than being rewritten in place. The move was then proved both ways: **5/5
+decrypt with the master key, 0/5 with the old derivation**, which is the assertion that the vault key
+genuinely changed and not merely that encryption succeeded. Finally, through the running API, all five
+passwords reveal as plaintext (11 to 17 characters each) under the new key, and the server's own startup line
+carries the same fingerprint the migration reported.
+
+**Two incidental observations from the run, both consistent with the review's other findings.** Two
+email-connector fields hold their value as **plaintext** rather than the JSON triple the encryption wrapper
+writes — the wrapper returns the stored string unchanged when it cannot parse it, so those values were never
+encrypted. The migration leaves them alone precisely because it cannot tell them apart from a malformed
+ciphertext, which is honest behaviour and also a small illustration of finding 4's shape. And the
+`apps/api/src/snapshots/users.json` file was rewritten by the snapshot poller while I had the server up
+(`lastLoginAt` from my own sign-in); I reverted it rather than folding a dev artifact into a crypto commit.
+
+**Records.** The review is on `main` with a provenance blockquote, at `KUMO-SECURITY-REVIEW.md`, exactly as
+the reviewer wrote it; its Retrace hunk was **not** imported, because it numbers itself 379 and `main`
+already has a Prompt 379 at line 10630. The other twelve findings remain open and are decisions rather than
+oversights: client scoping (#2), sensitive asset fields (#4) and the two-factor permission and logging (#5)
+all change who may see what, which is the operator's call rather than mine. Both probe scripts were written
+inside `apps/api` so module resolution worked and both were deleted; the new probe and the migration are
+committed as `probe:kumo-key` and `kumo:reencrypt`. The development master key was generated locally and
+written to `apps/api/.env`, which is gitignored, so no key is in the repository and none was printed here.

@@ -82,8 +82,8 @@ export interface EnvironmentBadge {
  */
 const DIRECT_READS: ReadonlyArray<{ name: string; note: string; secret?: boolean; fallback?: string }> = [
   { name: "DATABASE_URL", note: "the Prisma connection string, including its password", secret: true },
-  { name: "JWT_SECRET", note: "signs session tokens; also derives the vault key when KUMO_MASTER_KEY is unset", secret: true, fallback: "the built-in development secret" },
-  { name: "KUMO_MASTER_KEY", note: "encrypts the Kumo vault", secret: true, fallback: "derived from JWT_SECRET" },
+  { name: "JWT_SECRET", note: "signs session tokens; derives the vault key only when KUMO_MASTER_KEY is unset and we are not in production", secret: true, fallback: "the built-in development secret" },
+  { name: "KUMO_MASTER_KEY", note: "encrypts the Kumo vault: 32 bytes base64 or 64 hex characters. Required in production — the API refuses to start without a usable one", secret: true, fallback: "derived from JWT_SECRET outside production" },
   { name: "NODE_ENV", note: "which environment this process believes it is", fallback: "development" },
   { name: "PORT", note: "the port the API listens on", fallback: "4000" },
   { name: "WEB_ORIGIN", note: "the SPA's origin, used for links the app builds and for CORS", fallback: "http://localhost:3010" },
