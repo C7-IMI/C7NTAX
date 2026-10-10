@@ -1,5 +1,24 @@
 [
   {
+    "version": "2026.10.10.015",
+    "date": "2026-10-10",
+    "title": "The review is closed, and a check the deploy needs first",
+    "changes": [
+      {
+        "text": "**The plan's status line and the go-live checklist record the close**, and the checklist",
+        "type": "Update"
+      },
+      {
+        "text": "**That item is the consequence of the instance tier**, and it is worth stating plainly. The",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The 503 the reviewer flagged is the health gate working, and the ordering is what makes it",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.10.014",
     "date": "2026-10-10",
     "title": "A relay that had no password, asked for one",

@@ -11745,3 +11745,48 @@ findings", and the marginal round now costs more than it returns. What remains i
 the difference between what a script says and what Azure does, and no further reading closes that gap. The
 response records the three evidence items and the four operator decisions as the next artefacts, and says
 plainly that the next document in this series should be a deploy transcript rather than another review.
+---
+
+### Prompt 391 — Round 9 closed, and a deploy check the tier made necessary
+
+**Timestamp:** 2026-10-10 11:54 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.10.015** — The review is closed, and a check the deploy needs first.
+
+**Prompt**
+
+> Here is Claude's response. Review, update, and reply here:
+>
+> Round 9 is closed. The credential fix is on origin/main now (commit c80f3251), and it works as Deepseek described. I wrote a short close-out as PlanDocs/PLAN-030-Review-Round-9-Close.md. **Verified:** delivery (both round-9 files in the tree), the credential fix against the five credential cases, and preflight with 0 failures on origin/main. **Unreviewed changes since the last reviewed commit:** ~11,000 lines across 166 files, almost none of it PLAN-030 — the Modern/Classic rename, an MFA policy, an instance permission tier and password history; nothing under infra/, scripts/azure/, the workflows or the Dockerfile changed. Two things to know: the permission-tier migration strips three instance-level permissions from the admin role, so existing admin accounts can do less the moment it applies — someone should confirm that is intended for the first production data — and a revision carrying these migrations will answer 503 on the deep readiness check until the job has run, which is the gate working as designed.
+
+**The reviewer's two flags, answered.** Both were worth raising and neither needed a code change, but the
+first needed something the reviewer had not said and I had not written down.
+
+**The `admin` demotion is intended** — it is the whole point of the tier, and it is what the operator asked
+for. What an admin account loses is the *write* on the MFA policy, Sessions & Security, the single sign-on
+provider, the Workspace and portal defaults, and the instance maintenance operations. What it keeps is
+everything to do with people, including resetting one person's second factor, plus roles, clients, boards,
+billing, branding and connectors; and reads are unchanged, which is how an administrator answers "why was I
+signed out".
+
+**What the flag implies and neither of us had stated: after this applies, a deployment with no Super Admin
+has nobody who can change the instance's authentication policy at all — including to switch it off.** The
+seed ships one, so it is a check rather than a fix, but it is the fifth lockout of this shape and the first
+one that is organisational rather than technical. It is now item one on the go-live checklist, because a
+checklist that omits a consequence of your own change is how the consequence reaches production.
+
+**The 503 is the gate working, and the ordering is what makes it safe.** A revision whose migrations the
+job has not run fails its deep readiness check and stays out of service, which is what stops it taking
+traffic against a schema it does not match — failures that would otherwise read as application bugs. The
+workflow runs the job before the revision update, so the 503 is transient.
+
+**Two smaller points.** The `secure` setting the reviewer read but did not build to test *was* built and
+observed: it was one of the six readings taken from the transport's own options when the credential fix
+went in, and it sits in the same object as the new `auth` spread, so the two cannot disagree about what
+reached the transport. And the deploy surface really is untouched — confirmed independently rather than
+agreed to, by diffing `infra`, `scripts/azure`, `.github/workflows` and the Dockerfile across the five
+commits, which returns **0 files**.
+
+**The rounds are closed.** The next document in this series should be the transcript of a deploy: one commit
+run twice, a deliberate rollback through the health gate, the prod rehearsal, and the five operator
+decisions. All of it needs an Azure subscription and spending authority, which is why it stops here.

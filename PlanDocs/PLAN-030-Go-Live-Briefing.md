@@ -58,6 +58,14 @@ yet, and both look finished because they are spelled correctly.
 
 These are the items that must be settled first. Everything else can follow.
 
+- [ ] **Confirm at least one active account is on the Super Admin role.** The
+      `20261010140000_instance_permission_tier` migration takes three instance-level permissions away from
+      `admin`, deliberately: the ability to change the MFA policy, the session settings, the Workspace and
+      portal defaults, and the instance maintenance operations moves to Super Admin. An administrator keeps
+      everything to do with people — including resetting one person's second factor — and can still *read*
+      those settings. **If no account holds the Super Admin role once this applies, nobody can change the
+      instance's authentication policy at all, including to switch it off.** The seed ships one, so this is
+      a check rather than a fix. See `PLAN-030-Response-to-Review-Round-9-Close.md` §1.
 - [x] **Fix the first-run image hand-off** — **done in the template** (plan §8.13). The app is now created
       once, against the real image, in two passes, so the probe-port hand-off that made a deployment from
       empty fail cannot happen. It is compiled, parsed and reviewed, and **not yet executed**; the dev run

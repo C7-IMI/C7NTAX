@@ -9,13 +9,21 @@
 > **compile** against the real Bicep CLI (0.48.1, no warnings). Four items were deliberately **not**
 > applied and six decisions are still the operator's: see *§7 What landed, and what did not* below.
 >
-> **The static review is closed at round 9.** Nine rounds took this from "cannot complete a deployment" to
-> "no further findings"; round 9 raised nothing and fixed one defect the reviewer had deliberately left
-> out (the mail transport authenticating with credentials that were never configured —
-> **2026.10.10.014**). **It is still not deployed and not ready.** Nothing further can be settled by
-> reading: the next evidence is a dev deploy that runs one commit twice and then does a deliberate
-> rollback, plus the prod rehearsal and the four operator decisions listed in
-> `PLAN-030-Response-to-Review-Round-9.md` §3.
+> **The static review is closed — round 9, closed out.** Nine rounds took this from "cannot complete a
+> deployment" to "no further findings". Round 9 raised nothing, fixed one defect the reviewer had
+> deliberately left unraised (the mail transport authenticating with credentials that were never
+> configured — **2026.10.10.014**), and the reviewer has confirmed the fix on `origin/main` and agreed to
+> stop. **It is still not deployed and not ready.** Nothing further can be settled by reading: the next
+> evidence is a dev deploy that runs one commit twice and then does a deliberate rollback, plus the prod
+> rehearsal and the **five** operator decisions — the original four, plus the Super Admin check below,
+> which the tier migration makes necessary.
+>
+> **Before a first production deploy, confirm there is at least one active account on the Super Admin
+> role.** The `20261010140000_instance_permission_tier` migration takes three instance-level permissions
+> away from `admin` (deliberately — see `PLAN-030-Response-to-Review-Round-9-Close.md` §1). An
+> administrator keeps the per-user half of MFA and everything to do with people, but the ability to change
+> the instance's authentication policy moves to Super Admin. If no account holds it, **nobody can change
+> the MFA policy or the session settings after this applies**, including to turn them off.
 >
 > **Revised against the review of the applied changes** (`PLAN-030-Review-of-Applied-Changes.md`, §1–§6
 > applied; §7 there — the least-privilege Postgres role, this plan's 2.3 — is tracked separately and

@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.10.014 | Last Updated: 2026-10-10
+## Version: 2026.10.10.015 | Last Updated: 2026-10-10
 
 ---
 
@@ -11,6 +11,36 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.10.015 — The review is closed, and a check the deploy needs first
+
+The PLAN-030 static review is closed at round 9. Nine rounds took the Azure package from "cannot complete
+a deployment" to "no further findings"; the reviewer independently verified the round-9 credential fix on
+`origin/main`, ran its logic against the five credential cases, and agreed to stop.
+
+- **[Update]** **The plan's status line and the go-live checklist record the close**, and the checklist
+  gained one item it was missing: **confirm at least one active account is on the Super Admin role** before
+  a first production deploy.
+- **[New]** **That item is the consequence of the instance tier**, and it is worth stating plainly. The
+  `20261010140000_instance_permission_tier` migration takes three instance-level permissions away from
+  `admin` on purpose — the ability to change the MFA policy, the session settings, the Workspace and portal
+  defaults and the instance maintenance operations now belongs to Super Admin. An administrator keeps
+  everything to do with people, including resetting one person's second factor, and can still *read* those
+  settings. But a deployment with no Super Admin would find that **nobody can change the instance's
+  authentication policy at all, including to switch it off**. The seed ships one, so this is a check rather
+  than a fix — the same shape as the four lockouts found inside the feature, one layer out: organisational
+  rather than technical.
+- **[Update]** **The 503 the reviewer flagged is the health gate working, and the ordering is what makes it
+  safe.** A revision carrying migrations the job has not yet run fails its deep readiness check and stays
+  out of service; without that it could take traffic against a schema it does not match, and the failures
+  would read as application bugs rather than an unrun migration. The workflow runs the job before the
+  revision update, so the 503 is transient.
+
+No code changed in this round. The three migrations that ride along are unchanged and additive, the deploy
+surface is untouched (`git diff --name-only 209195c0..HEAD -- infra scripts/azure .github/workflows
+Dockerfile` returns 0 files), and preflight is 0 failures.
 
 ---
 
