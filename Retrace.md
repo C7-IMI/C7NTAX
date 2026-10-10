@@ -10624,3 +10624,20 @@ missing from `infra/env/.env.production.example`. That is the repository's own r
 environment variable being part of the change, and the environment-contract check is what caught it. It is
 documented there now; the rest of that failure list is the pre-existing one recorded in the go-live
 briefing.
+
+### Prompt 379 — Kumo security review
+
+**Timestamp:** 2026-10-10 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** None — a review document only; no product change, so no BuildNotes entry applies.
+
+**Prompt**
+
+> The product called kumo holds secure data like it glue does. Its passwords for all of our clients.  Can you check it for security and write an md file with your findings.
+
+**Changes:** Added `KUMO-SECURITY-REVIEW.md`. It covers 13 findings, ranked by severity. The headline
+finding is that the deployment docs specify a base64 `KUMO_MASTER_KEY` (44 characters), but
+`kumoCrypto.ts` only accepts hex of 64+ characters. The configured key is therefore silently ignored, and
+the vault key is derived from `JWT_SECRET`. I confirmed this by running the check. The other main
+findings: no client scoping on any Kumo route, reveal with no MFA step-up or rate limit, and asset fields
+marked "encrypted" stored in plain text. No code was changed.
