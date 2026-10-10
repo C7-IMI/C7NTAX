@@ -6,7 +6,10 @@ import toast from "react-hot-toast";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
 import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
-import { Plus, Building2, Search, Mail, Phone, MapPin, Users, FileText, ArrowUpDown, ExternalLink, AppWindow, SquareArrowOutUpRight, Copy, Download, RotateCw, Eraser, Ticket, Cloud, KeyRound, Server } from "lucide-react";
+import { openApiDocument } from "../lib/openDocument";
+import { Permission } from "@C7NTAX/shared";
+import { useAuth } from "../hooks/useAuth";
+import { Plus, Building2, Search, Mail, Phone, MapPin, Users, FileText, ArrowUpDown, ExternalLink, AppWindow, SquareArrowOutUpRight, Copy, Download, RotateCw, Eraser, Ticket, Cloud, KeyRound, Server, Receipt } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { PageHeader } from "../components/ui";
 import { useRedesign } from "../hooks/useNavigationStyle";
@@ -36,6 +39,7 @@ export function ClientsPage() {
   const [showNew, setShowNew] = useState(false);
   const navigate = useNavigate();
   const menu = useContextMenu();
+  const { permissions } = useAuth();
   const searchRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<Record<string, string>>({ name: "", email: "", phone: "", city: "", state: "", companyType: "Client", industry: "" });
 
@@ -89,6 +93,19 @@ export function ClientsPage() {
       { label: "New ticket", icon: Ticket, onSelect: () => navigate(`/tickets?new=1&companyId=${id}`) },
       { label: "View tickets", icon: FileText, onSelect: () => navigate(`/tickets?companyId=${id}`) },
       { label: "View contacts", icon: Users, onSelect: () => navigate(`/clients/contacts?companyId=${id}`) },
+      // The statement is a billing document, but a person asks for it from the client rather than from
+      // the invoice, so it belongs here. It is offered only to somebody who may read billing: a menu
+      // entry that answers 403 is a control that cannot work.
+      permissions.includes(Permission.BillingView) && {
+        label: "This client's statement",
+        icon: Receipt,
+        hint: "what they owe, aged",
+        onSelect: () =>
+          void openApiDocument(`/api/billing/clients/${id}/statement`, {
+            filename: `${String(c.name ?? "client").replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-statement.html`,
+            failure: "Could not open the statement",
+          }),
+      },
       contact && {
         label: `Open contact ${String(contact.firstName ?? "")} ${String(contact.lastName ?? "")}`.trim(),
         icon: Users,

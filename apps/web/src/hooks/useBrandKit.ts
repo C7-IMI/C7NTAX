@@ -23,10 +23,20 @@ import {
   type BrandOverride,
   type DocumentBrand,
   type DocumentFamily,
+  type DocumentPresentation,
 } from "@C7NTAX/shared";
 import api from "../api";
 
 let current: BrandKit = DEFAULT_BRAND;
+/**
+ * One report's own presentation, keyed by the report's id.
+ *
+ * Loaded with the brand rather than fetched when a report is printed, because a print path cannot await
+ * a request: a report that had to ask what paper it was on would either print wrongly or print late. A
+ * permission error is not an error here — a person without `branding:view` simply gets their family's
+ * settings, which is exactly what they were getting before this existed.
+ */
+let reportPresentations = new Map<string, Partial<DocumentPresentation>>();
 let inflight: Promise<BrandKit> | null = null;
 const listeners = new Set<() => void>();
 
@@ -46,8 +56,13 @@ export function currentBrand(): BrandKit {
  * print or export path calls, and it is the same resolution the settings screen previews, so the
  * preview a person approves and the document that is produced cannot differ.
  */
-export function documentBrandOf(family: DocumentFamily, override?: BrandOverride | null): DocumentBrand {
-  return documentBrandFor(current, family, override);
+export function documentBrandOf(
+  family: DocumentFamily,
+  override?: BrandOverride | null,
+  reportKey?: string | null,
+): DocumentBrand {
+  const report = reportKey ? reportPresentations.get(reportKey) ?? null : null;
+  return documentBrandFor(current, family, override, report);
 }
 
 /** Replace the cached brand — used by the settings screen after a save, so a preview updates itself. */
@@ -64,11 +79,20 @@ export function setBrandKit(kit: Partial<BrandKit> | null | undefined): void {
  */
 export function ensureBrandKit(): Promise<BrandKit> {
   if (!inflight) {
-    inflight = api
-      .get<Partial<BrandKit> & { brand?: Partial<BrandKit> }>("/brand")
-      .then((response) => {
+    inflight = Promise.all([
+      api.get<Partial<BrandKit> & { brand?: Partial<BrandKit> }>("/brand"),
+      // One report's own settings travel with the brand so that a report printed from the browser obeys
+      // Report Branding. A refusal here is not an error: no permission means the family's settings, which
+      // is what the person had before the feature existed.
+      api.get<{ reports?: { reportKey: string; presentation: Partial<DocumentPresentation> }[] }>("/brand/reports")
+        .catch(() => null),
+    ])
+      .then(([response, reports]) => {
         const payload = response.data?.brand ?? response.data;
         current = normaliseBrand(payload);
+        reportPresentations = new Map(
+          (reports?.data?.reports ?? []).map((row) => [row.reportKey, row.presentation]),
+        );
         announce();
         return current;
       })

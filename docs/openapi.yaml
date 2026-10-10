@@ -1562,7 +1562,8 @@ paths:
     get:
       tags: ["Brand"]
       operationId: "getBrand"
-      summary: "Read brand"
+      summary: "The instance's identity, and what each kind of document wears"
+      description: "One read for the whole Branding section, because its four subjects are four views of one record. Returns the identity ? product and company name, tagline, the letterhead logo and its dark variant, the square icon, the wordmark, the contact line and postal address, the website, the two colours, the document footer and legal text, and the email sender ? plus `documents`, one row per document family with its presentation already resolved (family default, then what is stored) and a `changed` flag; the fixed document `palette`; and `contrast`, the ratio of each settable colour against paper with the `minimum` a printed mark needs. `documentPresentation` is the raw stored map, and `effective` is what every send actually uses with defaults applied. Requires branding:view."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["branding:view"]
       x-source: "brand.ts · brandRouter.get"
@@ -1575,7 +1576,8 @@ paths:
     put:
       tags: ["Brand"]
       operationId: "putBrand"
-      summary: "Replace brand"
+      summary: "Save the instance's identity"
+      description: "Partial semantics that matter: a field **absent** from the body is left alone, a field present and blank clears it, so a screen that owns only part of the record cannot empty somebody else's field. `documentPresentation` is a map keyed by document family. Colours are refused unless they are a three- or six-digit hex value, and the sender and reply-to addresses are refused unless they parse as addresses. Writes an audit row. Requires branding:manage."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["branding:manage"]
       x-source: "brand.ts · brandRouter.put"
@@ -1589,7 +1591,8 @@ paths:
     get:
       tags: ["Brand"]
       operationId: "getBrandassetbyId"
-      summary: "Read brand/asset/the one named"
+      summary: "An uploaded logo or icon"
+      description: "The stored bytes of one upload, with its content type, cacheable immutably ? a new upload is a new id, so a cached mark can never be stale. **Deliberately public**, and the only route in this API that is: a logo is an image inside an email and on a printed page, so it must be fetchable by a mail client that holds no session here, and serving it from the database by an opaque id means there is no filename to trust and no directory to traverse. It also sends `Cross-Origin-Resource-Policy: cross-origin`, which is required rather than generous ? the document it appears on is fetched from this API and rendered by the web app, so the image is cross-origin by construction."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: []
       x-permission-note: "No permission is required beyond being signed in."
@@ -1609,7 +1612,8 @@ paths:
     post:
       tags: ["Brand"]
       operationId: "postBrandassets"
-      summary: "Create or act on brand/assets"
+      summary: "Upload a logo or an icon"
+      description: "Takes `{ kind, dataUrl }` where `kind` is `logo`, `logoDark` or `icon` and `dataUrl` is what a browser's FileReader produces, and answers `{ id, url, contentType, byteSize }` with 201. PNG, JPEG or WebP only ? **SVG is refused**, because an uploaded SVG is a script with an image's extension ? and 2 MB. The bytes are checked against their own magic number rather than trusted from the request, so a renamed file cannot be stored as an image and served back. The returned `url` is `/api/brand/asset/<id>`: put it in `logoUrl`, `logoDarkUrl` or `iconUrl` and save. Requires branding:manage."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["branding:manage"]
       x-source: "brand.ts · brandRouter.post"
@@ -1623,7 +1627,8 @@ paths:
     get:
       tags: ["Brand"]
       operationId: "getBrandclients"
-      summary: "Read brand/clients"
+      summary: "Each client's own brand, or what it inherits"
+      description: "Every active client with its brand patch already resolved and an `inheritedLogo` marker, which is `portal` when the client has no logo of its own and is therefore wearing the one on its customer portal ? one client, one logo. Requires branding:view."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["branding:view"]
       x-source: "brand.ts · brandRouter.get"
@@ -1637,7 +1642,8 @@ paths:
     put:
       tags: ["Brand"]
       operationId: "putBrandclientsbyCompanyId"
-      summary: "Replace brand/clients/the one named"
+      summary: "Give a client its own branding on the documents addressed to it"
+      description: "Saves a patch over the instance's identity ? the case-by-case half of branding, for a client that is its own legal entity and must be invoiced under its own name and address. Every field is optional and an absent or null field means \"the instance's own\", so a client whose form was never filled in produces exactly the document it produced before. An empty patch clears the override. Requires branding:manage."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["branding:manage"]
       x-source: "brand.ts · brandRouter.put"
@@ -1656,7 +1662,8 @@ paths:
     get:
       tags: ["Brand"]
       operationId: "getBrandreports"
-      summary: "Read brand/reports"
+      summary: "The reports whose appearance differs from their family's"
+      description: "Only the rows that exist, each with its patch and who last changed it. The catalogue of reports is code and stays code ? its figures are the report ? so this deliberately does not return a stubbed row per report, which would be inventing content a person could then 'reset'. The settings screen already holds the catalogue and marks the overridden ones. Requires branding:view."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["branding:view"]
       x-source: "brand.ts · brandRouter.get"
@@ -1670,7 +1677,8 @@ paths:
     put:
       tags: ["Brand"]
       operationId: "putBrandreportsbyReportKey"
-      summary: "Replace brand/reports/the one named"
+      summary: "Save one report's own presentation"
+      description: "A patch on top of the report's family: title, subtitle, paper size, orientation, letterhead, the basis block, footer, page numbers and a footer note. Precedence is the order of specificity ? the family's stored settings, then a client's override, then this, which is how one report can print landscape while its family prints portrait. An empty patch deletes the row and returns the report to its family's default. Requires branding:manage."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: ["branding:manage"]
       x-source: "brand.ts · brandRouter.put"
@@ -7960,5 +7968,5 @@ components:
         occurredAt: { type: string, format: date-time }
         data: { type: object, description: "Kept as it arrived, on the ticket." }
 
-# 105 of 469 operations carry a curated summary from docs/api-operations.json;
+# 113 of 469 operations carry a curated summary from docs/api-operations.json;
 # the rest are described from their own path, which is still enough to call them correctly.

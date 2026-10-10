@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.030 | Last Updated: 2026-10-09
+## Version: 2026.10.9.032 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,107 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.032 — One document language, and a brand you can actually change
+
+Five families of document left this application through four different mechanisms in two visual languages, and
+none of them agreed with the others: the report kit drew one letterhead, the banded designer drew another, the
+invoice was a **dark screen** printed to PDF, the ticket sheet had a heading and no letterhead, and a quote had
+no printable output at all. Everything a document said about the company — the wordmark, `Cyber 7 Group, LLC`,
+the shield, the contact line — was a literal in a file, so changing a logo meant finding every copy.
+
+- **[New]** **One document language, drawn at true paper size.** A4 (210 × 297 mm) and US Letter, in
+  millimetres, always **white paper with dark ink whatever interface theme is in use**, one instance accent
+  carried in the *weight* of a stroke as well as its colour so a greyscale photocopy keeps the signal, type in
+  points with **nothing below 8.5 pt**, tabular numerals in every money column, hairlines instead of cards, a
+  masthead of key figures with their values written beside them, a **running head** and a **footer on every page
+  carrying page *n* of *m***, and the closing **basis block** saying where the figures came from. The report
+  kit, the banded designer, the invoice, the statement, the quote and the ticket sheet all draw it from one
+  module rather than six copies.
+- **[New]** **The Branding section** (Administration → Branding, `branding:view` / `branding:manage`): **Identity**
+  (upload a logo, an icon and a dark-mode lockup, the wordmark, the company name and tagline, the contact line
+  and postal address, the two colours, the document footer and the legal text, the email sender), **Document
+  Branding** (what each of eight families wears — letterhead, paper, orientation, footer, page numbers, the
+  basis block, title and subtitle, each with Reset), **Client Branding** (a client billed under its own legal
+  entity gets its own name, address, logo and colours, and inherits everything it does not override), and
+  **Report Branding** (the reports whose appearance differs from their family's default). Every page carries a
+  live preview drawn by the real renderer, so what is approved on screen is what prints.
+- **[New]** **One brand record, worn by everything.** `EmailBrandKit` is renamed **`BrandKit`** because it had
+  stopped being an email setting, and the logo, colours, footer and sender now come from it in every document
+  *and* every email, resolved on demand so there is no second copy to drift. A field that is absent from a save
+  is left alone and a field sent blank clears, so one screen's save cannot empty another screen's field.
+- **[New]** **Uploaded logos** are stored as bytes in `BrandAsset` and served from `GET /api/brand/asset/:id`,
+  which is deliberately **public** — a logo has to be fetchable by a mail client that holds no session here. It
+  is safe because the asset is addressed by an opaque id and served from the database, so there is no filename
+  to trust and no directory to traverse; PNG, JPEG and WebP only, 2 MB, and **SVG is refused** because an
+  uploaded SVG is a script with an image's extension.
+- **[New]** **A printable quote and a statement.** `quotes.ts` had four handlers and no document output, so a
+  quote could not leave the product; it now prints as a proposal. A statement (what a client owes, aged by
+  band) did not exist and is what the overdue reminder was missing.
+- **[Fix]** **The invoice printed its tax rate 100× too high.** `taxRate` is written two ways in this database —
+  invoices carry a percentage (`8.5`), service agreements a fraction (`0.085`) — and the PDF route multiplied by
+  100 unconditionally, so `INV-2026-002` printed **"Tax (850.0%)"** beside a correct $680.00 on the one document
+  a customer keeps. `reportData.ts` already recorded the convention; the document now uses it and names the rate
+  and its jurisdiction: *Sales tax · 8.5% · US · IL*.
+- **[Fix]** **The ticket sheet printed internal notes.** It mapped the first ten comments with no `isInternal`
+  filter and labelled them, so a hidden internal note was printed — and printed on the copy sent to the client.
+  Internal notes are now **built out of the list rather than blanked**, so there is nothing to redact, and the
+  sheet gained the ticket's time entries, its attachments, the resolution and pagination.
+- **[Fix]** **Every generated PDF was landscape A4** whatever the screen showed, and the print window wrote no
+  `@page` size at all so the browser decided. Paper size and orientation are now the document's own properties,
+  offered in the output chooser as a per-export choice and settable per family in Document Branding. The dead
+  landscape `tablesToPdf` renderer is deleted.
+- **[Fix]** **The designed report engine, four defects.** Its group rule was `#22d3ee` at low contrast on white —
+  the one line a reader navigates by; its layout was content-box-relative, so **the report printed in the paper's
+  corner** instead of inside its 12 mm margins; an unescaped `font-family` in an inline style truncated the
+  attribute and the print window drew 16 px black text; and `LaidOutBand.groupValue` was typed and documented
+  but never set, so the Excel and CSV **Group column was always blank**. The cyan is gone, the margins are
+  right, the type is the report's own, and the Group column has its value.
+- **[Fix]** **An invoice that records no line items no longer prints "No line items"** above a real $8,000.00
+  subtotal — it states the agreement basis it is actually charging from. Dates are unambiguous (`7 August 2026`),
+  and a **part-paid** invoice shows what is outstanding rather than the gross total.
+- **[Update]** The invoice document was a dark screen with a `border-radius` card inside it, which is precisely
+  what makes a document read as "a screen printed out". It is now paper, with the amount due stated once, a
+  **pay block** (how to pay, the reference to quote, what happens next) and a footer on every page.
+
+---
+
+## 2026.10.9.031 — The Email Studio: every message, visible and editable
+
+Every email this product sent was a string literal in `packages/email/src/EmailService.ts`. There was no way to
+see what a client would receive, no way to change a word of it, and **no record of a send at all** — so "we
+changed the template" had no evidence and "the invoice never arrived" had no answer. Two senders
+(`sendInvoice`, `sendTicketAutoClose`) had existed for months with **no caller anywhere**.
+
+- **[New]** **The message registry and renderer** — twelve message keys (eight live, four named with no sender
+  behind them and shown as such), one renderer reached over `POST /api/email/preview` so the preview a person
+  approves is literally the message that goes out, and a probe that diffs each default against the sender it
+  replaced: **35 of 35 identical**, the only normalised difference being `$13,050.00` against the sender's
+  `$13050.00`.
+- **[New]** **Plain text, always.** Every send is `multipart/alternative` with a text part derived from the same
+  blocks as the HTML, so a mail system that strips HTML still delivers a readable message and the two parts
+  cannot carry different facts. Links are written out in full, a button becomes `Label: <url>`, tables and fact
+  lists become `Label: value`, and an image carries its alt text. The editor shows the text part beside the HTML
+  and warns when the two disagree on a figure or a URL.
+- **[New]** **The Studio** (`/admin/email`): the twelve messages with their trigger, reader, audience and state;
+  a block editor over thirteen block kinds with a live canvas, the fields each block resolves to *for a chosen
+  record*, conditional blocks, and reset-to-default with version history; a preview against a real ticket or
+  invoice at two widths; and the delivery log with template version, outcome and the reason a send failed.
+- **[New]** **Sending a document from the product** — a send sheet with the resolved subject, the recipients,
+  the attachments and a Before → During → After account of exactly what was handed to the mailer; and a
+  document import that reads a pasted document or a `.docx` (out of its zip, with no dependency added) into
+  blocks, with an honest list of what cannot survive conversion.
+- **[New]** **`EmailMessageLog`** — one row per attempt, whatever the outcome, carrying the template version
+  used. **Deliberately not related to `User` by foreign key**: an account outlives a person's membership, and a
+  delivery log that loses its rows when somebody leaves is worse than one that keeps a name it can no longer
+  resolve.
+- **[Fix]** **The ticket composer appended a hard-coded footer paragraph** to every note it sent; the footer now
+  comes from the template and the brand kit.
+- **[Update]** **A security-class message is locked by class, not by trust**: a one-time code's body cannot be
+  edited at all and the message cannot be saved without its code token, because a decorated sign-in code is how
+  a legitimate message comes to look like a phishing attempt.
 
 ---
 

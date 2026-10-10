@@ -11,7 +11,11 @@ screenshot, because a reader trusts it and then cannot find the thing.
   reads differently in light mode it is because of a colour token, not a different layout, so one shot
   per screen is enough.
 - At a **1440-wide viewport, device scale factor 2** (so the files are ~2500px wide and stay crisp when
-  the Help column renders them at ~700–900px), then clipped to the region the caption talks about.
+  the Help column renders them at ~700–900px), then clipped to the region the caption talks about. (The
+  Branding, Reporting and Shortcuts figures added later were taken at a 1700-wide viewport, device scale
+  factor 2 — ~3400px wide — to match the width of the pictures already here; the two documents,
+  `branding-invoice.png` and `ticket-sheet.png`, are captured as the **sheet** the product produces and
+  so are portrait rather than screen-shaped.)
 - **PNG, unedited.** No arrows, no highlights, no browser chrome removed by hand: the caption carries the
   pointing in words ("the switch is the second row from the bottom"), which keeps the image honest and
   the annotation translatable.
@@ -34,6 +38,14 @@ screenshot, because a reader trusts it and then cannot find the thing.
 | `cloudconnect.png` | C7NC overview | C7NC — connecting services |
 | `service-alerts.png` | The Service Alerts outage board | Service Alerts & the Outage Board |
 | `uptime-monitors.png` | Uptime monitors | Uptime Monitors |
+| `branding-identity.png` | Branding → Identity: the marks, the two colours, and the specimen sheet beside the form | Branding — the logo, the letterhead and the paper |
+| `branding-identity-classic.png` | The same page in the classic interface: labelled fields in a grid, a thumbnail per image | Branding — the logo, the letterhead and the paper — *In the classic interface* |
+| `branding-documents.png` | Document Branding, one family open: the letterhead, paper, orientation and basis choices | Branding — the logo, the letterhead and the paper; Report Branding |
+| `branding-reports.png` | Report Branding: the report rows, the family each inherits from, the sheets that differ | Branding — the logo, the letterhead and the paper |
+| `branding-clients.png` | Client Branding: one client's own brand, every box inheriting the instance's | Branding — the logo, the letterhead and the paper |
+| `branding-invoice.png` | A produced document: the invoice sheet, letterhead to footer | Branding; Quotes & Convert to Invoice |
+| `report-export.png` | The report output chooser: the four ways out, the paper, the basis block | Reporting & Business Reviews |
+| `ticket-sheet.png` | A ticket printed as a sheet, with the letterhead, the record and its resolution | Workspace, Shortcuts & Batch Actions — *Printing a ticket sheet* |
 
 ## Taking them again
 

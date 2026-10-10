@@ -296185,5 +296185,103 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-10T00:22:27.661Z"
+  },
+  {
+    "id": "f4a45396-979c-485b-b286-638936ac8c9c",
+    "action": "brand.report_presentation",
+    "entity": "brand",
+    "entityId": "aging",
+    "changes": {
+      "cleared": false
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T00:35:35.073Z"
+  },
+  {
+    "id": "4c9469c0-fbbd-4fa6-bcf5-e6e20d4b67cd",
+    "action": "brand:update",
+    "entity": "brand",
+    "entityId": "aging",
+    "changes": {
+      "subtitle": "Probe: landscape, no basis block",
+      "showBasis": false,
+      "orientation": "landscape"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T00:35:35.080Z"
+  },
+  {
+    "id": "7a2de585-d368-4493-8089-ba76df9fcde6",
+    "action": "email_brand.updated",
+    "entity": "email",
+    "entityId": "brand",
+    "changes": {
+      "fromEmail": [
+        null,
+        null
+      ],
+      "companyName": [
+        "Cyber 7 Group, LLC",
+        "Cyber 7 Group, LLC"
+      ],
+      "primaryColor": [
+        "#c00000",
+        "#c00000"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T00:38:11.756Z"
+  },
+  {
+    "id": "70274d36-cc59-4254-8405-5c0b353f14b7",
+    "action": "email:update",
+    "entity": "email",
+    "entityId": "brand",
+    "changes": {
+      "tagline": "Probe tagline",
+      "contactLine": "probe@example.com"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T00:38:11.759Z"
+  },
+  {
+    "id": "ef3184b0-4d32-49b1-9444-d3ef5806689d",
+    "action": "email_brand.updated",
+    "entity": "email",
+    "entityId": "brand",
+    "changes": {
+      "fromEmail": [
+        null,
+        null
+      ],
+      "companyName": [
+        "Cyber 7 Group, LLC",
+        "Cyber 7 Group, LLC"
+      ],
+      "primaryColor": [
+        "#c00000",
+        "#c00000"
+      ]
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T00:38:11.769Z"
+  },
+  {
+    "id": "cb31249c-b498-46a2-9921-6facd0b12f41",
+    "action": "email:update",
+    "entity": "email",
+    "entityId": "brand",
+    "changes": {
+      "tagline": null,
+      "contactLine": null
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T00:38:11.773Z"
   }
 ]

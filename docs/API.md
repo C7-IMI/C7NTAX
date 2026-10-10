@@ -477,6 +477,31 @@ invoice aged and totalled by band and is what the overdue-reminder email attache
 `billing:view` and carry the caller's client scope, so a company-scoped account is refused another
 client's document.
 
+### The instance's branding, and the logo a document wears
+
+The letterhead on those documents, their colours, their footer and the words at the foot of the page come
+from one **brand record** per instance:
+
+```bash
+GET /api/brand                       # the identity, what each document family wears, and each colour's contrast
+PUT /api/brand                       # save it                                    (branding:manage)
+POST /api/brand/assets               # upload a logo or an icon, as a data URL     (branding:manage)
+GET  /api/brand/asset/{id}           # the stored image — deliberately public, no credential
+GET  /api/brand/clients              # each client's own branding, or what it inherits
+PUT  /api/brand/clients/{companyId}  # a client billed under its own entity        (branding:manage)
+GET  /api/brand/reports              # the reports whose appearance differs from their family's
+PUT  /api/brand/reports/{key}        # one report's own paper, letterhead and title (branding:manage)
+```
+
+Two things about it are worth knowing before you write to it. **A field absent from a `PUT` is left
+alone, and a field sent blank is cleared** — that is what lets four screens share one record without one
+of them emptying another's field. And **`GET /api/brand/asset/{id}` is the only operation in this API
+that needs no credential**: a logo is an image inside an email and on a printed page, so it must be
+fetchable by a mail client that holds no session here. It is served from the database by an opaque id,
+which is why that is safe — there is no filename to trust and no directory to traverse — and it answers
+with a long immutable cache, because a new upload is always a new id and a cached mark can never be
+stale. SVG is refused on upload: an uploaded SVG is a script with an image's extension.
+
 ### Microsoft 365 account hygiene
 
 The Microsoft 365 sync brings in each tenant's users with their sign-in activity where Azure will

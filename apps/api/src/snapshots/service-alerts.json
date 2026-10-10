@@ -1992,13 +1992,13 @@
     "serviceId": "3fb1a7a6-e638-4b1f-afd2-bb9cb7fbf9f4",
     "title": "Delayed Costs data in the Compliance API",
     "description": "Status: Monitoring We have implemented a mitigation, and delayed Costs data is now processing through the Compliance API. Some customers may continue to see incomplete Costs data while the backlog catches up. We expect this catch-up process to continue through Sunday, October 11. ChatGPT usage and API Platform requests remain unaffected. We are monitoring recovery. Affected components Compliance API (Degraded performance)",
-    "severity": "outage",
+    "severity": "degraded",
     "status": "active",
     "source": "rss",
     "sourceUrl": "https://status.openai.com//incidents/01M4GV1M2A3K38T73JCVCD9G0R",
     "detectedAt": "2026-10-09T17:26:38.782Z",
     "resolvedAt": null,
     "createdAt": "2026-10-09T17:26:38.784Z",
-    "updatedAt": "2026-10-09T22:06:11.085Z"
+    "updatedAt": "2026-10-10T00:29:57.639Z"
   }
 ]

@@ -10069,9 +10069,9 @@ saying where the figures came from and what could not be known):
 
 ### Prompt 369 — Build the documents, and let me brand them
 
-**Timestamp:** 2026-10-09 17:21 | **Status:** In progress | **Duration:** —
+**Timestamp:** 2026-10-09 17:21 | **Status:** Complete | **Duration:** —
 
-**BuildNotes IDs:** none yet — the entry is written when the build lands (expected **2026.10.9.032**).
+**BuildNotes IDs:** **2026.10.9.032** — One document language, and a brand you can actually change.
 
 **Prompt**
 
@@ -10115,6 +10115,67 @@ looks like) and **the brand** (whose page it is). The renderers take a brand obj
 literals, so branding is one source of truth consumed by documents, reports, PDFs and email alike — including
 the email brand kit the parallel Email Studio work introduced, which is being promoted from an email-only
 setting to the instance's identity rather than left as a second place to change a logo.
+
+**What landed, and the two things it found on the way**
+
+The build ran as one contract and seven agents: a document language in the browser, the banded designer's
+output, the server-rendered customer documents, and the Branding section, beside the four Email Studio agents
+finishing their own work. Two defects were found by reading rather than by a report, and both were on the
+customer's side of the fence:
+
+- **The invoice printed its tax rate 100× too high.** `reportData.ts:1912` already recorded that `taxRate` is
+written two ways — invoices carry a percentage (`8.5`), agreements a fraction (`0.085`) — while
+`billing.ts:494` multiplied by 100 unconditionally, so a live invoice printed **"Tax (850.0%)"** next to a
+correct $680.00. Confirmed against the route's own arithmetic and `snapshots/invoices.json`.
+- **The ticket sheet printed internal notes.** `Tickets.tsx:2650` sliced the first ten comments with no
+`isInternal` filter, so a hidden note was printed *on the copy the client is sent*.
+
+Both are in 032. Three further defects were found by the agents while building: every generated PDF was
+landscape A4 regardless of the screen, the banded engine printed its content in the paper's corner (its
+layout was content-box-relative and the margins were never added), and `LaidOutBand.groupValue` was typed and
+documented but never set, so the Excel and CSV Group column had always been blank.
+
+**On the branding requirement.** "Change the header and logo" turned out to need the schema rather than only
+a screen: `EmailBrandKit` was renamed **`BrandKit`** because it had stopped being an email setting, per-family
+presentation and per-client overrides are stored on it, and uploaded marks are kept as bytes in `BrandAsset`
+and served from an opaque id — which is what lets a logo be fetched by a mail client that has no session, and
+what makes the route safe to leave public.
+
+**A standing instruction was added to the house rules:** a walkthrough carries **screenshots**, and where the
+two interfaces arrange the same thing differently the walkthrough shows the one it is describing rather than
+captioning a modern screen as the classic one. `.github/copilot-instructions.md` now says so under the Help
+rule, so the next model to add a walkthrough does it without being asked.
+
+---
+
+### Prompt 370 — "Approved. Build them all" — the Email Studio, built
+
+**Timestamp:** 2026-10-09 (logged late, when the build landed) | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.9.031** — The Email Studio: every message, visible and editable.
+
+*Logged after its own build finished rather than when it arrived, which is why its number follows prompts that
+came after it: prompts 366 to 369 were logged while this build was still running across four agents.*
+
+**Prompt**
+
+> Approved. Build them all
+
+**What it produced**
+
+The Email Studio, from three approved mockups and four parallel agents: the message registry and the renderer
+(proved word-for-word against the eight senders it replaced — **35 of 35 identical**), the Studio with its
+block editor, preview and version history, the brand kit and delivery log screens, and the send sheet with the
+document import. Plus `EmailMessageLog`, because nothing in the product recorded a send before this.
+
+**The plain-text requirement was folded into all four agents** rather than added afterwards: every send carries
+both parts, derived from the same blocks, so a mail system that strips HTML still delivers something readable
+and the two parts cannot disagree about a figure.
+
+**Two findings worth keeping.** `sendInvoice` and `sendTicketAutoClose` exist in code with **no caller
+anywhere**, which is why `invoice.send` is shown in the Studio as a message with no sender behind it rather
+than as a working one; and the ticket composer appended a **hard-coded footer paragraph** to every note it
+sent, which the template and the brand kit now own.
 
 
 

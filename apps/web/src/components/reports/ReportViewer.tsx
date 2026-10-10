@@ -256,6 +256,7 @@ export function ReportViewer({
       client: clientLabel,
       period: periodLabel(payload),
       family: "report.standard",
+      reportKey: report.id,
       generatedBy,
       basis: basisFromPayload(payload),
       sections,

@@ -4,6 +4,7 @@ import { ProductPicker } from "../components/ProductPicker";
 import { PageHeader } from "../components/ui";
 import { ListViews, ListFooter } from "../components/ui";
 import { useRedesign } from "../hooks/useNavigationStyle";
+import { openApiDocument } from "../lib/openDocument";
 
 type Quote = { id: string; quoteNumber: string; title: string; status: string; total: number; company: { id: string; name: string } | null };
 type Client = { id: string; name: string };
@@ -57,6 +58,18 @@ export function QuotesPage() {
     catch (e: unknown) { setMessage(e instanceof Error ? e.message : "Convert failed"); }
   };
 
+  /**
+   * The quote as a document, which it could not be before: `quotes.ts` had four handlers and no
+   * document output at all, so a quote could not leave the product. It is the client's copy — the
+   * letterhead, what the options cost, the terms and a place to accept — and it prints or saves as a
+   * PDF from the tab it opens in.
+   */
+  const openQuote = (q: Quote) =>
+    void openApiDocument(`/api/quotes/${q.id}/pdf`, {
+      filename: `${q.quoteNumber || "quote"}.html`,
+      failure: "Could not open the quote",
+    });
+
   return (
     <div className="space-y-4 animate-fade-in">
       <PageHeader variant="section" title="Quotes" />
@@ -105,7 +118,7 @@ export function QuotesPage() {
                   <td className="px-3 py-2 text-gray-400">{q.company?.name || "—"}</td>
                   <td className="px-3 py-2 tabular-nums text-gray-200">${q.total.toFixed(2)}</td>
                   <td className="px-3 py-2">{redesign ? <span className={`chip text-[10px] ${statusOf(q) === "accepted" || statusOf(q) === "converted" ? "chip--good" : statusOf(q) === "declined" ? "chip--bad" : "chip--warn"}`}>{statusOf(q)}</span> : <span className="text-gray-400">{q.status}</span>}</td>
-                  <td className="px-3 py-2">{statusOf(q) !== "converted" && <button onClick={() => convert(q.id)} className="btn-secondary text-xs">Convert to invoice</button>}</td>
+                  <td className="px-3 py-2"><span className="flex items-center gap-2">{statusOf(q) !== "converted" && <button onClick={() => convert(q.id)} className="btn-secondary text-xs">Convert to invoice</button>}<button onClick={() => openQuote(q)} className="btn-secondary text-xs">Print / PDF</button></span></td>
                 </tr>
               ))}
               {shownQuotes.length === 0 && <tr><td colSpan={6} className="px-3 py-8 text-center text-gray-500">{quotes.length === 0 ? "No quotes yet." : "Nothing in this view."}</td></tr>}

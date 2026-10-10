@@ -1,5 +1,91 @@
 [
   {
+    "version": "2026.10.9.032",
+    "date": "2026-10-09",
+    "title": "One document language, and a brand you can actually change",
+    "changes": [
+      {
+        "text": "**One document language, drawn at true paper size.** A4 (210 × 297 mm) and US Letter, in",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The Branding section** (Administration → Branding, `branding:view` / `branding:manage`): **Identity**",
+        "type": "New Feature"
+      },
+      {
+        "text": "**One brand record, worn by everything.** `EmailBrandKit` is renamed **`BrandKit`** because it had",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Uploaded logos** are stored as bytes in `BrandAsset` and served from `GET /api/brand/asset/:id`,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A printable quote and a statement.** `quotes.ts` had four handlers and no document output, so a",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The invoice printed its tax rate 100× too high.** `taxRate` is written two ways in this database —",
+        "type": "Fix"
+      },
+      {
+        "text": "**The ticket sheet printed internal notes.** It mapped the first ten comments with no `isInternal`",
+        "type": "Fix"
+      },
+      {
+        "text": "**Every generated PDF was landscape A4** whatever the screen showed, and the print window wrote no",
+        "type": "Fix"
+      },
+      {
+        "text": "**The designed report engine, four defects.** Its group rule was `#22d3ee` at low contrast on white —",
+        "type": "Fix"
+      },
+      {
+        "text": "**An invoice that records no line items no longer prints \"No line items\"** above a real $8,000.00",
+        "type": "Fix"
+      },
+      {
+        "text": "The invoice document was a dark screen with a `border-radius` card inside it, which is precisely",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.9.031",
+    "date": "2026-10-09",
+    "title": "The Email Studio: every message, visible and editable",
+    "changes": [
+      {
+        "text": "**The message registry and renderer** — twelve message keys (eight live, four named with no sender",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Plain text, always.** Every send is `multipart/alternative` with a text part derived from the same",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The Studio** (`/admin/email`): the twelve messages with their trigger, reader, audience and state;",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Sending a document from the product** — a send sheet with the resolved subject, the recipients,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`EmailMessageLog`** — one row per attempt, whatever the outcome, carrying the template version",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The ticket composer appended a hard-coded footer paragraph** to every note it sent; the footer now",
+        "type": "Fix"
+      },
+      {
+        "text": "**A security-class message is locked by class, not by trust**: a one-time code's body cannot be",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.030",
     "date": "2026-10-09",
     "title": "The design language, written down where a model will find it",

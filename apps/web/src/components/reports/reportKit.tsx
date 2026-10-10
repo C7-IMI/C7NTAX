@@ -60,6 +60,12 @@ export interface ReportDocument {
   period?: string;
   /** The client the report was run for, when the caller narrowed it. */
   client?: string;
+  /**
+   * The report's own id, so Report Branding applies to a report printed from the browser and not only
+   * to one produced on the server. Absent means the family's settings, which is the right answer for a
+   * document that is not one of the shipped reports.
+   */
+  reportKey?: string;
   /** Who produced the document. The fourth fact of the meta line, and the first question asked of a disputed figure. */
   generatedBy?: string;
   family?: DocumentFamily;
@@ -379,6 +385,7 @@ const brandOf = (document_: ReportDocument, options?: ExportOptions): DocumentBr
   documentBrandOf(
     document_.family ?? "report.standard",
     options?.presentation ? { presentation: options.presentation } : null,
+    document_.reportKey,
   );
 
 /** `S. Simmons` — the footer's version of a name, where there is no room for the whole of it. */

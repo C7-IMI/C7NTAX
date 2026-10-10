@@ -54,6 +54,8 @@ const STRUCTURAL_EXEMPT = {
     "A client's own portal accent colour, which the user sets and the product must not re-theme, plus the example of it in the help text beside the field.",
   "apps/web/src/components/email/EmailSample.tsx":
     "Draws the customer-facing email itself — a document that leaves the building, wearing the kit's own colours from lib/documentBrand.ts and the template's existing palette. An email must look the same to the client whatever theme the person who sent it prefers, exactly as a printed report must, so a token here would produce the wrong message.",
+  "apps/web/src/pages/HelpDoc.tsx":
+    "Documentation prose that quotes a colour value in order to teach it: the hex somebody types into a branding field appears in the words of a walkthrough, as it already does in ClientDetail's help text. A quoted example is not a colour this file draws — the help draws none of its own, so a token here would be a token in a sentence.",
 };
 
 const HEX = /#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3})?\b/g;
