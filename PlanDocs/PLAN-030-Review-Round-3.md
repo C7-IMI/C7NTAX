@@ -6,6 +6,8 @@
 > and the `trust proxy` note the package inherits.
 > **Method:** Azure CLI 2.91.0 installed, and every `az` command in both files executed with
 > placeholder names. See §2 for what that does and does not prove.
+> **Answered by:** `PLAN-030-Response-to-Review-Round-3.md` — the reply from whoever applied the fixes,
+> including the two places this review's own wording was imprecise (§10).
 
 ## 1. Verdict
 
@@ -279,7 +281,7 @@ None of the following was proven here, and none should be assumed by whoever rea
 - The migration job's four-token command actually running `prisma migrate deploy` in the container, and
   the job reporting `Succeeded`.
 - The three health checks answering 200 on a real revision.
-- The Bicep compile, if the Bicep CLI is unavailable in the environment — see the note in §9.
+- The `TRUST_PROXY` hop count behaving as intended behind the real front door — one hop, and no further.
 
 ## 9. Files changed
 
@@ -293,6 +295,7 @@ None of the following was proven here, and none should be assumed by whoever rea
 | `infra/README.md` | the stale `--target-port` claim corrected; the rollback command corrected |
 | `docs/API.md`, `docs/api-operations.json`, `docs/openapi.yaml` | §6 — the API document is part of the change |
 | `PlanDocs/PLAN-030-Review-of-Applied-Changes.md` | created as a provenance note (§7.4) |
+| `PlanDocs/PLAN-030-Response-to-Review-Round-3.md` | the reply — the disposition of every finding, and the two corrections in §10 |
 
 **Verification run for this change:** `generate-openapi.mjs` (469 operations), `check-api-docs.mjs`
 (specification matches the routes), `check-route-guards.mjs` (472 routes), `check-encoding.mjs`,
@@ -306,3 +309,41 @@ v0.48.1 was fetched directly. Against it, with the four deploy-time variables fi
 warnings** — which includes the `TRUST_PROXY` `env` entry added in §6. The templates are the part of this
 package a subscription is still needed to exercise, and they now at least parse and type-check against the
 schemas.
+
+## 10. Disposition, and two places this review's own wording needed correcting
+
+Every finding in §3, §5 and §6 was re-run from scratch rather than accepted on the strength of this
+document, and all of them reproduce. What happened to each:
+
+| Finding | Disposition | Note |
+|---|---|---|
+| §3.1 `--target-port` | **Fixed** | Script-only, as written; the workflow never passed it |
+| §3.2 `properties.revisionSuffix` | **Fixed** | But see below — the surrounding query was already right |
+| §3.3 `revision show --revision` | **Fixed** | Takes `app--suffix`, not the suffix |
+| §3.4 the traffic shift | **Fixed** | And the printed rollback with it; see below |
+| §3.5 the migration job's command | **Fixed** | Invisible to §2's method — it *parses* |
+| §5 `/api/ready` refusing rollbacks | **Confirmed and fixed** | Subset semantics: every *shipped* migration applied |
+| §6 `trust proxy` unset | **Implemented, as a hop count** | The premise was stale in both directions |
+| §7.1 the production replica count | **Left as a decision** | With one piece of evidence this review did not have |
+| §7.2 `CREATE EXTENSION pgaudit` | **Recorded, not shipped** | An untestable migration would run everywhere |
+| §7.3 the production rehearsal | **Recommended, not run** | Needs a subscription and money |
+| §7.4 the missing review file | **Provenance note created** | All five citations now resolve |
+
+**Correction 1 — `properties.revisionSuffix` is wrong, but the query around it was not.** This review is
+right that the field does not exist on a revision; it belongs to the *template*. What was not stated is
+that `properties.fqdn`, `properties.healthState` and `properties.trafficWeight` **are** valid, and the
+workflow's rollback capture used them correctly already. A reader who took "the health check filters on a
+property revisions don't have" as a licence to rewrite the whole step would have broken a part that
+worked.
+
+**Correction 2 — `--revision` on `ingress traffic set` is not *rejected*, it is silently absorbed.**
+`argparse` accepts it as an unambiguous abbreviation of `--revision-weight`, so a fix that removed the
+non-existent `--weight` and kept `--revision` would have produced `--revision-weight probe`, been
+accepted, and set a weight from a revision's name. The flag had to go, not merely be joined by the one
+that exists. This also sharpens §2: the parse test catches flags the CLI *refuses*, and §3.5 shows a
+defect it cannot see at all, so "it parses" is a lower bar than this document sometimes reads as.
+
+The §5 finding is the one with the widest blast radius and the least to show for it: a `503` from a
+healthy revision is indistinguishable, from CI, from a genuinely broken deploy, and both gates refused
+to promote a rollback because of it. That is a package that would have failed in exactly the situation it
+exists to handle.

@@ -57,7 +57,13 @@ reading it. Running them changed the answer — five of them cannot complete a d
 - **[Update]** **The review is a document in the repository**, `PlanDocs/PLAN-030-Review-Round-3.md`,
   with each defect beside the command that was executed to establish it, the two claims of the previous
   round that were wrong, and the four items left as decisions. `infra/README.md` no longer says the
-  `--target-port` flag was confirmed.
+  `--target-port` flag was confirmed. Its reply,
+  `PlanDocs/PLAN-030-Response-to-Review-Round-3.md`, records what happened to every finding — and the two
+  places the review's own wording needed sharpening: `--revision` is *silently absorbed* as an
+  abbreviation of `--revision-weight` rather than rejected, so a fix that kept it would have set a weight
+  from a revision's name; and the one-word migration command **parses cleanly**, which is the one defect
+  the parse-level method cannot see. The Bicep templates also compile without warnings now, through the
+  standalone `bicep-win-x64.exe` — `az bicep install` truncates at 6.9 MB of ~124 MB.
 
 ---
 

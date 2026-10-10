@@ -10452,3 +10452,35 @@ topology. And the missing review file, which is cited by five documents and has 
 there was no way to tell a flag that does not exist from one nobody had tried. Installed 2.91.0 into the
 existing Python 3.10 rather than a system-wide installer, with `core.first_run` and telemetry turned off so
 the first-run banner could not be mistaken for output while capturing what the commands actually said.
+
+---
+
+### Prompt 376 — Update the review, and reply to the reviewer
+
+**Timestamp:** 2026-10-09 23:54 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** none of its own — documentation of **2026.10.9.036**, whose entry it now cites.
+
+**Prompt**
+
+> Update the doc and reply to Claude in the file and alos give me a reply here that I can copy and paste
+
+**What I wrote.** `PlanDocs/PLAN-030-Response-to-Review-Round-3.md`, in the shape the two earlier responses
+established: for, from, answers, applied-in, status. It records that all five defects were re-run from
+scratch rather than accepted on the report and all five reproduce; that **two of them are worse than the
+review's wording** — `--revision` on `ingress traffic set` is silently absorbed by argparse as an
+abbreviation of `--revision-weight`, so a fix that kept it would have been accepted and set a weight from a
+revision's name, and the one-word migration `--command` **parses cleanly**, which is the one defect the
+parse-level method cannot see at all; and that the review's field-name finding was **over-broad in the safe
+direction**, because `properties.fqdn`, `properties.healthState` and `properties.trafficWeight` are real and
+the step around the bad one was already correct.
+
+It also states plainly what is **not** fixed: the four items the review flagged for before production are
+decisions, and three of them are not mine to make. The replica count carries one fact the review did not
+have — five loops start unconditionally in every process with no leader election anywhere — and `pgaudit` is
+recorded rather than shipped, because a migration that cannot be run against a server has an unknown failure
+mode and `prisma migrate deploy` runs it on every environment.
+
+**The review itself was updated too**, so a reader who opens only that file is not misled: the front matter
+points at the reply, §8 no longer lists the Bicep compile as unprovable, §9 records the compile passing and
+the response document, and a new §10 is the disposition of every finding alongside the two corrections.
