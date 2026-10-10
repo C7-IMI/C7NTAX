@@ -5,10 +5,10 @@ import { DollarSign, TrendingUp, Clock, AlertTriangle, Receipt, CreditCard } fro
 import toast from "react-hot-toast";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { PageHeader, StatCard as KpiCard } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 export function FinanceDashboardPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [genCompanyId, setGenCompanyId] = useState("");
@@ -30,7 +30,7 @@ export function FinanceDashboardPage() {
         subtitle="Billing overview and financial health"
       />
 
-      {redesign ? (
+      {modern ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard label="Total Invoiced" value={`$${data.totalInvoiced.toLocaleString()}`} icon={<Receipt size={13} />} tone="cyber" />
           <KpiCard label="Total Paid" value={`$${data.totalPaid.toLocaleString()}`} icon={<CreditCard size={13} />} tone="green" />
@@ -102,8 +102,8 @@ function StatCard({ icon: Icon, label, value, color }: { icon: any; label: strin
 }
 
 function Bar({ label, value }: { label: string; value: any }) {
-  const redesign = useRedesign();
-  return <div className="flex items-center justify-between text-sm"><span className="text-gray-400">{label}</span><span className={redesign ? "text-white font-medium tabular-nums" : "text-white font-medium"}>{value}</span></div>;
+  const modern = useModernInterface();
+  return <div className="flex items-center justify-between text-sm"><span className="text-gray-400">{label}</span><span className={modern ? "text-white font-medium tabular-nums" : "text-white font-medium"}>{value}</span></div>;
 }
 
 function StatusBadge({ label, status }: { label: string; status: string }) {

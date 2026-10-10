@@ -10,7 +10,7 @@
  *    be a preview of a different document, and the whole promise is that the page a person approves is
  *    the page they get. The sheet is the same object in both; only the frame around it differs, and the
  *    frame belongs to the page.
- *  - `BrandLinks` — the four screens of the section. It reads `useRedesign()` and draws chips in the
+ *  - `BrandLinks` — the four screens of the section. It reads `useModernInterface()` and draws chips in the
  *    modern interface and buttons in the classic one, because navigation *is* furniture.
  *
  * `useBrandWrite` is the state machine every write in the section goes through: a write that failed says
@@ -22,7 +22,7 @@ import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
 import { FileText, Image as ImageIcon, Palette, Users } from "lucide-react";
 import { WriteFailure } from "../email/emailChrome";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import type { WriteResult } from "../email/emailApi";
 import { DocumentPreview, PreviewNote } from "./brandPreview";
 import type { DocumentBrand } from "@C7NTAX/shared";
@@ -38,11 +38,11 @@ export const BRAND_SCREENS: { path: string; label: string; blurb: string; icon: 
 
 /** The way between the four screens. Chips in the modern interface, buttons in the classic one. */
 export function BrandLinks({ current }: { current: string }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   return (
     <div className="flex flex-wrap items-center gap-2">
       {BRAND_SCREENS.filter((screen) => screen.path !== current).map((screen) =>
-        redesign ? (
+        modern ? (
           <Link key={screen.path} to={screen.path} className="chip" title={screen.blurb}>
             <screen.icon size={12} />
             {screen.label}

@@ -9,7 +9,7 @@ import { FlexpointClientCard } from "../components/FlexpointClientCard";
 import { Permission } from "@C7NTAX/shared";
 import { useAuth } from "../hooks/useAuth";
 import { PageHeader, Tabs } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { monthlyLabel, monthlyValue } from "../lib/agreements";
 import { copyText } from "../lib/menuActions";
 
@@ -30,7 +30,7 @@ export function ClientDetailPage() {
   const [client, setClient] = useState<Record<string, any> | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("summary");
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Record<string, any>>({});
   const [saving, setSaving] = useState(false);
@@ -80,21 +80,21 @@ export function ClientDetailPage() {
   if (!client) return <div className="text-center py-12 text-gray-500">Client not found</div>;
 
   const tabs = [
-    { id: "summary", label: redesign ? "Overview" : "Summary", icon: Building2 },
+    { id: "summary", label: modern ? "Overview" : "Summary", icon: Building2 },
     { id: "contacts", label: `Contacts (${client._count?.contacts || 0})`, icon: Users },
     { id: "configurations", label: "Configurations", icon: Layers },
     { id: "agreements", label: `Agreements (${client._count?.serviceAgreements || 0})`, icon: ClipboardList },
     { id: "tickets", label: `Tickets (${client._count?.tickets || 0})`, icon: Ticket },
     { id: "invoices", label: `Invoices (${client._count?.invoices || 0})`, icon: DollarSign },
   ];
-  const clientTabs = redesign ? tabs : tabs.filter(t => t.id !== "configurations");
+  const clientTabs = modern ? tabs : tabs.filter(t => t.id !== "configurations");
   const { amount: mrr, currency } = monthlyValue((client.serviceAgreements || []).filter((a: any) => a.isActive !== false));
   const agreement = (client.serviceAgreements || []).find((a: any) => a.isActive !== false);
   const primaryContact = (client.contacts || []).find((c: any) => c.isPrimary);
 
   return (
-    <div className={redesign ? "space-y-4 animate-fade-in" : "space-y-6 animate-fade-in max-w-5xl"}>
-      {redesign ? (
+    <div className={modern ? "space-y-4 animate-fade-in" : "space-y-6 animate-fade-in max-w-5xl"}>
+      {modern ? (
         <div className="card overflow-hidden p-0" data-hl="client-details">
           <div className="flex flex-wrap items-center gap-3 border-b border-surface-border p-3.5">
             <div className="min-w-0 flex-1">
@@ -207,8 +207,8 @@ export function ClientDetailPage() {
       {tab === "summary" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
-            <Card title={redesign ? "The account" : "General Information"}>
-              {redesign && !editing ? (
+            <Card title={modern ? "The account" : "General Information"}>
+              {modern && !editing ? (
                 <Kv rows={[
                   ["Client number", <span className="font-mono">{String(client.id).slice(0, 8).toUpperCase()}</span>],
                   ["Location", [client.city, client.state].filter(Boolean).join(", ") || null],
@@ -354,13 +354,13 @@ export function ClientDetailPage() {
 
           <div className="space-y-4">
             {/* The brief first: one paragraph the next technician reads before touching anything. */}
-            {redesign && (
+            {modern && (
               <Card title="Brief">
                 {client.notes ? <p className="whitespace-pre-wrap text-sm text-gray-300">{client.notes}</p> : <p className="text-sm text-gray-600">Nothing written yet — this is the highest-value field on the record.</p>}
                 <button onClick={() => setEditing(true)} className="btn-secondary mt-1 flex w-full items-center justify-center gap-1.5 text-xs"><Pencil size={12} /> Edit the brief</button>
               </Card>
             )}
-            {redesign && (
+            {modern && (
               <Card title="Recent work">
                 {(client.tickets || []).length === 0 ? <p className="text-sm text-gray-600">No tickets yet</p> : (
                   <div className="space-y-1.5">
@@ -379,7 +379,7 @@ export function ClientDetailPage() {
                 )}
               </Card>
             )}
-            {!redesign && (
+            {!modern && (
             <Card title="Status">
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between"><span className="text-gray-500">Active</span><span className={`badge ${client.isActive ? "bg-green-600/20 text-green-400" : "bg-gray-600/20 text-gray-400"}`}>{client.isActive ? "Yes" : "No"}</span></div>
@@ -395,17 +395,17 @@ export function ClientDetailPage() {
                   <p className="text-white">{primaryContact.firstName} {primaryContact.lastName}</p>
                   {primaryContact.email && <p className="text-gray-400 flex items-center gap-1"><Mail size={12} /> {primaryContact.email}</p>}
                   {primaryContact.phone && <p className="text-gray-400 flex items-center gap-1"><Phone size={12} /> {primaryContact.phone}</p>}
-                  {redesign && <Link to={`/contacts?companyId=${client.id}`} className="block pt-1 text-xs text-cyber-400 hover:underline">All contacts →</Link>}
+                  {modern && <Link to={`/contacts?companyId=${client.id}`} className="block pt-1 text-xs text-cyber-400 hover:underline">All contacts →</Link>}
                 </div>
               ) : <p className="text-sm text-gray-600">No primary contact</p>}
             </Card>
-            <Card title={redesign ? "At a glance" : "Quick Stats"}>
+            <Card title={modern ? "At a glance" : "Quick Stats"}>
               <div className="space-y-2 text-sm">
                 {[{l:"Contacts",v:client._count?.contacts},{l:"Agreements",v:client._count?.serviceAgreements},{l:"Tickets",v:client._count?.tickets},{l:"Invoices",v:client._count?.invoices}].map(s => (
                   <div key={s.l} className="flex justify-between"><span className="text-gray-500">{s.l}</span><span className="text-white font-medium">{s.v || 0}</span></div>
                 ))}
-                {redesign && configs !== null && <div className="flex justify-between"><span className="text-gray-500">Configurations</span><span className="text-white font-medium">{configs.length}</span></div>}
-                {redesign && <div className="flex justify-between"><span className="text-gray-500">Recurring</span><span className="text-white font-medium">{monthlyLabel(mrr, currency)}</span></div>}
+                {modern && configs !== null && <div className="flex justify-between"><span className="text-gray-500">Configurations</span><span className="text-white font-medium">{configs.length}</span></div>}
+                {modern && <div className="flex justify-between"><span className="text-gray-500">Recurring</span><span className="text-white font-medium">{monthlyLabel(mrr, currency)}</span></div>}
               </div>
             </Card>
           </div>
@@ -503,7 +503,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 function Grid({ cols, children }: { cols: number; children: React.ReactNode }) {
   return <div className={`grid grid-cols-2 md:grid-cols-${cols} gap-3`}>{children}</div>;
 }
-/** Label/value rows — how the redesigned screens read a record, as opposed to editing it. */
+/** Label/value rows — how the Modern screens read a record, as opposed to editing it. */
 function Kv({ rows }: { rows: Array<[string, React.ReactNode]> }) {
   return (
     <dl className="divide-y divide-surface-border/60">

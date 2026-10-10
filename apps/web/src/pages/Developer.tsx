@@ -5,7 +5,7 @@ import { Catalogue } from "../components/developer/Catalogue";
 import { EnvironmentBadge } from "../components/developer/EnvironmentBadge";
 import { RepoHealthPanel } from "../components/developer/RepoHealth";
 import { useDeveloperEnvironment, useRepoHealth } from "../components/developer/developerApi";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 /**
  * `/developer` — the hub, and the proposal made real.
@@ -29,7 +29,7 @@ import { useRedesign } from "../hooks/useNavigationStyle";
  * a labelled field in the classic one — the same fact, different furniture.
  */
 export function DeveloperHubPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const environment = useDeveloperEnvironment();
   const health = useRepoHealth();
 
@@ -62,7 +62,7 @@ export function DeveloperHubPage() {
   ];
 
   // ── Classic: a paragraph of consequence above a table of entries ────────────────────────────────
-  if (!redesign) {
+  if (!modern) {
     return (
       <div className="space-y-6">
         <PageHeader

@@ -21,7 +21,7 @@ import toast from "react-hot-toast";
 import { Check, Loader2, Pencil, Plus, Trash2, Truck, X } from "lucide-react";
 import api from "../api";
 import { apiErrorMessage } from "../lib/apiError";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 export interface POLine {
   id?: string;
@@ -105,7 +105,7 @@ export function PurchaseOrderDialog({
   /** Called after anything was written, so the list behind the dialog can refresh. */
   onChanged: () => void;
 }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [order, setOrder] = useState<PurchaseOrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -337,7 +337,7 @@ export function PurchaseOrderDialog({
   ) : null;
 
   // ── Modern: a sheet, with the status as a track and the vendor beside the lines ──
-  if (redesign) {
+  if (modern) {
     return (
       <>
         <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/60 p-4 pt-[6vh]" onClick={onClose}>
@@ -595,7 +595,7 @@ export function VendorDialog({
   onClose: () => void;
   onSaved: () => void | Promise<void>;
 }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [form, setForm] = useState({
     name: vendor.name || "",
     contactName: vendor.contactName || "",
@@ -636,7 +636,7 @@ export function VendorDialog({
     ["website", "Website", ""],
   ];
 
-  if (redesign) {
+  if (modern) {
     return (
       <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-black/70 p-4 pt-[10vh]" onClick={onClose}>
         <div

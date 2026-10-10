@@ -74,7 +74,7 @@
     passkey). Today each is a different screen on a different background, and the one that needs
     explaining most — the temporary password — is the one that explains nothing.
 
-  · The sign-in page sits outside the shell and does not read `useRedesign()` today; the proposal keeps one
+  · The sign-in page sits outside the shell and does not read `useModernInterface()` today; the proposal keeps one
     arrangement for both interfaces, because the choice on this page is which *credential* to use, not
     which furniture you prefer. For the team that wants the branch anyway, the classic arrangement is drawn
     at the end: labelled fields in a column, the passkey path as a full-width secondary button, the
@@ -113,7 +113,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark light">
-<title>Mockup — the sign-in page, redesigned</title>
+<title>Mockup — the sign-in page, Modern interface</title>
 <style>
   /* ── The application's own tokens, copied from apps/web/src/index.css ───────────────────────── */
   :root {
@@ -284,7 +284,7 @@
     display: flex; flex-direction: column; gap: 14px;
   }
 
-  /* The way in: a two-option choice, the redesign's segmented furniture. Real radios underneath, so the
+  /* The way in: a two-option choice, the Modern interface's segmented furniture. Real radios underneath, so the
      arrow keys work and a screen reader says "Passkey, selected, 1 of 2" — two divs with aria-pressed say
      nothing, and announce nothing when the choice changes what the next field is. */
   .seg {
@@ -676,7 +676,7 @@
               “is this process listening” — and must never query the database, or an outage becomes a crash
               storm. It answers <code>{"status":"ok","version":"1.0.0"}</code>. The honest probe already
               exists at <code>/api/ready</code>, answers <code>{"status":"ready"}</code>, and is
-              unauthenticated, so this page can ask it. The redesign does.</li>
+              unauthenticated, so this page can ask it. The Modern interface does.</li>
           <li><b>The remedy is written for the wrong reader.</b> When the API is down, three tiles tell a
               person signing in to run <code>pnpm dev</code> in <code>apps/api</code> and to check port
               4000 with <code>netstat</code>. That text is kept — it is accurate and it is somebody's
@@ -736,7 +736,7 @@
           eight colour schemes at the end of <code>index.css</code>, every one of which fills with a dark
           red and therefore needs a white label. The default theme's cyan accent needs the opposite ink
           and never gets it, so <b>Sign In</b> — the only control on the page that matters — is white on
-          cyan today. The same fallback reaches the redesign's own <code>.tab-active</code>.
+          cyan today. The same fallback reaches the Modern interface's own <code>.tab-active</code>.
         </p>
       </div>
 
@@ -778,7 +778,7 @@
               <code>{"enabled":false}</code> on 9 October 2026, so there is none; the state where an
               administrator has switched it on is drawn in the storyboard.</li>
           <li><b>A passkey button on a browser without WebAuthn</b> — <code>Login.tsx</code> already gates
-              on <code>PublicKeyCredential</code>; the redesign keeps that and removes the segmented
+              on <code>PublicKeyCredential</code>; the Modern interface keeps that and removes the segmented
               control entirely rather than showing an option that will fail.</li>
         </ul>
       </div>
@@ -1194,7 +1194,7 @@
         say: 'Only one probe can fail, so “one of the four down” is not a state this panel can actually be ' +
              'in: the Web Server tile cannot go red (it is the page) and the other three come from one ' +
              'request. Today those three red tiles tell a person signing in to run `pnpm dev` and check port ' +
-             '4000 with netstat — after the password has been typed and rejected. The redesign states the ' +
+             '4000 with netstat — after the password has been typed and rejected. The Modern interface states the ' +
              'consequence first, switches the act off rather than letting it fail, keeps the operator’s ' +
              'remedy in the disclosure under “For whoever runs this instance”, and never uses colour alone: ' +
              'each service prints its own word.',
@@ -1231,7 +1231,7 @@
       },
       {
         cap: '15 · The same state in the classic interface',
-        say: 'The sign-in page is outside the shell and does not read useRedesign() today; the proposal ' +
+        say: 'The sign-in page is outside the shell and does not read useModernInterface() today; the proposal ' +
              'keeps one arrangement for both interfaces, because the choice here is which credential to ' +
              'use rather than which furniture you prefer. If the switch is extended to it, this is the ' +
              'classic arrangement: labelled fields in a column, the act, the passkey path as a full-width ' +

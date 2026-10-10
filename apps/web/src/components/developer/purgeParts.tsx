@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import type { PurgeModelCount, PurgeReceipt } from "./developerApi";
 import { formatCount } from "./developerUi";
 
@@ -117,7 +117,7 @@ export function ModelTable({
  * still on the page rather than quietly dropped.
  */
 export function PurgeReceiptPanel({ receipt }: { receipt: PurgeReceipt }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const written =
     (typeof receipt.receiptPath === "string" && receipt.receiptPath) ||
     (typeof receipt.wrote === "string" && receipt.wrote) ||
@@ -137,7 +137,7 @@ export function PurgeReceiptPanel({ receipt }: { receipt: PurgeReceipt }) {
     ["Flag", receipt.flag || "not reported"],
   ];
 
-  if (redesign) {
+  if (modern) {
     return (
       <div className="rounded-xl border border-dashed border-alert-green/50 bg-surface-light p-4">
         <div className="flex flex-wrap items-center gap-2">

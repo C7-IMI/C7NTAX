@@ -15,8 +15,8 @@ a change as finished.
 
 ## The two mistakes worth repeating here
 
-- **Two interfaces, two designs.** `useRedesign()` from `apps/web/src/hooks/useNavigationStyle` decides
-  which. The modern arrangement is built from the redesign's own furniture (rails, chips you press, sheets,
+- **Two interfaces, two designs.** `useModernInterface()` from `apps/web/src/hooks/useNavigationStyle` decides
+  which. The Modern arrangement is built from its own furniture (rails, chips you press, sheets,
   a status track, sentences beside the control that acts) and the classic one is a **form** (labelled fields
   in a grid, a dialog with a heading and Save/Cancel). The shared part is the state, the API call and the
   words — never the layout. Verify both before calling it done.

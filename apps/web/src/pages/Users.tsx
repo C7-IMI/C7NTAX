@@ -10,6 +10,7 @@ import {
 import {
   SystemRole, Permission, PERMISSION_CATEGORIES, ROLE_PERMISSIONS,
   DEVELOPER_PERMISSION_KEYS, DEVELOPER_ROLE_REFUSAL, isDeveloperRole, withoutDeveloperPermissions,
+  type MfaPolicy,
 } from "@C7NTAX/shared";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { ContextMenu, useContextMenu, isTextEntryTarget, type MenuEntry } from "../components/ContextMenu";
@@ -17,10 +18,11 @@ import { copyText, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { NewUserDialog, type RoleOption, type ClientOption, isAdministrativeRole } from "../components/users/NewUserDialog";
 import { ResetPasswordDialog } from "../components/users/ResetPasswordDialog";
+import { MfaControl, MfaBadge, hasEnrolledSecondFactor, mfaRowSummary } from "../components/users/MfaControl";
 import { useAuth } from "../hooks/useAuth";
 import { timezoneOptions } from "../lib/timezones";
 import { PageHeader, Tabs, ListViews, ListFooter } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { useSuperAdmin } from "../hooks/useSuperAdmin";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -42,7 +44,13 @@ interface UserFull {
   company?: { id: string; name: string } | null;
   companyId?: string | null;
   isActive: boolean; isLocked: boolean;
+  /** What the account has enrolled. `mfaEnabled` is false for a passkey, which *is* the sign-in. */
   mfaEnabled: boolean;
+  /** What the policy asks of the account, apart from what it has. */
+  mfaState?: string | null;
+  mfaMethod?: string | null;
+  mfaEnrolledAt?: string | null;
+  mfaGraceUntil?: string | null;
   mustChangePassword?: boolean;
   passwordChangedAt?: string | null;
   lastLoginAt?: string | null; createdAt: string;
@@ -80,6 +88,14 @@ export function UsersPage() {
   // The API refuses role and permission edits without role:manage, so the screen
   // shows them read-only instead of letting somebody fill in a form that 403s.
   const canManageRoles = permissions.includes(Permission.RoleManage);
+  /*
+   * The two second-factor actions answer to different permissions, so each is asked about separately:
+   * changing what is required of an account is `mfa:enforce`, and taking a factor away is
+   * `security:manage` — the same pair the API's two routes require. A control the caller cannot use is
+   * shown disabled with the reason beside it rather than left to fail on click.
+   */
+  const canEnforceMfa = permissions.includes(Permission.MFAEnforce);
+  const canResetMfa = permissions.includes(Permission.SecurityManage);
   const [users, setUsers] = useState<UserFull[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -90,7 +106,7 @@ export function UsersPage() {
   // Detail panel
   const [selected, setSelected] = useState<UserFull | null>(null);
   const [tab, setTab] = useState<"profile" | "permissions" | "security">("profile");
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const superAdmin = useSuperAdmin();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Record<string, any>>({});
@@ -104,6 +120,12 @@ export function UsersPage() {
   const [createDefaults, setCreateDefaults] = useState<{ roleId?: string; companyId?: string; department?: string; timezone?: string; fromName?: string } | undefined>();
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [resetTarget, setResetTarget] = useState<UserFull | null>(null);
+  /*
+   * The instance's own policy — the mode, and the methods this deployment offers. Read once, because
+   * its one use is telling the editor what the instance currently says when an account is left to
+   * "follow the instance setting"; the list column resolves each row from the row itself.
+   */
+  const [instancePolicy, setInstancePolicy] = useState<MfaPolicy | null>(null);
   const timezones = useMemo(() => timezoneOptions(), []);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const menu = useContextMenu();
@@ -158,7 +180,14 @@ export function UsersPage() {
     } catch { /* the client picker is optional */ }
   }, []);
 
-  useEffect(() => { fetchUsers(); fetchRoles(); fetchClients(); }, [fetchUsers, fetchRoles, fetchClients]);
+  const fetchInstancePolicy = useCallback(async () => {
+    try {
+      const r = await api.get("/auth/mfa/policy");
+      setInstancePolicy(r.data as MfaPolicy);
+    } catch { /* the column reports only what an account's own state says until this answers */ }
+  }, []);
+
+  useEffect(() => { fetchUsers(); fetchRoles(); fetchClients(); fetchInstancePolicy(); }, [fetchUsers, fetchRoles, fetchClients, fetchInstancePolicy]);
 
   const refreshUser = async (id: string) => {    try {
       const r = await api.get(`/users/${id}`);
@@ -299,7 +328,9 @@ export function UsersPage() {
     { key: "systemRole", label: "System Role", value: u => u.role?.systemRole ?? "" },
     { key: "department", label: "Department", value: u => u.department ?? "" },
     { key: "company", label: "Company", value: u => u.company?.name ?? "" },
-    { key: "mfa", label: "MFA", value: u => (u.mfaEnabled ? "Enabled" : "Disabled") },
+    // The label the screen already shows, so an export says "Exempt" or "Required — overdue" rather
+    // than "Disabled" for three situations the policy keeps apart.
+    { key: "mfa", label: "MFA", value: u => mfaRowSummary(u).label },
     { key: "status", label: "Status", value: u => (u.isActive ? "Active" : "Inactive") },
     { key: "lastLogin", label: "Last Login", value: u => u.lastLoginAt ?? "" },
   ];
@@ -351,7 +382,8 @@ export function UsersPage() {
       onSelect: () => setResetTarget(u),
     },
     {
-      label: "Reset MFA", icon: ShieldCheck, disabled: !u.mfaEnabled, hint: u.mfaEnabled ? undefined : "not enrolled",
+      label: "Reset MFA", icon: ShieldCheck, disabled: !hasEnrolledSecondFactor(u),
+      hint: hasEnrolledSecondFactor(u) ? undefined : "not enrolled",
       onSelect: () => setMenuConfirm({
         title: "Reset MFA?",
         body: `${`${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email} will need to enrol an authenticator again at their next sign-in.`,
@@ -361,7 +393,9 @@ export function UsersPage() {
             await api.post(`/users/${u.id}/reset-mfa`);
             toast.success("MFA reset");
             await fetchUsers();
-            if (selected?.id === u.id) setSelected({ ...u, mfaEnabled: false });
+            // The reset stamps a fresh deadline, so the open record is re-read rather than patched
+            // with what this row happened to hold.
+            if (selected?.id === u.id) await refreshUser(u.id);
           } catch (e: any) { toast.error(e?.response?.data?.error?.message || "Failed to reset MFA"); }
         },
       }),
@@ -396,10 +430,10 @@ export function UsersPage() {
 
   /*
    * The states an account can be in, counted from the rows already in hand: an account nobody signs
-   * in with, two-factor never enrolled, and a lock an administrator has applied. The redesigned list
+   * in with, two-factor never enrolled, and a lock an administrator has applied. The Modern list
    * shows the slice a view names; classic keeps every row it always showed.
    */
-  const withoutMfa = users.filter(u => !u.mfaEnabled).length;
+  const withoutMfa = users.filter(u => !hasEnrolledSecondFactor(u)).length;
   const userViews = [
     { id: "all", label: "All", count: users.length },
     { id: "active", label: "Active", count: users.filter(u => u.isActive).length },
@@ -410,11 +444,11 @@ export function UsersPage() {
   const inView = (u: UserFull) =>
     view === "active" ? u.isActive
     : view === "inactive" ? !u.isActive
-    : view === "no-mfa" ? !u.mfaEnabled
+    : view === "no-mfa" ? !hasEnrolledSecondFactor(u)
     : view === "locked" ? u.isLocked
     : true;
   const sortedUsers = sortData(users, sort?.field || "firstName", sort?.direction || "asc");
-  const viewRows = redesign ? sortedUsers.filter(inView) : sortedUsers;
+  const viewRows = modern ? sortedUsers.filter(inView) : sortedUsers;
   if (loading) return <div className="text-center py-12 text-gray-500">Loading users...</div>;
 
   return (
@@ -458,16 +492,16 @@ export function UsersPage() {
 
       {/* ── Filters ── */}
       <div className="flex items-center gap-2 flex-wrap">
-        {redesign && <ListViews views={userViews} value={view} onChange={setView} label="User views" />}
+        {modern && <ListViews views={userViews} value={view} onChange={setView} label="User views" />}
         <div className="relative flex-1 max-w-xs">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
           <input ref={searchRef} className="input-field pl-9" placeholder="Search users..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <select className="input-field text-sm py-1.5 w-auto" value={roleFilter} onChange={e => setRoleFilter(e.target.value)}>
-          <option value="">{redesign ? "Role: any" : "All Roles"}</option>
+          <option value="">{modern ? "Role: any" : "All Roles"}</option>
           {assignableRoles.map(r => <option key={r.id} value={r.systemRole}>{r.name}</option>)}
         </select>
-        {redesign && <span className="text-xs text-gray-500">{viewRows.length} user{viewRows.length === 1 ? "" : "s"}{withoutMfa > 0 ? ` · ${withoutMfa} without two-factor` : ""}</span>}
+        {modern && <span className="text-xs text-gray-500">{viewRows.length} user{viewRows.length === 1 ? "" : "s"}{withoutMfa > 0 ? ` · ${withoutMfa} without two-factor` : ""}</span>}
       </div>
 
       {/* ── User Table ── */}
@@ -479,7 +513,7 @@ export function UsersPage() {
                 <SortableHeader field="firstName" label="User" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3" />
                 <SortableHeader field="role.name" label="Role" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden md:table-cell" />
                 <SortableHeader field="company.name" label="Company" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 hidden lg:table-cell" />
-                <SortableHeader field="mfaEnabled" label="MFA" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 w-16" />
+                <SortableHeader field="mfaEnabled" label="MFA" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 w-40" />
                 <SortableHeader field="isActive" label="Status" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3 w-24" />
               </tr>
             </thead>
@@ -506,11 +540,11 @@ export function UsersPage() {
                     <span className="badge bg-cyber-600/15 text-cyber-400 capitalize text-xs">{u.role?.systemRole.replace(/_/g, " ") || "—"}</span>
                   </td>
                   <td className="px-4 py-3 hidden lg:table-cell text-gray-400 text-xs">{u.company?.name || "—"}</td>
-                  <td className="px-4 py-3 text-center">
-                    {u.mfaEnabled ? <Shield size={15} className="text-green-400 mx-auto" /> : <span className="text-gray-600">—</span>}
+                  <td className="px-4 py-3">
+                    <MfaBadge row={u} />
                   </td>
                   <td className="px-4 py-3">
-                    {redesign ? (
+                    {modern ? (
                       <span className="flex items-center gap-1.5">
                         <span className={`chip text-[10px] ${u.isActive ? "chip--good" : "chip--warn"}`}>
                           {u.isActive ? "Active" : "Inactive"}
@@ -525,13 +559,13 @@ export function UsersPage() {
                   </td>
                 </tr>
               ))}
-              {redesign && viewRows.length === 0 && (
+              {modern && viewRows.length === 0 && (
                 <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500 text-sm">Nothing in this view.</td></tr>
               )}
             </tbody>
           </table>
         </div>
-        {redesign && viewRows.length > 0 && (
+        {modern && viewRows.length > 0 && (
           <ListFooter
             from={1}
             to={viewRows.length}
@@ -644,7 +678,7 @@ export function UsersPage() {
             </div>
 
             {/* Tabs */}
-            {redesign ? (
+            {modern ? (
               <div className="px-6 pt-4">
                 <Tabs
                   label="User sections"
@@ -931,6 +965,26 @@ export function UsersPage() {
                       </div>
                     </div>
                   </Section>
+                  {/*
+                    * The second-factor control replaces the single "MFA: enabled/disabled" row this tab
+                    * used to carry. That row answered one of the two questions — what the account has —
+                    * and could not show what the policy asks of it, which is the half an administrator
+                    * changes here.
+                    */}
+                  <MfaControl
+                    account={selected}
+                    instancePolicy={instancePolicy}
+                    canEnforce={canEnforceMfa}
+                    canReset={canResetMfa}
+                    onAccountChanged={(fields) => {
+                      setSelected(prev => (prev ? { ...prev, ...fields } : prev));
+                      void fetchUsers();
+                    }}
+                    onResetDone={() => {
+                      void fetchUsers();
+                      void refreshUser(selected.id);
+                    }}
+                  />
                   <Section title="Account Status">
                     <div className="space-y-3">
                       <div className="flex items-center justify-between py-2">
@@ -944,36 +998,6 @@ export function UsersPage() {
                           }`}>
                           {selected.isActive ? <><UserX size={13} /> Deactivate</> : <><UserCheck size={13} /> Activate</>}
                         </button>
-                      </div>
-                      <div className="flex items-center justify-between py-2">
-                        <div>
-                          <p className="text-sm text-white font-medium">MFA</p>
-                          <p className="text-xs text-gray-500">{selected.mfaEnabled ? "Enabled" : "Not configured"}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`badge text-xs ${selected.mfaEnabled ? "bg-green-600/20 text-green-400" : "bg-gray-600/20 text-gray-400"}`}>
-                            {selected.mfaEnabled ? "Secure" : "Not Set"}
-                          </span>
-                          {selected.mfaEnabled && (
-                            <button
-                              onClick={() => setMenuConfirm({
-                                title: "Reset MFA?",
-                                body: `${`${selected.firstName ?? ""} ${selected.lastName ?? ""}`.trim() || selected.email} will need to enrol an authenticator again at their next sign-in.`,
-                                confirmLabel: "Reset MFA",
-                                run: async () => {
-                                  try {
-                                    await api.post(`/users/${selected.id}/reset-mfa`);
-                                    toast.success("MFA reset");
-                                    await fetchUsers();
-                                    await refreshUser(selected.id);
-                                  } catch (e: any) { toast.error(e?.response?.data?.error?.message || "Failed to reset MFA"); }
-                                },
-                              })}
-                              className="bg-amber-600/10 text-amber-400 hover:bg-amber-600/20 px-3 py-1.5 rounded text-xs font-medium flex items-center gap-1.5">
-                              <ShieldCheck size={13} /> Reset MFA
-                            </button>
-                          )}
-                        </div>
                       </div>
                       <div className="flex items-center justify-between py-2">
                         <div>

@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { Plus, FolderKanban, Calendar, DollarSign, CheckCircle, Clock } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { PageHeader, ListViews } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 interface Project{id:string;name:string;description?:string;companyId?:string;status:string;priority:string;startDate?:string;endDate?:string;budget:number;budgetSpent?:number;}
 
@@ -14,7 +14,7 @@ export function ProjectsPage(){
   const [showNew,setShowNew]=useState(false);
   const [form,setForm]=useState({name:"",companyId:"",description:"",budget:0,startDate:"",endDate:"",priority:"medium"});
   const [companies,setCompanies]=useState<Array<{id:string;name:string}>>([]);
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [view,setView]=useState("all");
 
   const fetch=()=>{api.get("/projects?limit=50").then(r=>setProjects(r.data.data||[])).catch(()=>{}).finally(()=>setLoading(false))};
@@ -37,7 +37,7 @@ export function ProjectsPage(){
       <button onClick={()=>setShowNew(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16}/>New Project</button>
     </div>
 
-    {redesign && projects.length > 0 && (
+    {modern && projects.length > 0 && (
       <div className="flex flex-wrap items-center gap-2">
         <ListViews views={projectViews} value={view} onChange={setView} label="Project views" />
         <span className="text-xs text-gray-500">{shown.length} shown · {budget > 0 ? `${Math.round((spent / budget) * 100)}% of budget spent` : "no budget set"}</span>
@@ -68,7 +68,7 @@ export function ProjectsPage(){
             <div className="bg-surface-lighter rounded px-2 py-1.5"><p className="text-gray-500">End</p><p className="text-white">{p.endDate?new Date(p.endDate).toLocaleDateString():"—"}</p></div>
           </div>
           {/* The budget as a proportion, so an overspent project is visible without dividing two figures. */}
-          {redesign && (
+          {modern && (
             <div className="mt-2.5">
               <span className="relative block h-1.5 overflow-hidden rounded-full bg-surface-lighter">
                 <i className={`absolute inset-y-0 left-0 rounded-full ${(p.budgetSpent||0) > p.budget ? "bg-alert-red" : "bg-cyber-500"}`} style={{ width: `${p.budget > 0 ? Math.min(100, Math.round(((p.budgetSpent||0) / p.budget) * 100)) : 0}%` }} />

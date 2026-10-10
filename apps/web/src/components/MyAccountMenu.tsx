@@ -8,7 +8,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useClientIp } from "../hooks/useClientIp";
 import { setContextPane, setInterfacePreference, setNavigationPreference, useNavigationSettings } from "../hooks/useNavigationStyle";
 import { useTheme } from "../hooks/useTheme";
-import { UI_NAV_AVAILABLE, UI_P1, UI_PALETTE, UI_REDESIGN_AVAILABLE } from "../lib/uiFlags";
+import { UI_NAV_AVAILABLE, UI_P1, UI_PALETTE, UI_MODERN_SCREENS_AVAILABLE } from "../lib/uiFlags";
 import { getDensity, setDensity, type Density } from "../lib/density";
 import { getPalette, setPalette, type PaletteMode } from "../lib/palette";
 import { PaletteSchemeList } from "./PaletteSchemeList";
@@ -211,15 +211,15 @@ export function MyAccountMenu() {
               </div>
             </div>
 
-            {/* The interface: the redesigned screens, or the classic ones. Its own switch rather
+            {/* The interface: the Modern screens, or the classic ones. Its own switch rather
                 than a name for the navigation pane's, because "which screens" and "which nav" are
                 different questions — and this is the one that takes the whole interface back. */}
-            {UI_REDESIGN_AVAILABLE && (
+            {UI_MODERN_SCREENS_AVAILABLE && (
               <div className="px-2 pb-1.5">
                 <p className="px-0.5 pb-1 text-[10px] text-gray-500">Interface</p>
                 <div className="flex items-center gap-1 rounded-md bg-surface-light p-0.5">
-                  <button className={chipClass(interfaceStyle === "redesign")} onClick={() => setInterfacePreference("redesign")} aria-pressed={interfaceStyle === "redesign"}>
-                    <span className="flex items-center justify-center gap-1.5"><Sparkles size={12} /> Redesign</span>
+                  <button className={chipClass(interfaceStyle === "modern")} onClick={() => setInterfacePreference("modern")} aria-pressed={interfaceStyle === "modern"}>
+                    <span className="flex items-center justify-center gap-1.5"><Sparkles size={12} /> Modern</span>
                   </button>
                   <button className={chipClass(interfaceStyle === "classic")} onClick={() => setInterfacePreference("classic")} aria-pressed={interfaceStyle === "classic"}>
                     <span className="flex items-center justify-center gap-1.5"><ListTree size={12} /> Classic</span>
@@ -247,7 +247,7 @@ export function MyAccountMenu() {
               </div>
             )}
 
-            {UI_REDESIGN_AVAILABLE && (
+            {UI_MODERN_SCREENS_AVAILABLE && (
               <div className="px-2 pb-1.5">
                 <p className="px-0.5 pb-1 text-[10px] text-gray-500">Layout</p>
                 <div className="flex items-center gap-1 rounded-md bg-surface-light p-0.5">

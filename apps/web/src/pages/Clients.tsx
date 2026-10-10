@@ -12,7 +12,7 @@ import { useAuth } from "../hooks/useAuth";
 import { Plus, Building2, Search, Mail, Phone, MapPin, Users, FileText, ArrowUpDown, ExternalLink, AppWindow, SquareArrowOutUpRight, Copy, Download, RotateCw, Eraser, Ticket, Cloud, KeyRound, Server, Receipt } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { PageHeader } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { monthlyLabel, monthlyValue } from "../lib/agreements";
 
 const TYPE_COLORS: Record<string, string> = {
@@ -26,7 +26,7 @@ const SORT_OPTIONS = [
 ];
 
 export function ClientsPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   // The mockup reads clients as cards — a card is where the brief, the counts and the state fit
   // together, which is what you are actually scanning for. The table is still there for anybody who
   // wants columns, and it is what the classic interface gets.
@@ -168,9 +168,9 @@ export function ClientsPage() {
         <button onClick={() => setShowNew(true)} className="btn-primary flex items-center gap-2"><Plus size={16} /> Add Client</button>
       </div>
 
-      {/* Filters + Sort — redesigned, the same controls as chips with the count line the mockup
+      {/* Filters + Sort — Modern, the same controls as chips with the count line the mockup
           carries, and a Cards / Table switch because the two are good at different questions. */}
-      {redesign ? (
+      {modern ? (
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-[15rem] max-w-md flex-1">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -229,8 +229,8 @@ export function ClientsPage() {
         </div>
       )}
 
-      {/* Client List — redesigned, as cards: the brief, the counts and the state in one place. */}
-      {redesign && view === "cards" ? (
+      {/* Client List — Modern, as cards: the brief, the counts and the state in one place. */}
+      {modern && view === "cards" ? (
         loading ? <TableSkeleton /> : clients.length === 0 ? (
           <div className="card p-8 text-center text-gray-500">No clients found</div>
         ) : (

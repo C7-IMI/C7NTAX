@@ -15,7 +15,7 @@
  */
 import { Info } from "lucide-react";
 import type { DocumentPresentation } from "@C7NTAX/shared";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import {
   FLAG_SPECS,
   LETTERHEAD_CARRIED,
@@ -44,7 +44,7 @@ export function PresentationForm({
   /** The instance's own footer sentence, so a footer note is not mistaken for a replacement for it. */
   footerContext?: string | null;
 }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const set = <K extends keyof DocumentPresentation>(key: K, value: DocumentPresentation[K]) =>
     onChange({ ...draft, [key]: value });
 
@@ -63,7 +63,7 @@ export function PresentationForm({
 
   const readOnly = disabled === true;
 
-  if (redesign) {
+  if (modern) {
     return (
       <div className="space-y-3.5">
         <div>

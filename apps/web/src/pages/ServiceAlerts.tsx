@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
 import { useVisibilityPolling } from "../hooks/useVisibilityPolling";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import toast from "react-hot-toast";
 import { PageHeader, Tabs, StatCard, ListViews } from "../components/ui";
 import {
@@ -189,8 +189,8 @@ export function ServiceAlertsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab] = useState<"live" | "board">(() =>
     new URLSearchParams(window.location.search).get("tab") === "board" ? "board" : "live");
-  const redesign = useRedesign();
-  // The redesigned live view's own slice of the page: which status is showing, and which source.
+  const modern = useModernInterface();
+  // The Modern live view's own slice of the page: which status is showing, and which source.
   const [alertView, setAlertView] = useState<"active" | "resolved">("active");
   const [sourceFilter, setSourceFilter] = useState("all");
 
@@ -256,7 +256,7 @@ export function ServiceAlertsPage() {
   const notifyCount = boardRows.filter(r => r.state === "notice").length;
   const blindCount = boardRows.filter(r => r.configuredSources > 0 && r.configuredSources === r.unreadableSources).length;
 
-  // The redesigned live view reads the same two alert collections the classic one does. The views
+  // The Modern live view reads the same two alert collections the classic one does. The views
   // strip offers Active and Resolved — the only two statuses the API returns — because an
   // "acknowledged" view would be a chip counting a field this data does not have.
   const alertSources = [...new Set([...active, ...resolved].map(a => a.source))]
@@ -422,9 +422,9 @@ export function ServiceAlertsPage() {
             {monitor?.lastCheckAt && <> Last check {timeAgo(monitor.lastCheckAt)}.</>}
           </p>
         </div>
-      ) : redesign ? (
+      ) : modern ? (
       /*
-       * The redesigned live view: one toolbar saying what you are looking at, a row per alert with
+       * The Modern live view: one toolbar saying what you are looking at, a row per alert with
        * its links on it, then the monitors that raise those alerts. The classic screen follows
        * below, untouched.
        */

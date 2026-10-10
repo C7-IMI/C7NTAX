@@ -1,148 +1,152 @@
-import { useState, useEffect, useRef } from "react";
-import api from "../api";
-import toast from "react-hot-toast";
-import { Shield, Key, Image as ImageIcon, Check, X, Copy } from "lucide-react";
-import { readEnrolmentFromImage, formatSecret, type DecodedEnrolment } from "../lib/qrEnrolment";
-import { copyText } from "../lib/menuActions";
+/**
+ * My Account → Two-Factor Authentication: the second factor you have, and the wizard that changes it.
+ *
+ * This is the *manage* half of the feature. The gate in `App.tsx` uses the same wizard (`MfaEnrolWizard`)
+ * for somebody who owes a second factor and cannot get past it; here it is opened on purpose by
+ * somebody who already signed in, so the same steps may be put off, and the screen leads with what the
+ * account has now rather than with the demand.
+ *
+ * The screen is thin on purpose: everything about *how* a second factor is set up — the methods this
+ * deployment offers, the QR code, the emailed code, the ten recovery codes and the acknowledgement
+ * they need — belongs to the wizard, and a second copy of it here is how the two would drift. What
+ * lives here is the answer to "what do I have?" and the two ways to change it.
+ *
+ * Two designs, deliberately:
+ *
+ *  · **Modern** — a sheet: the current method as the largest thing on the screen, a state pill beside
+ *    it, the sentence that explains the state, and the acting control next to the sentence.
+ *  · **Classic** — a card of labelled rows above a form-style screen: method, status, and a button
+ *    that opens the wizard, which is itself a labelled form in this interface.
+ */
+import { useEffect, useState } from "react";
+import { ShieldCheck } from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
+import { useModernInterface } from "../hooks/useNavigationStyle";
+import { MfaEnrolWizard } from "../components/mfa/MfaEnrolWizard";
+import { daysLeftInWords, mfaMethodName } from "../lib/mfa";
 
 export function MFASetupPage() {
-  const [qrCode, setQrCode] = useState<string | null>(null);
-  const [secret, setSecret] = useState("");
-  const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [reading, setReading] = useState(false);
-  const [read, setRead] = useState<{ matches: boolean; enrolment: DecodedEnrolment } | null>(null);
-  const [dragging, setDragging] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const modern = useModernInterface();
+  const { mfaPolicy, refreshMfaPolicy, user } = useAuth();
+  const [open, setOpen] = useState(false);
+  /** Once the person has opened or closed it themselves, the screen stops deciding for them. */
+  const [touched, setTouched] = useState(false);
 
+  // The policy endpoint is the one that carries the method catalogue, so the name of the enrolled
+  // method resolves here rather than falling back to its id.
   useEffect(() => {
-    fetchMfaSetup();
-  }, []);
+    void refreshMfaPolicy();
+  }, [refreshMfaPolicy]);
 
-  const fetchMfaSetup = async () => {
-    try {
-      const res = await api.post("/auth/mfa/setup");
-      setQrCode(res.data.qrCode);
-      setSecret(res.data.secret);
-      setRead(null);
-    } catch { toast.error("Failed to load MFA setup"); }
-  };
+  // First touch on this screen for somebody who has nothing enrolled: the wizard is the point of the
+  // page, so it is open rather than behind a button.
+  useEffect(() => {
+    if (!touched && mfaPolicy && !mfaPolicy.enrolled) setOpen(true);
+  }, [mfaPolicy, touched]);
 
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await api.post("/auth/mfa/verify-setup", { code });
-      toast.success("MFA enabled successfully");
-    } catch { toast.error("Invalid code"); }
-    finally { setLoading(false); }
-  };
+  const enrolled = !!mfaPolicy?.enrolled;
+  const methodName = enrolled ? mfaMethodName(mfaPolicy, mfaPolicy?.method) : "Not set up";
+  const optional = mfaPolicy?.mode === "optional" && !mfaPolicy.required;
 
-  /**
-   * Reads the enrolment out of a QR screenshot so the key can be typed by hand. The image never
-   * leaves the browser, and a QR that belongs to a different account is reported rather than used:
-   * enrolling with a secret that is not this account's would produce an authenticator whose codes
-   * the server rejects, with nothing on screen explaining why.
-   */
-  const readScreenshot = async (file: File) => {
-    setReading(true);
-    setRead(null);
-    try {
-      const result = await readEnrolmentFromImage(file);
-      if (!result.ok) {
-        toast.error(result.reason);
-        return;
-      }
-      const matches = result.enrolment.secret === secret;
-      setRead({ matches, enrolment: result.enrolment });
-      if (matches) toast.success("That screenshot is this account's enrolment code");
-      else toast.error("That screenshot is a QR for a different account or secret");
-    } finally {
-      setReading(false);
-      if (fileRef.current) fileRef.current.value = "";
-    }
-  };
+  const stateSentence = enrolled
+    ? "Signing in asks for this second factor. Changing it here replaces the method you are asked for; anything already trusted keeps working until it expires."
+    : mfaPolicy?.mustEnrolNow
+      ? "This account has to have a second factor before it can be used."
+      : mfaPolicy?.mustEnrol
+        ? `${daysLeftInWords(mfaPolicy.daysLeft)} — set one up now, or come back before then.`
+        : optional
+          ? "Nothing asks you for a second factor yet. Setting one up means a stolen password is not enough to get into your account."
+          : "A second factor is a second proof of who you are: a code from an app, a code by email, or a passkey on your device.";
 
-  return (
-    <div className="max-w-md mx-auto space-y-6 animate-fade-in pt-8">
-      <div className="text-center">
-        <div className="w-12 h-12 rounded-xl bg-cyber-600/20 text-cyber-400 flex items-center justify-center mx-auto mb-3">
-          <Shield size={24} />
-        </div>
-        <h2 className="text-lg font-semibold text-white">Two-Factor Authentication</h2>
-        <p className="text-sm text-gray-400 mt-1">Scan the QR code with your authenticator app</p>
-      </div>
+  const wizard = open ? (
+    <MfaEnrolWizard
+      mode="manage"
+      policy={mfaPolicy}
+      onEnrolled={() => { setTouched(true); setOpen(false); }}
+      onDismiss={() => { setTouched(true); setOpen(false); }}
+    />
+  ) : null;
 
-      {qrCode && (
-        <div className="card flex flex-col items-center space-y-4">
-          <div className="bg-white p-4 rounded-xl">
-            <img src={qrCode} alt="MFA QR Code" className="w-48 h-48" />
+  const openWizard = () => { setTouched(true); setOpen(true); };
+
+  if (modern) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-5 pt-6 animate-fade-in">
+        <header className="flex items-start gap-3">
+          <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyber-600/20 text-cyber-400">
+            <ShieldCheck size={18} />
+          </span>
+          <div>
+            <h1 className="text-lg font-semibold text-white">Two-Factor Authentication</h1>
+            <p className="mt-1 text-[11.5px] leading-relaxed text-gray-500">
+              How you prove it is you, after your password.
+            </p>
           </div>
-          <div className="w-full">
-            <p className="text-xs text-gray-500 mb-1 text-center">Or enter this key manually:</p>
-            <div className="flex items-center gap-2 bg-surface-lighter rounded-lg px-3 py-2">
-              <Key size={14} className="text-gray-500 shrink-0" />
-              <code className="text-xs font-mono text-white break-all flex-1">{formatSecret(secret)}</code>
-              <button onClick={() => void copyText(formatSecret(secret), "Enrolment key")} className="text-gray-500 hover:text-white shrink-0" title="Copy the key">
-                <Copy size={13} />
-              </button>
+        </header>
+
+        <section className="rounded-xl border border-surface-border bg-surface p-5">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs uppercase tracking-wider text-gray-500">Current method</p>
+              <p className="mt-1 text-lg font-semibold text-white">{methodName}</p>
+              <p className="mt-1.5 text-[11.5px] leading-relaxed text-gray-500">{stateSentence}</p>
             </div>
-          </div>
-
-          {/* The screen that showed the QR is often gone by the time somebody needs the key, and a
-              screenshot is the only copy left. */}
-          <div
-            onDragOver={e => { e.preventDefault(); setDragging(true); }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={e => {
-              e.preventDefault();
-              setDragging(false);
-              const file = e.dataTransfer.files?.[0];
-              if (file) void readScreenshot(file);
-            }}
-            className={`w-full rounded-lg border border-dashed p-3 text-center transition-colors ${dragging ? "border-cyber-500 bg-cyber-600/5" : "border-surface-border"}`}
-          >
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={e => { const file = e.target.files?.[0]; if (file) void readScreenshot(file); }}
-            />
-            <button onClick={() => fileRef.current?.click()} disabled={reading} className="text-xs text-gray-400 hover:text-white inline-flex items-center gap-1.5">
-              <ImageIcon size={13} />
-              {reading ? "Reading the image…" : "Drop a screenshot of the QR here, or choose a file"}
-            </button>
-            <p className="text-[10px] text-gray-600 mt-1">The image is read in this browser and is not uploaded.</p>
-
-            {read && (
-              <div className={`mt-2 text-left rounded-lg p-2 text-xs ${read.matches ? "bg-emerald-600/10 text-emerald-300" : "bg-red-600/10 text-red-300"}`}>
-                {read.matches ? (
-                  <p className="flex items-center gap-1.5"><Check size={12} /> This is the enrolment code for this account. The key above is the one to type.</p>
-                ) : (
-                  <>
-                    <p className="flex items-center gap-1.5"><X size={12} /> That QR belongs to a different enrolment, so it is not used here.</p>
-                    <p className="text-gray-400 mt-1">
-                      It carries {read.enrolment.issuer ? `the issuer “${read.enrolment.issuer}”` : "no issuer"}
-                      {read.enrolment.label ? ` and the account “${read.enrolment.label}”` : ""}. Codes from it will not be accepted by this account.
-                    </p>
-                  </>
-                )}
-              </div>
+            <span
+              className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${
+                enrolled ? "border-emerald-500/40 text-emerald-300" : "border-amber-500/40 text-amber-200"
+              }`}
+            >
+              {enrolled ? "Active" : "Not set up"}
+            </span>
+            {!open && (
+              <button type="button" className="btn-primary shrink-0 text-xs" onClick={openWizard}>
+                {enrolled ? "Change method" : "Set it up"}
+              </button>
             )}
           </div>
-        </div>
-      )}
+          {enrolled && (
+            <p className="mt-3 border-t border-surface-border pt-3 text-[11px] text-gray-600">
+              Signed in as {user?.email}. A passkey can also be added from here on a device that supports
+              one; it then replaces the code you are asked for on that device.
+            </p>
+          )}
+        </section>
 
-      <div className="card">
-        <form onSubmit={handleVerify} className="space-y-3">
-          <label className="block text-sm text-gray-400">Enter 6-digit verification code</label>
-          <input className="input-field text-center text-2xl tracking-widest" type="text" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} placeholder="000000" />
-          <button className="btn-primary w-full" type="submit" disabled={loading || code.length !== 6}>
-            {loading ? "Verifying..." : "Enable MFA"}
-          </button>
-        </form>
+        {wizard}
       </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-5 pt-6 animate-fade-in">
+      <div className="text-center">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-cyber-600/20 text-cyber-400">
+          <ShieldCheck size={24} />
+        </div>
+        <h1 className="text-lg font-semibold text-white">Two-Factor Authentication</h1>
+        <p className="mt-1 text-sm text-gray-400">How you prove it is you, after your password.</p>
+      </div>
+
+      <div className="card space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <p className="text-xs text-gray-500">Current method</p>
+            <p className="mt-0.5 text-sm text-white">{methodName}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Status</p>
+            <p className="mt-0.5 text-sm text-white">{enrolled ? "Active" : "Not set up"}</p>
+          </div>
+        </div>
+        <p className="text-xs leading-relaxed text-gray-400">{stateSentence}</p>
+        {!open && (
+          <button type="button" className="btn-primary" onClick={openWizard}>
+            {enrolled ? "Change method" : "Set up two-factor authentication"}
+          </button>
+        )}
+      </div>
+
+      {wizard}
     </div>
   );
 }

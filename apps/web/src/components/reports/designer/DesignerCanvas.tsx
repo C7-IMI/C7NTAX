@@ -59,7 +59,7 @@ interface CanvasProps {
    * The two views a designer looks *through* rather than edits.
    *
    * Both default to on, so the classic designer — which does not pass them — draws exactly what it
-   * always drew. The redesigned one offers them as chips: a grid you can turn off is what lets you
+   * always drew. The Modern one offers them as chips: a grid you can turn off is what lets you
    * judge spacing against the sheet, and band guides you can turn off are what lets you see the
    * report as the reader will.
    */

@@ -100,7 +100,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mockup — Email brand and delivery: what every message inherits, and what happened to the last few</title>
 <style>
-  /* ── The application's own tokens, copied from docs/mockups/contacts-boards-redesign.html ──── */
+  /* ── The application's own tokens, copied from docs/mockups/contacts-boards-modern.html ──── */
   :root {
     --navy-50:#e8edf5; --navy-100:#c5d1e5; --navy-200:#9eb3d3; --navy-300:#7895c1; --navy-400:#5b7db3;
     --navy-500:#3e64a5; --navy-600:#365796; --navy-700:#2b4783; --navy-800:#223771; --navy-900:#142454;
@@ -548,7 +548,7 @@
   <header class="stack">
     <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
       <span class="mock-tag">Mockup — nothing changed</span>
-      <span class="mock-note">Email brand &amp; delivery — the modern interface only (<code>useRedesign()</code>)</span>
+      <span class="mock-note">Email brand &amp; delivery — the modern interface only (<code>useModernInterface()</code>)</span>
     </div>
     <h1 style="font-size:22px; letter-spacing:-.01em;">
       What every message inherits, where it is sent from, when it may go, who may receive it — and what happened to the last few
@@ -2199,7 +2199,7 @@
   <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
        THE CLASSIC ARRANGEMENT — required, because this repository keeps two designs of every screen
        and they are two designs rather than one screen with a class toggled. The modern screen above is
-       what `useRedesign()` returns; this panel is what the same screen is when it returns false, and
+       what `useModernInterface()` returns; this panel is what the same screen is when it returns false, and
        it is a form.
        ══════════════════════════════════════════════════════════════════════════════════════════ -->
   <section class="screen" id="classic">
@@ -2253,7 +2253,7 @@
   </section>
 
   <footer class="mock-note" style="margin-top:34px; padding-top:16px; border-top:1px solid var(--surface-border); max-width:140ch;">
-    Drawn from the modern interface only (<code>useRedesign()</code>). 7 screens · 14 messages — 8 live, 2 written
+    Drawn from the modern interface only (<code>useModernInterface()</code>). 7 screens · 14 messages — 8 live, 2 written
     and never sent, 4 proposed · 7 template functions in <code>EmailService.ts</code>, every one a string literal ·
     1 from address (<code>SMTP_FROM</code> = <code>C7NTAX &lt;noreply@cyber7group.com&gt;</code>), 0 reply-to headers ·
     8 configuration sections, the proposed ninth written in the registry's own shape · 5 clients, 0 overriding the

@@ -6,7 +6,7 @@ import api from "../api";
 import { EmptyState, ListFooter, ListViews, PageHeader, StatCard, TableSkeleton } from "../components/ui";
 import { activityIcon } from "../components/activityIcons";
 import { useAuth } from "../hooks/useAuth";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import {
   activitiesFromAudit,
   activityHref,
@@ -88,7 +88,7 @@ const timeOfDay = (iso: string) =>
 
 export function MyActivityPage() {
   const { user, permissions } = useAuth();
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const userKey = user?.email ?? "anon";
 
   const [view, setView] = useState("all");
@@ -187,7 +187,7 @@ export function MyActivityPage() {
         <div className="space-y-6">
           {/* The figures this history already holds: its two halves, how many days it covers, and
               how long it is — read from the list above rather than asked for again. */}
-          {redesign && (
+          {modern && (
             <>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard label="Entries" value={activities.length} icon={<History size={13} />} tone="cyber" />
@@ -220,7 +220,7 @@ export function MyActivityPage() {
                 <h3 className="text-xs font-medium text-gray-400">
                   {day.label}
                 </h3>
-                <span className={redesign ? "text-[10px] text-gray-600 tabular-nums" : "text-[10px] text-gray-600"}>
+                <span className={modern ? "text-[10px] text-gray-600 tabular-nums" : "text-[10px] text-gray-600"}>
                   {day.items.length}{" "}
                   {day.items.length === 1 ? "activity" : "activities"}
                 </span>
@@ -263,7 +263,7 @@ export function MyActivityPage() {
                       </span>
                       <span className="shrink-0 text-right">
                         <span
-                          className={redesign ? "block text-[11px] text-gray-500 tabular-nums" : "block text-[11px] text-gray-500"}
+                          className={modern ? "block text-[11px] text-gray-500 tabular-nums" : "block text-[11px] text-gray-500"}
                           title={new Date(activity.at).toLocaleString()}
                         >
                           {timeOfDay(activity.at)}
@@ -272,7 +272,7 @@ export function MyActivityPage() {
                           {relativeTime(activity.at, now)}
                         </span>
                       </span>
-                      {redesign && <span className="chip shrink-0 text-[10px]">{activity.kind}</span>}
+                      {modern && <span className="chip shrink-0 text-[10px]">{activity.kind}</span>}
                     </Link>
                   );
                 })}
@@ -280,11 +280,11 @@ export function MyActivityPage() {
             </section>
           ))}
 
-          {redesign && shown.length === 0 && (
+          {modern && shown.length === 0 && (
             <p className="text-sm text-gray-500">Nothing in this view.</p>
           )}
 
-          {redesign && shown.length > 0 && (
+          {modern && shown.length > 0 && (
             <ListFooter
               from={1}
               to={shown.length}

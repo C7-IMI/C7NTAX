@@ -26,7 +26,7 @@ import { Permission } from "@C7NTAX/shared";
 import { PageHeader } from "../components/ui";
 import { Band, LoadingBlock, StateChip, UnavailablePanel } from "../components/email/emailChrome";
 import { useAuth } from "../hooks/useAuth";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import {
   clientDiffers,
   saveClientOverride,
@@ -61,7 +61,7 @@ const INHERIT_RULE =
   "An empty box means this client inherits the instance's value, and the chip beside the field says so. Clearing a box is how a value goes back to being inherited; nothing is deleted, because nothing was copied.";
 
 export function BrandingClientsPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const brand = useBrand();
   const clients = useBrandClients();
   const { permissions } = useAuth();
@@ -191,7 +191,7 @@ export function BrandingClientsPage() {
     </div>
   );
 
-  if (redesign) {
+  if (modern) {
     return (
       <div className="space-y-4">
         <PageHeader

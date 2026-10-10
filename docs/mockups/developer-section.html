@@ -53,7 +53,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mockup — Developer: purge data and a danger zone, in the modern interface</title>
 <style>
-  /* ── The application's own tokens, copied from docs/mockups/contacts-boards-redesign.html ──── */
+  /* ── The application's own tokens, copied from docs/mockups/contacts-boards-modern.html ──── */
   :root {
     --navy-50:#e8edf5; --navy-100:#c5d1e5; --navy-200:#9eb3d3; --navy-300:#7895c1; --navy-400:#5b7db3;
     --navy-500:#3e64a5; --navy-600:#365796; --navy-700:#2b4783; --navy-800:#223771; --navy-900:#142454;
@@ -492,7 +492,7 @@
   <header class="stack">
     <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
       <span class="mock-tag">Mockup — nothing changed</span>
-      <span class="mock-note">Developer — the modern interface only (<code>useRedesign()</code>)</span>
+      <span class="mock-note">Developer — the modern interface only (<code>useModernInterface()</code>)</span>
     </div>
     <h1 style="font-size:22px; letter-spacing:-.01em;">
       A section for the changes that are not normally available, that says what each one can destroy
@@ -765,7 +765,7 @@
               <span class="entry__where">uiFlags.ts · packages/shared/src/features/*</span>
             </div>
             <div class="entry__rows">
-              <div class="er er--do"><span class="er__k">Does</span><span class="er__v">One table of every kill switch with its owner, its default and which layer has overridden it: <code>c7_ui_p1</code>, <code>c7_ui_p2</code>, <code>c7_ui_palette</code>, <code>c7_ui_kumo_orgs</code>, <code>c7_ui_kumo_types</code>, <code>c7_ui_kumo_crumbs</code>, <code>c7_ui_context_menus</code>, <code>c7_ui_console</code>, <code>c7_ui_nav</code>, <code>c7_ui_redesign</code>, each with its <code>VITE_UI_*</code> deployment counterpart.</span></div>
+              <div class="er er--do"><span class="er__k">Does</span><span class="er__v">One table of every kill switch with its owner, its default and which layer has overridden it: <code>c7_ui_p1</code>, <code>c7_ui_p2</code>, <code>c7_ui_palette</code>, <code>c7_ui_kumo_orgs</code>, <code>c7_ui_kumo_types</code>, <code>c7_ui_kumo_crumbs</code>, <code>c7_ui_context_menus</code>, <code>c7_ui_console</code>, <code>c7_ui_nav</code>, <code>c7_ui_modern</code>, each with its <code>VITE_UI_*</code> deployment counterpart.</span></div>
               <div class="er er--kill"><span class="er__k">Can destroy</span><span class="er__v">A flag off hides a shipped capability for everyone on the deployment, and the person who switched it off is usually standing on the screen it just disappeared from.</span></div>
               <div class="er er--safe"><span class="er__k">Safeguard</span><span class="er__v">The three layers are shown separately — a per-browser <code>localStorage</code> override, the system setting that decides the default, and the <code>VITE_*</code> build switch that needs a restart — and the switch says which one is winning before it is pressed.</span></div>
             </div>
@@ -1766,7 +1766,7 @@ guard exists to catch: a document that lags the routes it describes.</span>
   <!-- ═══════════════════════════════════════════════════════════════════════════════════════════
        THE CLASSIC ARRANGEMENT — required, because this repository keeps two designs of every screen
        and they are two designs rather than one screen with a class toggled. The modern screen above is
-       what `useRedesign()` returns; this panel is what the same screen is when it returns false, and
+       what `useModernInterface()` returns; this panel is what the same screen is when it returns false, and
        it is a form.
        ══════════════════════════════════════════════════════════════════════════════════════════ -->
   <section class="screen" id="classic">
@@ -1821,7 +1821,7 @@ guard exists to catch: a document that lags the routes it describes.</span>
   </section>
 
   <footer class="mock-note" style="margin-top:34px; padding-top:16px; border-top:1px solid var(--surface-border); max-width:130ch;">
-    Drawn from the modern interface only (<code>useRedesign()</code>). 34 catalogue entries across 6
+    Drawn from the modern interface only (<code>useModernInterface()</code>). 34 catalogue entries across 6
     groups · 8,085 rows removed and 54 kept by the purge this instance would perform right now ·
     85 tables in <code>WIPE_MODELS</code>, 13 in <code>KEEP_MODELS</code> · 3 live sessions ·
     17 accounts, 6 roles · 4 API keys · 21 migrations, latest

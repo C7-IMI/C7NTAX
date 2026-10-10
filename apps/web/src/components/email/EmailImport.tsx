@@ -43,7 +43,7 @@ import { useCallback, useRef, useState, type ClipboardEvent } from "react";
 import toast from "react-hot-toast";
 import { ClipboardPaste, FileText, Loader2, Upload, X } from "lucide-react";
 import api from "../../api";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import {
   CallNote, EMAIL_API, Tile, blockLabel, blockReads, blockSummary, describeFailure, unwrap,
   type CallFailure, type EmailBlock,
@@ -168,7 +168,7 @@ export interface EmailImportProps {
 }
 
 export function EmailImport({ onSave, onEditInComposer, className = "" }: EmailImportProps) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [choices, setChoices] = useState<MappingChoice>(DEFAULT_MAPPING);
   const [source, setSource] = useState<ImportSource | null>(null);
   const [outcome, setOutcome] = useState<ImportOutcome | null>(null);
@@ -272,7 +272,7 @@ export function EmailImport({ onSave, onEditInComposer, className = "" }: EmailI
 
   const mappingTable = (title: string) => (
     <>
-      <h3 className={redesign ? "text-[11px] uppercase tracking-wider text-gray-500" : "text-sm font-semibold text-white"}>{title}</h3>
+      <h3 className={modern ? "text-[11px] uppercase tracking-wider text-gray-500" : "text-sm font-semibold text-white"}>{title}</h3>
       <div className="mt-2 overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
@@ -389,7 +389,7 @@ export function EmailImport({ onSave, onEditInComposer, className = "" }: EmailI
   );
 
   // ══ Modern: a flow of decisions ═══════════════════════════════════════════
-  if (redesign) {
+  if (modern) {
     return (
       <div className={`space-y-4 ${className}`}>
         <div

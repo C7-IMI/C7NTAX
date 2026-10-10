@@ -7,7 +7,7 @@ import { TableSkeleton } from "../components/ui/Skeleton";
 import { ProductPicker } from "../components/ProductPicker";
 import { PurchaseOrderDialog } from "../components/PurchaseOrderDialog";
 import { PageHeader, ListViews, ListFooter } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 interface PO{id:string;poNumber:string;vendorId:string;status:string;total:number;expectedAt?:string;createdAt:string;vendor?:{name:string};}
 interface POItem{description:string;quantity:number;unitPrice:number;productId?:string|null;sku?:string|null;}
@@ -57,7 +57,7 @@ export function ProcurementPage(){
   };
 
   const SC:Record<string,string>={draft:"bg-gray-600/20 text-gray-400",ordered:"bg-blue-600/20 text-blue-400",shipped:"bg-amber-600/20 text-amber-400",received:"bg-green-600/20 text-green-400"};
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [view,setView]=useState("all");
   const PO_STATUSES = ["draft","ordered","shipped","received"] as const;
   const poViews = [
@@ -81,7 +81,7 @@ export function ProcurementPage(){
       <button onClick={()=>setShowNew(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16}/>New PO</button>
     </div>
 
-    {redesign && pos.length > 0 && (
+    {modern && pos.length > 0 && (
       <div className="flex flex-wrap items-center gap-2">
         <ListViews views={poViews} value={view} onChange={(id)=>{ setView(id); setPage(1); }} label="Purchase order views" />
         <span className="text-xs text-gray-500">{shownPos.length} shown · ${outstanding.toLocaleString(undefined, { maximumFractionDigits: 0 })} outstanding</span>
@@ -119,7 +119,7 @@ export function ProcurementPage(){
           <td className="p-3 text-gray-400 text-xs hidden md:table-cell">{new Date(po.createdAt).toLocaleDateString()}</td>
           <td className="p-3 text-right" onClick={e=>e.stopPropagation()}>{po.status==="shipped"&&<button onClick={()=>handleReceive(po.id)} className="text-xs text-green-400 hover:text-green-300"><CheckCircle size={13} className="inline mr-1"/>Receive</button>}</td>
         </tr>))}</tbody></table></div>
-        {redesign && shownPos.length > 0 && (
+        {modern && shownPos.length > 0 && (
           <ListFooter
             from={pageStart + 1}
             to={pageStart + pageRows.length}

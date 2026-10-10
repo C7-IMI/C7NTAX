@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import api from "../api";
 import { EmptyState, ListFooter, ListViews, PageHeader, Section, StatCard } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { Chip } from "./Configuration";
 
 /** What `GET /api/api-keys` returns. Never the secret, never the hash. */
@@ -110,7 +110,7 @@ const when = (iso: string | null): string => {
 };
 
 export function ApiAccessPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [keys, setKeys] = useState<ApiKeySummary[]>([]);
   const [keyView, setKeyView] = useState("all");
   const [loading, setLoading] = useState(true);
@@ -309,7 +309,7 @@ export function ApiAccessPage() {
       />
 
       {/* ── The figures the page already holds ── */}
-      {redesign ? (
+      {modern ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Keys in the inventory" value={keys.length} icon={<KeyRound size={14} />} tone="cyber" />
           <StatCard label="Active" value={activeKeyCount} icon={<ShieldCheck size={14} />} tone="green" />
@@ -550,7 +550,7 @@ export function ApiAccessPage() {
       ) : null}
 
       {/* ── The inventory ── */}
-      {redesign && !loading && !denied && keys.length > 0 ? (
+      {modern && !loading && !denied && keys.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews
             views={[
@@ -617,7 +617,7 @@ export function ApiAccessPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(redesign ? shownKeys : keys).map((key) => (
+                  {(modern ? shownKeys : keys).map((key) => (
                     <tr key={key.id} className="border-b border-surface-border last:border-0 align-top">
                       <td className="px-4 py-3">
                         <p className="text-gray-200">{key.name}</p>
@@ -625,7 +625,7 @@ export function ApiAccessPage() {
                         {key.description ? <p className="text-[11px] text-gray-500 mt-1">{key.description}</p> : null}
                       </td>
                       <td className="px-4 py-3">
-                        <p className={`text-xs text-gray-400${redesign ? " tabular-nums" : ""}`}>{key.permissions.length} scope{key.permissions.length === 1 ? "" : "s"}</p>
+                        <p className={`text-xs text-gray-400${modern ? " tabular-nums" : ""}`}>{key.permissions.length} scope{key.permissions.length === 1 ? "" : "s"}</p>
                         <p className="text-[11px] text-gray-500 font-mono mt-0.5 break-words max-w-[240px]">
                           {key.permissions.join(", ")}
                         </p>
@@ -637,14 +637,14 @@ export function ApiAccessPage() {
                           : null}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-400">
-                        <p className={redesign ? "tabular-nums" : undefined}>{when(key.lastUsedAt)}</p>
-                        <p className={`text-[11px] text-gray-500 mt-0.5${redesign ? " tabular-nums" : ""}`}>
+                        <p className={modern ? "tabular-nums" : undefined}>{when(key.lastUsedAt)}</p>
+                        <p className={`text-[11px] text-gray-500 mt-0.5${modern ? " tabular-nums" : ""}`}>
                           {key.requestCount.toLocaleString()} request{key.requestCount === 1 ? "" : "s"}
                           {key.lastUsedIp ? ` · ${key.lastUsedIp}` : ""}
                         </p>
                       </td>
                       <td className="px-4 py-3">
-                        {redesign ? (
+                        {modern ? (
                           <span className={`chip ${key.state === "active" ? "chip--good" : key.state === "expired" ? "chip--warn" : "chip--bad"}`}>
                             {key.state}
                           </span>
@@ -707,7 +707,7 @@ export function ApiAccessPage() {
                       </td>
                     </tr>
                   ))}
-                  {redesign && shownKeys.length === 0 ? (
+                  {modern && shownKeys.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-500">
                         Nothing in this view.
@@ -717,7 +717,7 @@ export function ApiAccessPage() {
                 </tbody>
               </table>
             </div>
-            {redesign && shownKeys.length > 0 ? (
+            {modern && shownKeys.length > 0 ? (
               <ListFooter
                 from={1}
                 to={shownKeys.length}

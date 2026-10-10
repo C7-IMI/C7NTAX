@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { Plus, BookOpen, Search, Eye, ThumbsUp, Sparkles, Check, Trash2, ExternalLink } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { PageHeader, ListViews } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 interface Article{id:string;title:string;slug:string;excerpt?:string;content?:string;status:string;visibility:string;tags:string[];viewCount:number;helpfulCount:number;updatedAt:string;aiGenerated?:boolean;sourceTicketId?:string|null;reviewNote?:string|null;}
 
@@ -16,7 +16,7 @@ export function KnowledgeBasePage(){
   const [showNew,setShowNew]=useState(false);
   const [form,setForm]=useState({title:"",content:"",status:"draft",visibility:"internal",tags:""});
   const [selected,setSelected]=useState<Article|null>(null);
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [view,setView]=useState("all");
 
   const fetch=()=>{api.get("/kb?limit=100").then(r=>setArticles(r.data.data||[])).catch(()=>{}).finally(()=>setLoading(false))};
@@ -56,7 +56,7 @@ export function KnowledgeBasePage(){
 
     <div className="relative"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"/><input className="input-field pl-9" placeholder="Search articles or tags..." value={search} onChange={e=>setSearch(e.target.value)}/></div>
 
-    {redesign && articles.length > 0 && (
+    {modern && articles.length > 0 && (
       <div className="flex flex-wrap items-center gap-2">
         <ListViews views={articleViews} value={view} onChange={setView} label="Article views" />
         <span className="text-xs text-gray-500">{shownArticles.length} shown · {articles.reduce((n,a)=>n+(a.viewCount||0),0).toLocaleString()} reads</span>
@@ -102,7 +102,7 @@ export function KnowledgeBasePage(){
 
         {loading?<TableSkeleton />:shownArticles.length===0?<div className="text-center py-12 card"><BookOpen size={40} className="text-gray-600 mx-auto mb-3"/><p className="text-gray-500">{articles.length===0?"No articles":"Nothing in this view"}</p></div>:shownArticles.map(a=>(<div key={a.id} className="card hover:border-cyber-500/30 transition-colors cursor-pointer group" onClick={()=>setSelected(a)}>
           <div className="flex items-start justify-between"><div className="flex-1"><h3 className="font-semibold text-white text-sm group-hover:text-cyber-400">{a.title}</h3>{a.excerpt&&<p className="text-xs text-gray-500 mt-1 line-clamp-2">{a.excerpt}</p>}</div>
-            <div className="flex items-center gap-2 shrink-0">{redesign
+            <div className="flex items-center gap-2 shrink-0">{modern
               ? <><span className={`chip text-[10px] ${a.status==="published"?"chip--good":a.status==="archived"?"chip--bad":""}`}>{a.status}</span><span className="chip text-[10px]">{a.visibility}</span></>
               : <><span className={"badge text-xs "+(SC[a.status]||"")}>{a.status}</span><span className={"badge text-xs "+(VC[a.visibility]||"")}>{a.visibility}</span></>}</div></div>
           <div className="flex items-center gap-4 mt-2 text-xs text-gray-500"><span className="flex items-center gap-1"><Eye size={12}/>{a.viewCount}</span><span className="flex items-center gap-1"><ThumbsUp size={12}/>{a.helpfulCount}</span><span>{new Date(a.updatedAt).toLocaleDateString()}</span>{a.tags?.map(t=><span key={t} className="bg-surface-lighter rounded px-1.5 py-0.5 text-gray-600">{t}</span>)}</div>

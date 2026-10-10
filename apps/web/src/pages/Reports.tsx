@@ -20,7 +20,7 @@ import { ScheduleReportDialog } from "../components/reports/ScheduleReportDialog
 /** The filters are the viewer's to define; they stay exported here because this screen used to own them. */
 export type { FilterOptions, ReportFilters } from "../components/reports/ReportViewer";
 import { PageHeader, Tabs } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 const TABS: Array<{ id: string; label: string; icon: LucideIcon; to: string }> = [
   { id: "dashboard", label: "Dashboards", icon: BarChart3, to: "/reports" },
@@ -43,7 +43,7 @@ export function ReviewsPage({ period }: { period?: string }) {
 
 export function ReportsPage({ tab: initialTab, period }: { tab?: string; period?: string }) {
   const navigate = useNavigate();
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const activeTab = initialTab === "qbr" ? "reviews" : initialTab || "dashboard";
 
   return (
@@ -56,7 +56,7 @@ export function ReportsPage({ tab: initialTab, period }: { tab?: string; period?
         </div>
       </div>
 
-      {redesign ? (
+      {modern ? (
         <Tabs
           label="Reporting sections"
           items={TABS.map(t => ({ id: t.id, label: t.label }))}

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 
 const TONES = {
   cyber: "bg-cyber-600/20 text-cyber-400",
@@ -12,7 +12,7 @@ const TONES = {
 /**
  * Compact KPI tile used on dashboards and summary strips.
  *
- * The redesigned tile leads with the number rather than the icon: a dashboard is read by scanning
+ * The Modern tile leads with the number rather than the icon: a dashboard is read by scanning
  * figures, and an icon sitting where the figure belongs makes that scan slower. The glyph moves to
  * the corner, where it labels the figure without competing with it.
  *
@@ -34,9 +34,9 @@ export function StatCard({
   tone?: keyof typeof TONES;
   foot?: ReactNode;
 }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
 
-  if (redesign) {
+  if (modern) {
     return (
       <div className="card card--interactive">
         <div className="flex items-start justify-between gap-2">

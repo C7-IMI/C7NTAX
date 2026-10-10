@@ -10,7 +10,7 @@ import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { ListFooter, ListViews, PageHeader, StatCard } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 
 interface DomainRow {
@@ -39,7 +39,7 @@ function expiryTone(row: DomainRow): string {
 }
 
 export function KumoDomainsPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [searchParams, setSearchParams] = useSearchParams();
   const [rows, setRows] = useState<DomainRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -133,7 +133,7 @@ export function KumoDomainsPage() {
     { id: "Certificate", label: "Certificates", count: certificateCount },
   ];
 
-  /** The redesigned views strip sets the same ?kind= the rail, the menu and the breadcrumbs use. */
+  /** The Modern views strip sets the same ?kind= the rail, the menu and the breadcrumbs use. */
   const setKind = (id: string) => {
     const next = new URLSearchParams(searchParams);
     if (id) next.set("kind", id); else next.delete("kind");
@@ -257,7 +257,7 @@ export function KumoDomainsPage() {
       </div>
 
       {/* Figures — the state of the estate this tracker is holding. */}
-      {redesign && (
+      {modern && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard label="Tracked" value={visible.length} icon={<Globe size={13} />} />
           <StatCard label="Expired" value={expiredCount} icon={<CalendarX size={13} />} tone={expiredCount > 0 ? "red" : "neutral"} />
@@ -267,7 +267,7 @@ export function KumoDomainsPage() {
       )}
 
       {/* Views — domains and certificates are different records, so the list names both. */}
-      {redesign && (
+      {modern && (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews views={domainViews} value={kind} onChange={setKind} label="Domains and certificates" />
           <span className="text-xs text-gray-500 tabular-nums">
@@ -304,7 +304,7 @@ export function KumoDomainsPage() {
                     </div>
                     {when ? (
                       <span className="text-right shrink-0">
-                        {redesign ? (
+                        {modern ? (
                           <span className={`chip ${when.overdue ? "chip--bad" : when.days <= 30 ? "chip--warn" : "chip--good"}`}>
                             {when.overdue ? "expired" : when.label}
                           </span>
@@ -323,7 +323,7 @@ export function KumoDomainsPage() {
               );
             })
             }
-            {redesign && (
+            {modern && (
               <ListFooter from={1} to={visible.length} total={visible.length} page={1} pages={1} onPage={() => {}}
                 note={filter === "expired" ? "Everything already past its date" : filter === "upcoming" ? "Due within 90 days" : "Renewals and cover in one list"} />
             )}
@@ -351,7 +351,7 @@ export function KumoDomainsPage() {
                     <p className="text-xs text-gray-500">{selected.kind}</p>
                   </div>
                 </div>
-                {redesign ? (
+                {modern ? (
                   <span className={`chip ${
                     selected.expiryDate && daysUntil(selected.expiryDate).overdue
                       ? "chip--bad"

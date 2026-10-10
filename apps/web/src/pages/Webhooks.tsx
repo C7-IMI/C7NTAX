@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import { Copy, KeyRound, Pencil, Send, ShieldCheck, Trash2, X } from "lucide-react";
 import api from "../api";
 import { EmptyState, ListFooter, ListViews, PageHeader, Section, StatCard } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { Chip } from "./Configuration";
 
 interface Hook {
@@ -139,7 +139,7 @@ function EventPicker({ options, selected, onToggle }: {
 }
 
 export function WebhooksPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [hooks, setHooks] = useState<Hook[]>([]);
   const [hookView, setHookView] = useState("all");
   const [deliveryView, setDeliveryView] = useState("all");
@@ -309,7 +309,7 @@ export function WebhooksPage() {
       />
 
       {/* ── The figures the page already holds ── */}
-      {redesign ? (
+      {modern ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Endpoints registered" value={hooks.length} icon={<Send size={14} />} tone="cyber" />
           <StatCard label="Active endpoints" value={activeHooks} icon={<ShieldCheck size={14} />} tone="green" />
@@ -442,7 +442,7 @@ export function WebhooksPage() {
       ) : null}
 
       {/* ── Registered endpoints ── */}
-      {redesign && !loading && hooks.length > 0 ? (
+      {modern && !loading && hooks.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews
             views={[
@@ -473,7 +473,7 @@ export function WebhooksPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {(redesign ? shownHooks : hooks).map((hook) => {
+            {(modern ? shownHooks : hooks).map((hook) => {
               const outcome = outcomes[hook.id];
               return (
               <div key={hook.id} className="card">
@@ -539,7 +539,7 @@ export function WebhooksPage() {
                           <Chip tone="info">{hook.retryCount === 1 ? "1 attempt" : `up to ${hook.retryCount} attempts`}</Chip>
                         </div>
                         <p className="text-xs text-gray-400 mt-1 break-all font-mono">{hook.url}</p>
-                        <p className={`text-xs text-gray-500 mt-1${redesign ? " tabular-nums" : ""}`}>
+                        <p className={`text-xs text-gray-500 mt-1${modern ? " tabular-nums" : ""}`}>
                           registered {formatWhen(hook.createdAt)} · {hook.events.length} event{hook.events.length === 1 ? "" : "s"}
                         </p>
                       </div>
@@ -601,10 +601,10 @@ export function WebhooksPage() {
               </div>
               );
             })}
-            {redesign && shownHooks.length === 0 ? (
+            {modern && shownHooks.length === 0 ? (
               <div className="card"><p className="text-sm text-gray-500">Nothing in this view.</p></div>
             ) : null}
-            {redesign && shownHooks.length > 0 ? (
+            {modern && shownHooks.length > 0 ? (
               <ListFooter
                 from={1}
                 to={shownHooks.length}
@@ -620,7 +620,7 @@ export function WebhooksPage() {
       </Section>
 
       {/* ── Delivery log ── */}
-      {redesign && deliveries.length > 0 ? (
+      {modern && deliveries.length > 0 ? (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews
             views={[
@@ -649,21 +649,21 @@ export function WebhooksPage() {
                 description="The last 100 deliveries appear here. Press Send test on an endpoint to put the first one in the list without waiting for an incident."
               />
             ) : (
-              (redesign ? shownDeliveries : deliveries).map((delivery) => (
+              (modern ? shownDeliveries : deliveries).map((delivery) => (
                 <div key={delivery.id} className="px-5 py-3">
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span className="text-sm text-white">{eventLabel(delivery.event)}</span>
-                    {redesign ? (
+                    {modern ? (
                       <span className={`chip ${delivery.status === "delivered" ? "chip--good" : delivery.status === "failed" ? "chip--bad" : "chip--warn"}`}>
                         {delivery.status}
                       </span>
                     ) : (
                       <Chip tone={STATUS_TONE[delivery.status] ?? "muted"}>{delivery.status}</Chip>
                     )}
-                    <span className={`text-xs text-gray-500${redesign ? " tabular-nums" : ""}`}>
+                    <span className={`text-xs text-gray-500${modern ? " tabular-nums" : ""}`}>
                       {delivery.attempts} attempt{delivery.attempts === 1 ? "" : "s"}
                     </span>
-                    <span className={`text-xs text-gray-500${redesign ? " tabular-nums" : ""}`}>{formatWhen(delivery.createdAt)}</span>
+                    <span className={`text-xs text-gray-500${modern ? " tabular-nums" : ""}`}>{formatWhen(delivery.createdAt)}</span>
                     <span className="text-xs text-gray-400 ml-auto">{hookName(delivery.webhookId)}</span>
                   </div>
                   <details className="mt-2">
@@ -677,11 +677,11 @@ export function WebhooksPage() {
                 </div>
               ))
             )}
-            {redesign && deliveries.length > 0 && shownDeliveries.length === 0 ? (
+            {modern && deliveries.length > 0 && shownDeliveries.length === 0 ? (
               <p className="text-sm text-gray-500 py-6 text-center">Nothing in this view.</p>
             ) : null}
           </div>
-          {redesign && shownDeliveries.length > 0 ? (
+          {modern && shownDeliveries.length > 0 ? (
             <ListFooter
               from={1}
               to={shownDeliveries.length}

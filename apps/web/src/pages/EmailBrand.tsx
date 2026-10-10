@@ -31,7 +31,7 @@ import { useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Permission } from "@C7NTAX/shared";
 import { useAuth } from "../hooks/useAuth";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { EmailBrandModern } from "../components/email/EmailBrandModern";
 import { EmailBrandClassic } from "../components/email/EmailBrandClassic";
 import {
@@ -47,7 +47,7 @@ import {
 } from "../components/email/brandScreen";
 
 export function EmailBrandPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [searchParams, setSearchParams] = useSearchParams();
   const requested = searchParams.get("view");
   const subject: BrandSubject = BRAND_SUBJECTS.find((entry) => entry.id === requested)?.id ?? "kit";
@@ -141,5 +141,5 @@ export function EmailBrandPage() {
     },
   };
 
-  return redesign ? <EmailBrandModern {...props} /> : <EmailBrandClassic {...props} />;
+  return modern ? <EmailBrandModern {...props} /> : <EmailBrandClassic {...props} />;
 }

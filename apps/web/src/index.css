@@ -360,7 +360,7 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; 
    unrelated scale), and every money or quantity column is tabular.
 
    Every selector is scoped to `.ticket-print-only`, and the sheet's own type, colour and rules reach
-   for `!important`. That is not decoration: the interface's table rules (`html[data-ui-redesign="true"]
+   for `!important`. That is not decoration: the interface's table rules (`html[data-ui-modern="true"]
    table thead th` sets an 11px header, a tinted sticky header row and its own padding) are written for
    the screen, sit later in this file, and would otherwise restyle a *printed table* — which is exactly
    the kind of leak the third-surface rule in DESIGN.md §8 forbids. A print block is the one place
@@ -581,27 +581,27 @@ html[data-theme="light"] {
 [data-ui-p2="true"] main > * { max-width: 1600px; margin-inline: auto; }
 
 /* ── The modern theme ───────────────────────────────────────────────────────
-   The redesigned interface is not only a different arrangement of pages, it is a
+   The Modern interface is not only a different arrangement of pages, it is a
    denser and flatter one: 34px table rows, 13px cards, 11px uppercase headers, a
    hairline where there used to be a shadow.
 
-   Every rule is scoped to `data-ui-redesign`, which `Layout.tsx` sets from the same
+   Every rule is scoped to `data-ui-modern`, which `Layout.tsx` sets from the same
    switch as everything else, so the classic interface keeps the styling it has
    always had — down to the rule — and every page in the application picks these up
    at once. That is the only honest way to say the whole application has been
-   redesigned rather than the pages somebody happened to visit.
+   Modern rather than the pages somebody happened to visit.
 
    The palette is deliberately absent: colour schemes are the user's choice, and the
    app's own Brand Crimson is already the near-black the mockup asks for. This is
    about structure, density and type. */
-html[data-ui-redesign="true"] main { padding: 1rem; }
-html[data-ui-redesign="true"] .card {
+html[data-ui-modern="true"] main { padding: 1rem; }
+html[data-ui-modern="true"] .card {
   padding: 0.8125rem 0.9375rem;
   border-radius: 0.75rem;
   box-shadow: none;
 }
 /* Cards that are a table's frame carry no padding at all. */
-html[data-ui-redesign="true"] .card.p-0 { padding: 0; }
+html[data-ui-modern="true"] .card.p-0 { padding: 0; }
 
 /*
  * The ticket detail's toolbar is pinned — `sticky top-0` — so anything the browser scrolls to
@@ -617,12 +617,12 @@ html[data-ui-redesign="true"] .card.p-0 { padding: 0; }
  * Every card in the pane carries it rather than only the composer, because whichever card is
  * scrolled to is the one that needs it, and a scroll margin on the wrong card is invisible.
  *
- * Scoped to the redesigned interface, because that is where the bar is pinned: the classic toolbar
+ * Scoped to the Modern interface, because that is where the bar is pinned: the classic toolbar
  * scrolls away with everything else, so a margin there would only open a gap above the card.
  */
-html[data-ui-redesign="true"] .ticket-pane > .card { scroll-margin-top: 6rem; }
-html[data-ui-redesign="true"] .card > h3:first-child,
-html[data-ui-redesign="true"] .card > .flex:first-child > h3 {
+html[data-ui-modern="true"] .ticket-pane > .card { scroll-margin-top: 6rem; }
+html[data-ui-modern="true"] .card > h3:first-child,
+html[data-ui-modern="true"] .card > .flex:first-child > h3 {
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -630,8 +630,8 @@ html[data-ui-redesign="true"] .card > .flex:first-child > h3 {
 }
 
 /* Tables: the queue's density — hairline rules, an 11px header that stays put, hover. */
-html[data-ui-redesign="true"] table { border-collapse: separate; border-spacing: 0; }
-html[data-ui-redesign="true"] table thead th {
+html[data-ui-modern="true"] table { border-collapse: separate; border-spacing: 0; }
+html[data-ui-modern="true"] table thead th {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -643,20 +643,20 @@ html[data-ui-redesign="true"] table thead th {
   z-index: 1;
   background: var(--surface);
 }
-html[data-ui-redesign="true"] table tbody td { padding: 0.4375rem 0.75rem; }
-html[data-ui-redesign="true"] table tbody tr { border-color: color-mix(in srgb, var(--surface-border) 70%, transparent); }
-html[data-ui-redesign="true"] table tbody tr:hover { background: var(--surface-light); }
+html[data-ui-modern="true"] table tbody td { padding: 0.4375rem 0.75rem; }
+html[data-ui-modern="true"] table tbody tr { border-color: color-mix(in srgb, var(--surface-border) 70%, transparent); }
+html[data-ui-modern="true"] table tbody tr:hover { background: var(--surface-light); }
 
 /* One type scale down, with the tighter tracking a dense interface reads well in. */
-html[data-ui-redesign="true"] h1,
-html[data-ui-redesign="true"] h2 { letter-spacing: -0.01em; }
-html[data-ui-redesign="true"] .text-2xl { font-size: 1.375rem; line-height: 1.6rem; }
+html[data-ui-modern="true"] h1,
+html[data-ui-modern="true"] h2 { letter-spacing: -0.01em; }
+html[data-ui-modern="true"] .text-2xl { font-size: 1.375rem; line-height: 1.6rem; }
 
 /* Controls, sized to the new row height rather than to the old one. */
-html[data-ui-redesign="true"] .input-field {
+html[data-ui-modern="true"] .input-field {
   font-size: 0.8125rem;
   /*
-   * The vertical padding and the radius are the redesign's; the **horizontal** padding is not, because
+   * The vertical padding and the radius are the Modern interface's; the **horizontal** padding is not, because
    * this rule outranks the utilities — a `padding` shorthand here silently undid the `pl-9` that every
    * field carrying an icon depends on to keep its text clear of the magnifier, in all nineteen of them.
    * The field's own `px-3` is the floor, and a `pl-*` beside it is a decision the rule should not have
@@ -666,17 +666,17 @@ html[data-ui-redesign="true"] .input-field {
   padding-bottom: 0.4375rem;
   border-radius: 0.5rem;
 }
-html[data-ui-redesign="true"] .btn-primary,
-html[data-ui-redesign="true"] .btn-secondary,
-html[data-ui-redesign="true"] .btn-danger {
+html[data-ui-modern="true"] .btn-primary,
+html[data-ui-modern="true"] .btn-secondary,
+html[data-ui-modern="true"] .btn-danger {
   font-size: 0.8125rem;
   padding: 0.4375rem 0.75rem;
   border-radius: 0.5rem;
 }
-html[data-ui-redesign="true"] .badge { font-size: 10.5px; padding: 0.0625rem 0.4375rem; }
+html[data-ui-modern="true"] .badge { font-size: 10.5px; padding: 0.0625rem 0.4375rem; }
 
 /* Dialogs and popovers take the card's hairline rather than a ring. */
-html[data-ui-redesign="true"] [role="dialog"] { border-radius: 0.875rem; }
+html[data-ui-modern="true"] [role="dialog"] { border-radius: 0.875rem; }
 
 /* ── Colour schemes ───────────────────────────────────────────────────────
    Optional palettes, selected with data-palette-dark / data-palette-light on
@@ -945,7 +945,7 @@ html[data-theme="light"][data-palette-light="contrast"] {
 }
 
 /* ── The sign-in page ────────────────────────────────────────────────────────
-   The one rule below belongs to the redesigned sign-in page and nothing else, and
+   The one rule below belongs to the Modern sign-in page and nothing else, and
    it is scoped to `.signin-surface`, that page's own root, so no other screen moves.
 
    **The two-option choice.** A radiogroup of real radios — the input is hidden, the

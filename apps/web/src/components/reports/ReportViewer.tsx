@@ -26,7 +26,7 @@ import {
   ReportBody, type ReportDocument, type Section,
 } from "./reportKit";
 import type { StandardReport } from "./standardReports";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 
 // ═══════════════════════════════════════════════════════════════════
 //  Shared filter state — what a report is asked, before it is drawn
@@ -219,7 +219,7 @@ export function ReportViewer({
   onValue: (key: string, value: string | number | boolean) => void;
 }) {
   const [payload, setPayload] = useState<unknown>(null);
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -278,7 +278,7 @@ export function ReportViewer({
           {/* The modern screen offers one control — Produce — because Print, PDF, Excel and CSV are one
               decision. The classic screen keeps the two buttons it has always had, and its Print goes
               straight to paper; the chooser is the dialog behind Export. */}
-          {redesign ? (
+          {modern ? (
             <button className="chip chip--on" onClick={() => setShowExport(true)} disabled={!payload}>
               Produce<span className="chip__n">{sections.length}</span>
             </button>
@@ -294,10 +294,10 @@ export function ReportViewer({
 
       <FilterBar report={report} filters={filters} onChange={onFilters} options={options} onRefresh={load} busy={loading} quarterPicker={quarterPicker} values={values} onValue={onValue} />
 
-      {/* The redesigned viewer states what it is showing and offers the two things the mockup's
+      {/* The Modern viewer states what it is showing and offers the two things the mockup's
           reporting page offers: the period as a strip rather than two date fields, and the way into
           the designer for the pack this report is not. */}
-      {redesign && (
+      {modern && (
         <div className="flex flex-wrap items-center gap-2">
           {report.filters.period && !quarterPicker && (
             <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Report period">
@@ -320,7 +320,7 @@ export function ReportViewer({
         </div>
       )}
 
-      {payload != null && !redesign && (
+      {payload != null && !modern && (
         <p className="text-xs text-gray-500">
           {periodLabel(payload) ? `Period: ${periodLabel(payload)} · ` : ""}
           Generated {new Date().toLocaleString()} · {sections.length} section{sections.length === 1 ? "" : "s"}
@@ -371,7 +371,7 @@ const OUTPUT_FORMATS: Array<{ id: OutputFormat; label: string; chip: string; sen
  * matrix that fits landscape does not fit portrait — and whether the **basis block** travels with the
  * file, because a spreadsheet and a PDF disagree about what "where these figures came from" even means.
  *
- * Two designs, deliberately. The modern arrangement is the redesign's own furniture: a sheet with a
+ * Two designs, deliberately. The modern arrangement is the Modern interface's own furniture: a sheet with a
  * sentence beside each of the four ways out, the paper as a choice you press, and a countable footer.
  * The classic arrangement is a form — a heading, labelled fields in a grid, a select per question and
  * Cancel/Confirm — and it lists "Print now, on paper" as the fourth entry in the format select, because
@@ -394,7 +394,7 @@ export function ExportDialog({
   onClose: () => void;
   values: ReportOptionValues;
 }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   // The paper and the basis block start where the document's own family says they should, so the
   // answer a person does not change is the one the instance designed.
   const defaults = documentBrandOf(document_.family ?? "report.standard").presentation;
@@ -525,7 +525,7 @@ export function ExportDialog({
     </div>
   );
 
-  if (redesign) {
+  if (modern) {
     return (
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-0 sm:p-4" onClick={onClose}>
         <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-surface-border bg-surface animate-slide-up" onClick={e => e.stopPropagation()}>

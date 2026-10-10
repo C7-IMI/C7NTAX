@@ -14,7 +14,7 @@ import {
   Pencil, Copy, Trash2, Power, PackagePlus, PackageMinus, Download, RotateCw, Eraser, Filter, X,
 } from "lucide-react";
 import { PageHeader, ListViews, ListFooter } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 /**
  * Administration → Product Catalog.
@@ -115,7 +115,7 @@ export function ProductCatalogPage() {
   const [form, setForm] = useState<Record<string, unknown>>({ ...emptyForm });
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<Product | null>(null);
-  const redesign = useRedesign();
+  const modern = useModernInterface();
 
   const canCreate = permissions.includes(Permission.ProductCreate);
   const canEdit = permissions.includes(Permission.ProductEdit);
@@ -341,12 +341,12 @@ export function ProductCatalogPage() {
         <label className="flex items-center gap-1.5 text-xs text-gray-400">
           <input type="checkbox" checked={showInactive} onChange={e => setShowInactive(e.target.checked)} /> Include retired
         </label>
-        {redesign && <span className="text-xs text-gray-500">{rows.length} shown · {totals.low} below reorder point</span>}
+        {modern && <span className="text-xs text-gray-500">{rows.length} shown · {totals.low} below reorder point</span>}
       </div>
 
       {/* The two checkboxes are the same two decisions as chips, and the counts are what tell you
           whether pressing one is worth it. The chips set the checkboxes; there is one state. */}
-      {redesign && (
+      {modern && (
         <ListViews
           views={[
             { id: "all", label: "All", count: products.length },
@@ -448,7 +448,7 @@ export function ProductCatalogPage() {
               </tbody>
             </table>
           </div>
-          {redesign && rows.length > 0 && (
+          {modern && rows.length > 0 && (
             <ListFooter from={1} to={rows.length} total={rows.length} page={1} pages={1} onPage={() => {}} note={`$${totals.monthly.toFixed(2)} monthly list value`} />
           )}
         </div>

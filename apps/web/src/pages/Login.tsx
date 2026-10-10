@@ -2,14 +2,14 @@
  * Signing in — the one page in the application that is outside the shell.
  *
  * A sign-in page is not a dashboard. Its whole job is one question — who are you, and can you prove
- * it — so everything drawn on it either serves that or competes with two fields. The redesigned page
+ * it — so everything drawn on it either serves that or competes with two fields. The Modern page
  * is therefore one path for the eye: the mark, one sentence, the way in, the field, the act. Nothing
  * moves, nothing advertises, and the backend's state is one sentence rather than a wall of tiles.
  *
  * **Two designs, deliberately.** This page sits outside the shell, so the switch that decides which
  * interface a person gets has to reach it as well:
  *
- *  · **Redesign** (`redesign`) — the page composed again. The way in is the first choice: a passkey
+ *  · **Modern** (`modern`) — the page composed again. The way in is the first choice: a passkey
  *    where the browser has one, a password one press away, both on one shared account field so
  *    switching never loses what was typed. Fields carry real labels rather than placeholders, and a
  *    failure is stated at the field it belongs to instead of in a toast that can expire before it is
@@ -18,18 +18,18 @@
  *    `components/SignInStatus.tsx` — and the four steps sign-in can take (credentials, second factor,
  *    a password an administrator set, a new passkey) are cards on one surface rather than four screens
  *    on three backgrounds.
- *  · **Classic** (`!redesign`) — the page exactly as it was, kept below rather than rewritten, so
+ *  · **Classic** (`!modern`) — the page exactly as it was, kept below rather than rewritten, so
  *    switching the interface off really does give the previous page back: its own `ServiceHealthPanel`,
  *    its toasts, its separate second-factor screen, its placeholder-only fields. Nothing in those two
  *    returns should be tidied — their job is to be what was there before this change arrived.
  *
- * Reverting one browser is `localStorage.setItem("c7_ui_redesign", "0")` and a reload; see
- * INTERFACE-ROLLBACK.md and `lib/uiFlags.ts`. `useRedesign()` resolves on this page without a session:
- * its narrowest layers — the `c7_ui_redesign` flag and a deployment-wide `VITE_UI_REDESIGN=false` —
+ * Reverting one browser is `localStorage.setItem("c7_ui_modern", "0")` and a reload; see
+ * INTERFACE-ROLLBACK.md and `lib/uiFlags.ts`. `useModernInterface()` resolves on this page without a session:
+ * its narrowest layers — the `c7_ui_modern` flag and a deployment-wide `VITE_UI_MODERN_SCREENS=false` —
  * are read from storage and from the build, not from the API. The instance setting behind them
  * (`appearance.interfaceStyle`) is served by `/system/config/app_settings`, which **requires a
  * session**, so on this page that request answers 401 and the hook falls back to its own default,
- * which is the redesign. One browser, or one deployment, therefore reverts this page; an
+ * which is the Modern interface. One browser, or one deployment, therefore reverts this page; an
  * instance-wide "Classic" does not reach a signed-out visitor.
  *
  * Nothing here changes what a sign-in *is*. The routes, the payloads, the lockout, the forced password
@@ -41,7 +41,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useClientIp } from "../hooks/useClientIp";
 import { usePasskey } from "../hooks/usePasskey";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { ServiceHealthPanel } from "../components/ServiceHealthPanel";
 import { SignInStatus, type SignInSystem } from "../components/SignInStatus";
 import { AppFooter } from "../components/AppFooter";
@@ -51,8 +51,9 @@ import { ChangePasswordForm } from "../components/users/ChangePasswordForm";
 import { apiErrorMessage } from "../lib/apiError";
 import api from "../api";
 import toast from "react-hot-toast";
+import type { MfaMethodId } from "@C7NTAX/shared";
 import {
-  AlertTriangle, Check, Eye, EyeOff, Fingerprint, Loader2, Lock, ShieldCheck,
+  AlertTriangle, Check, Eye, EyeOff, Fingerprint, Loader2, Lock, Mail, ShieldCheck,
 } from "lucide-react";
 
 /**
@@ -82,8 +83,40 @@ function rememberPasskeyOffer(): void {
   }
 }
 
-/** Which card the redesigned page is showing. The second factor has its own state — `mfaToken`. */
+/** Which card the Modern page is showing. The second factor has its own state — `mfaToken`. */
 type Stage = "credentials" | "password-change" | "passkey-offer";
+
+/**
+ * The second-factor field takes two kinds of answer, because the API accepts two.
+ *
+ * A six-digit authenticator code, and a single-use **recovery code** in the form `XXXXX-XXXXX` — which
+ * is compared by the same endpoint and answers identically. A field that stripped anything but digits
+ * could not express the second of them, which is how a person whose phone is in a drawer ends up
+ * needing an administrator. The hyphen is optional on the way in (it is re-inserted before the call)
+ * because it is punctuation, not a secret.
+ */
+function normaliseMfaCode(value: string): string {
+  return value.replace(/[^0-9a-zA-Z-]/g, "").toUpperCase().slice(0, 11);
+}
+
+function isSixDigits(value: string): boolean {
+  return /^\d{6}$/.test(value);
+}
+
+function isRecoveryCode(value: string): boolean {
+  return /^[A-Z0-9]{5}-?[A-Z0-9]{5}$/.test(value);
+}
+
+/** What is sent: the recovery code in its stored shape, or the six digits untouched. */
+function codeForApi(value: string): string {
+  const upper = value.toUpperCase();
+  return /^[A-Z0-9]{10}$/.test(upper) ? `${upper.slice(0, 5)}-${upper.slice(5)}` : upper;
+}
+
+function mfaCodeReady(delivery: "totp" | "email", value: string): boolean {
+  if (delivery === "email") return isSixDigits(value);
+  return isSixDigits(value) || isRecoveryCode(value);
+}
 
 export function LoginPage() {
   const {
@@ -91,7 +124,7 @@ export function LoginPage() {
   } = useAuth();
   const { registerPasskey, loginWithPasskey, isSupported: passkeySupported } = usePasskey();
   const navigate = useNavigate();
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -101,7 +134,7 @@ export function LoginPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const clientIp = useClientIp();
 
-  // ── The redesigned page's own state ────────────────────────────────────────
+  // ── The Modern page's own state ────────────────────────────────────────
   /** Which credential is being offered. A passkey is the default where the browser has one. */
   const [method, setMethod] = useState<"passkey" | "password">("passkey");
   const [revealPassword, setRevealPassword] = useState(false);
@@ -113,6 +146,18 @@ export function LoginPage() {
   const [delivery, setDelivery] = useState<"totp" | "email">("totp");
   const [emailSent, setEmailSent] = useState(false);
   const [mfaError, setMfaError] = useState<string | null>(null);
+  /**
+   * Which method the challenge is for, as the sign-in said, so the page does not show an authenticator
+   * field to somebody whose second factor is an emailed code. And whether emailed codes are available
+   * at all: the deployment's own setting is not published to a signed-out visitor, so the option is
+   * offered until the API refuses it — at which point it is withdrawn with the reason rather than
+   * offered again.
+   */
+  const [challengeMethod, setChallengeMethod] = useState<MfaMethodId>("totp");
+  const [emailUnavailable, setEmailUnavailable] = useState(false);
+  /** Days a proved browser may skip the second factor; 0 means the deployment does not remember any. */
+  const [rememberDays, setRememberDays] = useState(0);
+  const [rememberMe, setRememberMe] = useState(true);
   /** The instance's answer, held here because the form acts on it (see `SignInStatus`). */
   const [system, setSystem] = useState<SignInSystem | null>(null);
   /**
@@ -184,7 +229,7 @@ export function LoginPage() {
 
   const handlePasskeyLogin = async () => {
     if (!loginId) {
-      if (redesign) {
+      if (modern) {
         setError({ message: "Enter your email or username first — a passkey is looked up by the account it belongs to.", on: "account" });
         focusField("account");
         return;
@@ -202,7 +247,7 @@ export function LoginPage() {
       const msg = (err as { message?: string })?.message || "Passkey login failed";
       // A passkey that is not on this account, or a prompt that was dismissed, is a path to change
       // rather than a wall: the password is always still a way in.
-      if (redesign) { setError({ message: msg, on: "account", offerPassword: true }); focusField("account"); }
+      if (modern) { setError({ message: msg, on: "account", offerPassword: true }); focusField("account"); }
       else toast.error(msg);
     } finally { setLoading(false); }
   };
@@ -222,7 +267,7 @@ export function LoginPage() {
    * The credentials step, whichever interface is on.
    *
    * A failure goes to a toast on the classic page, because that is the page it is, and to the field on
-   * the redesigned one — so the classic branch's own expression is kept verbatim in the `else` below.
+   * the Modern one — so the classic branch's own expression is kept verbatim in the `else` below.
    */
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -231,14 +276,31 @@ export function LoginPage() {
     try {
       const result = await login(loginId, password);
       if (result.mfaRequired) {
-        setMfaToken(result.mfaToken!);
+        const token = result.mfaToken!;
+        const method = result.mfaMethod ?? "totp";
+        setMfaToken(token);
         setMfaError(null);
-        if (!redesign) toast("Enter the code from your authenticator app or email");
+        setChallengeMethod(method);
+        setRememberDays(result.rememberDays ?? 0);
+        /*
+         * The method decides the field. An account whose second factor is an emailed code gets the code
+         * sent straight away, because the alternative is a card asking for six digits that no screen has
+         * produced yet, with no way to ask for them.
+         */
+        setDelivery(method === "email_code" ? "email" : "totp");
+        if (!modern) {
+          toast(
+            method === "email_code"
+              ? "Enter the code we are emailing you"
+              : "Enter the code from your authenticator app, or a recovery code",
+          );
+        }
+        if (method === "email_code") await sendChallengeEmail(token);
         return;
       }
       const next = result.landingPage?.path || "/";
       setLandingPath(next);
-      if (!redesign) { navigate(next); return; }
+      if (!modern) { navigate(next); return; }
       // The account owes a password change: sign-in succeeded, so the step that says why belongs here,
       // on the page that has just taken the temporary password, rather than on a screen that replaces
       // everything and explains nothing.
@@ -247,7 +309,7 @@ export function LoginPage() {
       else if (passkeyEnabled && !passkeyOfferDeclined()) setStage("passkey-offer");
       else navigate(next);
     } catch (err: unknown) {
-      if (redesign) {
+      if (modern) {
         const status = (err as { response?: { status?: number } })?.response?.status;
         setError({
           message: status === 423
@@ -275,13 +337,41 @@ export function LoginPage() {
     void handleLogin(e);
   };
 
+  /**
+   * Ask for the emailed half of the second factor.
+   *
+   * Takes the token explicitly because the credentials step calls it in the same tick it received the
+   * token, before the state carrying it has rendered. A deployment that does not offer emailed codes
+   * answers with a refusal — and *that* is what the screen uses to stop offering them, rather than a
+   * guess about a setting a signed-out visitor cannot read.
+   */
+  const sendChallengeEmail = async (token: string, options?: { announceFailure?: boolean }) => {
+    setMfaError(null);
+    try {
+      await api.post("/auth/send-mfa-email", { mfaToken: token });
+      setEmailSent(true);
+      return true;
+    } catch (err: unknown) {
+      setEmailSent(false);
+      setEmailUnavailable(true);
+      setMfaError(
+        apiErrorMessage(err, "That code could not be sent — use your authenticator app instead."),
+      );
+      if (options?.announceFailure && challengeMethod !== "email_code") setDelivery("totp");
+      return false;
+    }
+  };
+
   const handleMfa = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!mfaToken) return;
     setLoading(true);
     setMfaError(null);
     try {
-      const lp = await loginMfa(mfaToken, mfaCode);
+      // A recovery code goes up the same endpoint as an authenticator code, and comes back identically.
+      const lp = await loginMfa(mfaToken, codeForApi(mfaCode), {
+        remember: rememberDays > 0 ? rememberMe : undefined,
+      });
       /*
        * A second factor clears the password, and `loginMfa` cannot say whether a password change is
        * also owed — it returns the landing page, not the account. The app-wide gate still catches that
@@ -289,7 +379,7 @@ export function LoginPage() {
        */
       navigate(lp?.path || "/");
     } catch (err: unknown) {
-      if (redesign) setMfaError(apiErrorMessage(err, "That code didn’t work. Check the six digits and try again."));
+      if (modern) setMfaError(apiErrorMessage(err, "That code didn’t work. Check the six digits and try again."));
       else toast.error("Invalid MFA code");
     } finally {
       setLoading(false);
@@ -305,16 +395,12 @@ export function LoginPage() {
   const requestEmailCode = async () => {
     if (!mfaToken) return;
     setDelivery("email");
+    // The field is shared between the two kinds of answer, and a recovery code is not a code for an
+    // email: leaving it in the box would leave a form that cannot be submitted.
+    setMfaCode("");
     setLoading(true);
-    setMfaError(null);
-    try {
-      await api.post("/auth/send-mfa-email", { mfaToken });
-      setEmailSent(true);
-    } catch (err: unknown) {
-      setMfaError(apiErrorMessage(err, "That code could not be sent — use your authenticator app instead."));
-    } finally {
-      setLoading(false);
-    }
+    await sendChallengeEmail(mfaToken, { announceFailure: true });
+    setLoading(false);
   };
 
   const handleEmailCode = async (e: React.FormEvent) => {
@@ -323,7 +409,11 @@ export function LoginPage() {
     setLoading(true);
     setMfaError(null);
     try {
-      const res = await api.post("/auth/mfa/verify-email", { code: mfaCode, mfaToken });
+      const res = await api.post("/auth/mfa/verify-email", {
+        code: mfaCode,
+        mfaToken,
+        ...(rememberDays > 0 ? { remember: rememberMe } : {}),
+      });
       await completeSignIn(res.data.token);
       navigate(landingPath || "/");
     } catch (err: unknown) {
@@ -354,8 +444,8 @@ export function LoginPage() {
     navigate(landingPath || "/");
   };
 
-  // ══ The redesigned page ═══════════════════════════════════════════════════════════════════════
-  if (redesign) {
+  // ══ The Modern page ═══════════════════════════════════════════════════════════════════════
+  if (modern) {
     return (
       <div className="signin-surface min-h-[100dvh] flex items-center justify-center bg-navy-950 px-4 py-6">
         <div className="w-full max-w-sm">
@@ -537,61 +627,90 @@ export function LoginPage() {
             <form onSubmit={delivery === "email" ? handleEmailCode : handleMfa} className="card mt-4 space-y-3.5">
               <div className="flex items-start gap-3">
                 <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyber-600/20 text-cyber-300">
-                  <ShieldCheck size={16} />
+                  {delivery === "email" ? <Mail size={16} /> : <ShieldCheck size={16} />}
                 </span>
                 <div>
                   <h2 className="font-semibold text-white">Two-Factor Authentication</h2>
                   <p className="mt-1 text-[11.5px] leading-relaxed text-gray-500">
-                    Enter the 6-digit code from your authenticator app or email
+                    {delivery === "email"
+                      ? <>Enter the 6-digit code we sent to the address on your account</>
+                      : <>Enter the 6-digit code from your authenticator app</>}
                     {loginId ? <> for <b className="font-semibold text-gray-300">{loginId}</b></> : null}.
+                    {delivery === "totp" ? " A recovery code works in this field too." : null}
                   </p>
                 </div>
               </div>
 
-              <div className="choice" role="radiogroup" aria-label="Where to get the code">
-                <label className={`choice__opt ${delivery === "totp" ? "choice__opt--on" : ""}`}>
-                  <input
-                    type="radio"
-                    name="signin-code-source"
-                    checked={delivery === "totp"}
-                    onChange={() => { setDelivery("totp"); setMfaError(null); }}
-                  />
-                  Authenticator app
-                </label>
-                <label className={`choice__opt ${delivery === "email" ? "choice__opt--on" : ""}`}>
-                  <input
-                    type="radio"
-                    name="signin-code-source"
-                    checked={delivery === "email"}
-                    onChange={() => { if (!emailSent) void requestEmailCode(); }}
-                  />
-                  Email me a code
-                </label>
-              </div>
+              {/* The other way to get a code — but not when the deployment has already refused it, and
+                  not for an account whose second factor is the emailed code, where there is nothing to
+                  choose between. */}
+              {challengeMethod !== "email_code" && !emailUnavailable && (
+                <div className="choice" role="radiogroup" aria-label="Where to get the code">
+                  <label className={`choice__opt ${delivery === "totp" ? "choice__opt--on" : ""}`}>
+                    <input
+                      type="radio"
+                      name="signin-code-source"
+                      checked={delivery === "totp"}
+                      onChange={() => { setDelivery("totp"); setMfaCode(""); setMfaError(null); }}
+                    />
+                    Authenticator app
+                  </label>
+                  <label className={`choice__opt ${delivery === "email" ? "choice__opt--on" : ""}`}>
+                    <input
+                      type="radio"
+                      name="signin-code-source"
+                      checked={delivery === "email"}
+                      onChange={() => { if (!emailSent) void requestEmailCode(); }}
+                    />
+                    Email me a code
+                  </label>
+                </div>
+              )}
 
               {delivery === "email" && emailSent && (
                 <p className="flex items-start gap-1.5 text-[11.5px] leading-relaxed text-gray-500">
                   <Check size={12} className="mt-[3px] shrink-0 text-alert-green" />
-                  A code is on its way. It is six digits and it expires in 15 minutes; a backup code works
-                  in this field too.
+                  A code is on its way. It is six digits and it expires in 15 minutes.
                 </p>
               )}
 
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-400" htmlFor="signin-code">6-digit code</label>
+                <label className="mb-1.5 block text-xs font-medium text-gray-400" htmlFor="signin-code">
+                  {delivery === "email" ? "6-digit code" : "Code, or a recovery code"}
+                </label>
                 <input
                   id="signin-code"
                   className="input-field text-center font-mono text-xl tracking-[0.28em]"
                   type="text"
-                  inputMode="numeric"
+                  inputMode={delivery === "email" ? "numeric" : "text"}
                   autoComplete="one-time-code"
-                  maxLength={6}
+                  maxLength={delivery === "email" ? 6 : 11}
                   value={mfaCode}
-                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))}
-                  placeholder="000000"
+                  onChange={(e) => setMfaCode(delivery === "email" ? e.target.value.replace(/\D/g, "").slice(0, 6) : normaliseMfaCode(e.target.value))}
+                  placeholder={delivery === "email" ? "000000" : "000000 or XXXXX-XXXXX"}
                   autoFocus
                 />
+                {delivery === "totp" && (
+                  <p className="mt-1.5 text-[11px] leading-relaxed text-gray-500">
+                    Lost your authenticator? One of the ten recovery codes you were given works here, once
+                    each.
+                  </p>
+                )}
               </div>
+
+              {/* Only where the deployment remembers browsers at all: a control that says it will not
+                  ask again, on a deployment whose remember setting is zero, is a promise nobody keeps. */}
+              {rememberDays > 0 && (
+                <label className="flex items-start gap-2 text-[12px] text-gray-300">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-cyber-500"
+                  />
+                  Don’t ask for a code on this browser for {rememberDays} days
+                </label>
+              )}
 
               {mfaError && (
                 <div role="alert" className="rounded-lg border border-alert-red/35 bg-alert-red/10 px-3 py-2 text-[12.5px] text-gray-300">
@@ -602,7 +721,7 @@ export function LoginPage() {
                 </div>
               )}
 
-              <button className="btn-primary w-full" type="submit" disabled={loading || mfaCode.length !== 6}>
+              <button className="btn-primary w-full" type="submit" disabled={loading || !mfaCodeReady(delivery, mfaCode)}>
                 {loading ? "Verifying…" : "Verify"}
               </button>
 
@@ -612,10 +731,14 @@ export function LoginPage() {
                       Nothing after a minute?{" "}
                       <button type="button" className="text-gray-400 underline underline-offset-2 hover:text-white" onClick={() => void requestEmailCode()}>Send another code</button>
                       {" · "}
-                      {/* A backup code is verified by the authenticator route, so this switches back. */}
-                      <button type="button" className="text-gray-400 underline underline-offset-2 hover:text-white" onClick={() => { setDelivery("totp"); setMfaError(null); }}>Use a backup code</button>
+                      {/* A recovery code is verified by the authenticator route, so this switches back. */}
+                      <button type="button" className="text-gray-400 underline underline-offset-2 hover:text-white" onClick={() => { setDelivery("totp"); setMfaCode(""); setMfaError(null); }}>Use a recovery code</button>
                     </>
-                  : <>Prefer the code by email? Choose <b className="font-semibold text-gray-300">Email me a code</b>. A backup code works in this field too.</>}
+                  : challengeMethod === "email_code"
+                    ? <>Codes are sent to the address on your account. Nothing else is needed here.</>
+                    : emailUnavailable
+                      ? <>Emailing a code is not available on this deployment — use your authenticator app, or a recovery code.</>
+                      : <>Prefer the code by email? Choose <b className="font-semibold text-gray-300">Email me a code</b>.</>}
               </p>
             </form>
           )}
@@ -687,6 +810,12 @@ export function LoginPage() {
   }
 
   // ══ The classic interface — the page as it was, below this line, unchanged ════════════════════
+  //
+  // One exception, and it is a change of behaviour rather than of design: the second-factor screen now
+  // carries what the API sends. The field accepts a recovery code as well as six digits, the method the
+  // sign-in named decides which field is drawn, an emailed code can be asked for, and "don't ask again"
+  // is offered only when the deployment remembers browsers. None of that is a restyle — the layout is
+  // the one that was here.
   if (mfaToken) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-navy-950 px-4">
@@ -694,13 +823,56 @@ export function LoginPage() {
           <div className="text-center mb-8">
             <BrandMark size={48} className="mx-auto mb-4" />
             <h1 className="text-xl font-semibold text-white">Two-Factor Authentication</h1>
-            <p className="text-gray-400 text-sm mt-2">Enter the 6-digit code from your authenticator app or email</p>
+            <p className="text-gray-400 text-sm mt-2">
+              {delivery === "email"
+                ? "Enter the 6-digit code we sent to the address on your account"
+                : "Enter the code from your authenticator app, or a recovery code"}
+            </p>
           </div>
-          <form onSubmit={handleMfa} className="card space-y-4">
-            <input className="input-field text-center text-2xl tracking-widest" type="text" maxLength={6} value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))} placeholder="000000" autoFocus />
-            <button className="btn-primary w-full" type="submit" disabled={loading || mfaCode.length !== 6}>
+          <form onSubmit={delivery === "email" ? handleEmailCode : handleMfa} className="card space-y-4">
+            <div>
+              <label className="block text-sm text-gray-400 mb-1" htmlFor="classic-mfa-code">
+                {delivery === "email" ? "6-digit code" : "Code or recovery code"}
+              </label>
+              <input
+                id="classic-mfa-code"
+                className="input-field text-center text-2xl tracking-widest"
+                type="text"
+                inputMode={delivery === "email" ? "numeric" : "text"}
+                maxLength={delivery === "email" ? 6 : 11}
+                value={mfaCode}
+                onChange={(e) => setMfaCode(delivery === "email" ? e.target.value.replace(/\D/g, "").slice(0, 6) : normaliseMfaCode(e.target.value))}
+                placeholder={delivery === "email" ? "000000" : "000000"}
+                autoFocus
+              />
+            </div>
+
+            {rememberDays > 0 && (
+              <label className="flex items-center gap-2 text-sm text-gray-400">
+                <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
+                Don’t ask again on this browser for {rememberDays} days
+              </label>
+            )}
+
+            <button className="btn-primary w-full" type="submit" disabled={loading || !mfaCodeReady(delivery, mfaCode)}>
               {loading ? "Verifying..." : "Verify"}
             </button>
+
+            {challengeMethod !== "email_code" && !emailUnavailable && (
+              <button
+                type="button"
+                className="btn-secondary w-full"
+                onClick={() => { if (delivery === "email") void sendChallengeEmail(mfaToken, { announceFailure: true }); else void requestEmailCode(); }}
+                disabled={loading}
+              >
+                {delivery === "email" && emailSent ? "Send another code by email" : "Email me a code instead"}
+              </button>
+            )}
+            {delivery === "totp" && (
+              <p className="text-xs text-gray-500">
+                A recovery code can be typed into the same field; each one works once.
+              </p>
+            )}
           </form>
         </div>
       </div>

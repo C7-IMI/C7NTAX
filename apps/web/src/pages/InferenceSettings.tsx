@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { Plus, Zap, Trash2, Check, X, Cpu, TestTube } from "lucide-react";
 import { PageSkeleton } from "../components/ui/Skeleton";
 import { EmptyState, ListFooter, ListViews, PageHeader } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 interface Provider { id: string; name: string; provider: string; model: string; isActive: boolean; isDefault: boolean; hasApiKey: boolean; temperature: number; maxTokens: number; }
 
@@ -14,7 +14,7 @@ const PROVIDER_LABELS: Record<string, string> = {
 };
 
 export function InferenceSettingsPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [view, setView] = useState("all");
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +54,7 @@ export function InferenceSettingsPage() {
   };
 
   /*
-   * The redesigned list slices what the page already holds. In the classic interface the view is
+   * The Modern list slices what the page already holds. In the classic interface the view is
    * never anything but "all", so the same list is rendered in full, as it was.
    */
   const providerViews = [
@@ -62,7 +62,7 @@ export function InferenceSettingsPage() {
     { id: "active", label: "Active", count: providers.filter(p => p.isActive).length },
     { id: "default", label: "Default", count: providers.filter(p => p.isDefault).length },
   ];
-  const listProviders = redesign && view !== "all"
+  const listProviders = modern && view !== "all"
     ? providers.filter(p => (view === "active" ? p.isActive : p.isDefault))
     : providers;
 
@@ -136,7 +136,7 @@ export function InferenceSettingsPage() {
       )}
 
       {/* Provider list */}
-      {redesign && !loading && providers.length > 0 && (
+      {modern && !loading && providers.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews views={providerViews} value={view} onChange={setView} label="Provider views" />
           <span className="text-xs text-gray-500">
@@ -145,7 +145,7 @@ export function InferenceSettingsPage() {
         </div>
       )}
       {loading ? <PageSkeleton /> : providers.length === 0 ? (
-        redesign ? (
+        modern ? (
           <div className="card">
             <EmptyState
               icon={<Zap size={40} />}
@@ -166,8 +166,8 @@ export function InferenceSettingsPage() {
       ) : (
         <div className="space-y-3">
           {listProviders.map(p => (
-            <div key={p.id} className={`card flex flex-col sm:flex-row sm:items-center gap-3 ${redesign ? "" : "sm:justify-between"}`}>
-              <div className={`flex items-start gap-3 ${redesign ? "flex-1 min-w-0" : ""}`}>
+            <div key={p.id} className={`card flex flex-col sm:flex-row sm:items-center gap-3 ${modern ? "" : "sm:justify-between"}`}>
+              <div className={`flex items-start gap-3 ${modern ? "flex-1 min-w-0" : ""}`}>
                 <div className={`p-2 rounded-lg ${p.isActive ? "bg-green-600/10" : "bg-gray-600/10"}`}>
                   <Zap size={18} className={p.isActive ? "text-green-400" : "text-gray-500"} />
                 </div>
@@ -181,7 +181,7 @@ export function InferenceSettingsPage() {
                   </p>
                 </div>
               </div>
-              <div className={`flex items-center gap-2 ${redesign ? "shrink-0" : ""}`}>
+              <div className={`flex items-center gap-2 ${modern ? "shrink-0" : ""}`}>
                 <span className={`badge ${p.isActive ? "bg-green-600/20 text-green-400" : "bg-gray-600/20 text-gray-400"}`}>
                   {p.isActive ? "Active" : "Inactive"}
                 </span>
@@ -212,7 +212,7 @@ export function InferenceSettingsPage() {
           ))}
         </div>
       )}
-      {redesign && listProviders.length > 0 && (
+      {modern && listProviders.length > 0 && (
         <ListFooter
           from={1}
           to={listProviders.length}

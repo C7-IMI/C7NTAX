@@ -17,7 +17,7 @@
  * table — and the classic screen is one column read in order, because a form is read top to bottom.
  */
 import { Shield, Lock, AlertTriangle } from "lucide-react";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import { Band, Mono, MonoTm, StateChip, plural } from "./emailChrome";
 
 const CODE_COMMENT = "\u201CInternal, and therefore not the customer template with different words: it names who replied and quotes what they said, because the person reading it has to decide what to do about it and the client is already in the thread. The ticket's own page is the link — an internal email that asks somebody to reply by email would put the answer in the wrong place.\u201D";
@@ -153,7 +153,7 @@ function LockedEditorNote() {
 }
 
 export function EmailInternalPanel() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
 
   const codeCards = (
     <>
@@ -172,7 +172,7 @@ export function EmailInternalPanel() {
     </>
   );
 
-  if (redesign) {
+  if (modern) {
     return (
       <div className="space-y-4">
         <Band

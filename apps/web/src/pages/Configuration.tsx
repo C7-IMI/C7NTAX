@@ -24,8 +24,9 @@ import {
 import api from "../api";
 import { ListFooter, PageHeader, StatCard } from "../components/ui";
 import { TableSkeleton } from "../components/ui/Skeleton";
+import { MfaSetupSimulator } from "../components/MfaSetupSimulator";
 import { primeContextMenusSetting } from "../hooks/useContextMenusEnabled";
-import { refreshNavigationSettings, useRedesign } from "../hooks/useNavigationStyle";
+import { refreshNavigationSettings, useModernInterface } from "../hooks/useNavigationStyle";
 import { ACCENT_COLOUR_HINT, DEFAULT_ACCENT_COLOUR, HEX_COLOUR_PATTERN } from "../lib/colourTokens";
 
 // ── Types mirroring the API's rendered registry ─────────────────────
@@ -174,7 +175,7 @@ export function FieldCard({ field, onSave, onClear, busy }: {
   useEffect(() => { setDraft(String(field.value ?? "")); }, [field.value]);
 
   const disabled = !field.editable || field.locked || busy;
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   /** Whether the control edits a draft, and so can be applied with a button rather than on change. */
   const savesFromDraft = field.type !== "boolean" && field.type !== "select";
   const dirty = String(field.value ?? "") !== draft;
@@ -266,7 +267,7 @@ export function FieldCard({ field, onSave, onClear, busy }: {
 
   return (
     <div className="border-b border-surface-border last:border-b-0 py-4 first:pt-0 last:pb-0" data-hl={`field:${field.id}`}>
-      {redesign ? (
+      {modern ? (
         <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
@@ -467,7 +468,7 @@ export function useConfigurationSection(sectionId: string) {
 // ── Hub ─────────────────────────────────────────────────────────────
 
 /**
- * The area rail the redesigned hub and the section editor share. Each entry is the address of the
+ * The area rail the Modern hub and the section editor share. Each entry is the address of the
  * area's own screen, which is the deep link Recent activity and Help already use — so the rail
  * moves a person between screens rather than re-implementing the screens it names.
  */
@@ -507,7 +508,7 @@ function AreaNav({ sections, current, onSelect, showAll = false }: {
 
 export function ConfigurationHub() {
   const { sections, loaded, loading, error } = useConfiguration();
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [query, setQuery] = useState("");
   const [area, setArea] = useState("all");
 
@@ -540,7 +541,7 @@ export function ConfigurationHub() {
 
   const shownSettings = shownSections.reduce((n, section) => n + section.fields.length, 0);
 
-  if (redesign) {
+  if (modern) {
     const q = query.trim().toLowerCase();
     return (
       <div className="space-y-4 animate-fade-in">
@@ -794,7 +795,7 @@ export function ConfigurationSectionPage() {
   const navigate = useNavigate();
   const { section, sections, loaded, loading, error, save, clear } = useConfigurationSection(sectionId ?? "");
   const [busy, setBusy] = useState(false);
-  const redesign = useRedesign();
+  const modern = useModernInterface();
 
   useEffect(() => {
     if (!loading && sections.length > 0 && !section) navigate("/admin/configuration", { replace: true });
@@ -829,7 +830,7 @@ export function ConfigurationSectionPage() {
   const deployment = section.fields.filter(f => !f.editable || f.locked);
   const addinEnabled = section.fields.find(f => f.id === "outlookAddin")?.value !== false;
 
-  if (redesign) {
+  if (modern) {
     return (
       <div className="space-y-4 animate-fade-in">
         <PageHeader
@@ -907,6 +908,15 @@ export function ConfigurationSectionPage() {
             )}
 
             {section.id === "apps" && <AddinSimulatorCard enabled={addinEnabled} />}
+
+            {/*
+              * The MFA setup simulator, offered on the Multi-factor authentication section only — the
+              * same precedent as the add-in simulator above: the rehearsal lives on the feature's own
+              * screen, which is where an administrator is standing when users start reporting trouble.
+              * The conditional is explicit rather than a field in the registry, because it is one
+              * screen's own affordance rather than something every area can declare.
+              */}
+            {section.id === "mfa" && <MfaSetupSimulator />}
 
             <p className="text-xs text-gray-500">
               A change is saved immediately and takes effect on the next action that reads it. Settings
@@ -988,6 +998,10 @@ export function ConfigurationSectionPage() {
       )}
 
       {section.id === "apps" && <AddinSimulatorCard enabled={addinEnabled} />}
+
+      {/* The MFA setup simulator, on the Multi-factor authentication section only. See the note in the
+        * Modern branch above: the placeholder is explicit rather than a registry field. */}
+      {section.id === "mfa" && <MfaSetupSimulator />}
 
       <p className="text-xs text-gray-500">
         A change is saved immediately and takes effect on the next action that reads it. Settings

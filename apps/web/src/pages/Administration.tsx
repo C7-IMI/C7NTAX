@@ -5,7 +5,7 @@ import { ListFooter, ListViews, PageHeader } from "../components/ui";
 import { FileText, ChevronDown, ChevronRight, Shield, Clock, User, Plus } from "lucide-react";
 import toast from "react-hot-toast";
 import { TableSkeleton } from "../components/ui/Skeleton";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 interface LogEntry {
   id: string; date: string;
@@ -111,7 +111,7 @@ export function AuditLogsSection() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [view, setView] = useState("all");
 
   useEffect(() => {
@@ -138,7 +138,7 @@ export function AuditLogsSection() {
     }).catch(() => setLoading(false));
   }, []);
 
-  // The redesign's views slice the day groups the page has already loaded. The dates are the ones
+  // The Modern interface's views slice the day groups the page has already loaded. The dates are the ones
   // the groups are keyed by, so "today" means the same thing here as it does in a heading below.
   const todayKey = new Date().toLocaleDateString();
   const weekKeys = new Set(Array.from({ length: 7 }, (_, i) => {
@@ -155,12 +155,12 @@ export function AuditLogsSection() {
     { id: "week", label: "This week", count: countEvents(logs.filter(inWeek)) },
   ];
   const totalEvents = countEvents(logs);
-  const visibleLogs = redesign && view !== "all" ? logs.filter(view === "today" ? inToday : inWeek) : logs;
+  const visibleLogs = modern && view !== "all" ? logs.filter(view === "today" ? inToday : inWeek) : logs;
 
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
       <PageHeader variant="section" title="Audit Logs" subtitle="Every change across the entire application — creation, updates, deletions, settings, and permissions" />
-      {redesign && !loading && logs.length > 0 && (
+      {modern && !loading && logs.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews views={auditViews} value={view} onChange={setView} label="Audit log views" />
           <span className="text-xs text-gray-500 tabular-nums">
@@ -200,7 +200,7 @@ export function AuditLogsSection() {
           ))}
         </div>
       )}
-      {redesign && visibleLogs.length > 0 && (
+      {modern && visibleLogs.length > 0 && (
         <ListFooter
           from={1}
           to={visibleLogs.length}
@@ -223,7 +223,7 @@ export function ServiceBoardsSection() {
   const [newBoard, setNewBoard] = useState({ name: "", description: "", notifyCustomerOnClose: true });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Record<string, any>>({});
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [view, setView] = useState("all");
 
   const startEdit = (b: any) => { setEditingId(b.id); setEditForm({ name: b.name, description: b.description, ticketCode: b.ticketCode, slaResponseMinutes: b.slaResponseMinutes, slaResolutionMinutes: b.slaResolutionMinutes, autoCloseEnabled: b.autoCloseEnabled, autoCloseDays: b.autoCloseDays, followUpEnabled: b.followUpEnabled, followUpIntervalHours: b.followUpIntervalHours, notifyCustomerOnClose: b.notifyCustomerOnClose !== false }); };
@@ -231,7 +231,7 @@ export function ServiceBoardsSection() {
   // A board's own page hands over to the editor with ?board=<id> (Boards.tsx → "Edit this board"), so
   // somebody who asked to edit *this* board arrives with it already open instead of with a list to
   // search. Consumed once, because `fetch` also runs after a save and re-opening the form then would
-  // undo the action that just succeeded. Read only in the redesigned interface: the classic screen has
+  // undo the action that just succeeded. Read only in the Modern interface: the classic screen has
   // no link that carries the parameter and must keep rendering exactly as it does today.
   const deepLinkRead = useRef(false);
 
@@ -239,7 +239,7 @@ export function ServiceBoardsSection() {
     api.get("/boards").then(r => {
       const data = Array.isArray(r.data) ? r.data : (r.data?.data || r.data || []);
       setBoards(data);
-      if (redesign && !deepLinkRead.current) {
+      if (modern && !deepLinkRead.current) {
         deepLinkRead.current = true;
         const requested = new URLSearchParams(window.location.search).get("board");
         const match = requested ? data.find((b: any) => b.id === requested) : null;
@@ -266,7 +266,7 @@ export function ServiceBoardsSection() {
     { id: "autoClose", label: "Auto-close", count: boards.filter(b => b.autoCloseEnabled).length },
     { id: "followUp", label: "Follow-up", count: boards.filter(b => b.followUpEnabled).length },
   ];
-  const visibleBoards = redesign && view !== "all"
+  const visibleBoards = modern && view !== "all"
     ? boards.filter(b => (view === "autoClose" ? b.autoCloseEnabled : b.followUpEnabled))
     : boards;
 
@@ -276,7 +276,7 @@ export function ServiceBoardsSection() {
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} /> New Board</button>
       </PageHeader>
 
-      {redesign && !loading && boards.length > 0 && (
+      {modern && !loading && boards.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews views={boardViews} value={view} onChange={setView} label="Board views" />
           <span className="text-xs text-gray-500 tabular-nums">
@@ -330,7 +330,7 @@ export function ServiceBoardsSection() {
                   ) : (
                     <div className="min-w-0">
                       <h3 className="text-white font-semibold">{b.name}</h3>
-                      {redesign && (
+                      {modern && (
                         /*
                          * The same promise the board's own page states, in the same words, read through
                          * the same helpers: two screens that both print a board's policy must not make
@@ -386,7 +386,7 @@ export function ServiceBoardsSection() {
           ))}
         </div>
       )}
-      {redesign && visibleBoards.length > 0 && (
+      {modern && visibleBoards.length > 0 && (
         <ListFooter
           from={1}
           to={visibleBoards.length}

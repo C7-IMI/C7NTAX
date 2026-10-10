@@ -18,7 +18,7 @@ scheme while users are looking at all of them.
 ## The five things a model most often gets wrong
 
 1. **Building for one interface.** Every screen has a **modern** and a **classic** arrangement — two designs,
-   not a class toggle (`useRedesign()`). 75 files already do this. See `DESIGN.md` §3.
+   not a class toggle (`useModernInterface()`). 75 files already do this. See `DESIGN.md` §3.
 2. **A colour literal.** Tokens are CSS variables so the two themes and **eight colour schemes** can move
    them (`DESIGN.md` §2). `node scripts/lint-design-tokens.mjs` must pass.
 3. **A modern branch that is the classic one restyled.** If you cannot say what the modern arrangement does

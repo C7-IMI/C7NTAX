@@ -13,7 +13,7 @@ import { useAuth } from "../hooks/useAuth";
 import { Search, Mail, Phone, Building2, Star, Edit3, Save, X, MapPin, Briefcase, Globe, MessageSquare, UserPlus, Clock, Plus, Ticket, Users, ExternalLink, UserCheck, UserX, Copy, Download, RotateCw, Eraser, ArrowRight, ShieldOff } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { PageHeader, ListViews } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 interface Contact {
   id: string; firstName: string; lastName: string; email: string;
@@ -57,7 +57,7 @@ export function ContactsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [view, setView] = useState("all");
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [companyFilter, setCompanyFilter] = useState("");
   const [companies, setCompanies] = useState<ClientRow[]>([]);
   /**
@@ -116,7 +116,7 @@ export function ContactsPage() {
   const filtered = contacts.filter(c => {
     if (search && !`${c.firstName} ${c.lastName} ${c.email} ${c.title || ""}`.toLowerCase().includes(search.toLowerCase())) return false;
     if (companyFilter && c.company?.id !== companyFilter) return false;
-    if (redesign) {
+    if (modern) {
       if (view === "primary" && !c.isPrimary) return false;
       if (view === "inactive" && c.isActive !== false) return false;
       if (view === "no email" && c.email) return false;
@@ -320,7 +320,7 @@ export function ContactsPage() {
    * Everything below the early return is the classic screen, untouched: the same state, the same
    * handlers, the same words, in the arrangement the classic interface has always drawn them in.
    */
-  if (redesign) {
+  if (modern) {
     const clientIdsInView = [...new Set(filtered.map(c => c.company?.id).filter((id): id is string => Boolean(id)))];
     const ticketsBetweenThem = companies.reduce((n, c) => (clientIdsInView.includes(c.id) ? n + (c._count?.tickets ?? 0) : n), 0);
     const primaryCount = filtered.filter(c => c.isPrimary).length;
@@ -861,8 +861,8 @@ export function ContactsPage() {
 
   // ── The classic arrangement ───────────────────────────────────────────────
   /*
-   * Unchanged. `redesign` is false by the time this renders, so the two guards below still describe
-   * what this screen had before the redesign and the markup they wrap is exactly what it was.
+   * Unchanged. `modern` is false by the time this renders, so the two guards below still describe
+   * what this screen had before the Modern interface and the markup they wrap is exactly what it was.
    */
   return (
     <div
@@ -873,10 +873,10 @@ export function ContactsPage() {
       <div className="flex items-center justify-between"><PageHeader variant="section" title="Contacts" subtitle={<>{filtered.length} contacts</>} /><button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} />Add Contact</button></div>
 
       <div className="flex gap-2 flex-wrap">
-        {redesign && <ListViews views={contactViews} value={view} onChange={setView} label="Contact views" />}
+        {modern && <ListViews views={contactViews} value={view} onChange={setView} label="Contact views" />}
         <div className="relative flex-1 min-w-[200px]"><Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" /><input ref={searchRef} className="input-field pl-9" placeholder="Search contacts..." value={search} onChange={e => setSearch(e.target.value)} /></div>
-        <select className="input-field text-sm py-1.5 w-auto" value={companyFilter} onChange={e => setCompanyFilter(e.target.value)}><option value="">{redesign ? "Client: any" : "All Companies"}</option>{companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-        {redesign && <span className="text-xs text-gray-500">{filtered.length} contact{filtered.length === 1 ? "" : "s"} · {filtered.filter(c => c.isPrimary).length} primary</span>}
+        <select className="input-field text-sm py-1.5 w-auto" value={companyFilter} onChange={e => setCompanyFilter(e.target.value)}><option value="">{modern ? "Client: any" : "All Companies"}</option>{companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+        {modern && <span className="text-xs text-gray-500">{filtered.length} contact{filtered.length === 1 ? "" : "s"} · {filtered.filter(c => c.isPrimary).length} primary</span>}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

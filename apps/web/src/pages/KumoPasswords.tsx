@@ -11,10 +11,10 @@ import { copyText, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { ListFooter, ListViews, PageHeader, StatCard } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 export function KumoPasswordsPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [passwords, setPasswords] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,10 +84,10 @@ export function KumoPasswordsPage() {
   }, [manualTotpCode?.enabled, selected?.id]);
 
   /*
-   * The redesigned views strip narrows the vault further than the client filter can, so its slice is
+   * The Modern views strip narrows the vault further than the client filter can, so its slice is
    * applied only while it is on screen — the classic list still answers to exactly the same rows.
    */
-  const viewSlice = (p: any) => !redesign || totpView === "" || (totpView === "totp" ? !!p.totpEnabled : !p.totpEnabled);
+  const viewSlice = (p: any) => !modern || totpView === "" || (totpView === "totp" ? !!p.totpEnabled : !p.totpEnabled);
 
   const filtered = passwords.filter(p => {
     if (!viewSlice(p)) return false;
@@ -337,7 +337,7 @@ export function KumoPasswordsPage() {
       </div>
 
       {/* Figures — what the vault holds, counted from the entries already on this page. */}
-      {redesign && (
+      {modern && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard label="Credentials" value={passwords.length} icon={<Shield size={13} />} />
           <StatCard label="TOTP enabled" value={totpCount} icon={<ShieldCheck size={13} />} tone={totpCount > 0 ? "green" : "neutral"} />
@@ -347,7 +347,7 @@ export function KumoPasswordsPage() {
       )}
 
       {/* Views — the second-factor state of the vault, as chips you press. */}
-      {redesign && (
+      {modern && (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews views={passwordViews} value={totpView} onChange={setTotpView} label="Vault views" />
           <span className="text-xs text-gray-500 tabular-nums">{filtered.length} of {passwords.length} credential{passwords.length === 1 ? "" : "s"}</span>
@@ -388,7 +388,7 @@ export function KumoPasswordsPage() {
                   <p className="text-sm text-white truncate">{p.label}</p>
                   <p className="text-xs text-gray-500">{p.username || "—"}</p>
                 </div>
-                {redesign ? (
+                {modern ? (
                   <span className="flex items-center gap-1.5 shrink-0">
                     <span className="text-xs text-gray-600">{p.category}</span>
                     {p.totpEnabled && <span className="chip chip--good">TOTP</span>}
@@ -399,7 +399,7 @@ export function KumoPasswordsPage() {
               </div>
             </button>
           ))}
-           {redesign && (
+           {modern && (
              <ListFooter from={1} to={filtered.length} total={filtered.length} page={1} pages={1} onPage={() => {}}
                note="Secrets stay hidden until revealed" />
            )}
@@ -424,7 +424,7 @@ export function KumoPasswordsPage() {
                     ) : (
                       <>
                         <h3 className="text-white font-semibold flex items-center gap-2">{selected.label}
-                          {redesign && <span className={`chip ${selected.totpEnabled ? "chip--good" : ""}`}>{selected.totpEnabled ? "TOTP" : "No TOTP"}</span>}
+                          {modern && <span className={`chip ${selected.totpEnabled ? "chip--good" : ""}`}>{selected.totpEnabled ? "TOTP" : "No TOTP"}</span>}
                         </h3>
                         <p className="text-xs text-gray-500">{selected.username || "—"} · {selected.category || "general"}</p>
                       </>

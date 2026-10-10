@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
 import { useAuth } from "../hooks/useAuth";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { RefreshCw, Clock, AlertTriangle, Users, TrendingUp, Inbox, Pause, MessageSquare, Calendar, GripVertical, Pin, PinOff, ArrowUp, ArrowDown, Save, RotateCcw, SlidersHorizontal, Mail, MailX, Shield, ArrowRight, type LucideIcon } from "lucide-react";
 import { PageHeader, StatCard } from "../components/ui";
 import { hoursInWords, minutesInWords } from "../components/boards/boardPolicy";
@@ -55,7 +55,7 @@ const BOARD_TILE_LABELS: Record<string, string> = {
 };
 
 /**
- * The redesigned tiles' words. The classic arrangement keeps `BOARD_TILE_LABELS` above: the two
+ * The Modern tiles' words. The classic arrangement keeps `BOARD_TILE_LABELS` above: the two
  * interfaces are two designs of the same screen, so their labels may differ where the new one reads
  * better ("On hold", "Average age") without the old one moving.
  */
@@ -72,7 +72,7 @@ const MODERN_TILE_LABELS: Record<string, string> = {
 export function BoardsPage() {
   const { permissions } = useAuth();
   const canArrange = permissions.includes("board:manage");
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [boards, setBoards] = useState<BoardMetrics[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -252,8 +252,8 @@ export function BoardsPage() {
   };
 
   /**
-   * The redesigned tile. Same six figures as the classic badge and the same place to go when you press
-   * one, drawn with the redesign's StatCard: the figure leads, the glyph labels it from the corner, and
+   * The Modern tile. Same six figures as the classic badge and the same place to go when you press
+   * one, drawn with the Modern interface's StatCard: the figure leads, the glyph labels it from the corner, and
    * the tile's subject is said underneath only where a reader would ask it ("on the client or a third
    * party"). The pin still shows — an outlined ring, as in the classic arrangement — because the
    * arrangement is shared with the desk that owns the board.
@@ -305,7 +305,7 @@ export function BoardsPage() {
         <PageHeader variant="section" title="Service Boards" subtitle={<>{boards.length} board{boards.length !== 1 ? "s" : ""}
             {lastUpdated && <span className="text-gray-600 ml-2">· updated {lastUpdated.toLocaleTimeString()}</span>}</>} />
         <div className="flex items-center gap-2">
-          {redesign && (
+          {modern && (
             <span className="text-xs text-gray-500 tabular-nums">
               {totalOpen} open · {totalStale} stale · {totalEscalations} escalated
             </span>
@@ -318,11 +318,11 @@ export function BoardsPage() {
 
       {/*
         Two designs of one screen, not one screen with a class on it (see INTERFACE-ROLLBACK.md).
-        The redesign's arrangement is a rail of the four boards beside the selected board's own page,
+        The Modern interface's arrangement is a rail of the four boards beside the selected board's own page,
         because the board page is where a board's promise belongs; the classic arrangement stays the
         grid of cards below, exactly as it renders today.
       */}
-      {redesign ? (
+      {modern ? (
         <div className="grid grid-cols-1 lg:grid-cols-[252px_minmax(0,1fr)] gap-3.5 items-start">
 
           {/* ── The rail: the four boards, as things you press ─────────────────────────────── */}
@@ -503,7 +503,7 @@ export function BoardsPage() {
                   )}
                 </div>
 
-                {/* The arrangement editor, unchanged in what it does — only its furniture is the redesign's. */}
+                {/* The arrangement editor, unchanged in what it does — only its furniture is the Modern interface's. */}
                 {editingBoard === selected.boardId && (
                   <div className="mt-3 space-y-2.5 border-t border-surface-border pt-3">
                     <p className="text-[11px] text-gray-500">
@@ -779,7 +779,7 @@ export function BoardsPage() {
                     </button>
                   )}
                   <span className="text-[10px] text-gray-600 font-mono">{m.open} open</span>
-                  {redesign && (
+                  {modern && (
                     <span
                       className={`chip text-[10px] ${m.stale3Days > 0 ? "chip--warn" : ""}`}
                       title={`${m.stale3Days} open ticket${m.stale3Days === 1 ? "" : "s"} nobody has touched for more than three days`}

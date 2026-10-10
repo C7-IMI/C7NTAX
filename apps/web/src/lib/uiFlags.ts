@@ -10,7 +10,7 @@
  *   localStorage.setItem("c7_ui_context_menus", "0"); location.reload() // disable the app right-click menus
  *   localStorage.setItem("c7_ui_console", "0"); location.reload() // hide the console
  *   localStorage.setItem("c7_ui_nav", "0"); location.reload() // the classic navigation pane
- *   localStorage.setItem("c7_ui_redesign", "0"); location.reload() // the classic interface
+ *   localStorage.setItem("c7_ui_modern", "0"); location.reload() // the classic interface
  *   localStorage.removeItem("c7_ui_p1");   location.reload()   // back to default
  * Or the window.c7UiP1 / window.c7UiP2 helpers, or the command palette actions.
  *
@@ -25,15 +25,26 @@
  * Interface** switch, which is the same flag this file names; see
  * NAV-PANE-ROLLBACK.md.
  *
- * The interface itself — the redesigned screens rather than the classic ones — is a
+ * The interface itself — the Modern screens rather than the classic ones — is a
  * system setting too (Workspace → "Interface", `appearance.interfaceStyle`), and
- * `c7_ui_redesign` overrides it for one browser. See INTERFACE-ROLLBACK.md.
+ * `c7_ui_modern` overrides it for one browser. See INTERFACE-ROLLBACK.md.
  *
  * Deployment-wide rollback: set VITE_UI_P1=false / VITE_UI_P2=false (e.g. in
  * apps/web/.env.local) and restart the web server; or run
  * scripts/rollback-ui-p1.ps1 -Part P1|P2|All.
  */
-type FlagStorageKey = "c7_ui_p1" | "c7_ui_p2" | "c7_ui_palette" | "c7_ui_kumo_orgs" | "c7_ui_kumo_types" | "c7_ui_kumo_crumbs" | "c7_ui_context_menus" | "c7_ui_console" | "c7_ui_nav" | "c7_ui_redesign";
+type FlagStorageKey = "c7_ui_p1" | "c7_ui_p2" | "c7_ui_palette" | "c7_ui_kumo_orgs" | "c7_ui_kumo_types" | "c7_ui_kumo_crumbs" | "c7_ui_context_menus" | "c7_ui_console" | "c7_ui_nav" | "c7_ui_modern";
+
+/**
+ * A flag's name before the interface was renamed Modern (it was "Redesign"). A browser that chose an
+ * interface under the old name still holds it, and a deployment that built with the old variable
+ * still constrains the build, so both are read — never written — as a fallback. Retire them in a
+ * later release, once no browser and no build can be carrying them.
+ */
+interface FlagAliases {
+  key: string;
+  envName: string;
+}
 
 const UI_P1_STORAGE_KEY: FlagStorageKey = "c7_ui_p1";
 const UI_P2_STORAGE_KEY: FlagStorageKey = "c7_ui_p2";
@@ -44,22 +55,27 @@ const UI_KUMO_BREADCRUMBS_STORAGE_KEY: FlagStorageKey = "c7_ui_kumo_crumbs";
 const UI_CONTEXT_MENUS_STORAGE_KEY: FlagStorageKey = "c7_ui_context_menus";
 const UI_CONSOLE_STORAGE_KEY: FlagStorageKey = "c7_ui_console";
 const UI_NAV_STORAGE_KEY: FlagStorageKey = "c7_ui_nav";
-const UI_REDESIGN_STORAGE_KEY: FlagStorageKey = "c7_ui_redesign";
+const UI_MODERN_SCREENS_STORAGE_KEY: FlagStorageKey = "c7_ui_modern";
+
+/** The Modern-screens flag's old name — read as a fallback, never written. See {@link FlagAliases}. */
+const UI_MODERN_SCREENS_LEGACY: FlagAliases = { key: "c7_ui_redesign", envName: "VITE_UI_REDESIGN" };
 
 function readBuildFlag(envName: string): boolean {
   const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
   return env?.[envName] !== "false";
 }
 
-function readFlag(key: FlagStorageKey, envName: string): boolean {
+function readFlag(key: FlagStorageKey, envName: string, legacy?: FlagAliases): boolean {
   try {
-    const override = localStorage.getItem(key);
+    // The current name wins; the old one is only a fallback, so a browser that chose before the
+    // rename keeps its choice.
+    const override = localStorage.getItem(key) ?? (legacy ? localStorage.getItem(legacy.key) : null);
     if (override === "0") return false;
     if (override === "1") return true;
   } catch {
     /* localStorage unavailable — fall through to the build default */
   }
-  return readBuildFlag(envName);
+  return readBuildFlag(envName) && (legacy ? readBuildFlag(legacy.envName) : true);
 }
 
 function writeFlag(key: FlagStorageKey, enabled: boolean): void {
@@ -133,23 +149,23 @@ export const UI_NAV_MODERN = readFlag(UI_NAV_STORAGE_KEY, "VITE_UI_NAV");
 export const UI_NAV_AVAILABLE = readBuildFlag("VITE_UI_NAV");
 
 /**
- * The redesigned interface — the restructured screens rather than the classic ones (default: on).
+ * The Modern interface — the restructured screens rather than the classic ones (default: on).
  *
  * This is the switch that takes somebody back to the interface the application had before the
- * redesign, and it is deliberately separate from the navigation pane's: the two are different
+ * Modern screens, and it is deliberately separate from the navigation pane's: the two are different
  * questions ("which screens" and "which nav"), and a person who wants the rail with the classic
- * screens, or the tree with the redesigned ones, should be able to say so. See
+ * screens, or the tree with the Modern ones, should be able to say so. See
  * INTERFACE-ROLLBACK.md.
  */
-export const UI_REDESIGN = readFlag(UI_REDESIGN_STORAGE_KEY, "VITE_UI_REDESIGN");
+export const UI_MODERN_SCREENS = readFlag(UI_MODERN_SCREENS_STORAGE_KEY, "VITE_UI_MODERN", UI_MODERN_SCREENS_LEGACY);
 
-/** Whether this build has the redesigned screens at all, ignoring what the browser asked for. */
-export const UI_REDESIGN_AVAILABLE = readBuildFlag("VITE_UI_REDESIGN");
+/** Whether this build has the Modern screens at all, ignoring what the browser asked for. */
+export const UI_MODERN_SCREENS_AVAILABLE = readBuildFlag("VITE_UI_MODERN") && readBuildFlag(UI_MODERN_SCREENS_LEGACY.envName);
 
 /** The browser's own answer for the interface, or `null` when it has never expressed one. */
-export function redesignOverride(): boolean | null {
+export function modernScreensOverride(): boolean | null {
   try {
-    const raw = localStorage.getItem(UI_REDESIGN_STORAGE_KEY);
+    const raw = localStorage.getItem(UI_MODERN_SCREENS_STORAGE_KEY) ?? localStorage.getItem(UI_MODERN_SCREENS_LEGACY.key);
     if (raw === "0") return false;
     if (raw === "1") return true;
   } catch {
@@ -213,13 +229,13 @@ export function setUiNavModern(enabled: boolean): void {
   writeFlag(UI_NAV_STORAGE_KEY, enabled);
 }
 
-/** `true` for the redesigned screens, `false` for the classic ones, for this browser only. */
-export function setUiRedesign(enabled: boolean): void {
-  writeFlag(UI_REDESIGN_STORAGE_KEY, enabled);
+/** `true` for the Modern screens, `false` for the classic ones, for this browser only. */
+export function setUiModernScreens(enabled: boolean): void {
+  writeFlag(UI_MODERN_SCREENS_STORAGE_KEY, enabled);
 }
 
 export {
   UI_P1_STORAGE_KEY, UI_P2_STORAGE_KEY, UI_PALETTE_STORAGE_KEY,
   UI_KUMO_ORGS_STORAGE_KEY, UI_KUMO_TYPES_STORAGE_KEY, UI_KUMO_BREADCRUMBS_STORAGE_KEY,
-  UI_CONTEXT_MENUS_STORAGE_KEY, UI_CONSOLE_STORAGE_KEY, UI_NAV_STORAGE_KEY, UI_REDESIGN_STORAGE_KEY,
+  UI_CONTEXT_MENUS_STORAGE_KEY, UI_CONSOLE_STORAGE_KEY, UI_NAV_STORAGE_KEY, UI_MODERN_SCREENS_STORAGE_KEY,
 };

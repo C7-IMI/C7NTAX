@@ -18,7 +18,7 @@
 import { useMemo } from "react";
 import { Permission } from "@C7NTAX/shared";
 import { useAuth } from "../hooks/useAuth";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { EmailLogModern } from "../components/email/EmailLogModern";
 import { EmailLogClassic } from "../components/email/EmailLogClassic";
 import { useEmailLog } from "../components/email/emailApi";
@@ -26,7 +26,7 @@ import { resolveLog, type EmailLogProps } from "../components/email/logView";
 import { DELIVERY_DEFAULTS, NO_RESEND_ROUTE } from "../components/email/emailFacts";
 
 export function EmailLogPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const log = useEmailLog();
   const { permissions } = useAuth();
   const canManage = permissions.includes(Permission.EmailManage);
@@ -45,5 +45,5 @@ export function EmailLogPage() {
     resendBlockedBecause: NO_RESEND_ROUTE,
   };
 
-  return redesign ? <EmailLogModern {...props} /> : <EmailLogClassic {...props} />;
+  return modern ? <EmailLogModern {...props} /> : <EmailLogClassic {...props} />;
 }

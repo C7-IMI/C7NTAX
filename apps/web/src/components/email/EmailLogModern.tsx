@@ -2,7 +2,7 @@
  * The delivery log in the **modern** interface: the last sends as rows you read down, with the reason
  * drawn where the failure is rather than behind a click.
  *
- * The arrangement is the redesign's own: a strip of figures, chips you press to narrow the list, rows
+ * The arrangement is the Modern interface's own: a strip of figures, chips you press to narrow the list, rows
  * with the outcome chip beside the recipient and the reason inline under the row it belongs to, a Resend
  * with the sentence saying why it is not offered, and a countable footer. The classic arrangement of the
  * same screen — a table with an Action column and the reason in a dialog — is `EmailLogClassic.tsx`; the

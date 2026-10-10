@@ -25,7 +25,7 @@ import type { DocumentFamily, DocumentPresentation } from "@C7NTAX/shared";
 import { PageHeader } from "../components/ui";
 import { Band, LoadingBlock, StateChip, UnavailablePanel } from "../components/email/emailChrome";
 import { useAuth } from "../hooks/useAuth";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import {
   resetReportPresentation,
   saveReportPresentation,
@@ -71,7 +71,7 @@ function familyTitle(family: DocumentFamily): string {
 }
 
 export function BrandingReportsPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const brand = useBrand();
   const reports = useBrandReports();
   const { permissions } = useAuth();
@@ -201,7 +201,7 @@ export function BrandingReportsPage() {
     );
   }
 
-  if (redesign) {
+  if (modern) {
     return (
       <div className="space-y-4">
         <PageHeader

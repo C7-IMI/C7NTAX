@@ -13,7 +13,7 @@ import { kumoTrail, useBreadcrumbTrail, kumoClientTrail } from "../components/Br
 import { currentView, copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { PageHeader, ListFooter, ListViews, StatCard, Tabs } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 interface ChecklistRow {
   id: string;
@@ -79,7 +79,7 @@ export function ChecklistsPage() {
   const menu = useContextMenu();
 
   const [tab, setTab] = useState<"checklists" | "tasks">("checklists");
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [view, setView] = useState("all");
   const [checklists, setChecklists] = useState<ChecklistRow[]>([]);
   const [tasks, setTasks] = useState<TaskRow[]>([]);
@@ -314,7 +314,7 @@ export function ChecklistsPage() {
 
       {/* The figures the page already holds, read from the two lists beneath it: how many checklists
           there are, how many are done, how many are past their date, and the tasks waiting on you. */}
-      {redesign && (
+      {modern && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard label="Checklists" value={checklists.length} icon={<ClipboardList size={13} />} tone="cyber" />
           <StatCard label="Complete" value={checklists.filter(isComplete).length} icon={<CheckCircle2 size={13} />} tone="green" />
@@ -323,7 +323,7 @@ export function ChecklistsPage() {
         </div>
       )}
 
-      {redesign ? (
+      {modern ? (
         <Tabs
           label="Checklist sections"
           items={[
@@ -349,7 +349,7 @@ export function ChecklistsPage() {
       </div>
       )}
 
-      {redesign && (
+      {modern && (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews
             views={tab === "tasks" ? taskViews : checklistViews}
@@ -440,7 +440,7 @@ export function ChecklistsPage() {
                 </tr>
               </thead>
               <tbody>
-                {redesign && shownRows.length === 0 && (
+                {modern && shownRows.length === 0 && (
                   <tr><td colSpan={7} className="px-3 py-8 text-center text-sm text-gray-500">Nothing in this view.</td></tr>
                 )}
                 {shownRows.map((row) => (
@@ -475,7 +475,7 @@ export function ChecklistsPage() {
                     )}
                     {shows("due") && (
                       <td className="px-3 py-2">
-                        <span className={`inline-flex items-center gap-1.5 ${dueLabel(row.dueDate, row.taskCount > 0 && row.completedCount === row.taskCount).tone}${redesign ? " tabular-nums" : ""}`}>
+                        <span className={`inline-flex items-center gap-1.5 ${dueLabel(row.dueDate, row.taskCount > 0 && row.completedCount === row.taskCount).tone}${modern ? " tabular-nums" : ""}`}>
                           <CalendarDays size={12} /> {dueLabel(row.dueDate).text}
                         </span>
                       </td>
@@ -483,7 +483,7 @@ export function ChecklistsPage() {
                     {shows("progress") && (
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-2">
-                          {redesign ? (
+                          {modern ? (
                             <span className={`chip text-[10px] ${row.taskCount > 0 && row.completedCount === row.taskCount ? "chip--good" : ""}`}>
                               {row.taskCount > 0 && row.completedCount === row.taskCount ? "complete" : "open"}
                               <span className="chip__n">{row.completedCount}/{row.taskCount}</span>
@@ -507,7 +507,7 @@ export function ChecklistsPage() {
                 ))}
               </tbody>
             </table>
-            {redesign && (
+            {modern && (
               <ListFooter
                 from={1}
                 to={shownRows.length}
@@ -535,7 +535,7 @@ export function ChecklistsPage() {
             </thead>
             <tbody>
               {shownTasks.length === 0 && (
-                <tr><td colSpan={6} className="px-3 py-8 text-center text-gray-500">{redesign && visibleTasks.length > 0 ? "Nothing in this view." : <>Nothing assigned to you{companyId ? " for this client" : ""}.</>}</td></tr>
+                <tr><td colSpan={6} className="px-3 py-8 text-center text-gray-500">{modern && visibleTasks.length > 0 ? "Nothing in this view." : <>Nothing assigned to you{companyId ? " for this client" : ""}.</>}</td></tr>
               )}
               {shownTasks.map((task) => (
                 <tr key={task.id} className="border-b border-surface-border/60 last:border-0 hover:bg-surface-lighter/40">
@@ -554,15 +554,15 @@ export function ChecklistsPage() {
                     {task.checklist && <Link to={`/kumo/checklists/${task.checklist.id}`} className="text-cyber-300 hover:text-cyber-200">{task.checklist.name}</Link>}
                   </td>
                   <td className="px-3 py-2 text-gray-400">{task.checklist?.company?.name || "—"}</td>
-                  <td className="px-3 py-2"><span className={`${dueLabel(task.dueDate, Boolean(task.completedAt)).tone}${redesign ? " tabular-nums" : ""}`}>{dueLabel(task.dueDate).text}</span></td>
-                  <td className="px-3 py-2 text-xs text-gray-500">{redesign
+                  <td className="px-3 py-2"><span className={`${dueLabel(task.dueDate, Boolean(task.completedAt)).tone}${modern ? " tabular-nums" : ""}`}>{dueLabel(task.dueDate).text}</span></td>
+                  <td className="px-3 py-2 text-xs text-gray-500">{modern
                     ? <span className={`chip text-[10px] ${task.completedAt ? "chip--good" : ""}`}>{task.completedAt ? "Done" : "Open"}</span>
                     : task.completedAt ? "Done" : "Open"}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {redesign && (
+          {modern && (
             <ListFooter
               from={1}
               to={shownTasks.length}

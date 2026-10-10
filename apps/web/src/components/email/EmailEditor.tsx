@@ -29,7 +29,7 @@
 import { useState, type ReactNode } from "react";
 import { AlertTriangle, ArrowDown, ArrowUp, Lock, Plus, Trash2 } from "lucide-react";
 import type { EmailBlock, EmailMessageKey } from "@C7NTAX/shared";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import { Band, Fact, Mono, MonoTm, StateChip, UnavailablePanel, plural } from "./emailChrome";
 import { EmailCanvasBlock } from "./EmailCanvas";
 import { EmailContentSwitches } from "./EmailContentSwitches";
@@ -327,7 +327,7 @@ function ClassTable({ fact }: { fact: EmailMessageFact | undefined }) {
 }
 
 export function EmailEditor(props: EmailEditorProps) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const locked = props.fact ? LOCKED_CLASSES.includes(props.fact.editingClass) : false;
   const proposed = props.fact?.editingClass === "proposed";
   const bodyLocked = locked || proposed || !props.canManage;
@@ -363,7 +363,7 @@ export function EmailEditor(props: EmailEditorProps) {
     </Band>
   );
 
-  if (!redesign) {
+  if (!modern) {
     return (
       <ClassicEditor
         {...props}

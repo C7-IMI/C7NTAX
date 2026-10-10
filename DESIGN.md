@@ -18,12 +18,12 @@ literal; never let the modern arrangement be a restyle of the classic one. Then 
 
 ## 1. The four axes every change must survive
 
-| Axis | Values | Where it is set | How to switch while testing |
-|---|---|---|---|
-| **Interface** | modern (`redesign`), classic | `useRedesign()` from `hooks/useNavigationStyle`, backed by the instance's `appearance.interfaceStyle`, the `c7_ui_redesign` flag and `VITE_UI_REDESIGN` | `localStorage.setItem("c7_ui_redesign", "0")` → classic; `"1"` → modern; `removeItem` → the instance default |
-| **Theme** | dark (default), light | `data-theme="light"` on `<html>`; the variables live in `index.css` | My Account → the theme toggle |
-| **Colour scheme** | dark: `crimson` (default), `rose`, `maroon`, `plum`, `oled` · light: `rosetint` (default), `brand`, `contrast` | `data-palette-dark` / `data-palette-light` on `<html>`, defined in `lib/palette.ts` and the "Colour schemes" block at the end of `index.css` | `c7Palette.set("dark", "plum")` in the console, or My Account |
-| **Density** | comfortable (default), `compact` | `data-density="compact"` on `<html>` (`lib/density.ts`) | My Account → Density |
+| Axis              | Values                                                                                                         | Where it is set                                                                                                                                            | How to switch while testing                                                                                |
+| ----------------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Interface**     | modern (`modern`), classic                                                                                     | `useModernInterface()` from `hooks/useNavigationStyle`, backed by the instance's `appearance.interfaceStyle`, the `c7_ui_modern` flag and `VITE_UI_MODERN` | `localStorage.setItem("c7_ui_modern", "0")` → classic; `"1"` → modern; `removeItem` → the instance default |
+| **Theme**         | dark (default), light                                                                                          | `data-theme="light"` on `<html>`; the variables live in `index.css`                                                                                        | My Account → the theme toggle                                                                              |
+| **Colour scheme** | dark: `crimson` (default), `rose`, `maroon`, `plum`, `oled` · light: `rosetint` (default), `brand`, `contrast` | `data-palette-dark` / `data-palette-light` on `<html>`, defined in `lib/palette.ts` and the "Colour schemes" block at the end of `index.css`               | `c7Palette.set("dark", "plum")` in the console, or My Account                                              |
+| **Density**       | comfortable (default), `compact`                                                                               | `data-density="compact"` on `<html>` (`lib/density.ts`)                                                                                                    | My Account → Density                                                                                       |
 
 There is also **navigation style** (rail vs tree, `c7_ui_nav`) — a fifth axis that changes the pane, not
 your page, so a page must never depend on it. And the P1/P2 flags in `lib/uiFlags.ts`, which govern whether
@@ -47,14 +47,14 @@ const themed = (variable) => `color-mix(in srgb, var(${variable}) calc(<alpha-va
 So a hex literal does not merely bypass a preference: it is the one colour on the screen the theme cannot
 reach. **Use the token.**
 
-| Purpose | Classes | Notes |
-|---|---|---|
-| Page and panel surfaces | `bg-navy-950`, `bg-surface`, `bg-surface-light`, `bg-surface-lighter`, `border-surface-border` | `surface` is the panel, `surface-light` the hover, `surface-lighter` the selected |
-| Primary accent | `text-cyber-400` / `bg-cyber-600` / `border-cyber-500` | The accent ramp is **crimson** in the shipped schemes, so never say "blue" in a comment |
-| Text | `text-white` (primary), `text-gray-300` (secondary), `text-gray-400` (tertiary), `text-gray-500` (muted), `text-gray-600` (muted alt) | These are *themed text tokens*: `text-white` is `--text-primary`, which is near-black on the light theme. Use them for text, never as a "white" fill |
-| Alert states | `text-alert-red` / `text-alert-amber` / `text-alert-green` | Red is destructive/overdue, amber waiting/warning, green success |
-| Ticket statuses | `.badge-status` plus `.badge-status-<status>` | See §6 |
-| The marks | `--brand-crimson` (`#c00000`), `--kumo-red` (`#e3222b`) | Brand constants. `--brand-crimson` is used by the logo and **never by a colour scheme**; `--kumo-red` belongs to Kumo |
+| Purpose                 | Classes                                                                                                                               | Notes                                                                                                                                                |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Page and panel surfaces | `bg-navy-950`, `bg-surface`, `bg-surface-light`, `bg-surface-lighter`, `border-surface-border`                                        | `surface` is the panel, `surface-light` the hover, `surface-lighter` the selected                                                                    |
+| Primary accent          | `text-cyber-400` / `bg-cyber-600` / `border-cyber-500`                                                                                | The accent ramp is **crimson** in the shipped schemes, so never say "blue" in a comment                                                              |
+| Text                    | `text-white` (primary), `text-gray-300` (secondary), `text-gray-400` (tertiary), `text-gray-500` (muted), `text-gray-600` (muted alt) | These are *themed text tokens*: `text-white` is `--text-primary`, which is near-black on the light theme. Use them for text, never as a "white" fill |
+| Alert states            | `text-alert-red` / `text-alert-amber` / `text-alert-green`                                                                            | Red is destructive/overdue, amber waiting/warning, green success                                                                                     |
+| Ticket statuses         | `.badge-status` plus `.badge-status-<status>`                                                                                         | See §6                                                                                                                                               |
+| The marks               | `--brand-crimson` (`#c00000`), `--kumo-red` (`#e3222b`)                                                                               | Brand constants. `--brand-crimson` is used by the logo and **never by a colour scheme**; `--kumo-red` belongs to Kumo                                |
 
 **Two places legitimately need literal colours**, and `scripts/lint-design-tokens.mjs` keeps a list with the
 reason written beside each entry: (a) anything rendered where CSS does not exist — the print document and
@@ -82,23 +82,23 @@ accent. If your change needs a literal, it belongs on that list with a written r
 
 Two **designs** of the same screen, not one screen with a class toggled.
 
-- **Modern** (`redesign === true`) is built from the redesign's own furniture: rails, chips you press,
+- **Modern** (`modern === true`) is built from its own furniture: rails, chips you press,
   sheets, segmented controls, a status track you step along, sentences beside the control that acts, and a
   countable footer.
 - **Classic** is a **form**: labelled fields in a grid, a dialog with a heading and Save/Cancel, a table
-  where the modern screen has cards, a select where the modern screen has a segmented control.
+  where the Modern screen has cards, a select where the Modern screen has a segmented control.
 
 The shared part is **the state, the API call and the words** — never the layout.
 
 ```tsx
 // The pattern: one component, one set of handlers, two returns, and the reason at the top of the file.
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 export function Example({ ticket, onClose }: { ticket: Ticket; onClose: () => void }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const save = () => { /* one handler, both arrangements */ };
 
-  if (redesign) {
+  if (modern) {
     return (
       <div className="card">
         <span className="chip chip--on">Resolve<span className="chip__n">{ticket.count}</span></span>
@@ -123,7 +123,7 @@ export function Example({ ticket, onClose }: { ticket: Ticket; onClose: () => vo
 }
 ```
 
-- **75 files** already branch on `useRedesign()`. `components/CloseTicketDialog.tsx` and
+- **75 files** already branch on `useModernInterface()`. `components/CloseTicketDialog.tsx` and
   `components/PurchaseOrderDialog.tsx` are the canonical examples, and their top-of-file comments explain
   why each arrangement differs.
 - If the two arrangements would come out identical, the thing is probably a shared component
@@ -133,7 +133,7 @@ export function Example({ ticket, onClose }: { ticket: Ticket; onClose: () => vo
 - Anything one interface keeps and the other deliberately drops is a difference the user will notice: it
   belongs in that feature's Help walkthrough.
 
-**Verify both, every time**: `localStorage.setItem("c7_ui_redesign", "0")` for classic, `removeItem` to
+**Verify both, every time**: `localStorage.setItem("c7_ui_modern", "0")` for classic, `removeItem` to
 return the browser to the instance's default. Screenshot both. Do not call a UI change done on the strength
 of one.
 
@@ -142,31 +142,31 @@ of one.
 `apps/web/src/components/ui` — the shared kit. Read a component's file before using it; two of them already
 handle both interfaces for you.
 
-| Component | Props | Use it for |
-|---|---|---|
-| `PageHeader` | `title`, `subtitle?`, `actions?`, `children?`, `className?`, `variant?: "page" \| "section"`, `icon?` | The header of every page and of every section inside one. **It branches on the interface itself**: one compact row with a sentence beside it in the modern interface, the title + description markup the classic page always had. `variant="section"` is the `h2` + `p` a page used to hand-roll |
-| `Section` | `title?`, `actions?`, `children`, `className?` | A titled block of a page |
-| `StatCard` | `label`, `value`, `icon?`, `tone?`, `foot?` | One figure with its label; `foot` is the line beneath it |
-| `EmptyState` | `icon?`, `title`, `description?`, `action?`, `className?` | Nothing to show — with a way to fix that |
-| `Tabs` | `items: TabItem[]` | A tab strip |
-| `ListViews` | `views: ListViewOption[]`, `value`, `onChange`, `label` | The "which slice of this am I looking at" strip above a list |
-| `ListFooter` | `from`, `to`, `total`, `page`, `pages`, `onPage`, `note?` | The countable footer under a list |
-| `Skeleton`, `TableSkeleton`, `PageSkeleton`, `CardSkeleton`, `ReportsSkeleton` | `rows`/`blocks`/`kpis`/`groups`, `className?` | Loading states that respect reduced motion |
+| Component                                                                      | Props                                                                                                 | Use it for                                                                                                                                                                                                                                                                                       |
+| ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PageHeader`                                                                   | `title`, `subtitle?`, `actions?`, `children?`, `className?`, `variant?: "page" \| "section"`, `icon?` | The header of every page and of every section inside one. **It branches on the interface itself**: one compact row with a sentence beside it in the modern interface, the title + description markup the classic page always had. `variant="section"` is the `h2` + `p` a page used to hand-roll |
+| `Section`                                                                      | `title?`, `actions?`, `children`, `className?`                                                        | A titled block of a page                                                                                                                                                                                                                                                                         |
+| `StatCard`                                                                     | `label`, `value`, `icon?`, `tone?`, `foot?`                                                           | One figure with its label; `foot` is the line beneath it                                                                                                                                                                                                                                         |
+| `EmptyState`                                                                   | `icon?`, `title`, `description?`, `action?`, `className?`                                             | Nothing to show — with a way to fix that                                                                                                                                                                                                                                                         |
+| `Tabs`                                                                         | `items: TabItem[]`                                                                                    | A tab strip                                                                                                                                                                                                                                                                                      |
+| `ListViews`                                                                    | `views: ListViewOption[]`, `value`, `onChange`, `label`                                               | The "which slice of this am I looking at" strip above a list                                                                                                                                                                                                                                     |
+| `ListFooter`                                                                   | `from`, `to`, `total`, `page`, `pages`, `onPage`, `note?`                                             | The countable footer under a list                                                                                                                                                                                                                                                                |
+| `Skeleton`, `TableSkeleton`, `PageSkeleton`, `CardSkeleton`, `ReportsSkeleton` | `rows`/`blocks`/`kpis`/`groups`, `className?`                                                         | Loading states that respect reduced motion                                                                                                                                                                                                                                                       |
 
 CSS component classes, defined once in `index.css` — a change to one is a change to every screen:
 
-| Class | What it is | The rule behind it |
-|---|---|---|
-| `.card` | `bg-surface border border-surface-border rounded-xl p-5` | The default container. Do not write those four utilities again |
-| `.btn-primary`, `.btn-secondary`, `.btn-danger` | The three buttons | `.btn-primary` takes its label colour from `--btn-primary-fg`, because a scheme may need dark text on its accent to stay ≥ 4.5:1 |
-| `.input-field` | A form control | Carries `px-3`; a `pl-*` for a leading icon is a deliberate override — see the comment about the nineteen fields that depend on it |
-| `.chip`, `.chip--on`, `.chip__n` | A filter or view you press, with the count of what it would show | The chosen one takes the accent: a strip where none of them look chosen is a strip you have to read to interpret |
-| `.chip--good`, `.chip--warn`, `.chip--bad` | A chip that reports a state rather than a filter | The label colour is re-shaded for the light theme and the tint follows `currentColor` |
-| `.badge`, `.badge-count`, `.badge-status` (+ `-new`, `-open`, `-in_progress`, `-waiting_on_client`, `-waiting_on_vendor`, `-resolved`, `-closed`, `-customer_reopened`) | Counts and statuses | Status colours are tokens, not palette shades, because the light theme fixes the same names to darker values |
-| `.nav-item`, `.nav-item--active` | A navigation row, in both panes | The active row's accent is `--nav-accent`, which is per scheme |
-| `.tab-active` | The chosen tab of a segmented control | It takes the primary button's fill: on a near-black surface an accent *tint* is not distinguishable from the group it sits in |
-| `.print-letterhead`, `.ticket-print-only`, `.ticket-print-activity` | Documents and printing | §8 |
-| `.scheme-swatch--<id>` | The palette picker's preview swatch | Literal colours **by definition** — it is a picture of the scheme |
+| Class                                                                                                                                                                   | What it is                                                       | The rule behind it                                                                                                                 |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `.card`                                                                                                                                                                 | `bg-surface border border-surface-border rounded-xl p-5`         | The default container. Do not write those four utilities again                                                                     |
+| `.btn-primary`, `.btn-secondary`, `.btn-danger`                                                                                                                         | The three buttons                                                | `.btn-primary` takes its label colour from `--btn-primary-fg`, because a scheme may need dark text on its accent to stay ≥ 4.5:1   |
+| `.input-field`                                                                                                                                                          | A form control                                                   | Carries `px-3`; a `pl-*` for a leading icon is a deliberate override — see the comment about the nineteen fields that depend on it |
+| `.chip`, `.chip--on`, `.chip__n`                                                                                                                                        | A filter or view you press, with the count of what it would show | The chosen one takes the accent: a strip where none of them look chosen is a strip you have to read to interpret                   |
+| `.chip--good`, `.chip--warn`, `.chip--bad`                                                                                                                              | A chip that reports a state rather than a filter                 | The label colour is re-shaded for the light theme and the tint follows `currentColor`                                              |
+| `.badge`, `.badge-count`, `.badge-status` (+ `-new`, `-open`, `-in_progress`, `-waiting_on_client`, `-waiting_on_vendor`, `-resolved`, `-closed`, `-customer_reopened`) | Counts and statuses                                              | Status colours are tokens, not palette shades, because the light theme fixes the same names to darker values                       |
+| `.nav-item`, `.nav-item--active`                                                                                                                                        | A navigation row, in both panes                                  | The active row's accent is `--nav-accent`, which is per scheme                                                                     |
+| `.tab-active`                                                                                                                                                           | The chosen tab of a segmented control                            | It takes the primary button's fill: on a near-black surface an accent *tint* is not distinguishable from the group it sits in      |
+| `.print-letterhead`, `.ticket-print-only`, `.ticket-print-activity`                                                                                                     | Documents and printing                                           | §8                                                                                                                                 |
+| `.scheme-swatch--<id>`                                                                                                                                                  | The palette picker's preview swatch                              | Literal colours **by definition** — it is a picture of the scheme                                                                  |
 
 ## 5. Page anatomy
 
@@ -236,7 +236,7 @@ it — `components/reports/reportKit.tsx` shows how the section-based document i
 ## 9. Definition of done for any interface change
 
 1. **Designed for both interfaces**, and it is obvious what the modern arrangement does differently.
-2. **Verified on both**, with the screenshot of each (`c7_ui_redesign` 0 and 1).
+2. **Verified on both**, with the screenshot of each (`c7_ui_modern` 0 and 1).
 3. **Verified on a non-default colour scheme** (one light, plus `plum` or `rose`) and on `compact` density.
 4. **No new colour literals**: `node scripts/lint-design-tokens.mjs` passes. (It is not one of the `guard:*`
    npm scripts; run it directly.)
@@ -272,16 +272,16 @@ additionally owes 5–6.
 
 ## 11. Where the truth lives
 
-| Question | File |
-|---|---|
-| What colour/type/radius may I use? | `apps/web/tailwind.config.js` and `apps/web/src/index.css` (variables, component classes, the modern theme, the schemes) |
-| Which colour schemes exist, and how are they switched? | `apps/web/src/lib/palette.ts` · rollback: `UI-PALETTE-ROLLBACK.md` |
-| Which interface is this, and what does the redesign change? | `apps/web/src/hooks/useNavigationStyle.ts` · `INTERFACE-ROLLBACK.md` |
-| Which flag turns this layer off, and where? | `apps/web/src/lib/uiFlags.ts` (plus `NAV-PANE-ROLLBACK.md`, `UI-P1-ROLLBACK.md`, `CONTEXT-MENUS-ROLLBACK.md`, `KUMO-*-ROLLBACK.md`) |
-| What is in the shared kit? | `apps/web/src/components/ui/` |
-| What owns the page frame, the nav tree and the palette? | `apps/web/src/components/Layout.tsx` · `apps/web/src/lib/navModel.ts` |
-| What is a generated document made of? | `apps/web/src/lib/documentBrand.ts` · `apps/web/src/components/reports/reportKit.tsx` |
-| What does this feature look like as a design? | `docs/mockups/*.html` — the approved sketches a screen should match |
+| Question                                                | File                                                                                                                                |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| What colour/type/radius may I use?                      | `apps/web/tailwind.config.js` and `apps/web/src/index.css` (variables, component classes, the modern theme, the schemes)            |
+| Which colour schemes exist, and how are they switched?  | `apps/web/src/lib/palette.ts` · rollback: `UI-PALETTE-ROLLBACK.md`                                                                  |
+| Which interface is this, and what does Modern change?   | `apps/web/src/hooks/useNavigationStyle.ts` · `INTERFACE-ROLLBACK.md`                                                                |
+| Which flag turns this layer off, and where?             | `apps/web/src/lib/uiFlags.ts` (plus `NAV-PANE-ROLLBACK.md`, `UI-P1-ROLLBACK.md`, `CONTEXT-MENUS-ROLLBACK.md`, `KUMO-*-ROLLBACK.md`) |
+| What is in the shared kit?                              | `apps/web/src/components/ui/`                                                                                                       |
+| What owns the page frame, the nav tree and the palette? | `apps/web/src/components/Layout.tsx` · `apps/web/src/lib/navModel.ts`                                                               |
+| What is a generated document made of?                   | `apps/web/src/lib/documentBrand.ts` · `apps/web/src/components/reports/reportKit.tsx`                                               |
+| What does this feature look like as a design?           | `docs/mockups/*.html` — the approved sketches a screen should match                                                                 |
 
 ## 12. Changing this document
 
@@ -293,4 +293,3 @@ change that makes it true:
 - A guard that changes what is allowed: update §9 and the guard's own comment together.
 - A rule you cannot point at in the code: it does not belong here. Either enforce it somewhere, or move it
   to `docs/mockups/` as a proposal.
-

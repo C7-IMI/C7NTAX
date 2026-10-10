@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { PageHeader } from "../components/ui";
 import {
   Ticket, Columns3, Building2, Target, DollarSign,
@@ -95,12 +95,12 @@ const GETTING_STARTED: QuickLink[] = [
 ];
 
 export function HomePage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   return (
     <div className="space-y-8 animate-fade-in max-w-4xl">
-      {/* Welcome — the redesigned screens put the name and the summary on one line, because the bar
+      {/* Welcome — the Modern screens put the name and the summary on one line, because the bar
           above the page has already said where you are. */}
-      {redesign ? (
+      {modern ? (
         <PageHeader
           variant="section"
           title="Welcome to C7NTAX"

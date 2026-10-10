@@ -19,7 +19,7 @@ import { Copy, ExternalLink, Eye, Globe, Search, ShieldCheck, SlidersHorizontal,
 import api from "../api";
 import { DEFAULT_ACCENT_COLOUR, HEX_COLOUR_PATTERN, ON_ACCENT_COLOUR } from "../lib/colourTokens";
 import { ListFooter, ListViews, PageHeader, StatCard, Tabs } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { PortalAccessDialog } from "../components/PortalAccessDialog";
 import { PortalPreviewDialog } from "../components/PortalPreviewDialog";
@@ -146,7 +146,7 @@ function PortalPreview({ name, accent, logo, welcome, support }: {
 }
 
 export function CustomerPortalSettingsPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const { section, sections, loaded, loading, error, save, clear } = useConfigurationSection("portal");
   const [clientView, setClientView] = useState("all");
   const [sessionView, setSessionView] = useState("all");
@@ -298,7 +298,7 @@ export function CustomerPortalSettingsPage() {
         </div>
       )}
 
-      {redesign ? (
+      {modern ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Portal"
@@ -512,7 +512,7 @@ export function CustomerPortalSettingsPage() {
           </div>
         </div>
 
-        {redesign && !overviewLoading && clients.length > 0 ? (
+        {modern && !overviewLoading && clients.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <ListViews
               views={[
@@ -548,7 +548,7 @@ export function CustomerPortalSettingsPage() {
                 </tr>
               </thead>
               <tbody>
-                {(redesign ? shownClients : clients).map(client => (
+                {(modern ? shownClients : clients).map(client => (
                   <tr key={client.id} className="border-b border-surface-border/60 last:border-b-0">
                     <td className="py-2.5 pr-3">
                       <Link to={`/clients/${client.id}`} className="text-white hover:text-cyber-300">{client.name}</Link>
@@ -561,7 +561,7 @@ export function CustomerPortalSettingsPage() {
                           disabled={!overview?.canEdit || savingClient === client.id}
                           onChange={e => void patchClient(client, { portalEnabled: e.target.checked })}
                         />
-                        {redesign ? (
+                        {modern ? (
                           <span className={`chip text-[10px] ${client.portalEnabled ? "chip--good" : ""}`}>
                             {client.portalEnabled ? "Enabled" : "Off"}
                           </span>
@@ -582,7 +582,7 @@ export function CustomerPortalSettingsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className={`py-2.5 pr-3 text-gray-400 text-xs${redesign ? " tabular-nums" : ""}`}>
+                    <td className={`py-2.5 pr-3 text-gray-400 text-xs${modern ? " tabular-nums" : ""}`}>
                       {client.eligibleContacts} of {client.contacts} usable
                     </td>
                     <td className="py-2.5 pr-3">
@@ -618,7 +618,7 @@ export function CustomerPortalSettingsPage() {
                         }}
                       />
                     </td>
-                    <td className={`py-2.5 text-gray-400 text-xs${redesign ? " tabular-nums" : ""}`}>{client.tickets}</td>
+                    <td className={`py-2.5 text-gray-400 text-xs${modern ? " tabular-nums" : ""}`}>{client.tickets}</td>
                     <td className="py-2.5 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
@@ -641,12 +641,12 @@ export function CustomerPortalSettingsPage() {
                 ))}
               </tbody>
             </table>
-            {redesign && shownClients.length === 0 ? (
+            {modern && shownClients.length === 0 ? (
               <p className="text-sm text-gray-500 py-6 text-center">Nothing in this view.</p>
             ) : null}
           </div>
         )}
-        {redesign && shownClients.length > 0 ? (
+        {modern && shownClients.length > 0 ? (
           <ListFooter
             from={1}
             to={shownClients.length}
@@ -667,7 +667,7 @@ export function CustomerPortalSettingsPage() {
       <div className="card">
         <h3 className="text-sm font-semibold text-white mb-1">Recent portal sessions</h3>
         <p className="text-xs text-gray-400 mb-4">The last 25 customer sessions, newest first.</p>
-        {redesign && !overviewLoading && portalSessions.length > 0 ? (
+        {modern && !overviewLoading && portalSessions.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <ListViews
               views={[
@@ -700,18 +700,18 @@ export function CustomerPortalSettingsPage() {
                 </tr>
               </thead>
               <tbody>
-                {(redesign ? shownSessions : portalSessions).map(row => (
+                {(modern ? shownSessions : portalSessions).map(row => (
                   <tr key={row.id} className="border-b border-surface-border/60 last:border-b-0">
                     <td className="py-2.5 pr-3">
                       <p className="text-white text-xs">{row.contactName || row.contactEmail}</p>
                       <p className="text-[11px] text-gray-500">{row.contactEmail}</p>
                     </td>
                     <td className="py-2.5 pr-3 text-gray-400 text-xs">{row.clientName ?? "—"}</td>
-                    <td className={`py-2.5 pr-3 text-gray-400 text-xs${redesign ? " tabular-nums" : ""}`}>{new Date(row.createdAt).toLocaleString()}</td>
-                    <td className={`py-2.5 pr-3 text-gray-400 text-xs${redesign ? " tabular-nums" : ""}`}>{new Date(row.lastActivityAt).toLocaleString()}</td>
+                    <td className={`py-2.5 pr-3 text-gray-400 text-xs${modern ? " tabular-nums" : ""}`}>{new Date(row.createdAt).toLocaleString()}</td>
+                    <td className={`py-2.5 pr-3 text-gray-400 text-xs${modern ? " tabular-nums" : ""}`}>{new Date(row.lastActivityAt).toLocaleString()}</td>
                     <td className="py-2.5 pr-3 text-gray-500 text-xs font-mono">{row.ipAddress ?? "—"}</td>
                     <td className="py-2.5">
-                      {redesign ? (
+                      {modern ? (
                         <span className={`chip ${row.active ? "chip--good" : row.invalidatedAt ? "" : "chip--warn"}`}>
                           {row.active ? "signed in" : row.invalidatedAt ? "signed out" : "expired"}
                         </span>
@@ -725,12 +725,12 @@ export function CustomerPortalSettingsPage() {
                 ))}
               </tbody>
             </table>
-            {redesign && shownSessions.length === 0 ? (
+            {modern && shownSessions.length === 0 ? (
               <p className="text-sm text-gray-500 py-6 text-center">Nothing in this view.</p>
             ) : null}
           </div>
         )}
-        {redesign && shownSessions.length > 0 ? (
+        {modern && shownSessions.length > 0 ? (
           <ListFooter
             from={1}
             to={shownSessions.length}

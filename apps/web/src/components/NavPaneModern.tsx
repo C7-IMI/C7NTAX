@@ -15,7 +15,7 @@ import {
  * columns side by side and reserved 432px for them, which on a 1280px window took a third of the
  * screen and squeezed every page in the application — the header's own toolbar is a fixed 644px, so
  * the cost landed on the page title and on the tables below it. Widening is not available (the point
- * of the pane is to hold a growing tree) and redesigning every page to fit a narrower column is a
+ * of the pane is to hold a growing tree) and reworking every page to fit a narrower column is a
  * much larger change than this one. So the column overlays instead: the rail is 200px, narrower than
  * the 256px the tree occupied, and the list of destinations appears on top of the content when it is
  * asked for and then goes away.

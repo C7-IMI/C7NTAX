@@ -6,7 +6,7 @@
  *
  * The classic arrangement is the dialog this product has always had: a heading, labelled fields in a
  * grid, Cancel and Save at the end, which is what every other classic settings screen is. The modern
- * arrangement is a sheet in the redesign's furniture: each field is a row with its current value, a
+ * arrangement is a sheet in the Modern interface's furniture: each field is a row with its current value, a
  * single sentence saying what the field does beside the control that changes it, and one Save at the
  * bottom rather than a Save/Cancel pair. The state, the validation, the payload and the words are
  * identical; only the arrangement differs, which is the rule in `DESIGN.md` §3.
@@ -19,7 +19,7 @@
  */
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Loader2, X } from "lucide-react";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import type { FieldCtx, FieldSpec } from "./brandScreen";
 import { IDENTITY_FIELDS, KIT_FIELDS } from "./brandScreen";
 import { WriteFailure } from "./emailChrome";
@@ -64,7 +64,7 @@ export function FieldsEditor({
   onSave: (patch: Record<string, unknown>) => void;
   onClose: () => void;
 }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const fields = useMemo<FieldSpec[]>(() => (surface === "identity" ? IDENTITY_FIELDS : KIT_FIELDS), [surface]);
   const initial = useMemo(() => {
     const draft: Record<string, string> = {};
@@ -109,7 +109,7 @@ export function FieldsEditor({
     );
   };
 
-  if (redesign) {
+  if (modern) {
     return (
       <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-black/70 p-4 pt-[10vh]" onClick={onClose}>
         <div

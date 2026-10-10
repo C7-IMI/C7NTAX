@@ -10,7 +10,7 @@ import {
 import { timeAgo } from "../lib/format";
 import { ticketStatusBadge, ticketStatusLabel } from "../lib/ticketStatus";
 import { PageHeader, EmptyState, StatCard } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 
 /**
@@ -84,10 +84,10 @@ function WhatChanged() {
 }
 
 export function DashboardPage() {  const { user } = useAuth();
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [stats, setStats] = useState<DashboardStats>({ totalTickets: 0, openTickets: 0, waitingOnClient: 0, resolved: 0, overdueInvoices: 0, revenueThisMonth: 0, activeClients: 0, alerts: 0, myMinutes: 0 });
   const [recent, setRecent] = useState<any[]>([]);
-  // The bands the redesigned dashboard opens with: what is about to break, where the load sits, what
+  // The bands the Modern dashboard opens with: what is about to break, where the load sits, what
   // is already broken, and what this person has been doing.
   const [atRisk, setAtRisk] = useState<any[]>([]);
   const [boardLoad, setBoardLoad] = useState<any[]>([]);
@@ -116,10 +116,10 @@ export function DashboardPage() {  const { user } = useAuth();
       api.get("/billing/time-entries").then(r => (Array.isArray(r.data) ? r.data : []).filter((e: any) => new Date(e.date) >= weekStart)).catch(() => []),
       // The count above asks for a single row on purpose; the list widget needs its own request.
       api.get("/tickets?limit=8").then(r => r.data.data || []).catch(() => []),
-      // The redesigned bands. Each is a list the page shows in full rather than a count.
-      redesign ? api.get("/tickets?limit=100").then(r => r.data.data || []).catch(() => []) : Promise.resolve([]),
-      redesign ? api.get("/boards/metrics").then(r => (Array.isArray(r.data) ? r.data : [])).catch(() => []) : Promise.resolve([]),
-      redesign ? api.get("/service-alerts").then(r => (r.data?.data || r.data || [])).catch(() => []) : Promise.resolve([]),
+      // The Modern bands. Each is a list the page shows in full rather than a count.
+      modern ? api.get("/tickets?limit=100").then(r => r.data.data || []).catch(() => []) : Promise.resolve([]),
+      modern ? api.get("/boards/metrics").then(r => (Array.isArray(r.data) ? r.data : [])).catch(() => []) : Promise.resolve([]),
+      modern ? api.get("/service-alerts").then(r => (r.data?.data || r.data || [])).catch(() => []) : Promise.resolve([]),
     ]).then(([tickets, open, waiting, clients, overdue, resolved, alertCount, entries, recentTickets, risky, boards, activeAlerts]) => {
       setStats({
         totalTickets: tickets.total,
@@ -143,7 +143,7 @@ export function DashboardPage() {  const { user } = useAuth();
       setBoardLoad((boards as any[]).filter(b => (b.metrics?.open || 0) > 0).sort((a, b) => (b.metrics?.open || 0) - (a.metrics?.open || 0)));
       setAlerts((activeAlerts as any[]).slice(0, 5));
     }).catch(() => {});
-  }, [user?.id, redesign]);
+  }, [user?.id, modern]);
 
   const loadLayout = useCallback(async () => {
     try {
@@ -385,10 +385,10 @@ export function DashboardPage() {  const { user } = useAuth();
         </div>
       </div>
 
-      {/* ── The redesigned dashboard opens with what a service desk looks at first: the figures, the
+      {/* ── The Modern dashboard opens with what a service desk looks at first: the figures, the
           tickets about to breach, where the load is sitting, what is already broken, and what this
           person has been doing. The widget grid below is still the arrangement they chose. ── */}
-      {redesign && (
+      {modern && (
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-6">
             <StatCard label="Open tickets" value={stats.openTickets} icon={<Ticket size={13} />} />

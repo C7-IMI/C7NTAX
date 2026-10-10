@@ -143,7 +143,7 @@ export const CATALOGUE: CatalogueEntry[] = [
     group: "env",
     name: "Feature-flag registry",
     where: "apps/web/src/lib/uiFlags.ts · packages/shared/src/features/*",
-    does: "One table of every kill switch with its owner, its default and which layer has overridden it: c7_ui_p1, c7_ui_p2, c7_ui_palette, c7_ui_kumo_orgs, c7_ui_kumo_types, c7_ui_kumo_crumbs, c7_ui_context_menus, c7_ui_console, c7_ui_nav, c7_ui_redesign, each with its VITE_UI_* deployment counterpart.",
+    does: "One table of every kill switch with its owner, its default and which layer has overridden it: c7_ui_p1, c7_ui_p2, c7_ui_palette, c7_ui_kumo_orgs, c7_ui_kumo_types, c7_ui_kumo_crumbs, c7_ui_context_menus, c7_ui_console, c7_ui_nav, c7_ui_modern, each with its VITE_UI_* deployment counterpart.",
     canDestroy: "A flag off hides a shipped capability for everyone on the deployment, and the person who switched it off is usually standing on the screen it just disappeared from.",
     safeguard: "The three layers are shown separately — a per-browser localStorage override, the system setting that decides the default, and the VITE_* build switch that needs a restart — so the switch says which one is winning before it is pressed.",
     state: "exists",

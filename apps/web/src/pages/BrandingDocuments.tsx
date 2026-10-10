@@ -27,7 +27,7 @@ import { Permission } from "@C7NTAX/shared";
 import { PageHeader } from "../components/ui";
 import { Band, LoadingBlock, StateChip, UnavailablePanel } from "../components/email/emailChrome";
 import { useAuth } from "../hooks/useAuth";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import {
   savePresentationMap,
   useBrand,
@@ -78,7 +78,7 @@ function specimenFor(family: DocumentFamily): { title: string; flavour: Specimen
 }
 
 export function BrandingDocumentsPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const brand = useBrand();
   const { permissions } = useAuth();
   const canManage = permissions.includes(Permission.BrandingManage);
@@ -190,7 +190,7 @@ export function BrandingDocumentsPage() {
     />
   ) : null;
 
-  if (redesign) {
+  if (modern) {
     return (
       <div className="space-y-4">
         <PageHeader

@@ -7,7 +7,7 @@ import {
   Power, EyeOff, Activity, TerminalSquare,
 } from "lucide-react";
 import { PageHeader, StatCard, ListViews, ListFooter } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 const VERDICT_DOT: Record<string, string> = {
   clear: "bg-emerald-500",
@@ -83,7 +83,7 @@ export function ServiceAlertsSettingsPage() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [manual, setManual] = useState({ serviceId: "", title: "", severity: "degraded" });
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [svcView, setSvcView] = useState("all");
 
   const load = useCallback(async () => {
@@ -219,7 +219,7 @@ export function ServiceAlertsSettingsPage() {
           </span>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 text-sm">
-          {redesign ? (
+          {modern ? (
             <>
               <StatCard label="Last check" value={monitor?.lastCheckAt ? new Date(monitor.lastCheckAt).toLocaleTimeString() : "Never"} tone="neutral" />
               <StatCard label="Services polled" value={monitor?.checkedServices ?? 0} tone="neutral" />
@@ -310,7 +310,7 @@ export function ServiceAlertsSettingsPage() {
         </div>
         {/* Enabled, disabled and actively alerting are the three questions anybody opens this table
             with, so they are views with counts rather than a scroll. */}
-        {redesign && services.length > 0 && (
+        {modern && services.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 border-b border-surface-border px-5 py-2">
             <ListViews
               views={[

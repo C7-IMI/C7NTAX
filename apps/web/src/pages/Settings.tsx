@@ -1,7 +1,7 @@
 import { useState, useEffect, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { PasskeyManager } from "../components/PasskeyManager";
 import { Cpu, LayoutDashboard, Ticket, Columns3, Building2, DollarSign, Cloud, Users, Target, FolderKanban, Monitor, BookOpen, Search } from "lucide-react";
 import api from "../api";
@@ -24,7 +24,7 @@ const LANDING_OPTIONS = [
 ];
 
 /*
- * The redesigned hub's left-hand navigation. The count is the number of rows the group renders,
+ * The Modern hub's left-hand navigation. The count is the number of rows the group renders,
  * so the chip above the page can state how many settings there are without a number that drifts.
  */
 const SETTING_GROUPS = [
@@ -36,7 +36,7 @@ const SETTING_GROUPS = [
   { id: "system", label: "System", count: 3 },
 ] as const;
 
-/** One setting in the redesigned hub: its name and note, its control, and its apply action. */
+/** One setting in the Modern hub: its name and note, its control, and its apply action. */
 function SettingRow({ label, note, control, action }: {
   label: string; note?: ReactNode; control?: ReactNode; action?: ReactNode;
 }) {
@@ -54,7 +54,7 @@ function SettingRow({ label, note, control, action }: {
 
 export function SettingsPage() {
   const { user, landingPage, setLandingPage, permissions } = useAuth();
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [settingQuery, setSettingQuery] = useState("");
   const [activeGroup, setActiveGroup] = useState(() => window.location.hash.slice(1) || "profile");
   /*
@@ -116,7 +116,7 @@ export function SettingsPage() {
     }
   };
 
-  if (redesign) {
+  if (modern) {
     const query = settingQuery.trim().toLowerCase();
     const matches = (...terms: string[]) => !query || terms.some(term => term.toLowerCase().includes(query));
     const showName = matches("profile name account", "name");

@@ -3,7 +3,7 @@ import api from "../api";
 import { Shield, Monitor, FileText, Link2, Server, Database, Clock, Key, BookOpen, Globe, ShieldCheck, Building2 } from "lucide-react";
 import { UI_KUMO_ORGS } from "../lib/uiFlags";
 import { PageHeader, StatCard } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 interface RecentItem {
   id: string;
@@ -15,7 +15,7 @@ interface RecentItem {
 }
 
 export function KumoDashboardPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [stats, setStats] = useState({ assets: 0, passwords: 0, configs: 0, documents: 0, links: 0 });
   const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
   const [orgCount, setOrgCount] = useState<number | null>(null);
@@ -47,9 +47,9 @@ export function KumoDashboardPage() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader variant="section" title="Kumo — IT Documentation" subtitle="Assets, passwords, configurations, and SOPs in one place." />
 
-      {/* Entry tiles — the redesigned tiles lead with the figure the dashboard has already
+      {/* Entry tiles — the Modern tiles lead with the figure the dashboard has already
           loaded, matching Kumo's own figure cards; the classic tiles keep their descriptions. */}
-      {redesign ? (
+      {modern ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           <a href="/kumo/assets" className="block" title="Open Flexible Assets"><StatCard label="Assets" value={stats.assets} icon={<Monitor size={13} />} /></a>
           <a href="/kumo/passwords" className="block" title="Open the Password Vault"><StatCard label="Credentials" value={stats.passwords} icon={<Key size={13} />} tone="amber" /></a>
@@ -72,7 +72,7 @@ export function KumoDashboardPage() {
       )}
 
       <div className="card">
-        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Recently Viewed{redesign && <span className="ml-2 text-xs font-normal normal-case tracking-normal text-gray-500 tabular-nums">{recentItems.length} item{recentItems.length === 1 ? "" : "s"}</span>}</h3>
+        <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">Recently Viewed{modern && <span className="ml-2 text-xs font-normal normal-case tracking-normal text-gray-500 tabular-nums">{recentItems.length} item{recentItems.length === 1 ? "" : "s"}</span>}</h3>
         {recentItems.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-6">No recently viewed items. Browse your assets, passwords, or configurations to populate this list.</p>
         ) : (

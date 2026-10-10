@@ -4,14 +4,14 @@ import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { Plus, Target, TrendingUp, DollarSign, ChevronRight, ArrowRight, Building2 } from "lucide-react";
 import { PageHeader } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 const STAGES: Record<string,string>={prospect:"bg-blue-600/20 text-blue-400",qualified:"bg-cyber-600/20 text-cyber-400",proposal:"bg-amber-600/20 text-amber-400",negotiation:"bg-purple-600/20 text-purple-400",won:"bg-green-600/20 text-green-400",lost:"bg-red-600/20 text-red-400"};
 const STAGE_ORDER=["prospect","qualified","proposal","negotiation","won","lost"];
 interface Opp{id:string;name:string;stage:string;amount:number;probability:number;companyId?:string;expectedCloseDate?:string;notes?:string;}
 
 export function OpportunitiesPage(){
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [opps,setOpps]=useState<Opp[]>([]);
   const [loading,setLoading]=useState(true);
   const [view,setView]=useState<"kanban"|"table">("kanban");
@@ -64,10 +64,10 @@ export function OpportunitiesPage(){
         {stages.map(stage=>(<div key={stage.key} className="card min-w-[180px]">
           {/* The stage's own value, because a column of deals is a column of money and the count
               alone does not say whether it is worth looking at. */}
-          <div className="flex items-center justify-between mb-3"><span className={`badge ${STAGES[stage.key]||""} text-xs`}>{stage.key.replace(/_/g," ")}</span><span className="text-xs text-gray-600">{stage.items.length}{redesign ? ` · $${stageValue(stage.items).toLocaleString()}` : ""}</span></div>
+          <div className="flex items-center justify-between mb-3"><span className={`badge ${STAGES[stage.key]||""} text-xs`}>{stage.key.replace(/_/g," ")}</span><span className="text-xs text-gray-600">{stage.items.length}{modern ? ` · $${stageValue(stage.items).toLocaleString()}` : ""}</span></div>
           <div className="space-y-2">{stage.items.map(o=>(<div key={o.id} className="bg-surface-lighter rounded-lg p-2.5 cursor-pointer hover:ring-1 hover:ring-cyber-500/30 transition-all" draggable onDragStart={e=>e.dataTransfer.setData("oppId",o.id)} onDragOver={e=>e.preventDefault()} onDrop={e=>{const id=e.dataTransfer.getData("oppId");if(id&&stage.key!==o.stage)handleStageChange(id,stage.key)}}>
             <p className="text-sm font-medium text-white">{o.name}</p>
-            {redesign && clientName(o.companyId) && <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-gray-500"><Building2 size={10} />{clientName(o.companyId)}</p>}
+            {modern && clientName(o.companyId) && <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-gray-500"><Building2 size={10} />{clientName(o.companyId)}</p>}
             <div className="flex items-center justify-between mt-2 text-xs"><span className="text-cyber-400">${(o.amount||0).toLocaleString()}</span><span className="text-gray-500">{o.probability}%</span></div>
             {o.expectedCloseDate&&<p className="text-[10px] text-gray-600 mt-1">Close: {new Date(o.expectedCloseDate).toLocaleDateString()}</p>}
           </div>))}</div>

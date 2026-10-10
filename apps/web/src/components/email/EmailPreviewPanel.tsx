@@ -30,7 +30,7 @@
 import { useEffect, useState } from "react";
 import { Mail, Monitor, Paperclip, Smartphone } from "lucide-react";
 import type { EmailBlock } from "@C7NTAX/shared";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import { Band, MonoTm, StateChip, UnavailablePanel, plural } from "./emailChrome";
 import { EMAIL_RECORDS, resolveFields } from "./emailRecords";
 import { compareTextFacts } from "./emailBlocks";
@@ -209,12 +209,12 @@ function simulationOf(props: EmailPreviewProps): SimulationMessage {
 }
 
 export function EmailPreviewPanel(props: EmailPreviewProps) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const { preview } = props;
   const answer = preview.status === "ok" ? preview.data : null;
   const simulation = simulationOf(props);
 
-  if (redesign) {
+  if (modern) {
     return (
       <div className="space-y-4">
         <div className="card flex flex-wrap items-center gap-3">

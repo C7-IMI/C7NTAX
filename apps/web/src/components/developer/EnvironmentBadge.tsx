@@ -1,5 +1,5 @@
 import { Server } from "lucide-react";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import type { Read, DeveloperEnvironment } from "./developerApi";
 import { LoadingBlock, StateChip, UnavailablePanel } from "./developerUi";
 
@@ -22,10 +22,10 @@ import { LoadingBlock, StateChip, UnavailablePanel } from "./developerUi";
  * whose failure the section must not hide, because it is what every other refusal quotes.
  */
 export function EnvironmentBadge({ read }: { read: Read<DeveloperEnvironment> }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
 
   if (read.status === "loading") {
-    if (redesign) return <LoadingBlock label="the environment badge" />;
+    if (modern) return <LoadingBlock label="the environment badge" />;
     return (
       <div className="rounded-lg border border-surface-border bg-surface-light px-4 py-3">
         <p className="text-sm text-gray-500">Reading the environment badge…</p>
@@ -35,7 +35,7 @@ export function EnvironmentBadge({ read }: { read: Read<DeveloperEnvironment> })
 
   if (read.status === "unavailable" || !read.data?.badge) {
     const message = read.message ?? "The environment badge could not be read, so this page cannot say which instance it is.";
-    if (redesign) return <UnavailablePanel message={message} onRetry={read.reload} />;
+    if (modern) return <UnavailablePanel message={message} onRetry={read.reload} />;
     return (
       <div className="rounded-lg border border-alert-amber/40 bg-alert-amber/10 px-4 py-3">
         <p className="text-sm text-white">Environment: <span className="text-alert-amber">could not be read</span></p>
@@ -51,7 +51,7 @@ export function EnvironmentBadge({ read }: { read: Read<DeveloperEnvironment> })
     : "host not reported";
 
   // ── Classic: the fact as a labelled field, the way every classic screen states a fact ──────────
-  if (!redesign) {
+  if (!modern) {
     return (
       <dl className="grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
         <div className="flex gap-2 text-sm">

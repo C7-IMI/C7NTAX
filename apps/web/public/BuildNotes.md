@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.10.007 | Last Updated: 2026-10-10
+## Version: 2026.10.10.014 | Last Updated: 2026-10-10
 
 ---
 
@@ -11,6 +11,372 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.10.014 — A relay that had no password, asked for one
+
+The mail transport was told to **authenticate** even when the deployment had no credentials to
+authenticate with. `EmailService` built its transport with
+
+```ts
+auth: { user: process.env.SMTP_USER ?? "", pass: process.env.SMTP_PASS ?? "" }
+```
+
+and an `auth` object that is *present* is an instruction to authenticate, not a statement that there is
+nothing to authenticate with. So a relay that needs no credentials — an internal relay, an
+address-allowlisted one, or the local one a developer runs — was handed an AUTH attempt with a blank
+username. Some relays answer that with an authentication failure rather than skipping authentication, so
+a deployment with no credentials could not send, and the error read like a wrong password rather than a
+configuration that never had one.
+
+- **[Fix]** **`auth` is omitted entirely when there is nothing to authenticate with**, and the "is there
+  anything" question is asked once, in one place (`resolveSmtpCredentials`). Proved by reading the
+  transport's own options rather than asserting the path: absent with no credentials and with explicitly
+  empty ones; `{user, pass}` when both are set; and **not dropped** when only one half is — a relay that
+  wants a username and no password is unusual but real, and discarding a configured username would be a
+  worse bug than the one being fixed. `secure` still reads `SMTP_SECURE`, so the round-8 fix is intact,
+  and `probe:email` is 35/35 afterwards, so no message body moved with it.
+
+Found by the PLAN-030 reviewer as the one item they deliberately left out of round 9 — "the mail sender
+passes empty credentials when none are set; that predates this work and I didn't test how it behaves."
+They were right to leave it and right that it was worth saying, and it is the third time in this series
+that the defect was in the gap between what a setting *says* and what the code *does*.
+
+---
+
+## 2026.10.10.013 — The last five passwords, and a development account
+
+Two changes that are not really related, landing together because they were asked for together: a
+password policy that remembers what was used, and the local development account put back the way it was.
+
+- **[New]** **An account may not reuse its last five passwords.** A minimum length and a complexity
+  floor stop a password being *guessable*; they do nothing about one being *reused*, and reuse is what
+  actually defeats a policy that wants passwords changed — an account alternating between two favourites
+  satisfies every complexity rule forever while never really changing anything. The history is stored as
+  **bcrypt hashes**, most recent first, capped at five, and compared with bcrypt: a history is a list of
+  credentials that used to work, so the only question ever asked of it is "is this one of them", which
+  bcrypt answers without the database holding the password.
+- **[Update]** **The rule applies to an administrator's reset as well as to a self-service change**, and
+  that is deliberate: "reset it back to what it was" is the exact instruction that would otherwise undo a
+  change somebody made because a password had been exposed, and the administrator has no way to know which
+  of the account's earlier passwords that was. A **generated** reset password skips the check — it is
+  random, so it cannot be a reuse, and refusing it would leave an administrator unable to reset an account
+  at all.
+- **[Fix]** **Five credential fields were being returned on a user record.** `GET /api/users/:id` stripped
+  only `passwordHash` and `mfaSecret`, so it handed back `mfaBackupCodes`, the **plaintext** pending
+  `mfaEmailCode`, and would have handed back the new history — a list of every credential an account had
+  ever had, given to anybody holding `user:manage`, from a route whose whole purpose is to show one
+  person's record. All five are now stripped by **one helper** at every call site, which is the fix rather
+  than five fixes: the reason the leak existed was that each site remembered a different subset.
+- **[Update]** **`admin@C7NTAX.com` is the local development account again** — Super Admin, password
+  `admin`, no forced change, MFA enrolment not required, and exempt from the gate and the session
+  timeout by way of `AUTH_TEST_BYPASS`. The password is written **directly**, because the product's own
+  policy refuses a five-character password and that policy was not weakened for it: signing in works,
+  and changing it through the interface still requires twelve characters.
+
+Verified against the running API: a short password, a one-class password and a common word are each
+refused with their own message; a valid one is accepted; returning to a previous password is refused;
+seven changes in a row leave the history at **exactly five**, and the oldest then becomes reusable, which
+is what "the last five" means. `admin/admin` signs in with no MFA challenge and reaches the MFA policy,
+Workspace, the instance pollers and the developer surface.
+
+---
+
+## 2026.10.10.012 — An instance tier above Admin
+
+`Admin` and `Super Admin` differed by two developer permissions and nothing else, so an ordinary
+administrator could turn multi-factor authentication on **and enforce it for the whole instance**, raise
+the session ceiling, switch authentication hardening off, enable the test-bypass exemption, change what
+every client sees in the portal, and pause the instance's background workers. Every one of those is a
+decision about the deployment itself.
+
+- **[New]** **Three instance permissions, held by the Super Admin alone.** `instance:security` — who may
+  sign in and how (the MFA policy, sessions and the sign-in methods) · `instance:config` — what the
+  application is for everybody (Workspace, the Customer Portal, client apps) · `instance:maintenance` —
+  operations that pause, force or reset instance-wide processes. The split is by *kind of decision*, so a
+  reviewer can see why each is protected; one role holds all three today.
+- **[Update]** **The per-account half of MFA stays with administrators.** `mfa:enforce` and
+  `security:manage` are untouched, because resetting one person's second factor is ordinary support while
+  deciding that everybody must have one is policy — which is exactly the line the request drew.
+- **[New]** **The tier cannot be granted by anyone below it, enforced in three places rather than one.**
+  Hiding a permission in a picker is presentation, not a control: `ROLE_PERMISSIONS` withholds it from
+  `Admin`; `computePermissions` subtracts it from any role whose own declared set does not include it, so
+  a stored or hand-edited role row cannot smuggle one in; and the role and user routes **refuse it by
+  name**, on create, on edit, and through both halves of a user's permission lists. An API key needs no
+  special case — its scopes are intersected with its owner's permissions on every request.
+- **[Update]** **Reads are unchanged; only writes moved.** An administrator can still see the values —
+  which is how they answer "why was I signed out" — and the screens already render a read-only section.
+- **[Fix]** **The tier would have locked the instance out of fixing itself.** Once enforcement bites, the
+  switches that turn it off sit behind `instance:security`, so the one person who could correct a mistake
+  was the one person the gate would have stopped. An account holding that permission is now exempt from
+  the enrolment **gate** while still owing the enrolment, so the reminder stands. Proven as a pair with
+  the requirement biting: an ordinary unenrolled account answers `403 MFA_ENROLMENT_REQUIRED` while the
+  Super Admin answers `200`, both reporting `mustEnrolNow: true`.
+
+A migration carries the data half: `super_admin` and `developer_admin` were given the three keys (they
+held everything before), `admin` deliberately was not, and any tier key found on an admin role is removed
+rather than trusted. Verified by running: an Admin writing the MFA section, the Workspace section or the
+instance pollers gets `403`; creating a role carrying `instance:security` gets `403` naming the key; and
+`admin/admin` — now a Super Admin — holds all three.
+
+---
+
+## 2026.10.10.011 — The two interfaces are called Modern and Classic
+
+The menu has always offered **Modern** and **Classic**; the code and the design notes around the
+second one called it "Redesign". That other name is gone — same screens, same switch, same
+behaviour, one word for each layout.
+
+- **[Update]** **One word per layout, everywhere.** `useRedesign()` is `useModernInterface()`,
+  `redesignOverride()` is `modernScreensOverride()`, `setUiRedesign()` is `setUiModernScreens()`,
+  `UI_REDESIGN`, `UI_REDESIGN_AVAILABLE` and `UI_REDESIGN_STORAGE_KEY` are `UI_MODERN_SCREENS*`,
+  `VITE_UI_REDESIGN` is `VITE_UI_MODERN`, the browser flag `c7_ui_redesign` is `c7_ui_modern`, the
+  attribute `data-ui-redesign` is `data-ui-modern`, the local `redesign` is `modern`, and the
+  `InterfaceStyle` value `"redesign"` is `"modern"`. The page-scoped stylesheet in `index.css` is
+  scoped to the new attribute, the setting's choices read **Modern (default)** and *Classic*, and
+  every comment, Help reference and mockup says Modern.
+- **[Update]** **The old names are still read, and nothing writes them.** A browser that chose before
+  the rename still holds `c7_ui_redesign`, and a deployment that built with `VITE_UI_REDESIGN=false`
+  still means it, so both are honoured — the new name first, the old one only as a fallback — while
+  the new pair is the one written. A stored `interfaceStyle` of `"redesign"` also still resolves to
+  the Modern interface, because anything that is not an explicit `classic` does. Both aliases can be
+  retired in a later release, once no browser and no build can be carrying them.
+- **[Fix]** **Two mockups were renamed** — `docs/mockups/login-redesign.html` and
+  `docs/mockups/contacts-boards-redesign.html` are now `login-modern.html` and
+  `contacts-boards-modern.html`, with the four files that copied the second one's tokens updated.
+  `INTERFACE-ROLLBACK.md` carries the rename, the aliases and the rule for retiring them.
+
+**Behaviour is unchanged in both layouts:** no screen, route, permission, setting or default moved
+except the words. **Verification:** `pnpm exec tsc --noEmit` clean in `apps/web` and `apps/api`;
+`check-encoding`, `lint-design-tokens`, `check-help-links`, `check-api-docs` and `check-route-guards`
+pass; in the browser `c7_ui_modern=0` gives the classic layout with `data-ui-modern="false"`, `"1"`
+gives the Modern one and `removeItem` gives the instance default, the legacy `c7_ui_redesign=0` on
+its own still gives the classic layout, and the switch still names its choices Modern and Classic —
+with no console errors in either.
+
+## 2026.10.10.010 — A rehearsal of the second factor
+
+A support call about MFA is hard because the person on the phone is describing a screen the support person
+cannot see. This is the screen they can both look at: what the instance actually does, read live from the
+policy endpoint, beside a scripted rehearsal of the eight states a person can be in — so somebody on a call
+can see what the person should be looking at, know what to check when they are not, and know what to say.
+
+- **[New]** **An end-to-end MFA setup simulator** (`apps/web/src/components/MfaSetupSimulator.tsx`),
+  offered as **Simulate a setup** on `Administration → Configuration → Multi-factor authentication` — the
+  feature's own screen, which is where an administrator is standing when users start reporting trouble. It
+  opens a real window (`window.open`) holding the two widths side by side, and falls back to an in-app
+  overlay when a pop-up is blocked: a sheet in the modern interface, a dialog with a heading and a Close
+  button in the classic one. It is **read-only** — no enrolment, no secret, no setting, no change to
+  anybody's account — and it says so on the screen as well as in the code: a rehearsal that could alter the
+  instance is a footgun aimed at the person most likely to press the wrong thing while distracted.
+- **[New]** **The live half is the API's own answer, not a mock.** The one call it makes is
+  `GET /api/auth/mfa/policy`, printed plainly: whether a second factor is available, whether it is required
+  of *this* account, the deadline and the whole days left (or that it has passed), the account's state in
+  the product's own words from `MFA_STATES`, and the method catalogue — each method marked offered or not,
+  with the configuration area that governs it named (passkeys belong to `sessions.passkeys`, not to the MFA
+  section). `enforcementPossible` is shown when the settings would require a factor while offering none. If
+  the read fails it prints the API's own sentence, names the endpoint and offers a retry — **never a blank
+  frame** — and the script half still works, because a rehearsal does not depend on the read.
+- **[New]** **The script half walks the states that actually differ**, and the picker starts on the one the
+  live read says the account is in: switched off; optional; required inside the grace period; required with
+  the grace expired (the gate has every screen); signing in with an authenticator code; signing in with an
+  emailed code; a lost phone and a recovery code; and "don't ask me again on this browser". Every step says
+  what the person is doing, what they should be seeing, what to check when they are not, and the one line to
+  say. The method names come from the deployment's catalogue and the account states from `MFA_STATES` — no
+  method list is hard-coded anywhere.
+- **[New]** **The failures support actually gets are in the notes**, at the step they belong to: a
+  time-based code refused is almost always a **device clock** that is not set automatically; an emailed code
+  needs a working **mail relay**, and the relay's own refusal is what the API answers with; a **passkey
+  cannot be the first method** because registering one needs a signed-in session, so it is listed with that
+  reason; a **recovery code works once** and a reset replaces all ten; and the gate follows the **session**,
+  so "it works in one tab and not another" means one tab has a session and the other does not.
+- **[New]** **Both widths, side by side** — a 900 px desktop frame and a 375 px phone frame, in their own
+  scroll regions, at the same height: the phone is not a smaller copy, it is the same screen with the rail
+  gone and one column of method cards, which is where "it looked fine on my desktop" usually breaks. The
+  frames are a **rehearsal of what the person sees**, drawn rather than imported, and the header comment says
+  so and says that the real screens are the authority if the two ever differ.
+- **[Update]** **Two arrangements for every surface, designed individually**, as the repository's rule
+  requires: the action is a strip with the sentence beside the control that acts in the modern interface and
+  a headed card with a control row in the classic one; the blocked-pop-up fallback is a sheet against a
+  dialog; and the content is a scenario rail of pills you press with a step track you step along — the widths
+  side by side — against a labelled `select` and numbered fieldsets read top to bottom with the widths
+  stacked. `apps/web/src/pages/Configuration.tsx` places the action for the **mfa** section only, with an
+  explicit commented conditional in both branches rather than a new registry field.
+
+`pnpm exec tsc --noEmit` — zero errors. `check-encoding`, `lint-design-tokens` and `check-help-links` —
+all pass. Driven in a browser, in both interfaces: the live read matched the endpoint's own JSON (200 on
+`/api/auth/mfa/policy`), all eight scenarios rendered, the stepper walked forward and back, both widths drew
+side by side, the blocked-pop-up fallback showed the sheet and then the classic dialog, a forced read failure
+showed the API's own sentence with a retry that recovered, and no console errors were logged.
+
+Three observations, reported rather than changed (the API is out of scope). The policy endpoint carries the
+**deadline** (`graceUntil`, `daysLeft`) but not the settings that produced it, so the live half shows the
+deadline and names the **Grace period** setting rather than the length; `rememberDays` is likewise only on
+the sign-in response. With the instance switch **off**, `mfaPolicyFor` resolves `methods: []`, so every entry
+in `catalogue` reads `offered: false` and the wizard's own refusal sentence blames the individual method's
+setting rather than the master switch — the simulator's step says plainly which of the two it is. And on this
+instance the admin account is the `AUTH_TEST_BYPASS` account, so `required` is false even with enforcement on
+and `graceDays: 0`: the exempt account is stopped by nothing, which is correct behaviour and worth knowing
+before reading the live half as evidence that enforcement is not working.
+
+---
+
+## 2026.10.10.009 — The second factor, on screen
+
+The policy landed on the wire first: `mfaPolicy` rides on every sign-in response and on `/auth/me`, and the
+enrolment gate answers `403 MFA_ENROLMENT_REQUIRED` to everything outside a short exempt list. This is the
+interface that makes it usable — the wizard somebody meets at first touch, the door that holds them until
+they finish it, the countdown that tells them before the door does, and a sign-in challenge that asks for
+what the account actually has.
+
+- **[New]** **The first-touch enrolment wizard.** One component for both moments a second factor is set up:
+  the gate that holds the whole application, and My Account where somebody changes a method they already
+  have. The steps are a track you step along — choose a method, prove it works, save your recovery codes —
+  and the method list is the **server's catalogue** rather than anything hard-coded here. A method the
+  deployment does not offer is shown greyed with the reason and the configuration area that governs it
+  (passkeys belong to `sessions.passkeys`, not to the `mfa` section), because "why can I not use my passkey"
+  is the question the screen exists to answer; and a passkey is listed but refused as a *first* method,
+  since registering one needs a session and a session needs a second factor once one is required.
+- **[New]** **The gate**, beside and **after** the password gate — a person can owe both, and the password is
+  what proves the account is theirs. It is not dismissable, it replaces the routed tree exactly as the
+  password gate does, and it offers signing out and nothing else.
+- **[New]** **Recovery codes are acknowledged, not just displayed.** Ten codes, a copy and a download, and a
+  Finish that stays disabled until the person confirms they are stored. The policy is deliberately not
+  refreshed when the enrolment succeeds — only on acknowledgement — because refreshing would make the gate
+  unmount the wizard and throw the codes away before they were written down.
+- **[New]** **A countdown instead of a cliff.** Somebody inside the grace period gets a banner on every
+  screen, above the page, saying how long is left in words ("6 days left") and going straight to the wizard.
+  It is dismissable for the session only: a deadline nobody is reminded of is a cliff with paperwork.
+- **[New]** **A truthful refusal from the mail relay.** If the SMTP server refuses the enrolment code, the
+  API's own message is shown — "the code could not be emailed, check the SMTP configuration or choose
+  another method" — and the screen keeps the way past it rather than waiting for a code that is not coming.
+- **[Update]** **The sign-in challenge now asks for what the account has.** `mfaMethod` decides the field, so
+  an emailed-code account is never shown an authenticator prompt (and the code is sent for it, rather than
+  leaving a field no screen has filled). A **recovery code** can be typed into the same field — the API
+  accepts one there and answers identically — and the page says so, which is why the field no longer strips
+  anything but digits. "Don't ask again on this browser for N days" appears only when the deployment
+  remembers browsers at all, and clearing it sends `remember: false` rather than leaving the API's own
+  default in place.
+- **[Update]** **My Account → Two-Factor Authentication** is now the change/re-enrol screen: what the
+  account has now, and the shared wizard to change it. It keeps the QR-screenshot reader that lets somebody
+  recover the manual key from an image of the code, decoded in the browser.
+- **[New]** **The per-account policy on Users**, which is where "everyone except this one" finally has a
+  home. The three states are pills you press in the modern interface and a labelled select in the classic
+  one, each with the sentence that says what it means; beside them, what the account has enrolled, when,
+  and the deadline as a countdown or plainly overdue. A reset opens in place and lists what will be lost
+  (the authenticator, the recovery codes) and what happens next, rather than asking "are you sure". The
+  user list gained a column and a badge for the same facts, and the controls are gated on the permissions
+  that apply to them — `mfa:enforce` to change the requirement, `security:manage` to reset — disabled with
+  the reason rather than failing on press.
+- **[Fix]** **"Without 2FA" counted passkey holders as having none.** The count, the CSV column and the
+  context-menu reset all keyed on `mfaEnabled`, which is false for a passkey — because a passkey *is* the
+  sign-in rather than a step after it — so an account with the strongest second factor there is was
+  reported as having none, and the reset refused to touch it. All three now key on the **enrolment**
+  (`mfaEnrolledAt`), which is what "has a second factor" actually means.
+
+Both interfaces are designed separately for every one of these surfaces — the modern screen is a sheet with a
+pressed-method list and sentences beside the control that acts, the classic one is a labelled form with a
+method select (refusals kept as disabled options), a checkbox and Save/Cancel. Verified by driving both:
+the wizard, the banner, the gate and the challenge were each exercised in the browser, and the gate was
+completed end-to-end so that the door actually opened.
+
+---
+
+## 2026.10.10.008 — Multi-factor authentication as a policy
+
+Until now an account either had MFA or did not: `mfaEnabled` was set the moment somebody verified their
+first authenticator code, and the sign-in asked for a second factor from those accounts and nobody else.
+There was no way to **require** one, no way to exempt an account from a requirement, no way to say which
+methods a deployment accepts, and no wizard — an account either stumbled onto the setup screen or did
+without.
+
+The feature is a **policy** on top of the enrolment that already existed. `Administration → Configuration
+→ Multi-factor authentication` decides whether a second factor is available, whether it is required, how
+long people get, which methods are offered, and how long a browser may be remembered. Each account then
+carries its own answer — `default`, `disabled` (exempt) or `enforced` (required whatever the instance
+says) — on the Users screen, which is where "everyone except this one" finally has a home.
+
+- **[New]** **A grace period instead of a cliff.** Switching enforcement on does not stop anybody: every
+  account that has not enrolled is given a deadline (7 days by default) rather than being turned away at
+  its next request. Re-saving the grace period re-stamps it, so shortening the period means what it says;
+  a deliberate switch-off and on again gives a real period rather than none. The interface that counts it
+  down is described in **2026.10.10.009**.
+- **[New]** **A browser may be remembered.** After a second factor is proved, a browser can be trusted for
+  a configured number of days. The trust is bound to the account **and to the enrolment that proved it**,
+  so an administrator's reset revokes it — the enrolment *is* the version, and there is no second record
+  to keep in step.
+- **[New]** **Three methods, and one place that decides.** Authenticator app, passkey and emailed code,
+  each resolving whether it is offered from the setting that governs it — passkeys from the existing
+  Sessions & Security switch, so there is not a second switch to forget.
+- **[Fix]** **Recovery codes work, for the first time.** They were documented as hashed, compared as plain
+  text with `indexOf`, and never generated by anything — so recovery was unreachable and an account whose
+  phone was lost needed an administrator. Enrolment now issues them, they are stored hashed, they are
+  compared with bcrypt, and they are spent by the attempt. The sign-in row says when one was used.
+- **[Fix]** **The emailed code is compared in constant time.** A plain `===` on a six-digit secret leaks
+  how many leading digits were right, which is enough to guess the rest inside the window.
+- **[New]** **Two safeguards against locking an instance out of itself.** A saved setting that would
+  require a second factor while offering none is refused, and the value it replaced is restored exactly; a
+  required account with no method left to choose is never stopped, so a misconfigured deployment degrades
+  to a warning. Both were found by running the thing rather than by reading it — the first version of the
+  refusal restored the field's *default* rather than its previous value, and switching enforcement off had
+  moved every deadline into the past so that switching it back on blocked everyone instantly.
+- **[New]** **`mfa:enforce` finally does something.** The permission was declared and granted to
+  administrators but no route read it; changing whether an account must have a second factor is what it
+  is for. Resetting an account's MFA stays on `security:manage`, because destroying a credential is a
+  security-management act.
+- **[Update]** **API keys are not stopped by the gate.** A key is a credential issued to a system that
+  cannot open a browser, so requiring it to complete an interactive wizard would break the integration
+  rather than protect it. An unattended integration needs no change; a user token is stopped, because the
+  person behind it can be asked.
+- **[Fix]** **The emailed fallback at sign-in ignored whether the deployment offers it.** `POST
+  /api/auth/send-mfa-email` had no method check while the *enrolment* endpoint had one, so an administrator
+  who switched emailed codes off — which they do because the second factor must not travel on the same
+  channel as a password reset — still had codes sent there. Both doors now refuse alike. Found by the work
+  that built the sign-in challenge, and only findable by reading the two endpoints against each other.
+- **[Fix]** **`GET /api/users/me` no longer returns the second factor's secrets.** It returned
+  `mfaBackupCodes` and, worse, the **plaintext** pending `mfaEmailCode` — a live second factor for as long
+  as its window is open. Both are stripped; nothing on the client has a use for either, since the codes are
+  shown once when issued and the pending code is meant to be read out of an email. The same route now also
+  carries `mfaPolicy`, so the account screen and the reminder do not have to make a second call — which is
+  how two screens come to disagree about a deadline.
+- **[Update]** **`POST /api/users/:id/reset-mfa` answers with the resolved policy**, matching the `PATCH`.
+  A reset is the change whose consequence is hardest to guess (the account is unenrolled, so whether it is
+  about to be stopped depends on the instance's setting and the deadline just stamped), so the caller is
+  told rather than left to re-read the record and infer it.
+- **[Update]** The API guide (§2.1) and the generated specification carry the gate, the policy object and
+  the method catalogue, and every new operation has curated prose.
+
+**Verified against a running server**, not by reading: the policy resolves for an instance with MFA off
+and changes nothing for it; the lockout guard refuses the last method and restores the previous value; an
+enforcement off/on cycle gives a 7-day period where it used to give none; a non-exempt route answers `403
+MFA_ENROLMENT_REQUIRED` while `GET /api/auth/me`, `GET /api/users/me` and the enrolment endpoints answer
+`200`; enrolment issues ten codes and opens the gate; a recovery code is accepted once, refused the second
+time, and a wrong one is refused. `tsc` clean for the API and the shared package, `check-api-docs` and
+`check-route-guards` (476 routes) pass, `guard:config` confirms all six new settings are read.
+
+---
+
+
+Three places had to agree about one setting and only two did: the production template documented
+`SMTP_SECURE`, the configuration screens reported it, and the mail transport hard-coded `secure: false`
+and never read it. A deployment on port 465 could show *"secure: true"* while every message was attempted
+in clear text — a connection that hangs, with a screen saying everything is fine.
+
+- **[Fix]** **The transport honours `SMTP_SECURE`.** `secure: config?.secure ?? process.env.SMTP_SECURE
+  === "true"` — a caller's own config wins when there is one, only the exact string `true` counts, and the
+  default is unchanged because the variable is set nowhere in this repository. Proved by constructing the
+  service four ways and reading the transporter's own options: unset, `"false"` and `"TRUE"` are false;
+  `"true"` on port 465 is true.
+- **[Update]** **The template says which value is which.** `false` is port 587 with STARTTLS, `true` is
+  465 where TLS *is* the connection, and only the exact string counts — so the placeholder stays `false`
+  for a relay on 587 and is changed only for one on 465.
+- **[Update]** **The env scan's last blind spot is bounded rather than described.** The one computed read,
+  `process.env[name]` in `routes/configuration.ts`, takes its names from requirement declarations in
+  `packages/shared/src/appConfiguration.ts` — five of them, all already documented. The scan reads those
+  declarations, so the section's last line is coverage rather than a warning: *"the one computed read is
+  bounded by … which is 5 of the names above"*. A computed read in any other file still warns, because
+  that is a new fact rather than a known pair. Preflight returns to **0 failures, 2 warnings**.
 
 ---
 

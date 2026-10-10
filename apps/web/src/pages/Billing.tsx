@@ -21,7 +21,7 @@ import {
   ReportViewer, useReportOptions, EMPTY_FILTERS, defaultOptionValues,
   type ReportFilters, type ReportOptionValues,
 } from "../components/reports/ReportViewer";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { EmailSendDialog } from "../components/email/EmailSendDialog";
 
 // Types
@@ -52,10 +52,10 @@ const PERIOD_COLORS: Record<string, string> = {
   annual: "bg-cyber-600/20 text-cyber-400", weekly: "bg-amber-600/20 text-amber-400",
 };
 
-/** Money in the redesigned lists: grouped, at most two decimals, never a bare float. */
+/** Money in the Modern lists: grouped, at most two decimals, never a bare float. */
 const money = (n: number) => `$${n.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
-/** Redesigned status chip: paid is good, overdue bad, partial and draft still in flight. */
+/** Modern status chip: paid is good, overdue bad, partial and draft still in flight. */
 const statusChip = (status: string) => {
   const s = (status || "").toLowerCase();
   if (s === "paid") return "chip--good";
@@ -73,7 +73,7 @@ const TABS = [
 ];
 
 export function BillingPage({ tab: initialTab }: { tab?: string }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [activeTab, setActiveTab] = useState(initialTab || "invoices");
 
   // The route owns the tab, including /billing itself (no tab prop).
@@ -90,9 +90,9 @@ export function BillingPage({ tab: initialTab }: { tab?: string }) {
         <PageHeader variant="section" title="Billing" subtitle="Invoicing, agreements, payments, and time tracking" />
       </div>
 
-      {/* Tab Navigation — the redesigned interface uses the application's own segmented control,
+      {/* Tab Navigation — the Modern interface uses the application's own segmented control,
           the same one the settings screens and the board tabs use, rather than a second tab idiom. */}
-      {redesign ? (
+      {modern ? (
         <Tabs
           label="Billing sections"
           items={TABS.map(t => ({ id: t.id, label: t.label }))}
@@ -136,7 +136,7 @@ export function BillingPage({ tab: initialTab }: { tab?: string }) {
 // ═══════════════════════════════════════════════════════════════════
 
 function InvoicesTab({ companies }: { companies: Company[] }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("all");
@@ -267,7 +267,7 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
     return s;
   }, { count: 0, total: 0, paid: 0, overdue: 0, outstanding: 0 });
 
-  // The redesigned list slices the rows it has already loaded: the views are the invoice states
+  // The Modern list slices the rows it has already loaded: the views are the invoice states
   // present in this list, counted live, and the figures under them are the list's own totals.
   const INVOICE_STATUSES = ["draft", "sent", "partial", "paid", "overdue", "void"] as const;
   const statusOf = (i: Invoice) => (i.status || "draft").toLowerCase();
@@ -284,7 +284,7 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
   const shownInvoices = query
     ? inView.filter(i => `${i.invoiceNumber ?? ""} ${i.company?.name ?? ""}`.toLowerCase().includes(query))
     : inView;
-  const visibleInvoices = redesign ? shownInvoices : invoices;
+  const visibleInvoices = modern ? shownInvoices : invoices;
   const shownTotal = shownInvoices.reduce((s, i) => s + i.total, 0);
   const shownOutstanding = shownInvoices.reduce((s, i) => s + (statusOf(i) === "sent" || statusOf(i) === "partial" ? i.total : 0), 0);
 
@@ -381,7 +381,7 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
       <ContextMenu state={menu.menuState} onClose={menu.close} />
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {redesign ? (
+        {modern ? (
           <>
             <StatCard label="Total invoiced" value={money(totals.total)} icon={<Receipt size={13} />} />
             <StatCard label="Paid" value={money(totals.paid)} icon={<CheckCircle size={13} />} tone="green" />
@@ -398,9 +398,9 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
         )}
       </div>
 
-      {/* Views — the redesigned list names its slices and counts them from the rows it has loaded,
+      {/* Views — the Modern list names its slices and counts them from the rows it has loaded,
           replacing the status select with the states as chips you press. */}
-      {redesign && (
+      {modern && (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews views={invoiceViews} value={view} onChange={setView} label="Invoice views" />
           <div className="relative min-w-[13rem] max-w-xs flex-1">
@@ -413,7 +413,7 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
 
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
-        {!redesign && (
+        {!modern && (
         <select className="input-field text-sm py-1.5 w-auto" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
           <option value="">All Statuses</option>
           <option value="draft">Draft</option><option value="sent">Sent</option><option value="partial">Partial</option>
@@ -457,10 +457,10 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
                   </div>
                 ) : <span className="text-gray-600">—</span>}
               </td>
-              <td className={redesign ? "p-3 tabular-nums" : "p-3"}>${inv.total.toFixed(2)}</td>
+              <td className={modern ? "p-3 tabular-nums" : "p-3"}>${inv.total.toFixed(2)}</td>
               <td className="p-3 text-gray-400 hidden md:table-cell">{new Date(inv.issueDate).toLocaleDateString()}</td>
               <td className="p-3 text-gray-400 hidden md:table-cell">{new Date(inv.dueDate).toLocaleDateString()}</td>
-              <td className="p-3">{redesign ? <span className={`chip ${statusChip(inv.status)}`}>{inv.status}</span> : <span className={`badge ${STATUS_COLORS[inv.status] || ""}`}>{inv.status}</span>}</td>
+              <td className="p-3">{modern ? <span className={`chip ${statusChip(inv.status)}`}>{inv.status}</span> : <span className={`badge ${STATUS_COLORS[inv.status] || ""}`}>{inv.status}</span>}</td>
               <td className="p-3 text-right">
                 <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
                   <button onClick={() => handleInvoicePdf(inv)} className="p-1.5 text-gray-400 hover:text-cyber-400" title="PDF"><FileText size={15} /></button>
@@ -470,9 +470,9 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
               </td>
             </tr>
           ))}
-          {redesign && shownInvoices.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-gray-500">Nothing in this view.</td></tr>}</tbody>
+          {modern && shownInvoices.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-gray-500">Nothing in this view.</td></tr>}</tbody>
         </table></div>
-        {redesign && shownInvoices.length > 0 && (
+        {modern && shownInvoices.length > 0 && (
           <ListFooter from={1} to={shownInvoices.length} total={shownInvoices.length} page={1} pages={1} onPage={() => {}} note={`${money(shownTotal)} invoiced in this view`} />
         )}
         </div>
@@ -598,7 +598,7 @@ function InvoicesTab({ companies }: { companies: Company[] }) {
 // ═══════════════════════════════════════════════════════════════════
 
 function AgreementsTab({ companies }: { companies: Company[] }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [agreements, setAgreements] = useState<Agreement[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("all");
@@ -611,14 +611,14 @@ function AgreementsTab({ companies }: { companies: Company[] }) {
   };
   useEffect(() => { fetch(); }, []);
 
-  // The redesigned list offers the two states an agreement is actually in, counted from the rows.
+  // The Modern list offers the two states an agreement is actually in, counted from the rows.
   const agreementViews = [
     { id: "all", label: "All", count: agreements.length },
     { id: "active", label: "Active", count: agreements.filter(a => a.isActive).length },
     { id: "inactive", label: "Inactive", count: agreements.filter(a => !a.isActive).length },
   ];
   const shownAgreements = agreements.filter(a => view === "all" || (view === "active" ? a.isActive : !a.isActive));
-  const visibleAgreements = redesign ? shownAgreements : agreements;
+  const visibleAgreements = modern ? shownAgreements : agreements;
   const shownActive = shownAgreements.filter(a => a.isActive).length;
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -695,7 +695,7 @@ function AgreementsTab({ companies }: { companies: Company[] }) {
       onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
     >
       <ContextMenu state={menu.menuState} onClose={menu.close} />
-      {redesign ? (
+      {modern ? (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews views={agreementViews} value={view} onChange={setView} label="Agreement views" />
           <span className="text-xs text-gray-500">{shownAgreements.length} shown · {shownActive} active</span>
@@ -721,10 +721,10 @@ function AgreementsTab({ companies }: { companies: Company[] }) {
               <td className="p-3 font-medium text-white">{a.name}</td>
               <td className="p-3 text-gray-300 hidden sm:table-cell">{a.company?.name || "—"}</td>
               <td className="p-3"><span className={`badge ${PERIOD_COLORS[a.billingPeriod] || ""}`}>{a.billingPeriod}</span></td>
-              <td className={redesign ? "p-3 tabular-nums" : "p-3"}>${a.billingAmount.toLocaleString()}</td>
+              <td className={modern ? "p-3 tabular-nums" : "p-3"}>${a.billingAmount.toLocaleString()}</td>
               <td className="p-3 text-gray-400 hidden md:table-cell text-xs">{new Date(a.startDate).toLocaleDateString()}{a.endDate ? ` → ${new Date(a.endDate).toLocaleDateString()}` : " (ongoing)"}</td>
               <td className="p-3">
-                {redesign ? (
+                {modern ? (
                   <div className="flex items-center gap-1.5">
                     <span className={`chip ${a.isActive ? "chip--good" : ""}`}>{a.isActive ? "Active" : "Inactive"}</span>
                     {a.autoInvoiceEnabled && <span className="chip">Auto</span>}
@@ -739,9 +739,9 @@ function AgreementsTab({ companies }: { companies: Company[] }) {
               </td>
             </tr>
           ))}
-          {redesign && shownAgreements.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-gray-500">Nothing in this view.</td></tr>}</tbody>
+          {modern && shownAgreements.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-gray-500">Nothing in this view.</td></tr>}</tbody>
         </table></div>
-        {redesign && shownAgreements.length > 0 && (
+        {modern && shownAgreements.length > 0 && (
           <ListFooter from={1} to={shownAgreements.length} total={shownAgreements.length} page={1} pages={1} onPage={() => {}} note={`${agreements.length} agreements in total`} />
         )}
         </div>
@@ -995,7 +995,7 @@ function BatchInvoiceDialog({ companies, onClose, onChanged }: { companies: Comp
 // ═══════════════════════════════════════════════════════════════════
 
 function PaymentsTab() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState("all");
@@ -1020,7 +1020,7 @@ function PaymentsTab() {
   const filtered = methodFilter ? payments.filter(p => p.method === methodFilter) : payments;
   const total = filtered.reduce((s, p) => s + p.amount, 0);
 
-  // The redesigned list slices by how the money arrived, counted from the rows already loaded.
+  // The Modern list slices by how the money arrived, counted from the rows already loaded.
   const PAYMENT_METHODS = [
     { id: "credit_card", label: "Credit card" },
     { id: "ach", label: "ACH" },
@@ -1034,7 +1034,7 @@ function PaymentsTab() {
     ...PAYMENT_METHODS.map(m => ({ id: m.id, label: m.label, count: filtered.filter(p => methodOf(p) === m.id).length })),
   ];
   const shownPayments = view === "all" ? filtered : filtered.filter(p => methodOf(p) === view);
-  const visiblePayments = redesign ? shownPayments : filtered;
+  const visiblePayments = modern ? shownPayments : filtered;
   const shownTotal = shownPayments.reduce((s, p) => s + p.amount, 0);
 
   // ── Right-click menu: Payments ──
@@ -1104,7 +1104,7 @@ function PaymentsTab() {
       onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, sectionMenuEntries()); }}
     >
       <ContextMenu state={menu.menuState} onClose={menu.close} />
-      {redesign ? (
+      {modern ? (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews views={paymentViews} value={view} onChange={setView} label="Payment views" />
           <span className="text-xs text-gray-500">{shownPayments.length} payments · {money(shownTotal)} recorded</span>
@@ -1131,15 +1131,15 @@ function PaymentsTab() {
             >
               <td className="p-3 font-medium text-white">{p.invoice.invoiceNumber}</td>
               <td className="p-3 text-gray-300">{p.invoice.company?.name || "—"}</td>
-              <td className={redesign ? "p-3 text-green-400 tabular-nums" : "p-3 text-green-400"}>${p.amount.toFixed(2)}</td>
+              <td className={modern ? "p-3 text-green-400 tabular-nums" : "p-3 text-green-400"}>${p.amount.toFixed(2)}</td>
               <td className="p-3 hidden sm:table-cell"><span className="badge bg-surface-lighter text-gray-400 capitalize">{p.method.replace(/_/g, " ")}</span></td>
               <td className="p-3 text-gray-400 hidden md:table-cell">{new Date(p.processedAt).toLocaleDateString()}</td>
               <td className="p-3 text-gray-500 text-xs hidden md:table-cell font-mono">{p.reference || "—"}</td>
             </tr>
           ))}
-          {redesign && shownPayments.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-gray-500">Nothing in this view.</td></tr>}</tbody>
+          {modern && shownPayments.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-gray-500">Nothing in this view.</td></tr>}</tbody>
         </table></div>
-        {redesign && shownPayments.length > 0 && (
+        {modern && shownPayments.length > 0 && (
           <ListFooter from={1} to={shownPayments.length} total={shownPayments.length} page={1} pages={1} onPage={() => {}} note={`${money(shownTotal)} recorded in this view`} />
         )}
         </div>
@@ -1153,7 +1153,7 @@ function PaymentsTab() {
 // ═══════════════════════════════════════════════════════════════════
 
 function TimeExpensesTab() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [view, setView] = useState("all");
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [expenses, setExpenses] = useState<any[]>([]);
@@ -1190,7 +1190,7 @@ function TimeExpensesTab() {
   const totalUnbilled = filtered.filter(e => e.billable && !e.invoiceId).reduce((s, e) => s + e.minutes, 0) / 60;
   const expenseTotal = expenses.reduce((s, e) => s + (e.amount || 0), 0);
 
-  // The redesigned list slices the loaded entries by what can be done with them — billed,
+  // The Modern list slices the loaded entries by what can be done with them — billed,
   // billable and not yet billed, or written off — and counts each slice live.
   const timeViews = [
     { id: "all", label: "All", count: entries.length },
@@ -1201,7 +1201,7 @@ function TimeExpensesTab() {
   const shownEntries = entries.filter(e =>
     view === "all" ? true : view === "billable" ? e.billable : view === "unbilled" ? e.billable && !e.invoiceId : !e.billable,
   );
-  const visibleEntries = redesign ? shownEntries : filtered;
+  const visibleEntries = modern ? shownEntries : filtered;
   const shownHours = shownEntries.reduce((s, e) => s + e.minutes, 0) / 60;
   const shownBillable = shownEntries.filter(e => e.billable).reduce((s, e) => s + e.minutes, 0) / 60;
 
@@ -1346,7 +1346,7 @@ function TimeExpensesTab() {
         </div>
       )}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {redesign ? (
+        {modern ? (
           <>
             <StatCard label="Total hours" value={`${totalHours.toFixed(1)}h`} icon={<Clock size={13} />} />
             <StatCard label="Billable" value={`${totalBillable.toFixed(1)}h`} icon={<DollarSign size={13} />} tone="green" />
@@ -1362,7 +1362,7 @@ function TimeExpensesTab() {
           </>
         )}
       </div>
-      {redesign ? (
+      {modern ? (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews views={timeViews} value={view} onChange={setView} label="Time entry views" />
           <span className="text-xs text-gray-500">{shownEntries.length} shown · {shownHours.toFixed(1)}h logged</span>
@@ -1394,9 +1394,9 @@ function TimeExpensesTab() {
               <td className="p-3 text-gray-500 text-xs hidden lg:table-cell">{new Date(e.date).toLocaleDateString()}</td>
             </tr>
           ))}
-          {redesign && shownEntries.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-gray-500">Nothing in this view.</td></tr>}</tbody>
+          {modern && shownEntries.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-gray-500">Nothing in this view.</td></tr>}</tbody>
         </table></div>
-        {redesign && shownEntries.length > 0 && (
+        {modern && shownEntries.length > 0 && (
           <ListFooter from={1} to={shownEntries.length} total={shownEntries.length} page={1} pages={1} onPage={() => {}} note={`${shownBillable.toFixed(1)}h billable`} />
         )}
         </div>
@@ -1404,7 +1404,7 @@ function TimeExpensesTab() {
 
       {/* Expenses — linked from the ticket Expenses tab */}
       <div className="flex justify-between items-center pt-2 border-t border-surface-border">
-        <p className="text-sm text-gray-400">{expenses.length} expenses · <span className={redesign ? "text-cyber-400 font-medium tabular-nums" : "text-cyber-400 font-medium"}>${expenseTotal.toFixed(2)}</span></p>
+        <p className="text-sm text-gray-400">{expenses.length} expenses · <span className={modern ? "text-cyber-400 font-medium tabular-nums" : "text-cyber-400 font-medium"}>${expenseTotal.toFixed(2)}</span></p>
       </div>
       {expenses.length === 0 ? (
         <div className="text-center py-8 card"><Receipt size={36} className="text-gray-600 mx-auto mb-2" /><p className="text-gray-500 text-sm">No expenses</p></div>
@@ -1420,11 +1420,11 @@ function TimeExpensesTab() {
               <td className="p-3 text-gray-300 text-xs">{e.description}</td>
               <td className="p-3"><span className="badge bg-purple-600/20 text-purple-400 text-xs capitalize">{e.category}</span></td>
               <td className="p-3 text-gray-500 text-xs hidden md:table-cell">{new Date(e.expenseDate).toLocaleDateString()}</td>
-              <td className={redesign ? "p-3 text-right text-cyber-400 font-medium tabular-nums" : "p-3 text-right text-cyber-400 font-medium"}>${(e.amount || 0).toFixed(2)}</td>
+              <td className={modern ? "p-3 text-right text-cyber-400 font-medium tabular-nums" : "p-3 text-right text-cyber-400 font-medium"}>${(e.amount || 0).toFixed(2)}</td>
             </tr>
           ))}</tbody>
         </table></div>
-        {redesign && expenses.length > 0 && (
+        {modern && expenses.length > 0 && (
           <ListFooter from={1} to={expenses.length} total={expenses.length} page={1} pages={1} onPage={() => {}} note={`${money(expenseTotal)} expenses`} />
         )}
         </div>
@@ -1458,7 +1458,7 @@ const BILLING_REPORTS: Array<{ id: string; label: string }> = [
 function ReportsTab() {
   const menu = useContextMenu();
   const navigate = useNavigate();
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const options = useReportOptions();
   const [open, setOpen] = useState<StandardReport | null>(null);
   const [filters, setFilters] = useState<ReportFilters>({ ...EMPTY_FILTERS });
@@ -1481,9 +1481,9 @@ function ReportsTab() {
   if (open) {
     return (
       <div className="space-y-4">
-        {/* The list gets a name here: in the redesign the way back is a chip that says where it goes,
+        {/* The list gets a name here: in the Modern interface the way back is a chip that says where it goes,
             where the classic screen uses the viewer's own Close, as Reporting does. */}
-        {redesign && (
+        {modern && (
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" onClick={() => setOpen(null)} className="chip">← All reports</button>
             <span className="text-xs text-gray-500">Run from the same catalogue as Reporting → Standard Reports</span>
@@ -1496,7 +1496,7 @@ function ReportsTab() {
           options={options}
           values={{ ...defaultOptionValues(open), ...values }}
           onValue={(key, value) => setValues(current => ({ ...current, [key]: value }))}
-          onClose={redesign ? undefined : () => setOpen(null)}
+          onClose={modern ? undefined : () => setOpen(null)}
         />
       </div>
     );
@@ -1509,9 +1509,9 @@ function ReportsTab() {
     >
       <ContextMenu state={menu.menuState} onClose={menu.close} />
       {/* Two arrangements of one list, because the interfaces are two designs rather than one with a
-          class on it: the classic screen keeps the card grid it has always had, and the redesign
-          offers the redesigned list — a row per report with the control that acts beside it. */}
-      {redesign ? (
+          class on it: the classic screen keeps the card grid it has always had, and the Modern interface
+          offers the Modern list — a row per report with the control that acts beside it. */}
+      {modern ? (
         <div className="card divide-y divide-surface-border">
           {BILLING_REPORTS.map(({ id, label }) => {
             const report = REPORT_BY_ID.get(id);

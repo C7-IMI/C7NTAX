@@ -20,7 +20,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { AlertTriangle, Mail, Paperclip } from "lucide-react";
 import type { EmailMessageKey } from "@C7NTAX/shared";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import { Band, LoadingBlock, MonoTm, StateChip, UnavailablePanel, plural } from "./emailChrome";
 import {
   EMAIL_FACTS_BY_KEY,
@@ -456,7 +456,7 @@ function ClassicList({ rows, selectedKey, onOpen, failure, onRetry, fromCode }: 
 }
 
 export function EmailMessageList(props: EmailListProps) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   if (props.loading) return <LoadingBlock label="the message list" />;
-  return redesign ? <ModernList {...props} /> : <ClassicList {...props} />;
+  return modern ? <ModernList {...props} /> : <ClassicList {...props} />;
 }

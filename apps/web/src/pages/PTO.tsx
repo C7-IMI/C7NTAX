@@ -5,7 +5,7 @@ import { useCalendarScale } from "../hooks/useCalendarScale";
 import { Calendar, Clock, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { ListFooter, ListViews, PageHeader } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -18,7 +18,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function PTOPage() {
   const { outerRef, innerRef, scale, scaledW, scaledH } = useCalendarScale<HTMLDivElement, HTMLDivElement>();
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [requests, setRequests] = useState<any[]>([]);
   const [view, setView] = useState("all");
   const [loading, setLoading] = useState(true);
@@ -180,7 +180,7 @@ export function PTOPage() {
       </div>
 
       {/* ── The slice of requests on screen, and what it holds ── */}
-      {redesign && (
+      {modern && (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews views={ptoViews} value={view} onChange={setView} label="Time-off views" />
           <span className="text-xs text-gray-500 tabular-nums">
@@ -203,15 +203,15 @@ export function PTOPage() {
           <tbody>{shownRequests.map(r => (
             <tr key={r.id} className="border-b border-surface-border/50">
               <td className="px-4 py-3 text-white capitalize">{r.type}</td>
-              <td className={redesign ? "px-4 py-3 text-gray-400 text-xs tabular-nums" : "px-4 py-3 text-gray-400 text-xs"}>{new Date(r.startDate).toLocaleDateString()} - {new Date(r.endDate).toLocaleDateString()}</td>
-              <td className={redesign ? "px-4 py-3 text-gray-400 tabular-nums" : "px-4 py-3 text-gray-400"}>{r.hours}h</td>
-              <td className="px-4 py-3">{redesign
+              <td className={modern ? "px-4 py-3 text-gray-400 text-xs tabular-nums" : "px-4 py-3 text-gray-400 text-xs"}>{new Date(r.startDate).toLocaleDateString()} - {new Date(r.endDate).toLocaleDateString()}</td>
+              <td className={modern ? "px-4 py-3 text-gray-400 tabular-nums" : "px-4 py-3 text-gray-400"}>{r.hours}h</td>
+              <td className="px-4 py-3">{modern
                 ? <span className={`chip text-xs ${viewOf(r) === "approved" ? "chip--good" : viewOf(r) === "denied" ? "chip--bad" : "chip--warn"}`}>{r.status}</span>
                 : <span className={`badge text-xs ${r.status === "approved" ? "bg-green-600/20 text-green-400" : r.status === "denied" ? "bg-red-600/20 text-red-400" : "bg-amber-600/20 text-amber-400"}`}>{r.status}</span>}</td>
             </tr>
           ))}</tbody>
         </table>
-        {redesign && (
+        {modern && (
           <ListFooter
             from={1}
             to={shownRequests.length}

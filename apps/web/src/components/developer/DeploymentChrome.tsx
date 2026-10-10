@@ -17,7 +17,7 @@
  */
 import type { ReactNode } from "react";
 import { AlertTriangle, Ban, Check, EyeOff, RotateCcw, Scale } from "lucide-react";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import { type DeploymentStateKey, STATE_LEGEND, STATE_LABEL } from "./deploymentContract";
 
 const CHIP_CLASS: Record<DeploymentStateKey, string> = {
@@ -122,7 +122,7 @@ export function DeploymentUnreadPanel({
   onRetry: () => void;
   retrying: boolean;
 }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const readAgain = (
     <button type="button" onClick={onRetry} disabled={retrying} className="btn-secondary inline-flex items-center gap-1.5 disabled:opacity-50">
       <RotateCcw size={13} className={retrying ? "animate-spin" : undefined} />
@@ -130,7 +130,7 @@ export function DeploymentUnreadPanel({
     </button>
   );
 
-  if (redesign) {
+  if (modern) {
     return (
       <div className="card border-amber-500/40 bg-amber-500/[0.06]">
         <div className="flex flex-wrap items-start gap-3">

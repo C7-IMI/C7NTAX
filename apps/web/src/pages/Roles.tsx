@@ -11,7 +11,7 @@ import { copyText, viewMenuEntries } from "../lib/menuActions";
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { PageHeader, ListViews, ListFooter, StatCard } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { useSuperAdmin } from "../hooks/useSuperAdmin";
 
 interface RoleRow {
@@ -37,7 +37,7 @@ const DEVELOPER_CATEGORY_REASON =
   DEVELOPER_ROLE_REFUSAL;
 
 export function RolesPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const superAdmin = useSuperAdmin();
   const [roles, setRoles] = useState<RoleRow[]>([]);
   const [view, setView] = useState("all");
@@ -301,7 +301,7 @@ export function RolesPage() {
     : view === "empty" ? noMembers(r)
     : view === "none" ? r.permissions.length === 0
     : true;
-  const shownRoles = redesign ? roles.filter(inView) : roles;
+  const shownRoles = modern ? roles.filter(inView) : roles;
   const assignedUsers = roles.reduce((n, r) => n + (r._count?.users ?? 0), 0);
   const permissionGrants = roles.reduce((n, r) => n + r.permissions.length, 0);
   if (loading) return <div className="text-center py-12 text-gray-500">Loading roles...</div>;
@@ -343,7 +343,7 @@ export function RolesPage() {
         </div>
       </div>
 
-      {redesign && (
+      {modern && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <StatCard label="Roles" value={roles.length} icon={<Shield size={14} />} tone="cyber" />
           <StatCard label="Users assigned" value={assignedUsers} icon={<Users size={14} />} tone="green" />
@@ -352,7 +352,7 @@ export function RolesPage() {
         </div>
       )}
 
-      {redesign && (
+      {modern && (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews views={roleViews} value={view} onChange={setView} label="Role views" />
           <span className="text-xs text-gray-500">
@@ -391,7 +391,7 @@ export function RolesPage() {
                         <p className="text-sm font-medium text-white truncate">{r.name}</p>
                         <p className="text-xs text-gray-500 capitalize">
                           {r.systemRole.replace(/_/g, " ")}
-                          {redesign && r.isDefault && <span className="chip chip--good text-[10px] ml-2">Default</span>}
+                          {modern && r.isDefault && <span className="chip chip--good text-[10px] ml-2">Default</span>}
                         </p>
                       </div>
                     </div>
@@ -409,7 +409,7 @@ export function RolesPage() {
                 </div>
               ))
             )}
-            {redesign && shownRoles.length > 0 && (
+            {modern && shownRoles.length > 0 && (
               <ListFooter
                 from={1}
                 to={shownRoles.length}
@@ -452,7 +452,7 @@ export function RolesPage() {
                       <>
                         <h3 className="text-white font-semibold">
                           {selected.name}
-                          {redesign && selected.isDefault && <span className="chip chip--good text-[10px] ml-2 align-middle">Default</span>}
+                          {modern && selected.isDefault && <span className="chip chip--good text-[10px] ml-2 align-middle">Default</span>}
                         </h3>
                         <p className="text-xs text-gray-400 capitalize">{selected.systemRole.replace(/_/g, " ")} · {selected.permissions.length} permissions</p>
                       </>
@@ -466,7 +466,7 @@ export function RolesPage() {
                       <button onClick={handleSaveRole} disabled={saving} className="btn-primary text-xs py-1 px-2 flex items-center gap-1"><Save size={12} /> {saving ? "Saving..." : "Save"}</button>
                       {(() => {
                         const changed = editPerms.size !== originalPerms.size || [...editPerms].some(p => !originalPerms.has(p));
-                        return changed ? (redesign ? <span className="chip chip--warn text-[10px]">Changed</span> : <span className="badge bg-amber-600/20 text-amber-400 text-[10px] px-1.5 py-0.5">Changed</span>) : null;
+                        return changed ? (modern ? <span className="chip chip--warn text-[10px]">Changed</span> : <span className="badge bg-amber-600/20 text-amber-400 text-[10px] px-1.5 py-0.5">Changed</span>) : null;
                       })()}
                     </>
                   ) : (
@@ -577,7 +577,7 @@ export function RolesPage() {
                           * control it describes; classic draws it as a form note under the label. The
                           * words are shared — only the arrangement differs.
                         */}
-                        {isDeveloperCategory && (redesign ? (
+                        {isDeveloperCategory && (modern ? (
                           <p className="flex items-start gap-1.5 px-3 pb-2 text-[11px] leading-relaxed text-gray-500">
                             <Shield size={12} className="text-red-400 shrink-0 mt-0.5" />
                             <span>{DEVELOPER_CATEGORY_REASON}</span>

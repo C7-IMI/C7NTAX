@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 /**
- * The list chrome every redesigned list page shares.
+ * The list chrome every Modern list page shares.
  *
  * A list in this application answers three questions in the same order every time: *which slice of it
  * am I looking at* (views), *what have I narrowed it to* (filters, count) and *how much of it is

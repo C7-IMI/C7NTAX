@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useState } from "react";
 import api from "../api";
 import {
-  UI_NAV_MODERN, UI_REDESIGN, navModernOverride, redesignOverride, setUiNavModern, setUiRedesign,
+  UI_NAV_MODERN, UI_MODERN_SCREENS, navModernOverride, modernScreensOverride, setUiNavModern, setUiModernScreens,
 } from "../lib/uiFlags";
 
 /**
@@ -15,15 +15,15 @@ import {
  *
  *   1. **The instance's setting** — `appearance.navigationStyle`, `appearance.assistantInRail`,
  *      `appearance.interfaceStyle`.
- *   2. **This browser's override** — the `c7_ui_nav` and `c7_ui_redesign` flags, which win in *either*
- *      direction so somebody can try the redesign on an instance that has not adopted it, or keep the
+ *   2. **This browser's override** — the `c7_ui_nav` and `c7_ui_modern` flags, which win in *either*
+ *      direction so somebody can try the Modern interface on an instance that has not adopted it, or keep the
  *      classic screens on an instance that has.
- *   3. **The build** — `VITE_UI_NAV=false` / `VITE_UI_REDESIGN=false` are deployment-wide offs and beat
+ *   3. **The build** — `VITE_UI_NAV=false` / `VITE_UI_MODERN=false` are deployment-wide offs and beat
  *      the setting, which is what makes them usable as rollbacks rather than as preferences.
  *
  * The interface and the navigation pane are separate answers on purpose: "which screens" and "which
  * nav" are different questions, and a person who wants the rail with the classic screens (or the tree
- * with the redesigned ones) should be able to say so.
+ * with the Modern ones) should be able to say so.
  *
  * Nothing here hides a working feature: an unreachable API and an unset value both mean "as it was
  * before this change arrived", which for the pane is the classic tree.
@@ -31,16 +31,16 @@ import {
 const APP_SETTINGS_CONFIG_KEY = "app_settings";
 
 export type NavStyle = "modern" | "classic";
-export type InterfaceStyle = "redesign" | "classic";
+export type InterfaceStyle = "modern" | "classic";
 
 export interface NavigationSettings {
   style: NavStyle;
   assistantInRail: boolean;
-  /** Which screens: the redesigned ones, or the classic ones. */
+  /** Which screens: the Modern ones, or the classic ones. */
   interfaceStyle: InterfaceStyle;
   /**
    * Whether a record shows its **context column** — the client, the contact and the estate beside
-   * the work. On by default, because that is the redesigned record: those facts are what you read
+   * the work. On by default, because that is the Modern record: those facts are what you read
    * *while* working, and a record that hides them behind a tab is the thing this replaces. It is a
    * personal preference rather than an instance setting: it is about how much room *you* want beside
    * a record, and it can be turned off from the account menu.
@@ -48,7 +48,7 @@ export interface NavigationSettings {
   contextPane: boolean;
 }
 
-const DEFAULT_SETTING: NavigationSettings = { style: "modern", assistantInRail: false, interfaceStyle: "redesign", contextPane: true };
+const DEFAULT_SETTING: NavigationSettings = { style: "modern", assistantInRail: false, interfaceStyle: "modern", contextPane: true };
 
 /** The context column's own preference. Not a build flag and not a server setting — see above. */
 const CONTEXT_PANE_STORAGE_KEY = "c7_ui_context";
@@ -101,8 +101,9 @@ export function parseNavigationSettings(value: unknown): NavigationSettings {
     // than silently reverting the interface for everybody.
     style: appearance?.navigationStyle === "classic" ? "classic" : "modern",
     assistantInRail: appearance?.assistantInRail === true,
-    // The redesign is the default; only an explicit "classic" reverts it.
-    interfaceStyle: appearance?.interfaceStyle === "classic" ? "classic" : "redesign",
+    // The Modern interface is the default; only an explicit "classic" reverts it. A stored
+    // "redesign" — the value this setting used before the rename — is therefore still Modern.
+    interfaceStyle: appearance?.interfaceStyle === "classic" ? "classic" : "modern",
     // Not from the server: the context column is a personal preference, and the default is on.
     contextPane: true,
   };
@@ -116,10 +117,10 @@ export function applyLocalOverride(setting: NavigationSettings): NavigationSetti
     const nav = navModernOverride();
     if (nav !== null) next = { ...next, style: nav ? "modern" : "classic" };
   }
-  if (!UI_REDESIGN) next = { ...next, interfaceStyle: "classic" };
+  if (!UI_MODERN_SCREENS) next = { ...next, interfaceStyle: "classic" };
   else {
-    const redesign = redesignOverride();
-    if (redesign !== null) next = { ...next, interfaceStyle: redesign ? "redesign" : "classic" };
+    const modern = modernScreensOverride();
+    if (modern !== null) next = { ...next, interfaceStyle: modern ? "modern" : "classic" };
   }
   const contextPane = contextPaneOverride();
   if (contextPane !== null) next = { ...next, contextPane };
@@ -198,27 +199,27 @@ export function setNavigationPreference(style: NavStyle): void {
 }
 
 /**
- * Switches this browser between the redesigned screens and the classic ones, from the My Account
+ * Switches this browser between the Modern screens and the classic ones, from the My Account
  * menu.
  *
- * It writes the same `c7_ui_redesign` flag INTERFACE-ROLLBACK.md names, so the switch and the
+ * It writes the same `c7_ui_modern` flag INTERFACE-ROLLBACK.md names, so the switch and the
  * documented override are one mechanism rather than two that can disagree, and it works in either
- * direction. A deployment-wide `VITE_UI_REDESIGN=false` is not a preference and still wins.
+ * direction. A deployment-wide `VITE_UI_MODERN=false` is not a preference and still wins.
  */
 export function setInterfacePreference(style: InterfaceStyle): void {
-  setUiRedesign(style === "redesign");
+  setUiModernScreens(style === "modern");
   overrideSubscribers.forEach((notify) => notify());
 }
 
 /**
- * `true` while the redesigned screens are in use, resolved through all three layers.
+ * `true` while the Modern screens are in use, resolved through all three layers.
  *
- * A screen that has a classic and a redesigned shape asks this rather than reading a flag directly,
+ * A screen that has a classic and a Modern shape asks this rather than reading a flag directly,
  * so it honours the instance's setting, the browser's own choice and a deployment-wide off without
  * having to know about any of them.
  */
-export function useRedesign(): boolean {
-  return useNavigationSettings().interfaceStyle === "redesign";
+export function useModernInterface(): boolean {
+  return useNavigationSettings().interfaceStyle === "modern";
 }
 
 /**

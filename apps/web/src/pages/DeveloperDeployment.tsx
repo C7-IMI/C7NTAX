@@ -7,7 +7,7 @@
  * were checked against and the sentence saying what happens if they are skipped, a sanitisation step the
  * plan does not cover at all, and a hand-off report at the end instead of a green tick.
  *
- * **Two designs, one set of handlers.** `useRedesign()` decides which arrangement is drawn, and this
+ * **Two designs, one set of handlers.** `useModernInterface()` decides which arrangement is drawn, and this
  * component draws neither of them itself:
  *
  *   · the **modern** arrangement (`DeploymentModern.tsx`) is the approved mockup — a step track you
@@ -31,7 +31,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { useDeveloperAccess } from "../hooks/useDeveloperAccess";
 import { PageHeader } from "../components/ui";
 import {
@@ -60,7 +60,7 @@ function defaultStepId(steps: DeploymentStep[]): string {
 }
 
 export function DeveloperDeploymentPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const { canPurge } = useDeveloperAccess();
   const { status, model, error, reload, applyPayload } = useDeveloperDeployment();
 
@@ -147,7 +147,7 @@ export function DeveloperDeploymentPage() {
             Reading the deployment state…
           </div>
         </div>
-      ) : redesign ? (
+      ) : modern ? (
         <DeploymentModern {...viewProps} />
       ) : (
         <DeploymentClassic {...viewProps} />

@@ -39,7 +39,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { MonitorSmartphone, X } from "lucide-react";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import { Band, LoadingBlock, Mono, MonoTm, UnavailablePanel } from "./emailChrome";
 import { EmailPlainText } from "./EmailPlainText";
 import { MAIL_DEVICES, MailFrame, type MailDevice } from "./emailMailFrame";
@@ -91,7 +91,7 @@ function recordLabel(id: string): string {
 }
 
 export function EmailSimulation(props: EmailSimulationProps) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [fallback, setFallback] = useState(false);
   const [popupLive, setPopupLive] = useState(false);
   const popup = useRef<{ win: Window; root: Root } | null>(null);
@@ -203,7 +203,7 @@ export function EmailSimulation(props: EmailSimulationProps) {
       </button>
 
       {fallback ? (
-        redesign ? (
+        modern ? (
           <SimulationSheet message={message} onClose={() => setFallback(false)} />
         ) : (
           <SimulationDialog message={message} onClose={() => setFallback(false)} />

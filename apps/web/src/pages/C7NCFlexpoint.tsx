@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { PageSkeleton } from "../components/ui/Skeleton";
 import { ListFooter, ListViews } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { DataSourceNote } from "../components/DataSourceNote";
 
 interface FlexpointOptions {
@@ -95,7 +95,7 @@ function when(iso: string | null): string {
 }
 
 export function C7NCFlexpointPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [clientView, setClientView] = useState("all");
   const [invoiceView, setInvoiceView] = useState("all");
   const [overview, setOverview] = useState<Overview | null>(null);
@@ -258,7 +258,7 @@ export function C7NCFlexpointPage() {
         <div className="card space-y-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3 min-w-0">
-              <span className={redesign
+              <span className={modern
                 ? `chip text-xs ${connection.status === "connected" ? "chip--good" : connection.status === "error" ? "chip--bad" : ""}`
                 : `inline-flex items-center gap-1.5 text-xs rounded-md px-2 py-1 ${
                   connection.status === "connected" ? "bg-emerald-600/10 text-emerald-300"
@@ -375,7 +375,7 @@ export function C7NCFlexpointPage() {
             </div>
           </div>
 
-          {redesign && (
+          {modern && (
             <div className="flex flex-wrap items-center gap-2">
               <ListViews views={clientViews} value={clientView} onChange={setClientView} label="Client views" />
               <span className="text-xs text-gray-500 tabular-nums">{shownClients.length} of {overview.clients.length} clients shown</span>
@@ -400,7 +400,7 @@ export function C7NCFlexpointPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {redesign && shownClients.length === 0 && (
+                  {modern && shownClients.length === 0 && (
                     <tr><td colSpan={6} className="py-6 text-center text-xs text-gray-500">Nothing in this view.</td></tr>
                   )}
                   {shownClients.map(client => (
@@ -428,7 +428,7 @@ export function C7NCFlexpointPage() {
                   ))}
                 </tbody>
               </table>
-              {redesign && (
+              {modern && (
                 <ListFooter
                   from={1}
                   to={shownClients.length}
@@ -486,7 +486,7 @@ export function C7NCFlexpointPage() {
               </p>
             </div>
           </div>
-          {redesign && (
+          {modern && (
             <div className="flex flex-wrap items-center gap-2">
               <ListViews views={invoiceViews} value={invoiceView} onChange={setInvoiceView} label="Invoice views" />
               <span className="text-xs text-gray-500 tabular-nums">{shownInvoices.length} of {invoices.length} invoices shown</span>
@@ -507,13 +507,13 @@ export function C7NCFlexpointPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {redesign && shownInvoices.length === 0 && (
+                  {modern && shownInvoices.length === 0 && (
                     <tr><td colSpan={5} className="py-6 text-center text-xs text-gray-500">Nothing in this view.</td></tr>
                   )}
                   {shownInvoices.map(invoice => (
                     <tr key={invoice.id} className="border-t border-surface-border">
                       <td className="py-2">
-                        {redesign ? (
+                        {modern ? (
                           <>
                             <span className="text-white tabular-nums">{invoice.invoiceNumber}</span>
                             <span className="chip ml-1.5 text-[10px]">{invoice.status}</span>
@@ -528,7 +528,7 @@ export function C7NCFlexpointPage() {
                       <td className="py-2 text-gray-400 truncate">{invoice.companyName}</td>
                       <td className="py-2 text-right tabular-nums text-white">{money(invoice.total)}</td>
                       <td className="py-2 text-xs">
-                        {redesign ? (
+                        {modern ? (
                           invoice.flexpointInvoiceId
                             ? <span className="chip chip--good text-[10px]">#{invoice.flexpointInvoiceId}{invoice.flexpointPaid > 0 && <span className="text-gray-400"> · {money(invoice.flexpointPaid)} received</span>}</span>
                             : <span className="chip text-[10px]">not pushed</span>
@@ -551,7 +551,7 @@ export function C7NCFlexpointPage() {
                   ))}
                 </tbody>
               </table>
-              {redesign && (
+              {modern && (
                 <ListFooter
                   from={1}
                   to={shownInvoices.length}

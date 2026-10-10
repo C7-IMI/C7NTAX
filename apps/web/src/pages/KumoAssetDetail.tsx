@@ -7,10 +7,10 @@ import { kumoClientTrail, kumoTrail, useBreadcrumbTrail } from "../components/Br
 import { KumoAssetDialog } from "../components/KumoAssetDialog";
 import { PageSkeleton } from "../components/ui/Skeleton";
 import { PageHeader, StatCard } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 export function KumoAssetDetailPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const { id } = useParams();
   const [asset, setAsset] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -56,7 +56,7 @@ export function KumoAssetDetailPage() {
   return (
     <div className="space-y-6 animate-fade-in max-w-3xl">
       <div className="flex items-center justify-between">
-        <PageHeader variant="section" title={asset.name} subtitle={redesign
+        <PageHeader variant="section" title={asset.name} subtitle={modern
           ? <>{[asset.template?.name, client?.name].filter(Boolean).join(" · ")}{asset.status ? <span className={`chip ml-1.5 ${asset.status === "active" ? "chip--good" : ""}`}>{asset.status}</span> : null}</>
           : [asset.template?.name, client?.name, asset.status].filter(Boolean).join(" · ")} />
         <button onClick={() => setEditing(true)} className="btn-primary text-sm flex items-center gap-1.5">
@@ -65,7 +65,7 @@ export function KumoAssetDetailPage() {
       </div>
 
       {/* Figures — what the type asks for and how much of it this record answers. */}
-      {redesign && fields.length > 0 && (
+      {modern && fields.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard label="Fields defined" value={fields.length} />
           <StatCard label="Populated" value={filled} tone="green" />

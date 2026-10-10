@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { BookOpen, HelpCircle, Settings2, ListOrdered, ChevronRight, ArrowRight, Wrench } from "lucide-react";
 import { HELP_SECTIONS, helpVisible } from "./HelpDoc";
 import { PageHeader } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { useAuth } from "../hooks/useAuth";
 
 const SECTION_ICONS: Record<string, typeof BookOpen> = {
@@ -13,7 +13,7 @@ const SECTION_ICONS: Record<string, typeof BookOpen> = {
 };
 
 export function HelpPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const { permissions } = useAuth();
   // The list is still derived from HELP_SECTIONS — help-home never grows a list of its own — and the
   // permission gate is applied *to that list*, so a gated walkthrough is one this reader never meets.
@@ -22,7 +22,7 @@ export function HelpPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {redesign ? (
+      {modern ? (
         <PageHeader
           variant="section"
           title="Help"
@@ -86,7 +86,7 @@ export function HelpPage() {
             { label: "What's New", to: "/admin/changelog" },
             { label: "Help Index", to: "/help/index" },
           ].map((l) => (
-            <Link key={l.to} to={l.to} className={redesign ? "chip" : "inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-surface-lighter text-gray-300 hover:text-white hover:bg-cyber-600/20"}>
+            <Link key={l.to} to={l.to} className={modern ? "chip" : "inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-surface-lighter text-gray-300 hover:text-white hover:bg-cyber-600/20"}>
               {l.label} <ArrowRight size={12} />
             </Link>
           ))}

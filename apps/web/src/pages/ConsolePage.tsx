@@ -9,7 +9,7 @@ import {
 import { ConsolePanel } from "../components/ConsoleDialog";
 import { useAuth } from "../hooks/useAuth";
 import { useConsoleEnabled } from "../hooks/useConsoleEnabled";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { PageHeader } from "../components/ui";
 
 /**
@@ -27,7 +27,7 @@ import { PageHeader } from "../components/ui";
  * button) and read only when the page mounts.
  */
 export function ConsolePage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const { permissions } = useAuth();
   const consoleEnabled = useConsoleEnabled();
   const [params, setParams] = useSearchParams();
@@ -102,11 +102,11 @@ export function ConsolePage() {
 
   /*
    * The sentence and the copy-link button are shared by both interfaces — the classic header draws
-   * them itself and the redesigned one hands them to the shared PageHeader — so they are built once
+   * them itself and the Modern one hands them to the shared PageHeader — so they are built once
    * here. Only the number inside the sentence is dressed differently, which is why it comes from a
    * helper rather than a duplicated paragraph (a fragment adds no element in the classic interface).
    */
-  const count = (n: number) => (redesign ? <span className="tabular-nums">{n}</span> : <>{n}</>);
+  const count = (n: number) => (modern ? <span className="tabular-nums">{n}</span> : <>{n}</>);
 
   const consoleHelp = (
     <>
@@ -144,7 +144,7 @@ export function ConsolePage() {
 
   return (
     <div className="h-[calc(100vh-11rem)] min-h-[24rem] flex flex-col gap-3">
-      {redesign ? (
+      {modern ? (
         <PageHeader
           variant="section"
           title="Console"
@@ -154,7 +154,7 @@ export function ConsolePage() {
       ) : (
         <div className="flex items-start gap-3 shrink-0">
           <div className="min-w-0">
-            <h1 className={redesign ? "text-base font-semibold text-white" : "text-lg font-semibold text-white"}>Console</h1>
+            <h1 className={modern ? "text-base font-semibold text-white" : "text-lg font-semibold text-white"}>Console</h1>
             <p className="text-xs text-gray-500">
               {consoleHelp}
             </p>
@@ -173,7 +173,7 @@ export function ConsolePage() {
 
       {/* The catalogue in a form you can read without typing anything: the same groups `help` prints. */}
       <details className="shrink-0 rounded-lg border border-surface-border bg-surface">
-        <summary className={redesign ? "px-3.5 py-2 text-xs text-gray-400 cursor-pointer hover:text-white tabular-nums" : "px-3.5 py-2 text-xs text-gray-400 cursor-pointer hover:text-white"}>
+        <summary className={modern ? "px-3.5 py-2 text-xs text-gray-400 cursor-pointer hover:text-white tabular-nums" : "px-3.5 py-2 text-xs text-gray-400 cursor-pointer hover:text-white"}>
           What is available ({permitted.length} commands,{" "}
           {CONSOLE_OWN_VERBS.length} console verbs)
         </summary>

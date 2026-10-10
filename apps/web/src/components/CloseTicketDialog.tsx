@@ -21,7 +21,7 @@ import toast from "react-hot-toast";
 import { Loader2, Mail, MailX, X } from "lucide-react";
 import api from "../api";
 import { apiErrorMessage } from "../lib/apiError";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 /** Remembered per browser: most people close the same way every time, and the choice stays visible. */
 const NOTIFY_PREFERENCE_KEY = "c7_close_notify_customer";
@@ -52,7 +52,7 @@ export function CloseTicketDialog({
   onCancel: () => void;
   onClosed: (result: { status: CloseStatus; emailed: boolean; count: number }) => void;
 }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const many = tickets.length > 1;
   const first = tickets[0];
   /*
@@ -118,7 +118,7 @@ export function CloseTicketDialog({
   const noteWord = many ? "every selected ticket" : "the ticket";
 
   // ── Modern: the two decisions, each with what it does written beside it ──
-  if (redesign) {
+  if (modern) {
     return (
       <div
         className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/60 p-4 pt-[8vh]"

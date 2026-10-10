@@ -1,7 +1,7 @@
 /**
  * The brand, identity, matrix, rules, recipient and override screens in the **modern** interface.
  *
- * The arrangement is the redesign's own furniture, not a restyle of the classic one: a rail of the six
+ * The arrangement is the Modern interface's own furniture, not a restyle of the classic one: a rail of the six
  * subjects you press (each with a count and a line saying what it answers), rows-as-cards with the
  * sentence beside the control that acts, chips you press to narrow the matrix, a track you step along
  * for the batching rule, the kit applied beside the kit it applies, and a countable footer under the

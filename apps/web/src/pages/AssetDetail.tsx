@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { Save, X, Monitor, ChevronLeft, Clock, User, FileText, MapPin, DollarSign, Wifi, HardDrive, Package } from "lucide-react";
 import { PageSkeleton } from "../components/ui/Skeleton";
 import { ListFooter, ListViews, PageHeader } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 const TYPE_COLORS: Record<string, string> = { hardware: "bg-blue-600/20 text-blue-400", software: "bg-purple-600/20 text-purple-400", license: "bg-amber-600/20 text-amber-400", server: "bg-cyber-600/20 text-cyber-400", laptop: "bg-green-600/20 text-green-400", mobile: "bg-pink-600/20 text-pink-400", network: "bg-orange-600/20 text-orange-400", other: "bg-gray-600/20 text-gray-400" };
 const STATUS_COLORS: Record<string, string> = { available: "bg-green-600/20 text-green-400", assigned: "bg-cyber-600/20 text-cyber-400", maintenance: "bg-amber-600/20 text-amber-400", retired: "bg-gray-600/20 text-gray-400", lost: "bg-red-600/20 text-red-400" };
@@ -51,7 +51,7 @@ const SECTIONS: Array<{ id: string; label: string }> = [
 /**
  * What the record's own field reads as, in the same words the read-only form already used: a date as
  * a date, a price with its currency mark. A field with nothing in it is left out rather than printed
- * as an em dash — the redesigned record shows what the asset has, not what it lacks.
+ * as an em dash — the Modern record shows what the asset has, not what it lacks.
  */
 function fieldValue(f: { key: string; type?: string }, asset: Record<string, any>): string | null {
   const value = asset[f.key];
@@ -63,7 +63,7 @@ function fieldValue(f: { key: string; type?: string }, asset: Record<string, any
 
 export function AssetDetailPage() {
   const { id } = useParams();
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [asset, setAsset] = useState<Record<string, any> | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -131,7 +131,7 @@ export function AssetDetailPage() {
         {/* Left column - Details */}
         <div className="lg:col-span-2 space-y-4">
           {/* General */}
-          {redesign && !editing ? (
+          {modern && !editing ? (
             /* The record as a record: one row per field it actually holds, drawn from the same
                field list the form is built from, so the two cannot drift. */
             <div className="card space-y-4">
@@ -205,7 +205,7 @@ export function AssetDetailPage() {
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Assignment History</h3>
             {assignments.length > 0 ? (
               <>
-              {redesign && (
+              {modern && (
                 <div className="flex flex-wrap items-center gap-2">
                   <ListViews views={assignmentViews} value={assignmentView} onChange={setAssignmentView} label="Assignment views" />
                   <span className="text-xs text-gray-500 tabular-nums">{shownAssignments.length} of {assignments.length} shown</span>
@@ -220,16 +220,16 @@ export function AssetDetailPage() {
                       {a.ticket && <span className="text-xs text-gray-500">via {a.ticket.ticketNumber}</span>}
                     </div>
                     <div className="flex items-center gap-3 text-xs text-gray-500">
-                      <span className={redesign ? "tabular-nums" : undefined}>Out: {new Date(a.checkedOutAt).toLocaleDateString()}</span>
-                      {a.checkedInAt && <span className={redesign ? "tabular-nums" : undefined}>In: {new Date(a.checkedInAt).toLocaleDateString()}</span>}
-                      {!a.checkedInAt && (redesign
+                      <span className={modern ? "tabular-nums" : undefined}>Out: {new Date(a.checkedOutAt).toLocaleDateString()}</span>
+                      {a.checkedInAt && <span className={modern ? "tabular-nums" : undefined}>In: {new Date(a.checkedInAt).toLocaleDateString()}</span>}
+                      {!a.checkedInAt && (modern
                         ? <span className="chip text-[10px]">Active</span>
                         : <span className="badge bg-cyber-600/20 text-cyber-400">Active</span>)}
                     </div>
                   </div>
                 ))}
               </div>
-              {redesign && (
+              {modern && (
                 <ListFooter
                   from={1}
                   to={shownAssignments.length}
@@ -250,10 +250,10 @@ export function AssetDetailPage() {
           <div className="card space-y-3">
             <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Status</h3>
             <div className="space-y-2">
-              <div className="flex justify-between text-sm"><span className="text-gray-500">Type</span>{redesign
+              <div className="flex justify-between text-sm"><span className="text-gray-500">Type</span>{modern
                 ? <span className={`chip text-xs`}>{asset.type}</span>
                 : <span className={`badge text-xs ${TYPE_COLORS[asset.type] || ""}`}>{asset.type}</span>}</div>
-              <div className="flex justify-between text-sm"><span className="text-gray-500">Status</span>{redesign
+              <div className="flex justify-between text-sm"><span className="text-gray-500">Status</span>{modern
                 ? <span className={`chip text-xs ${asset.status === "available" ? "chip--good" : asset.status === "lost" ? "chip--bad" : asset.status === "maintenance" ? "chip--warn" : ""}`}>{asset.status}</span>
                 : <span className={`badge text-xs ${STATUS_COLORS[asset.status] || ""}`}>{asset.status}</span>}</div>
               {asset.category && <div className="flex justify-between text-sm"><span className="text-gray-500">Category</span><span className="text-white">{asset.category}</span></div>}
@@ -267,8 +267,8 @@ export function AssetDetailPage() {
               {asset.manufacturer && <div className="flex items-center gap-2"><Package size={13} className="text-gray-500" /><span className="text-gray-400">{asset.manufacturer} {asset.model || ""}</span></div>}
               {asset.serialNumber && <div className="flex items-center gap-2"><HardDrive size={13} className="text-gray-500" /><span className="text-gray-400">S/N: {asset.serialNumber}</span></div>}
               {asset.ipAddress && <div className="flex items-center gap-2"><Wifi size={13} className="text-gray-500" /><span className="text-gray-400">{asset.ipAddress}</span></div>}
-              {asset.purchasePrice != null && <div className="flex items-center gap-2"><DollarSign size={13} className="text-gray-500" /><span className={redesign ? "text-gray-400 tabular-nums" : "text-gray-400"}>${Number(asset.purchasePrice).toLocaleString()}</span></div>}
-              {asset.createdAt && <div className="flex items-center gap-2"><Clock size={13} className="text-gray-500" /><span className={redesign ? "text-gray-400 tabular-nums" : "text-gray-400"}>Created {new Date(asset.createdAt).toLocaleDateString()}</span></div>}
+              {asset.purchasePrice != null && <div className="flex items-center gap-2"><DollarSign size={13} className="text-gray-500" /><span className={modern ? "text-gray-400 tabular-nums" : "text-gray-400"}>${Number(asset.purchasePrice).toLocaleString()}</span></div>}
+              {asset.createdAt && <div className="flex items-center gap-2"><Clock size={13} className="text-gray-500" /><span className={modern ? "text-gray-400 tabular-nums" : "text-gray-400"}>Created {new Date(asset.createdAt).toLocaleDateString()}</span></div>}
             </div>
           </div>
 

@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import api from "../api";
 import { RichTextEditor, DOCUMENT_PROFILE } from "../components/richText";
 import { kumoClientTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 interface Person { id: string; firstName: string; lastName: string; email?: string }
 
@@ -110,7 +110,7 @@ function DueControl({
 export function ChecklistDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [, setTick] = useState(0);
   const [checklist, setChecklist] = useState<Checklist | null>(null);
   const [users, setUsers] = useState<Person[]>([]);
@@ -283,7 +283,7 @@ export function ChecklistDetailPage() {
         </div>
 
         <div className="flex items-center gap-3 text-xs text-gray-500">
-          {redesign && (
+          {modern && (
             <span className={`chip text-[10px] ${checklist.taskCount > 0 && checklist.completedCount === checklist.taskCount ? "chip--good" : ""}`}>
               {checklist.taskCount === 0 ? "no tasks" : checklist.completedCount === checklist.taskCount ? "complete" : checklist.completedCount > 0 ? "in progress" : "not started"}
             </span>
@@ -301,7 +301,7 @@ export function ChecklistDetailPage() {
       {/* The same record as fields rather than controls: what this checklist is attached to, who has
           it, when it is due, and how far it has got. The editable form above is untouched — this is
           a read of it, not a second way to write it. */}
-      {redesign && (
+      {modern && (
         <div className="card">
           <dl>
             <div className="flex items-start justify-between gap-3 border-b border-surface-border/60 py-2">

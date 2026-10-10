@@ -18,7 +18,7 @@
 import { useRef, useState } from "react";
 import { AlertTriangle, ImageOff, Loader2, Trash2, Upload } from "lucide-react";
 import { BRAND_COLOR_DEFAULTS, DOCUMENT_PALETTE } from "@C7NTAX/shared";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import { COLOUR_PATTERN, COLOUR_SWATCHES, type BrandFieldSpec } from "./brandFields";
 import {
   UPLOAD_ACCEPT,
@@ -101,7 +101,7 @@ export function BrandAssetField({
   /** "hero" draws the two fields people came for, larger than everything else on the page. */
   emphasis?: "hero" | "row";
 }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { busy, problem, clear, choose } = useBrandUpload(kindOf(spec.key), onChange);
 
@@ -141,7 +141,7 @@ export function BrandAssetField({
     </p>
   ) : null;
 
-  if (redesign) {
+  if (modern) {
     const hero = emphasis === "hero";
     return (
       <div className={`card ${hero ? "p-4" : ""}`}>
@@ -262,7 +262,7 @@ export function BrandColourField({
   /** The swatches to offer — used by the modern arrangement. */
   onDraft?: (value: string) => void;
 }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const swatches = COLOUR_SWATCHES;
 
   return (
@@ -290,7 +290,7 @@ export function BrandColourField({
           onChange={(event) => onChange(event.target.value)}
         />
       </div>
-      {redesign && onDraft ? (
+      {modern && onDraft ? (
         <div className="flex flex-wrap items-center gap-1.5">
           {swatches.map((swatch) => (
             <button

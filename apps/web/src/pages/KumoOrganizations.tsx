@@ -10,7 +10,7 @@ import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { ListFooter, ListViews, PageHeader, StatCard } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 interface Organization {
   id: string;
@@ -40,12 +40,12 @@ const TYPE_COLORS: Record<string, string> = {
   Partner: "bg-green-600/20 text-green-400",
 };
 
-function CountCell({ value, className = "", redesign = false }: { value: number; className?: string; redesign?: boolean }) {
-  return <td className={`px-4 py-3 ${className} ${redesign ? "tabular-nums" : ""} ${value > 0 ? "text-gray-300" : "text-gray-600"}`}>{value}</td>;
+function CountCell({ value, className = "", modern = false }: { value: number; className?: string; modern?: boolean }) {
+  return <td className={`px-4 py-3 ${className} ${modern ? "tabular-nums" : ""} ${value > 0 ? "text-gray-300" : "text-gray-600"}`}>{value}</td>;
 }
 
 export function KumoOrganizationsPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [orgs, setOrgs] = useState<Organization[]>([]);
   const [recent, setRecent] = useState<RecentItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -96,7 +96,7 @@ export function KumoOrganizationsPage() {
   /*
    * The figures and the coverage slice this page can state from the organizations it has already
    * loaded: how much documentation each client holds, and how many of them hold none at all. The
-   * slice only applies while the redesigned interface is on, so the classic table is unchanged.
+   * slice only applies while the Modern interface is on, so the classic table is unchanged.
    */
   const documented = (o: Organization) =>
     (o.kumo?.assets ?? 0) + (o.kumo?.passwords ?? 0) + (o.kumo?.documents ?? 0) + (o.kumo?.domains ?? 0) + (o.kumo?.certificates ?? 0) > 0;
@@ -111,7 +111,7 @@ export function KumoOrganizationsPage() {
     { id: "undocumented", label: "Undocumented", count: rows.filter((o) => !documented(o)).length },
   ];
   const matchesOrgView = (o: Organization) =>
-    !redesign || orgView === "" ||
+    !modern || orgView === "" ||
     (orgView === "active" ? o.isActive
       : orgView === "inactive" ? !o.isActive
         : orgView === "undocumented" ? !documented(o)
@@ -240,7 +240,7 @@ export function KumoOrganizationsPage() {
       </div>
 
       {/* Figures — what the client estate holds in Kumo, totalled from the rows already loaded. */}
-      {redesign && (
+      {modern && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard label="Organizations" value={rows.length} icon={<Building2 size={13} />} />
           <StatCard label="Assets documented" value={totalAssets} icon={<Server size={13} />} tone="neutral" />
@@ -278,7 +278,7 @@ export function KumoOrganizationsPage() {
       )}
 
       {/* Views — who is documented and who is not, which is the coverage question this page answers. */}
-      {redesign && (
+      {modern && (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews views={orgViews} value={orgView} onChange={setOrgView} label="Organization views" />
           <span className="text-xs text-gray-500 tabular-nums">{viewRows.length} of {total} organizations</span>
@@ -331,7 +331,7 @@ export function KumoOrganizationsPage() {
                 ? `No ${companyType.toLowerCase()} organizations yet.`
                 : "No organizations yet."}
           </div>
-        ) : redesign && viewRows.length === 0 ? (
+        ) : modern && viewRows.length === 0 ? (
           <div className="p-8 text-center text-gray-500">No organizations in this view.</div>
         ) : (
           <div className="overflow-x-auto">
@@ -380,14 +380,14 @@ export function KumoOrganizationsPage() {
                         </span>
                       )}
                     </td>
-                    <CountCell value={org._count?.contacts ?? 0} className="hidden lg:table-cell" redesign={redesign} />
-                    <CountCell value={org.kumo?.assets ?? 0} redesign={redesign} />
-                    <CountCell value={org.kumo?.passwords ?? 0} className="hidden md:table-cell" redesign={redesign} />
-                    <CountCell value={org.kumo?.documents ?? 0} className="hidden md:table-cell" redesign={redesign} />
-                    <CountCell value={org.kumo?.domains ?? 0} className="hidden xl:table-cell" redesign={redesign} />
-                    <CountCell value={org.kumo?.certificates ?? 0} className="hidden xl:table-cell" redesign={redesign} />
+                    <CountCell value={org._count?.contacts ?? 0} className="hidden lg:table-cell" modern={modern} />
+                    <CountCell value={org.kumo?.assets ?? 0} modern={modern} />
+                    <CountCell value={org.kumo?.passwords ?? 0} className="hidden md:table-cell" modern={modern} />
+                    <CountCell value={org.kumo?.documents ?? 0} className="hidden md:table-cell" modern={modern} />
+                    <CountCell value={org.kumo?.domains ?? 0} className="hidden xl:table-cell" modern={modern} />
+                    <CountCell value={org.kumo?.certificates ?? 0} className="hidden xl:table-cell" modern={modern} />
                     <td className="px-4 py-3 hidden lg:table-cell">
-                      {redesign ? (
+                      {modern ? (
                         <span className={`chip ${org.isActive ? "chip--good" : ""}`}>{org.isActive ? "Active" : "Inactive"}</span>
                       ) : (
                       <>
@@ -405,7 +405,7 @@ export function KumoOrganizationsPage() {
             </table>
           </div>
         )}
-        {redesign && !loading && !error && viewRows.length > 0 && (
+        {modern && !loading && !error && viewRows.length > 0 && (
           <ListFooter from={1} to={viewRows.length} total={viewRows.length} page={1} pages={1} onPage={() => {}}
             note={total > rows.length ? `${total - rows.length} more not loaded · counts are Kumo records` : "Counts are Kumo records, not service-desk ones"} />
         )}

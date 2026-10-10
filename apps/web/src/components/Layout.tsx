@@ -502,8 +502,8 @@ export function Layout({ children }: { children: ReactNode }) {
    */
   const navigation = useNavigationSettings();
   const modernNav = navigation.style === "modern";
-  // The redesigned screens compact the chrome that every page shares, which is the header here.
-  const redesign = navigation.interfaceStyle === "redesign";
+  // The Modern screens compact the chrome that every page shares, which is the header here.
+  const modern = navigation.interfaceStyle === "modern";
   /*
    * The modern *theme* hangs off this attribute, the way density and P2 do, so one stylesheet can
    * restyle every page in the application and the classic interface keeps every rule it has always
@@ -511,8 +511,8 @@ export function Layout({ children }: { children: ReactNode }) {
    * is about structure, density and type rather than about replacing them.
    */
   useEffect(() => {
-    document.documentElement.setAttribute("data-ui-redesign", redesign ? "true" : "false");
-  }, [redesign]);
+    document.documentElement.setAttribute("data-ui-modern", modern ? "true" : "false");
+  }, [modern]);
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const segments = location.pathname.split("/").filter(Boolean);
@@ -1323,15 +1323,15 @@ export function Layout({ children }: { children: ReactNode }) {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className={`border-b border-surface-border flex items-center justify-between px-4 lg:px-6 shrink-0 bg-surface/50 ${redesign ? "py-2" : "py-3"}`}>
-          {/* Redesigned, the header is one row — where you are, what the section is for, and the
+        <header className={`border-b border-surface-border flex items-center justify-between px-4 lg:px-6 shrink-0 bg-surface/50 ${modern ? "py-2" : "py-3"}`}>
+          {/* Modern, the header is one row — where you are, what the section is for, and the
               trail back — rather than a title row with the breadcrumb on a line of its own beneath
               it. That is about 24px of chrome above every page in the application. */}
-          {/* Redesigned, the header is one row: the section's name and what it is for. The trail is
+          {/* Modern, the header is one row: the section's name and what it is for. The trail is
               not repeated here — the rail is already showing where you are, and the pages that have
               a place to go back to carry their own breadcrumb — because the width a crumb needs is
               the width the description needs, and at 1280px the toolbar leaves room for one of them. */}
-          {redesign ? (
+          {modern ? (
             <div className="flex items-center gap-x-2.5 min-w-0 flex-1 mr-6">
               <button className="lg:hidden text-gray-400 hover:text-white p-1 shrink-0" onClick={() => setMobileOpen(true)} aria-label="Open the navigation">
                 <Menu size={20} />
@@ -1429,8 +1429,8 @@ export function Layout({ children }: { children: ReactNode }) {
             What you have open: the section you are in, the record you are in, and the way to open
             something else. It sits above the page and below the header because it is neither — the
             header is the application's, the page is the record's, and this is the hand you are
-            holding. Only the redesigned interface shows it. */}
-        {redesign && (
+            holding. Only the Modern interface shows it. */}
+        {modern && (
           <div className="flex items-stretch gap-0.5 border-b border-surface-border bg-surface/60 px-2 shrink-0 overflow-x-auto whitespace-nowrap">
             <Link
               to={`/${location.pathname.split("/")[1] || ""}`}

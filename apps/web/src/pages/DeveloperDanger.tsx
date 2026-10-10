@@ -9,7 +9,7 @@ import {
   useApiKeys, useDeveloperEnvironment, usePurgePreview, type PurgeModelCount,
 } from "../components/developer/developerApi";
 import { useDeveloperAccess } from "../hooks/useDeveloperAccess";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 /**
  * `/developer/danger` — the operations with no way back, kept apart from everything else.
@@ -34,7 +34,7 @@ import { useRedesign } from "../hooks/useNavigationStyle";
  * state, the calls and the words are shared; the arrangement is not.
  */
 export function DeveloperDangerPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const { canPurge } = useDeveloperAccess();
   const environment = useDeveloperEnvironment();
   const preview = usePurgePreview();
@@ -152,7 +152,7 @@ export function DeveloperDangerPage() {
     readOnly: true,
   };
 
-  if (!redesign) {
+  if (!modern) {
     const rows = [...operations, auditCard];
     const open = operations.find((operation) => operation.id === openOp) ?? null;
     return (

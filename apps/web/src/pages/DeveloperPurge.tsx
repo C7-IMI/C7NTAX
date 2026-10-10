@@ -13,7 +13,7 @@ import {
   type PurgeSnapshot,
 } from "../components/developer/developerApi";
 import { useDeveloperAccess } from "../hooks/useDeveloperAccess";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 /**
  * `/developer/purge` — the purge, with the count in front of it and the survivors on the same screen.
@@ -46,7 +46,7 @@ import { useRedesign } from "../hooks/useNavigationStyle";
  *     equivalent because on the modern screen the snapshot is a step on the track rather than a choice.
  */
 export function DeveloperPurgePage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const { canPurge } = useDeveloperAccess();
   const preview = usePurgePreview();
   const environment = useDeveloperEnvironment();
@@ -121,7 +121,7 @@ export function DeveloperPurgePage() {
   const unavailable = preview.status === "unavailable";
 
   // ── Classic: a form with a summary grid, labelled list boxes and a confirmation dialog ──────────
-  if (!redesign) {
+  if (!modern) {
     return (
       <div className="space-y-6">
         <PageHeader

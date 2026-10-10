@@ -22,7 +22,7 @@ import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { apiErrorMessage } from "../lib/apiError";
 import { TableSkeleton, PageSkeleton } from "../components/ui/Skeleton";
 import { CloseTicketDialog, type CloseTicketTarget } from "../components/CloseTicketDialog";
-import { useRedesign, useContextPane, setContextPane as setContextPanePreference } from "../hooks/useNavigationStyle";
+import { useModernInterface, useContextPane, setContextPane as setContextPanePreference } from "../hooks/useNavigationStyle";
 
 const STATUS_COLORS: Record<string, string> = {
   new: "bg-blue-600/20 text-blue-400", in_progress: "bg-cyber-600/20 text-cyber-400",
@@ -89,7 +89,7 @@ function slaChipFor(ticket: { slaResolutionDue?: unknown; dueDate?: unknown; isO
 /**
  * A state as a pill you press.
  *
- * The redesigned record header shows status, priority and assignee as the things themselves rather
+ * The Modern record header shows status, priority and assignee as the things themselves rather
  * than as fields inside a form: changing one is a click, not a dialog with a save button. The pill
  * does not own the value — it hands back what was picked and the page writes it through the route
  * the Edit form uses — so there is still exactly one place that changes a ticket.
@@ -280,7 +280,7 @@ function loadTicketColumns(): string[] {
     const v = JSON.parse(localStorage.getItem("c7_ticket_columns") || "null");
     if (Array.isArray(v) && v.length > 0) {
       const cols = v.filter((id: string) => TICKET_COLUMNS.some((c) => c.id === id));
-      // One-time: Age and SLA arrived with the redesigned queue, and a selection saved from before
+      // One-time: Age and SLA arrived with the Modern queue, and a selection saved from before
       // them would leave the two columns the queue is read by hidden — with nothing on screen to
       // say why. They are added once; from then on the choice is the user's, including removing
       // them again.
@@ -323,7 +323,7 @@ const TICKET_DETAIL_TABS = [
 ];
 
 /**
- * The five tabs the redesigned detail screen is organised into, and the panels each one holds.
+ * The five tabs the Modern detail screen is organised into, and the panels each one holds.
  *
  * This is a grouping, not a deletion: every one of the twelve panels above is still here and still
  * reachable, one click away at the most. Activities, History and Audit Trail are one story at three
@@ -332,7 +332,7 @@ const TICKET_DETAIL_TABS = [
  * the strip entirely because the estate is a fact about the *client*, and it belongs beside the
  * ticket rather than three clicks into it.
  */
-/** One redesigned detail tab: a label, an icon, and the panels it holds — never an empty set. */
+/** One Modern detail tab: a label, an icon, and the panels it holds — never an empty set. */
 type TicketTabGroup = { id: string; label: string; icon: typeof FileText; tabs: [string, ...string[]] };
 
 const TICKET_TAB_GROUPS: [TicketTabGroup, ...TicketTabGroup[]] = [
@@ -380,7 +380,7 @@ const BOARD_TABS = true;
 
 export function TicketsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const boardId = searchParams.get("boardId") || "";  const statusParam = searchParams.get("status") || "";
   const priorityParam = searchParams.get("priority") || "";
   const assignedParam = searchParams.get("assignedToId") || "";
@@ -1058,11 +1058,11 @@ export function TicketsPage() {
           <span className="text-white font-medium">{boards.find(b=>b.id===boardId)?.name||"Board"}</span>
         </div>
       )}
-      {/* Redesigned, the title and its toolbar share a single row so the list starts higher up. */}
-      <div className={redesign ? "flex flex-wrap items-end justify-between gap-x-3 gap-y-2" : "space-y-4"}>
+      {/* Modern, the title and its toolbar share a single row so the list starts higher up. */}
+      <div className={modern ? "flex flex-wrap items-end justify-between gap-x-3 gap-y-2" : "space-y-4"}>
       <div>
-        <h2 className={redesign ? "text-base font-semibold text-white" : "text-lg font-semibold text-white"}>Tickets</h2>
-        <p className={redesign ? "text-xs text-gray-500" : "text-sm text-gray-400"}>
+        <h2 className={modern ? "text-base font-semibold text-white" : "text-lg font-semibold text-white"}>Tickets</h2>
+        <p className={modern ? "text-xs text-gray-500" : "text-sm text-gray-400"}>
           {companyParam && !searchParams.get("new")
             ? `Showing ${scopedClientName ?? "one client"}'s tickets`
             : boardId && !BOARD_TABS ? `Filtered by board` : "Manage service tickets"}
@@ -1070,7 +1070,7 @@ export function TicketsPage() {
       </div>
 
       {/* Toolbar: board selector + Create on the left, Filter + Choose Columns on the right */}
-      <div className={redesign ? "flex-1 flex flex-wrap items-center justify-between gap-2" : "flex flex-wrap items-center justify-between gap-2"}>
+      <div className={modern ? "flex-1 flex flex-wrap items-center justify-between gap-2" : "flex flex-wrap items-center justify-between gap-2"}>
         <div className="flex items-center gap-2">
           {!BOARD_TABS && (
             <select
@@ -1647,7 +1647,7 @@ export function TicketDetailPage() {
 
   // ── Tabbed toolbar state ──
   const [activeTab, setActiveTab] = useState("ticket");
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const contextPane = useContextPane();
   // Which sub-tab of each group was last used, so clicking back into a group returns you to the
   // panel you were on rather than resetting you to its first one.
@@ -2432,16 +2432,16 @@ export function TicketDetailPage() {
 
   return (
     <div
-      className={redesign ? "space-y-4 animate-fade-in" : "space-y-6 animate-fade-in max-w-4xl"}
+      className={modern ? "space-y-4 animate-fade-in" : "space-y-6 animate-fade-in max-w-4xl"}
       onContextMenu={(e) => { if (isTextEntryTarget(e.target)) return; menu.open(e, detailMenuEntries(), detailMenuHeader()); }}
     >
       <ContextMenu state={menu.menuState} onClose={menu.close} />
       <DeleteTicketDialog target={deleteOpen ? { ticketNumber: String(ticket?.ticketNumber ?? ""), title: String(ticket?.title ?? "") } : null} busy={deleting} onCancel={() => setDeleteOpen(false)} onConfirm={confirmDeleteTicket} />
       {/* ── The record header ──
-          Redesigned: where it sits, what it is, and then the states *themselves* as pills you press.
+          Modern: where it sits, what it is, and then the states *themselves* as pills you press.
           Every pill writes through the route the Edit form uses, so a status change is a click
           rather than a dialog with a form and a save — and there is still one place that writes. */}
-      {redesign ? (
+      {modern ? (
         <div className="space-y-2">
           <div className="flex items-center gap-x-2 gap-y-1 flex-wrap">
             <Link to="/tickets" className="text-xs text-gray-500 hover:text-white">Tickets</Link>
@@ -2532,13 +2532,13 @@ export function TicketDetailPage() {
         </>)}
 
       {/* ── Toolbar card: tabs + icon actions ──
-          Redesigned, the twelve panels are grouped into five tabs the screen can hold at once, and a
+          Modern, the twelve panels are grouped into five tabs the screen can hold at once, and a
           group holding more than one shows them as sub-tabs — never buried a second click deep. The
           actions sit on the same line as the tabs, so the chrome around a panel is two rows and not
           three; the sub-tab row is ordered after both. */}
-      <div className={redesign ? "card p-2.5 sticky top-0 z-30 flex flex-wrap items-center gap-x-2 gap-y-1.5" : "card p-3 space-y-2"}>
+      <div className={modern ? "card p-2.5 sticky top-0 z-30 flex flex-wrap items-center gap-x-2 gap-y-1.5" : "card p-3 space-y-2"}>
         {/* Tab strip */}
-        {redesign ? (
+        {modern ? (
           <>
             <div className="flex items-center gap-0.5 overflow-x-auto whitespace-nowrap order-1 flex-1 min-w-0">
               {TICKET_TAB_GROUPS.map(group => (
@@ -2598,7 +2598,7 @@ export function TicketDetailPage() {
         )}
 
         {/* Icon toolbar */}
-        <div className={redesign ? "order-2 flex items-center gap-1 shrink-0" : "flex items-center gap-1 flex-wrap"}>
+        <div className={modern ? "order-2 flex items-center gap-1 shrink-0" : "flex items-center gap-1 flex-wrap"}>
           <button onClick={refreshDetails} title="Refresh" aria-label="Refresh" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><RotateCw size={16} /></button>
           <button onClick={() => { setFocusNoteRequested(true); setActiveTab("ticket"); }} title="Add Note" aria-label="Add Note" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><MessageSquare size={16} /></button>
           <button onClick={() => { setActiveTab("time"); openTimeEntryModal(); }} title="Log Time" aria-label="Log Time" className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-surface-lighter transition-colors"><Timer size={16} /></button>
@@ -2831,12 +2831,12 @@ export function TicketDetailPage() {
           </section>
 
           {activeTab === "ticket" && (
-      <div className={redesign ? (contextPane ? "grid grid-cols-1 xl:grid-cols-3 gap-5" : "grid grid-cols-1 gap-5") : "grid grid-cols-1 lg:grid-cols-3 gap-5"}>
-        <div className={redesign ? (contextPane ? "ticket-pane xl:col-span-2 space-y-5" : "ticket-pane space-y-5") : "ticket-pane lg:col-span-2 space-y-5"}>
+      <div className={modern ? (contextPane ? "grid grid-cols-1 xl:grid-cols-3 gap-5" : "grid grid-cols-1 gap-5") : "grid grid-cols-1 lg:grid-cols-3 gap-5"}>
+        <div className={modern ? (contextPane ? "ticket-pane xl:col-span-2 space-y-5" : "ticket-pane space-y-5") : "ticket-pane lg:col-span-2 space-y-5"}>
           {/* General / The record */}
           <div className="card space-y-3">
-            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{redesign ? "The record" : "General"}</h3>
-            {redesign && !editing ? (
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{modern ? "The record" : "General"}</h3>
+            {modern && !editing ? (
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
                 {recordRows.map(([label, value]) => (
                   <div key={label} className="flex items-baseline justify-between gap-3 border-b border-surface-border/50 py-1.5">
@@ -2860,16 +2860,16 @@ export function TicketDetailPage() {
 
           {/* What the client said — the description on its own, because it is the one thing on the
               ticket that is the customer's words rather than ours. */}
-          {redesign && !editing && (
+          {modern && !editing && (
             <div className="card space-y-2">
               <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">What the client said</h3>
               <p className="whitespace-pre-wrap text-sm text-gray-300">{(ticket.description as string) || "Nothing was written on this ticket — it arrived without a description."}</p>
             </div>
           )}
 
-          {/* Dates & Times — in the redesigned screens the dates are in The record, and logging time
+          {/* Dates & Times — in the Modern screens the dates are in The record, and logging time
               starts from the composer, so this card is the classic one. */}
-          {!redesign && (
+          {!modern && (
           <div className="card space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Dates & Times</h3>
@@ -2891,11 +2891,11 @@ export function TicketDetailPage() {
           </div>
           )}
 
-          {/* Notes — and, redesigned, the composer: a note, a reply to the client and a time entry
+          {/* Notes — and, in the Modern interface, the composer: a note, a reply to the client and a time entry
               all start in the same place, because they are the same act of recording what you did.
               The tab is the existing internal/emailed flag, so nothing new is being written. */}
           <div className="card space-y-3">
-            {redesign ? (
+            {modern ? (
               <>
                 <div className="flex items-center gap-1 flex-wrap">
                   {([["note", "Note", ShieldCheck], ["reply", "Reply to client", Mail], ["time", "Log time", Timer]] as const).map(([key, label, Icon]) => (
@@ -2916,10 +2916,10 @@ export function TicketDetailPage() {
             ) : (
               <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Notes</h3>
             )}
-            <form onSubmit={redesign ? submitComposer : handlePostNote} className="space-y-2">
+            <form onSubmit={modern ? submitComposer : handlePostNote} className="space-y-2">
               <textarea
                 ref={noteInputRef}
-                rows={redesign ? 3 : 4}
+                rows={modern ? 3 : 4}
                 className="input-field w-full text-sm resize-y min-h-[6.5rem]"
                 placeholder={composerMode === "reply" ? "Reply to the client — this is emailed to the ticket contact (Ctrl+Enter to submit)" : composerMode === "time" ? "What did you work on? (Ctrl+Enter to submit)" : "What did you do? (Ctrl+Enter to submit)"}
                 value={noteText}
@@ -2929,7 +2929,7 @@ export function TicketDetailPage() {
               {/* The job a time entry is made of. Always visible rather than behind the Log time
                   tab, because a note and a time entry are the same act of recording what you did —
                   and because a field you have to go and find is a field that goes unfilled. */}
-              {redesign && (
+              {modern && (
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
                   <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer select-none">
                     <input type="checkbox" checked={noteInternal} onChange={e => setNoteInternal(e.target.checked)} className="accent-cyber-500" />
@@ -2963,18 +2963,18 @@ export function TicketDetailPage() {
                   {noteInternal ? "Internal only — the customer is not emailed" : "Will be emailed to the ticket contact"}
                 </span>
                 <div className="flex items-center gap-3">
-                  {redesign && (
+                  {modern && (
                     <button type="button" onClick={() => setShowAttachDialog(true)} className="btn-secondary text-sm flex items-center gap-1.5">
                       <Paperclip size={13} /> Attach
                     </button>
                   )}
-                  {!redesign && (
+                  {!modern && (
                     <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer select-none">
                       <input type="checkbox" checked={noteInternal} onChange={e=>setNoteInternal(e.target.checked)} />
                       Internal
                     </label>
                   )}
-                  <button type="submit" disabled={posting || !noteText.trim()} className="btn-primary text-sm">{posting ? "…" : redesign ? "Save and log" : "Add Note"}</button>
+                  <button type="submit" disabled={posting || !noteText.trim()} className="btn-primary text-sm">{posting ? "…" : modern ? "Save and log" : "Add Note"}</button>
                 </div>
               </div>
 
@@ -3043,7 +3043,7 @@ export function TicketDetailPage() {
               past a list of the client's other tickets. The list is context for the work, not the work.
               The classic interface has no such card — there the composer follows Dates & Times, and
               nothing moved. */}
-          {redesign && otherOpen.length > 0 && (
+          {modern && otherOpen.length > 0 && (
             <div className="card space-y-3">
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">The client's other open work</h3>
               <div className="space-y-2">
@@ -3099,9 +3099,9 @@ export function TicketDetailPage() {
         {/* Right column — the CONTEXT rail, and it follows you down the panel: whose ticket this is,
             who to talk to and what they run are facts you read *while* working, not a tab you visit.
             Read-only on purpose — a state you change is a pill in the header, and the rest is Edit. */}
-        {(!redesign || editing || contextPane) && (
-        <div className={`space-y-5 ${redesign ? "xl:sticky xl:top-20 xl:self-start" : ""}`}>
-          {redesign && contextPane && !editing ? (<>
+        {(!modern || editing || contextPane) && (
+        <div className={`space-y-5 ${modern ? "xl:sticky xl:top-20 xl:self-start" : ""}`}>
+          {modern && contextPane && !editing ? (<>
             {/* The context column says what it is and can be put away — a rail you cannot dismiss is
                 a rail that is part of the page rather than something you chose to have. */}
             <div className="flex items-center justify-between">

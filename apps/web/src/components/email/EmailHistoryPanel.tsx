@@ -15,7 +15,7 @@
 import { useState } from "react";
 import { Clock, RotateCcw } from "lucide-react";
 import type { EmailBlock, EmailMessageKey, EmailTemplateVersion } from "@C7NTAX/shared";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import { Band, MonoTm, StateChip, UnavailablePanel, plural } from "./emailChrome";
 import { codeBlocksFor } from "./emailCodeV0";
 import { derivePlainText, htmlToText } from "./emailBlocks";
@@ -78,7 +78,7 @@ function DefaultDifference({ messageKey, blocks }: { messageKey: EmailMessageKey
 }
 
 export function EmailHistoryPanel(props: EmailHistoryProps) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [confirm, setConfirm] = useState<number | null>(null);
   const versions = [...props.versions].sort((a, b) => b.version - a.version);
 
@@ -102,7 +102,7 @@ export function EmailHistoryPanel(props: EmailHistoryProps) {
 
   const confirmRow = confirm === null ? null : rows.find((row) => row.version === confirm);
 
-  if (redesign) {
+  if (modern) {
     return (
       <div className="space-y-4">
         <Band

@@ -13,7 +13,7 @@ import { OrganizationTypePanel } from "../components/OrganizationTypePanel";
 import { OrganizationTypeRail, promotedTypeLink, type AssetType } from "../components/OrganizationTypeRail";
 import { kumoClientTrail, useBreadcrumbTrail } from "../components/Breadcrumbs";
 import { StatCard } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 interface Organization {
   id: string;
@@ -130,7 +130,7 @@ export function KumoOrganizationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [detail, setDetail] = useState<Detail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -274,18 +274,18 @@ export function KumoOrganizationDetailPage() {
     <div className="space-y-4 animate-fade-in">
       {/* ── Header ──
           A record header keeps its own shape — the pills are states a title cannot carry — but in the
-          redesigned interface the name and those pills share one line rather than stacking. */}
-      <div className={redesign ? "flex flex-wrap items-center justify-between gap-2" : "flex flex-wrap items-start justify-between gap-3"}>
-        <div className={redesign ? "min-w-0 flex flex-wrap items-center gap-x-2.5 gap-y-1" : "min-w-0"}>
-          <h2 className={redesign ? "text-base font-semibold text-white truncate" : "text-2xl font-semibold text-white mt-1 truncate"}>{org.name}</h2>
-          <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 ${redesign ? "text-xs text-gray-500" : "mt-1 text-sm text-gray-400"}`}>
+          Modern interface the name and those pills share one line rather than stacking. */}
+      <div className={modern ? "flex flex-wrap items-center justify-between gap-2" : "flex flex-wrap items-start justify-between gap-3"}>
+        <div className={modern ? "min-w-0 flex flex-wrap items-center gap-x-2.5 gap-y-1" : "min-w-0"}>
+          <h2 className={modern ? "text-base font-semibold text-white truncate" : "text-2xl font-semibold text-white mt-1 truncate"}>{org.name}</h2>
+          <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 ${modern ? "text-xs text-gray-500" : "mt-1 text-sm text-gray-400"}`}>
             <span className="inline-flex items-center gap-1.5">
               <span className={`w-2 h-2 rounded-full ${org.isActive ? "bg-green-400" : "bg-gray-600"}`} />
               {org.isActive ? "Active" : "Inactive"} {org.companyType || "Client"}
             </span>
             {location && <span className="inline-flex items-center gap-1"><MapPin size={12} />{location}</span>}
             {org.industry && <span>{org.industry}</span>}
-            {org.serviceLevel && (redesign
+            {org.serviceLevel && (modern
               ? <span className="chip chip--good">{org.serviceLevel}</span>
               : <span className="badge text-xs bg-cyber-600/20 text-cyber-400">{org.serviceLevel}</span>)}
             <span>{org._count.contacts} contacts</span>
@@ -338,7 +338,7 @@ export function KumoOrganizationDetailPage() {
       </div>
 
       {/* Figures — everything this client holds in Kumo, taken from the counts the page already has. */}
-      {redesign && (
+      {modern && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <StatCard label="Assets" value={counts.assets} icon={<Monitor size={13} />} />
           <StatCard label="Configurations" value={counts.configs} icon={<Server size={13} />} tone="green" />

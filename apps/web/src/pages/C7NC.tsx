@@ -22,7 +22,7 @@ import { OutlookAddInPage } from "./OutlookAddIn";
 import { PageHeader } from "../components/ui";
 import { ListViews, StatCard } from "../components/ui";
 import { Wordmark } from "../components/Wordmark";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -190,7 +190,7 @@ function isSecretCred(cred: string): boolean {
  * front door and a filing system, not a rewrite.
  */
 export function C7NCPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [serviceView, setServiceView] = useState("all");
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [types, setTypes] = useState<IntegrationType[]>([]);
@@ -701,7 +701,7 @@ export function C7NCPage() {
         <div className="space-y-6">
           {/* Figures the page already holds: the services it reads, how many answer, how many need a
               look, and whether anything can answer a question. */}
-          {redesign && (
+          {modern && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard label="Services" value={integrations.length} icon={<Plug size={13} />} tone="cyber" />
               <StatCard label="Connected" value={connected.length} icon={<CheckCircle size={13} />} tone="green" />
@@ -759,12 +759,12 @@ export function C7NCPage() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-white font-medium text-sm">{sub.label}</p>
                         {count ? (
-                          <span className={`text-[11px] rounded-full bg-surface-lighter px-1.5 py-0.5 text-gray-400${redesign ? " tabular-nums" : ""}`}>
+                          <span className={`text-[11px] rounded-full bg-surface-lighter px-1.5 py-0.5 text-gray-400${modern ? " tabular-nums" : ""}`}>
                             {sub.id === "models" ? `${count} connected` : `${count} ${sub.id === "services" ? "connected" : "installed"}`}
                           </span>
                         ) : null}
                         {sub.id === "services" && attention.length ? (
-                          <span className={`text-[11px] rounded-full bg-amber-500/10 px-1.5 py-0.5 text-amber-300${redesign ? " tabular-nums" : ""}`}>
+                          <span className={`text-[11px] rounded-full bg-amber-500/10 px-1.5 py-0.5 text-amber-300${modern ? " tabular-nums" : ""}`}>
                             {attention.length} need{attention.length === 1 ? "s" : ""} attention
                           </span>
                         ) : null}
@@ -1273,7 +1273,7 @@ export function C7NCPage() {
         </button>
       </div>
       {/* Integration List */}
-      {redesign && !loading && integrations.length > 0 && (
+      {modern && !loading && integrations.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews views={serviceViews} value={serviceView} onChange={setServiceView} label="Service views" />
           <span className="text-xs text-gray-500 tabular-nums">
@@ -1299,7 +1299,7 @@ export function C7NCPage() {
           </div>
         ) :
         <div className="space-y-3">
-          {redesign && shownServices.length === 0 && (
+          {modern && shownServices.length === 0 && (
             <div className="card text-center py-8 text-sm text-gray-500">Nothing in this view.</div>
           )}
           {shownServices.map((int: any) => {
@@ -1327,7 +1327,7 @@ export function C7NCPage() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-white font-medium text-sm truncate hover:text-cyber-400 transition-colors">{int.name}</p>
-                        <span className={redesign
+                        <span className={modern
                           ? `chip text-xs ${int.status === "connected" ? "chip--good" : int.status === "error" ? "chip--bad" : ""}`
                           : `badge text-xs ${statusColor(int.status)}`}>
                           {int.status === "connected" ? <CheckCircle size={10} className="inline mr-0.5" /> :

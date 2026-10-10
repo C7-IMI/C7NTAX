@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Compass, Home, Search } from "lucide-react";
 import { Wordmark } from "../components/Wordmark";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { useAuth } from "../hooks/useAuth";
 import { filterNavByPermission, NAV_TREE } from "../components/Layout";
 
@@ -24,7 +24,7 @@ import { filterNavByPermission, NAV_TREE } from "../components/Layout";
  *   destinations as a plain list. A form of the same page, not a restyle of it.
  */
 export function NotFoundPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const location = useLocation();
   const navigate = useNavigate();
   const { permissions } = useAuth();
@@ -49,7 +49,7 @@ export function NotFoundPage() {
 
   const address = location.pathname + location.search;
 
-  if (redesign) {
+  if (modern) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center animate-fade-in">
         <div className="surface-card w-full max-w-xl p-6">

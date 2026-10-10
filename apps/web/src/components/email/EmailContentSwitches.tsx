@@ -19,7 +19,7 @@
  *  · **Classic** is a `<fieldset>` of labelled checkboxes in the same order with the summary line under
  *    it — the classic screen's own way of asking a list of yes/no questions.
  */
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import { CONTENT_SWITCHES } from "./emailCodeV0";
 
 /** The nine facts a ticket owns, and the switch that puts each one in the message. */
@@ -56,9 +56,9 @@ export interface EmailContentSwitchesProps {
 }
 
 export function EmailContentSwitches({ switches, onToggle, className = "" }: EmailContentSwitchesProps) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
 
-  if (redesign) {
+  if (modern) {
     return (
       <section className={`card ${className}`}>
         <div className="flex flex-wrap items-baseline gap-2">

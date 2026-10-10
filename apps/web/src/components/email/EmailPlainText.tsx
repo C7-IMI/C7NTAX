@@ -18,7 +18,7 @@
  *    fact is written under the label rather than drawn as a state chip.
  */
 import { useState } from "react";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import { Band, StateChip, plural } from "./emailChrome";
 import { compareTextFacts } from "./emailBlocks";
 
@@ -69,12 +69,12 @@ function DifferenceWarning({ html, text }: { html: string; text: string }) {
 }
 
 export function EmailPlainText({ derived, edited, onEdit, readOnly = false, html, derivedLocally = false, className = "" }: EmailPlainTextProps) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [draft, setDraft] = useState(edited ?? "");
   const shown = edited ?? derived;
   const overridden = edited !== null;
 
-  if (redesign) {
+  if (modern) {
     return (
       <section className={`card ${className}`}>
         <div className="flex flex-wrap items-center gap-2">

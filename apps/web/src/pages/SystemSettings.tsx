@@ -22,7 +22,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
 import { ListFooter, PageHeader, StatCard } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import {
   Activity, AlertTriangle, ArrowRight, CheckCircle, Clock, Database, Mail,
   Monitor, RotateCw, Search, Server, XCircle, type LucideIcon,
@@ -92,9 +92,9 @@ function StatusCard({ icon: Icon, label, value, tone }: {
 function DeploymentRow({ icon: Icon, label, env, note, state, action }: {
   icon: LucideIcon; label: string; env: string; note: ReactNode; state: "good" | "warn" | "info"; action?: ReactNode;
 }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
 
-  if (redesign) {
+  if (modern) {
     /* A row, the way the mockup draws a setting: what it is on the left, where its value comes from
        underneath, the state in the middle and the action — when there is one — on the right. */
     return (
@@ -165,7 +165,7 @@ export function SystemSettingsPage() {
   const [areas, setAreas] = useState<AreaSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [query, setQuery] = useState("");
   const [areaId, setAreaId] = useState("all");
 
@@ -191,7 +191,7 @@ export function SystemSettingsPage() {
     await load();
   };
 
-  // Search and the area rail are the redesign's hub. Both read what the page has already loaded —
+  // Search and the area rail are the Modern interface's hub. Both read what the page has already loaded —
   // the registry of areas — so nothing here asks the API a second question.
   const q = query.trim().toLowerCase();
   const shownShortcuts = q ? AREA_SHORTCUTS.filter(shortcut => shortcut.label.toLowerCase().includes(q)) : AREA_SHORTCUTS;
@@ -209,7 +209,7 @@ export function SystemSettingsPage() {
 
       {error && <div className="card border-red-500/30 text-sm text-red-300">{error}</div>}
 
-      {redesign && (
+      {modern && (
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -241,7 +241,7 @@ export function SystemSettingsPage() {
           <p className="text-xs text-gray-500">Your role cannot read any configuration area.</p>
         ) : (
           <>
-            {redesign ? (
+            {modern ? (
               <div className="grid gap-4 lg:grid-cols-[236px_minmax(0,1fr)]">
                 <nav
                   aria-label="Configuration areas"
@@ -350,7 +350,7 @@ export function SystemSettingsPage() {
         <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
           <Activity size={15} className="text-cyber-400" /> Instance health
         </h3>
-        {redesign ? (
+        {modern ? (
           <div className="grid gap-3 sm:grid-cols-3">
             <StatCard
               icon={poller && !poller.paused ? <CheckCircle size={13} /> : <XCircle size={13} />}
@@ -421,7 +421,7 @@ export function SystemSettingsPage() {
               ))
             )}
           </div>
-          {redesign && (poller?.recoveryLog?.length ?? 0) > 0 && (
+          {modern && (poller?.recoveryLog?.length ?? 0) > 0 && (
             <ListFooter
               from={1}
               to={poller?.recoveryLog?.length ?? 0}

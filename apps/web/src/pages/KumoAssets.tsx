@@ -10,7 +10,7 @@ import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { ListFooter, ListViews, PageHeader, StatCard } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 interface KumoAsset {
   id: string; name: string; templateId: string; status: string; companyId: string | null;
@@ -19,7 +19,7 @@ interface KumoAsset {
 }
 
 export function KumoAssetsPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [assets, setAssets] = useState<KumoAsset[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -197,7 +197,7 @@ export function KumoAssetsPage() {
       </div>
 
       {/* Figures — what the estate holds, counted from the records already on this page. */}
-      {redesign && (
+      {modern && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard label="Assets" value={assets.length} icon={<Monitor size={13} />} />
           <StatCard label="Active" value={activeCount} icon={<CheckCircle size={13} />} tone="green" />
@@ -206,7 +206,7 @@ export function KumoAssetsPage() {
         </div>
       )}
 
-      {redesign ? (
+      {modern ? (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews views={views} value={templateFilter} onChange={setTemplateFilter} label="Asset types" />
           <div className="relative flex-1 min-w-[13rem] max-w-xs">
@@ -261,7 +261,7 @@ export function KumoAssetsPage() {
               <th className="px-4 py-3">Asset</th>
               <th className="px-4 py-3 hidden md:table-cell">Template</th>
               <th className="px-4 py-3 hidden sm:table-cell">Status</th>
-              {redesign && <th className="px-4 py-3 w-16"></th>}
+              {modern && <th className="px-4 py-3 w-16"></th>}
               <th className="px-4 py-3 w-20"></th>
             </tr></thead>
             <tbody>
@@ -277,7 +277,7 @@ export function KumoAssetsPage() {
                   <td className="px-4 py-3 text-white font-medium">{a.name}</td>
                   <td className="px-4 py-3 hidden md:table-cell text-gray-400 text-xs">{a.template?.name || "—"}</td>
                   <td className="px-4 py-3 hidden sm:table-cell">
-                    {redesign ? (
+                    {modern ? (
                       <span className={`chip ${a.status === "active" ? "chip--good" : ""}`}>{a.status}</span>
                     ) : (
                     <span className={`badge text-xs ${a.status === "active" ? "bg-green-600/20 text-green-400" : "bg-gray-600/20 text-gray-400"}`}>
@@ -285,7 +285,7 @@ export function KumoAssetsPage() {
                     </span>
                     )}
                   </td>
-                  {redesign && (
+                  {modern && (
                     <td className="px-4 py-3 text-right">
                       <button
                         type="button"
@@ -307,7 +307,7 @@ export function KumoAssetsPage() {
             </tbody>
           </table>
         </div>
-        {redesign && !loading && filtered.length > 0 && (
+        {modern && !loading && filtered.length > 0 && (
           <ListFooter from={1} to={filtered.length} total={filtered.length} page={1} pages={1} onPage={() => {}}
             note={companyScope ? "Scoped to one client from the organization" : "Kumo keeps its own records apart from the service desk"} />
         )}

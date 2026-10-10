@@ -24,7 +24,7 @@ import { Tabs } from "../components/ui/Tabs";
 import { StatCard } from "../components/ui";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { EmptyState } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 type Tab = "sign-ins" | "sessions" | "devices";
 
@@ -104,7 +104,7 @@ const METHOD_LABEL: Record<string, string> = {
 const when = (value: string | null) => (value ? new Date(value).toLocaleString() : "—");
 
 export function SecurityPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [params, setParams] = useSearchParams();
   const tab = (["sign-ins", "sessions", "devices"].includes(params.get("tab") ?? "")
     ? params.get("tab")
@@ -298,7 +298,7 @@ export function SecurityPage() {
       {/* ── Active sessions ───────────────────────────────────────────────── */}
       {tab === "sessions" && (
         <>
-          {redesign && (
+          {modern && (
             <div className="flex flex-wrap items-center gap-2">
               <div className="inline-flex rounded-lg border border-surface-border p-0.5">
                 {([["active", "Signed in"], ["ended", "Ended"], ["all", "All"]] as const).map(([value, label]) => (

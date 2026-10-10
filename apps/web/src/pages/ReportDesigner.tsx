@@ -37,7 +37,7 @@ import { LaidOutPageView } from "../components/reports/designer/PageRenderer";
 import { clearActiveExpressionTarget, isTypingTarget } from "../components/reports/designer/ExpressionInput";
 import { ScheduleReportDialog } from "../components/reports/ScheduleReportDialog";
 import type { DesignerCatalog, DesignerRun } from "../lib/designerTypes";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { documentBrandOf, useBrandKit } from "../hooks/useBrandKit";
 
 interface SavedReport {
@@ -47,13 +47,13 @@ interface SavedReport {
 
 type Tab = "design" | "preview" | "data";
 
-/** The hairline the redesigned toolbar divides its groups with — the mockup's `.rd-sep`. */
+/** The hairline the Modern toolbar divides its groups with — the mockup's `.rd-sep`. */
 function ToolbarDivider() {
   return <span className="mx-0.5 h-4 w-px shrink-0 bg-surface-border" aria-hidden="true" />;
 }
 
 export function ReportDesignerPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const { id = "new" } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const poppedOut = searchParams.get("popout") === "1";
@@ -577,9 +577,9 @@ export function ReportDesignerPage() {
   const issueColour = errorCount ? "text-red-400" : warningCount ? "text-amber-400" : "text-green-400";
 
   /**
-   * The six things a report is made of, in the order you build it — the redesigned designer's left
+   * The six things a report is made of, in the order you build it — the Modern designer's left
    * panel, taken from the report-designer mockup. The classic designer keeps its single scrolling
-   * column of fields, built-ins, functions and elements; this is the arrangement the redesign uses
+   * column of fields, built-ins, functions and elements; this is the arrangement the Modern interface uses
    * instead, and one pane is on screen at a time.
    */
   const palettePanes = [
@@ -593,7 +593,7 @@ export function ReportDesignerPage() {
   type PalettePaneId = (typeof palettePanes)[number]["id"];
 
   /*
-   * The status line the redesigned designer carries: what is selected, how tall the band is, what
+   * The status line the Modern designer carries: what is selected, how tall the band is, what
    * the last run returned and how the page is set up — the four questions a designer answers with a
    * tooltip everywhere else. The mockup's argument is that a banded tool should say where you are.
    */
@@ -657,11 +657,11 @@ export function ReportDesignerPage() {
           >Discard the draft</button>
         </div>
       ) : null}
-      {/* Toolbar — one arrangement for each interface. The redesigned one is the mockup's: a single
+      {/* Toolbar — one arrangement for each interface. The Modern one is the mockup's: a single
           wrapping row of pills in the order the work is done (what this is, how you are looking at it,
           how big, what is drawn, undo, and the two writes), with the report's own identity stated
           beside its name rather than in a heading. The classic one is untouched below it. */}
-      {redesign ? (
+      {modern ? (
         <div className="surface-card flex flex-wrap items-center gap-x-2 gap-y-1.5 px-3 py-2">
           <button
             type="button"
@@ -795,7 +795,7 @@ export function ReportDesignerPage() {
           <button type="button" className="btn-icon" title="Zoom out" onClick={() => setZoom(value => Math.max(0.35, Math.round((value - 0.1) * 100) / 100))}>−</button>
           <span className="text-[11px] text-gray-400 w-10 text-center">{Math.round(zoom * 100)}%</span>
           <button type="button" className="btn-icon" title="Zoom in" onClick={() => setZoom(value => Math.min(2, Math.round((value + 0.1) * 100) / 100))}>+</button>
-          {redesign ? (
+          {modern ? (
             <button type="button" className="btn-secondary text-xs" title="Zoom so the whole sheet fits the width of the stage" onClick={fitWidth}>
               Fit width
             </button>
@@ -888,8 +888,8 @@ export function ReportDesignerPage() {
       <div className="flex-1 flex gap-3 min-h-0">
         {/* Palette */}
         <aside className="w-64 shrink-0 surface-card overflow-hidden flex flex-col">
-          {redesign ? (
-            /* The redesigned palette: the six things a report is made of, one at a time, in the order
+          {modern ? (
+            /* The Modern palette: the six things a report is made of, one at a time, in the order
                they are built. The classic column below shows every one of them at once, which is why
                it is still there. */
             <>
@@ -1037,7 +1037,7 @@ export function ReportDesignerPage() {
         {/* Canvas / preview / data */}
         <main ref={stageRef} className="flex-1 min-w-0 overflow-auto surface-card p-4">
           {tab === "design" ? (
-            redesign ? (
+            modern ? (
               /* The stage, as the mockup has it: a rule along the top of the sheet, then the paper. The
                  ruler is measured in the sheet's own millimetres at the current zoom, so it says what
                  the position of an element actually is rather than decorating the space above it. */
@@ -1204,7 +1204,7 @@ export function ReportDesignerPage() {
       {/* The status bar, across the whole width and below all three panels — the mockup's arrangement,
           and the reason it moved: inside the centre column it read as a caption on the canvas, while
           what it describes is the designer as a whole. */}
-      {redesign ? (
+      {modern ? (
         <div className="surface-card flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-1.5 text-[11px] text-gray-500">
           <span>Selected <b className="font-medium text-gray-300">{selectionLabel}</b></span>
           <span>· Band height <b className="font-medium text-gray-300">{bandHeightLabel}</b></span>

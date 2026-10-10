@@ -25,7 +25,7 @@ interface PaletteProps {
   /**
    * Which pane of the palette to draw.
    *
-   * The redesigned designer shows the six things a report is made of as six panes, so one of them is
+   * The Modern designer shows the six things a report is made of as six panes, so one of them is
    * on screen at a time. **Absent means every section**, which is what the classic designer has
    * always shown in one scrolling column — so the classic screen is untouched by this prop.
    */

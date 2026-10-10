@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Calendar, Sparkles, Zap, RefreshCw, Bug, Search, X } from "lucide-react";
 import api from "../api";
 import { PageHeader, StatCard } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 interface ChangeItem {
   text: string;
@@ -58,7 +58,7 @@ function parseBuildNotes(raw: string): Version[] {
 }
 
 export function ChangelogPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [versions, setVersions] = useState<Version[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -119,10 +119,10 @@ export function ChangelogPage() {
       })
     : versions;
 
-  // The band the redesign puts above the timeline counts what the filter leaves on screen.
+  // The band the Modern interface puts above the timeline counts what the filter leaves on screen.
   const changeCount = (type: ChangeItem["type"]) =>
     filtered.reduce((n, v) => n + v.changes.filter(c => c.type === type).length, 0);
-  const tn = redesign ? " tabular-nums" : "";
+  const tn = modern ? " tabular-nums" : "";
 
   return (
     <div className="space-y-8 animate-fade-in max-w-4xl">
@@ -154,7 +154,7 @@ export function ChangelogPage() {
       </div>
 
       {/* What the filter leaves on screen, in figures — the page already holds every one of them. */}
-      {redesign && (
+      {modern && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard label="Releases" value={filtered.length} icon={<Calendar size={13} />} tone="cyber" />
           <StatCard label="New" value={changeCount("new")} icon={<Zap size={13} />} tone="green" />
@@ -182,7 +182,7 @@ export function ChangelogPage() {
                   <div className="flex items-center gap-3">
                     <span className={`badge bg-navy-600/40 text-gray-500 font-mono text-xs px-2 py-0.5${tn}`}>#{v.id}</span>
                     <span className={`badge bg-cyber-600/20 text-cyber-400 font-mono text-sm px-3 py-1${tn}`}>{v.version}</span>
-                    {i === 0 && (redesign
+                    {i === 0 && (modern
                       ? <span className="chip chip--good">Latest</span>
                       : <span className="badge bg-green-600/20 text-green-400 text-xs">Latest</span>)}
                   </div>

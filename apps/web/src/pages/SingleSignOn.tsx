@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { CheckCircle2, Copy, ExternalLink, Globe, KeyRound, RefreshCw, ShieldCheck, Users, XCircle } from "lucide-react";
 import api from "../api";
 import { ListViews, PageHeader, Section, StatCard } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { Chip } from "./Configuration";
 
 interface OidcSettingsView {
@@ -63,7 +63,7 @@ function Hint({ children }: { children: React.ReactNode }) {
 }
 
 export function SingleSignOnPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [settings, setSettings] = useState<OidcSettingsView | null>(null);
   const [checkView, setCheckView] = useState("all");
   const [roles, setRoles] = useState<RoleChoice[]>([]);
@@ -221,7 +221,7 @@ export function SingleSignOnPage() {
       />
 
       {/* ── The figures the page already holds ── */}
-      {redesign ? (
+      {modern ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Single sign-on"
@@ -247,7 +247,7 @@ export function SingleSignOnPage() {
 
       {/* ── Status ── */}
       <div className="card">
-        {redesign ? (
+        {modern ? (
           <div className="mb-3">
             <h3 className="text-sm font-semibold text-white">Where sign-in stands</h3>
             <p className="text-xs text-gray-500 mt-0.5">
@@ -260,7 +260,7 @@ export function SingleSignOnPage() {
         ) : (
           <>
             <div className="flex flex-wrap items-center gap-2">
-              {redesign ? (
+              {modern ? (
                 <>
                   {settings?.enabled ? <span className="chip chip--good">Sign-in offered</span> : <span className="chip">Sign-in not offered</span>}
                   <span className={`chip ${settings?.source === "stored" ? "chip--on" : ""}`}>
@@ -303,7 +303,7 @@ export function SingleSignOnPage() {
                 <ShieldCheck size={12} /> Check the saved provider
               </button>
             </div>
-            {redesign && test ? (
+            {modern && test ? (
               <div className="flex flex-wrap items-center gap-2 mt-4">
                 <ListViews
                   views={[
@@ -322,7 +322,7 @@ export function SingleSignOnPage() {
             ) : null}
             {test ? (
               <ul className="mt-3 space-y-1">
-                {(redesign ? shownChecks : test.checks).map((check) => (
+                {(modern ? shownChecks : test.checks).map((check) => (
                   <li key={check.check} className="text-xs flex items-start gap-2">
                     {check.ok
                       ? <CheckCircle2 size={12} className="mt-0.5 shrink-0 text-emerald-400" />
@@ -334,7 +334,7 @@ export function SingleSignOnPage() {
                 ))}
               </ul>
             ) : null}
-            {redesign && test && shownChecks.length === 0 ? (
+            {modern && test && shownChecks.length === 0 ? (
               <p className="text-xs text-gray-500 mt-2">Nothing in this view.</p>
             ) : null}
           </>
@@ -343,7 +343,7 @@ export function SingleSignOnPage() {
 
       {/* ── The provider ── */}
       <Section title="The provider">
-        {redesign ? (
+        {modern ? (
           <p className="text-xs text-gray-500">
             The identity provider this instance trusts, and the client it signs in as.
           </p>
@@ -435,7 +435,7 @@ export function SingleSignOnPage() {
 
       {/* ── Who may sign in ── */}
       <Section title="Who may sign in">
-        {redesign ? (
+        {modern ? (
           <p className="text-xs text-gray-500">
             Which addresses the provider may vouch for, and what a newly created account gets.
           </p>
@@ -515,7 +515,7 @@ export function SingleSignOnPage() {
       </Section>
 
       {/* ── Save ── */}
-      {redesign ? (
+      {modern ? (
         <div className="card">
           <div className="mb-3">
             <h3 className="text-sm font-semibold text-white">Offer it to staff</h3>

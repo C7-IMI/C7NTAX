@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import api from "../api";
 import { ListFooter, ListViews, PageHeader } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useCalendarScale } from "../hooks/useCalendarScale";
@@ -20,7 +20,7 @@ const MONTHS = ["January","February","March","April","May","June","July","August
 
 export function CalendarPage() {
   const { outerRef, innerRef, scale, scaledW, scaledH } = useCalendarScale<HTMLDivElement, HTMLDivElement>();
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [entries, setEntries] = useState<ScheduleEntry[]>([]);
   const [view, setView] = useState("all");
   const [loading, setLoading] = useState(true);
@@ -190,7 +190,7 @@ export function CalendarPage() {
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 text-sm"><Plus size={16} /> Add Event</button>
       </PageHeader>
 
-      {redesign && (
+      {modern && (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews views={calendarViews} value={view} onChange={setView} label="Calendar views" />
           <span className="text-xs text-gray-500 tabular-nums">
@@ -295,14 +295,14 @@ export function CalendarPage() {
                   <p className="text-white font-medium text-sm">{e.title}</p>
                   {e.description && <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{e.description}</p>}
                   <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                    <span className={redesign ? "flex items-center gap-1 tabular-nums" : "flex items-center gap-1"}><Clock size={11} />{new Date(e.startTime).toLocaleString()}</span>
+                    <span className={modern ? "flex items-center gap-1 tabular-nums" : "flex items-center gap-1"}><Clock size={11} />{new Date(e.startTime).toLocaleString()}</span>
                     {e.location && <span className="flex items-center gap-1"><MapPin size={11} />{e.location}</span>}
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          {redesign && (
+          {modern && (
             <ListFooter
               from={1}
               to={shownEntries.length}

@@ -9,9 +9,9 @@ import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { ListFooter, ListViews, PageHeader, StatCard } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
-/** Redesigned state chip for a document: published reads good, a draft is still in flight. */
+/** Modern state chip for a document: published reads good, a draft is still in flight. */
 function docStateChip(state: string): string {
   const s = (state || "").toLowerCase();
   if (s === "published" || s === "current" || s === "approved" || s === "active") return "chip--good";
@@ -21,7 +21,7 @@ function docStateChip(state: string): string {
 }
 
 export function KumoDocumentsPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [folders, setFolders] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -160,7 +160,7 @@ export function KumoDocumentsPage() {
     setSearchParams(next, { replace: true });
   };
 
-  /** The redesigned views strip writes the same ?filter= the rail and breadcrumbs already use. */
+  /** The Modern views strip writes the same ?filter= the rail and breadcrumbs already use. */
   const setDocFilter = (id: string) => {
     const next = new URLSearchParams(searchParams);
     if (id) next.set("filter", id); else next.delete("filter");
@@ -259,7 +259,7 @@ export function KumoDocumentsPage() {
       </div>
 
       {/* Figures — what the folder in hand holds, and how much of it has drifted. */}
-      {redesign && (
+      {modern && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard label="Documents" value={documents.length} icon={<FileText size={13} />} />
           <StatCard label="Folders" value={folders.length} icon={<Folder size={13} />} tone="neutral" />
@@ -269,7 +269,7 @@ export function KumoDocumentsPage() {
       )}
 
       {/* Views — the states a document drifts into, as chips you press rather than a filter to fill in. */}
-      {redesign && (
+      {modern && (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews views={docViews} value={docFilter} onChange={setDocFilter} label="Document views" />
           <span className="text-xs text-gray-500 tabular-nums">
@@ -310,7 +310,7 @@ export function KumoDocumentsPage() {
                     <FileText size={18} className="text-cyber-400 shrink-0" />
                     <div>
                       <p className="text-white font-medium text-sm">{d.title}</p>
-                      {redesign ? (
+                      {modern ? (
                         <p className="text-xs text-gray-500 mt-0.5 flex flex-wrap items-center gap-1.5">
                           <span className="tabular-nums">v{d.currentVersion}</span>
                           {d.status ? <span className={`chip ${docStateChip(d.status)}`}>{d.status}</span> : null}
@@ -329,7 +329,7 @@ export function KumoDocumentsPage() {
               </div>
             ))}
            </div>
-           {redesign && (
+           {modern && (
              <ListFooter from={1} to={visibleDocuments.length} total={visibleDocuments.length} page={1} pages={1} onPage={() => {}}
                note={`${folders.length} folder${folders.length === 1 ? "" : "s"} · a document is stale after 90 days`} />
            )}
@@ -386,7 +386,7 @@ export function KumoDocumentsPage() {
             <div className="flex items-center gap-3 text-xs text-gray-500">
               <span>v{viewDoc.currentVersion}</span>
               <span>·</span>
-              {redesign
+              {modern
                 ? <span className={`chip ${docStateChip(viewDoc.status)}`}>{viewDoc.status}</span>
                 : <span className="badge bg-cyber-600/20 text-cyber-400">{viewDoc.status}</span>}
               <span>·</span>

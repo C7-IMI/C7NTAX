@@ -11,8 +11,9 @@ import {
 } from "react";
 import api, { setAuthToken } from "../api";
 import { sessionCookieAvailable } from "../lib/session";
-import { ROLE_PERMISSIONS, type SystemRole } from "@C7NTAX/shared";
+import { ROLE_PERMISSIONS, type MfaMethodId, type SystemRole } from "@C7NTAX/shared";
 import { clearRecentActivityCache } from "./useRecentActivity";
+import type { MfaPolicyView } from "../lib/mfa";
 
 interface User {
   id: string;
@@ -58,18 +59,35 @@ interface AuthState {
   session: SessionInfo;
   /** Effective permissions (role + overrides), for hiding controls the API will refuse. */
   permissions: string[];
+  /**
+   * What this account has to do about a second factor, straight from the API.
+   *
+   * Held here rather than recomputed because the gate, the reminder banner, the wizard and the
+   * sign-in redirect all have to describe the same deadline — and the decision behind it is the
+   * server's (`services/mfaPolicy.ts`). Null until the server has said; a client that has not been
+   * told must not guess, since guessing "required" would hold a person behind a gate the deployment
+   * does not have.
+   */
+  mfaPolicy: MfaPolicyView | null;
+  /** Re-read it from the API, including the catalogue the wizard needs. */
+  refreshMfaPolicy: () => Promise<MfaPolicyView | null>;
   login: (
     email: string,
     password: string,
   ) => Promise<{
     mfaRequired?: boolean;
     mfaToken?: string;
+    /** Which method the challenge is for, so the page does not show the wrong field. */
+    mfaMethod?: MfaMethodId;
+    /** Days a proved browser may skip the second factor; 0 means the deployment does not remember. */
+    rememberDays?: number;
     landingPage?: LandingPage;
     mustChangePassword?: boolean;
   }>;
   loginMfa: (
     mfaToken: string,
     code: string,
+    options?: { remember?: boolean },
   ) => Promise<LandingPage | undefined>;
   /** Finish a sign-in that produced a token elsewhere, and load the profile. */
   completeSignIn: (token: string) => Promise<User>;
@@ -116,6 +134,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<SessionInfo>(DEFAULT_SESSION);
   const cookieModeRef = useRef(false);
 
+  /*
+   * The second-factor policy, and the two ways it arrives.
+   *
+   * Every sign-in response carries it, so the gate can be decided from the response that signed the
+   * person in rather than from a request that follows it; `refreshMfaPolicy` re-reads it from the one
+   * endpoint designed to describe it, which is also the only one that carries the method catalogue.
+   * The bootstrap below asks for it because a page load with an existing session has no sign-in
+   * response to read it from.
+   */
+  const [mfaPolicy, setMfaPolicyState] = useState<MfaPolicyView | null>(null);
+  const refreshMfaPolicy = useCallback(async () => {
+    try {
+      const res = await api.get("/auth/mfa/policy");
+      const next = res.data as MfaPolicyView;
+      setMfaPolicyState(next);
+      return next;
+    } catch {
+      // Left as it was: an unreachable API is not news that the requirement has been lifted, and
+      // clearing the policy would open the gate on a failure rather than on an answer.
+      return null;
+    }
+  }, []);
+
   /** Keep the tab's token in memory; only persist it when the cookie cannot be used. */
   const adoptToken = useCallback(
     (nextToken: string | null, persist: boolean) => {
@@ -136,6 +177,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // A stale permission list must not outlive the session it described: the next person to sign in on
     // this browser would otherwise draw their interface from the previous one's answer.
     setServerPermissions(null);
+    // The policy describes an account, so it goes the same way the account does.
+    setMfaPolicyState(null);
     setSession(DEFAULT_SESSION);
   }, [adoptToken]);
 
@@ -144,6 +187,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false;
     const stored = localStorage.getItem("c7_token");
+
+    /*
+     * The account's second-factor policy, read for a page that was already signed in.
+     *
+     * `/auth/me` is asked rather than `/auth/mfa/policy` because it is exempt from the enrolment gate
+     * and answers with the policy attached — so a person stopped by the gate learns what they owe from
+     * the same request that tells the application who they are, and the wizard then asks the fuller
+     * endpoint for the catalogue. A failure is left silent and the policy stays unset: "not told" must
+     * not collapse into "not required".
+     */
+    const readMfaPolicy = () =>
+      api
+        .get("/auth/me")
+        .then((res) => {
+          if (!cancelled) setMfaPolicyState((res.data?.mfaPolicy as MfaPolicyView) ?? null);
+        })
+        .catch(() => {
+          /* Nothing to say: the sign-in response carries the same answer next time. */
+        });
 
     const fromCookie = () =>
       api
@@ -160,6 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             cookieMode: true,
             timeoutMinutes: res.data.timeoutMinutes ?? 30,
           });
+          void readMfaPolicy();
         })
         .catch(() => {
           if (!cancelled) setUser(null);
@@ -171,6 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .get("/users/me")
         .then((res) => {
           if (!cancelled) setUser(res.data);
+          void readMfaPolicy();
         })
         .catch(() => {
           if (!cancelled) {
@@ -220,9 +284,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         : { username: loginId, password };
       const res = await api.post("/auth/login", body);
       if (res.data.mfaRequired) {
+        /*
+         * The challenge travels with what it needs to be answered: which method it is for (so an
+         * emailed-code account is not shown an authenticator field), and how long a browser may be
+         * remembered (0 meaning the deployment does not remember any, in which case the page must not
+         * offer the control). `mfaPolicy` is not on this response — the sign-in has not happened, so
+         * there is no session to hold a policy about.
+         */
         return {
           mfaRequired: true as const,
           mfaToken: res.data.mfaToken as string,
+          mfaMethod: (res.data.mfaMethod as MfaMethodId | undefined) ?? "totp",
+          rememberDays: Number(res.data.rememberDays ?? 0),
         };
       }
       await settleCredentials(res.data.token);
@@ -230,6 +303,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ...res.data.user,
         mustChangePassword: !!res.data.mustChangePassword,
       });
+      // Carried on the sign-in response, so the gate is decided from the answer that signed the
+      // person in rather than from a request that follows it.
+      setMfaPolicyState((res.data.mfaPolicy as MfaPolicyView) ?? null);
       // `settleCredentials` re-reads `/auth/session` for cookie clients, which sets these too; a token
       // client (desktop shell, add-in) has only this response, so it is set here as well.
       setServerPermissions(Array.isArray(res.data.permissions) ? res.data.permissions : null);
@@ -249,14 +325,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const loginMfa = useCallback(
-    async (mfaToken: string, code: string) => {
-      const res = await api.post("/auth/mfa/verify", { mfaToken, code });
+    async (mfaToken: string, code: string, options?: { remember?: boolean }) => {
+      /*
+       * `remember` is passed through exactly as asked — sent as `false` to clear the box, and omitted
+       * when no preference was expressed. The API treats anything but `false` as "remember", so a
+       * client that always sent a value would be overruling the deployment's own default rather than
+       * answering the question the control asks.
+       */
+      const res = await api.post("/auth/mfa/verify", {
+        mfaToken,
+        code,
+        ...(options?.remember === undefined ? {} : { remember: options.remember }),
+      });
       await settleCredentials(res.data.token);
       setUser({
         ...res.data.user,
         mustChangePassword: !!res.data.mustChangePassword,
       });
       setServerPermissions(Array.isArray(res.data.permissions) ? res.data.permissions : null);
+      setMfaPolicyState((res.data.mfaPolicy as MfaPolicyView) ?? null);
       if (res.data.landingPage) {
         setLandingPage(res.data.landingPage);
         localStorage.setItem(
@@ -275,10 +362,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await settleCredentials(nextToken);
       const res = await api.get("/users/me");
       setUser(res.data);
+      // The token arrived from somewhere else (an SSO redirect, a passkey prompt), so `/users/me` is
+      // the only thing that has been read; the policy has to be asked for separately.
+      void refreshMfaPolicy();
       setLoading(false);
       return res.data as User;
     },
-    [settleCredentials],
+    [settleCredentials, refreshMfaPolicy],
   );
 
   const markPasswordChanged = useCallback(
@@ -346,6 +436,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         landingPage,
         session,
         permissions,
+        mfaPolicy,
+        refreshMfaPolicy,
         login,
         loginMfa,
         completeSignIn,

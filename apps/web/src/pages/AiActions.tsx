@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../api";
 import { PageHeader, StatCard } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 type AiAction = {
   id: string; entityType: string; title: string; summary: string; riskTier: string; status: string; createdAt: string;
@@ -22,7 +22,7 @@ function appliedSummary(result: Record<string, unknown> | null | undefined): str
 }
 
 export function AiActionsPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [actions, setActions] = useState<AiAction[]>([]);
   const [message, setMessage] = useState("");
 
@@ -55,7 +55,7 @@ export function AiActionsPage() {
         Critical actions are blocked automatically. <strong className="text-gray-300">Approving an action carries it out</strong> — through
         the same route the screen uses, as the person who raised it — and a failure is recorded here with its reason. Decisions are audited.
       </p>
-      {redesign && actions.length > 0 && (
+      {modern && actions.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard label="Awaiting a decision" value={countOf("pending")} tone="amber" />
           <StatCard label="Applied" value={countOf("executed")} tone="green" />
@@ -69,7 +69,7 @@ export function AiActionsPage() {
         return (
           <div key={a.id} className="card space-y-2">
             <div className="flex items-center gap-2.5 flex-wrap">
-              {redesign ? (
+              {modern ? (
                 <>
                   <span className={`chip text-[10px] uppercase ${tierChip(a.riskTier)}`}>{a.riskTier}</span>
                   <strong className="text-sm text-white">{a.title}</strong>

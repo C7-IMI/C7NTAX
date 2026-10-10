@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 
 /**
  * Standard page header: title + optional subtitle on the left, optional
  * actions on the right. Replaces the hand-rolled header markup that was
  * duplicated across pages.
  *
- * The redesigned interface asks a page to spend less height on chrome, so the
+ * The Modern interface asks a page to spend less height on chrome, so the
  * header has two shapes and the page does not have to know which one it gets:
  *
  * - **`variant="page"`** (the default) is the header of a page — a title and its
@@ -14,9 +14,9 @@ import { useRedesign } from "../../hooks/useNavigationStyle";
  * - **`variant="section"`** is the header a page used to hand-roll for a section
  *   of itself: an `h2` with a `p` under it. It reproduces that markup exactly in
  *   the classic interface, so converting a page to this component changes the
- *   redesigned screens and *not* the classic ones.
+ *   Modern screens and *not* the classic ones.
  *
- * In the redesigned interface both variants draw one compact row, because two
+ * In the Modern interface both variants draw one compact row, because two
  * lines of heading for one line of title is height taken from the content. See
  * INTERFACE-ROLLBACK.md.
  */
@@ -39,10 +39,10 @@ export function PageHeader({
   /** A leading glyph, for the pages whose header names its subject with an icon. */
   icon?: ReactNode;
 }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const right = actions ?? children;
 
-  if (redesign) {
+  if (modern) {
     return (
       <div className={`flex flex-wrap items-end justify-between gap-x-3 gap-y-2 ${className}`}>
         <div className="min-w-0 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
@@ -56,7 +56,7 @@ export function PageHeader({
     );
   }
 
-  // ── Classic: the markup this page had before the redesign, unchanged ──────
+  // ── Classic: the markup this page had before the Modern interface, unchanged ──────
   if (variant === "section") {
     const block = (
       <div>

@@ -47,7 +47,7 @@ import {
   AlertTriangle, ArrowRight, Check, FileText, Loader2, Mail, Paperclip, RefreshCw, Send, X,
 } from "lucide-react";
 import api from "../../api";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import { toAttachmentDraft, type EmailAttachmentDraft } from "../richText";
 import { EMAIL_MESSAGE_KEYS, type EmailMessageKey } from "@C7NTAX/shared";
 import { blockIsRequired, codeBlocksFor } from "./emailCodeV0";
@@ -249,7 +249,7 @@ export function EmailSendDialog({
   /** So the page can refresh what it owns — Billing refetches its invoices after a real send. */
   onSent?: (outcome: SendOutcome) => void;
 }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const navigate = useNavigate();
 
   // Records the sheet reads rather than guesses.
@@ -985,7 +985,7 @@ export function EmailSendDialog({
   );
 
   // ══ Modern: the sheet ═════════════════════════════════════════════════════
-  if (redesign) {
+  if (modern) {
     const step = phase === "compose" ? 0 : phase === "sending" ? 1 : 2;
     const steps = ["Before", "During", "After"];
     return (

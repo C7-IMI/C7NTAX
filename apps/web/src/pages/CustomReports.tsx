@@ -17,7 +17,7 @@ import { measureTextMm } from "../lib/reportMeasure";
 import { exportTemplateCsv, exportTemplateExcel, exportTemplatePdf, printTemplateReport } from "../lib/reportOutput";
 import { LaidOutPageView } from "../components/reports/designer/PageRenderer";
 import { PageHeader, ListViews, ListFooter } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 interface Schedule { id: string; frequency: string; timeOfDay: string; recipients: string[]; format: string; isActive: boolean; lastSentAt: string | null }
 interface SavedReport {
@@ -188,7 +188,7 @@ export function CustomReportsPage() {
   const [scheduling, setScheduling] = useState<SavedReport | null>(null);
   const [deleting, setDeleting] = useState<SavedReport | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const redesign = useRedesign();
+  const modern = useModernInterface();
 
   const load = useCallback(() => {
     setLoading(true);
@@ -375,12 +375,12 @@ export function CustomReportsPage() {
             <X size={12} /> Clear
           </button>
         )}
-        {redesign && <span className="ml-auto text-xs text-gray-500">{visible.length} shown · {totals.scheduled} scheduled</span>}
+        {modern && <span className="ml-auto text-xs text-gray-500">{visible.length} shown · {totals.scheduled} scheduled</span>}
       </div>
 
       {/* The "Scheduled only" checkbox is one of these views, so the strip and the checkbox are the
           same state read two ways — the chips set it, the checkbox still works, neither drifts. */}
-      {redesign && (
+      {modern && (
         <ListViews
           views={[
             { id: "all", label: "All", count: totals.reports },
@@ -456,7 +456,7 @@ export function CustomReportsPage() {
               </tbody>
             </table>
           </div>
-          {redesign && visible.length > 0 && (
+          {modern && visible.length > 0 && (
             <ListFooter from={1} to={visible.length} total={visible.length} page={1} pages={1} onPage={() => {}} note={`${totals.types} distinct types · ${totals.configDriven} config-driven`} />
           )}
         </div>

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api";
 import { ListViews, PageHeader } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 type MonitorVerdict = "problem" | "restored" | "clear" | "unknown";
 
@@ -72,7 +72,7 @@ export function MonitorsPage() {
   const [sslWarnDays, setSslWarnDays] = useState("30");
   const [expectStatus, setExpectStatus] = useState("200");
   const [message, setMessage] = useState("");
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [view, setView] = useState("all");
 
   const load = () => api.get("/service-alerts/services").then(r => setServices((r.data.data || r.data || []).filter((s: MonitorService) => s.monitorKind !== "vendor"))).catch(() => setServices([]));
@@ -103,8 +103,8 @@ export function MonitorsPage() {
     const at = s.sourceStatus?.checkedAt;
     return at && (!latest || at > latest) ? at : latest;
   }, null);
-  // Only the redesigned table narrows by the views strip; the classic screen lists every monitor.
-  const shownMonitors = redesign && view !== "all" ? services.filter(s => monitorState(s) === view) : services;
+  // Only the Modern table narrows by the views strip; the classic screen lists every monitor.
+  const shownMonitors = modern && view !== "all" ? services.filter(s => monitorState(s) === view) : services;
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -187,7 +187,7 @@ export function MonitorsPage() {
         <button onClick={create} className="btn-primary text-sm">Add monitor</button>
       </div>
       {message && <p className="text-sm text-cyber-300">{message}</p>}
-      {redesign && services.length > 0 && (
+      {modern && services.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews
             views={[
@@ -210,7 +210,7 @@ export function MonitorsPage() {
       <div className="card p-0 overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="text-left text-xs uppercase text-gray-500">
-            <tr><th className="px-3 py-2 font-medium">Name</th><th className="px-3 py-2 font-medium">Kind</th><th className="px-3 py-2 font-medium">Target</th>{redesign && <th className="px-3 py-2 font-medium">State</th>}<th className="px-3 py-2 font-medium">Enabled</th></tr>
+            <tr><th className="px-3 py-2 font-medium">Name</th><th className="px-3 py-2 font-medium">Kind</th><th className="px-3 py-2 font-medium">Target</th>{modern && <th className="px-3 py-2 font-medium">State</th>}<th className="px-3 py-2 font-medium">Enabled</th></tr>
           </thead>
           <tbody className="divide-y divide-surface-border">
             {shownMonitors.map(s => (
@@ -218,11 +218,11 @@ export function MonitorsPage() {
                 <td className="px-3 py-2 text-gray-200">{s.name}</td>
                 <td className="px-3 py-2 text-gray-400">{s.monitorKind}</td>
                 <td className="px-3 py-2 text-gray-400">{s.monitorUrl}</td>
-                {redesign && <td className="px-3 py-2"><MonitorStateChip service={s} /></td>}
+                {modern && <td className="px-3 py-2"><MonitorStateChip service={s} /></td>}
                 <td className="px-3 py-2 text-gray-400">{s.enabled ? "yes" : "no"}</td>
               </tr>
             ))}
-            {shownMonitors.length === 0 && <tr><td colSpan={redesign ? 5 : 4} className="px-3 py-8 text-center text-gray-500">{redesign && services.length > 0 ? "Nothing in this view." : "No uptime monitors yet."}</td></tr>}
+            {shownMonitors.length === 0 && <tr><td colSpan={modern ? 5 : 4} className="px-3 py-8 text-center text-gray-500">{modern && services.length > 0 ? "Nothing in this view." : "No uptime monitors yet."}</td></tr>}
           </tbody>
         </table>
       </div>

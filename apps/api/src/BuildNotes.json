@@ -1,5 +1,226 @@
 [
   {
+    "version": "2026.10.10.014",
+    "date": "2026-10-10",
+    "title": "A relay that had no password, asked for one",
+    "changes": [
+      {
+        "text": "**`auth` is omitted entirely when there is nothing to authenticate with**, and the \"is there",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.10.013",
+    "date": "2026-10-10",
+    "title": "The last five passwords, and a development account",
+    "changes": [
+      {
+        "text": "**An account may not reuse its last five passwords.** A minimum length and a complexity",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The rule applies to an administrator's reset as well as to a self-service change**, and",
+        "type": "Update"
+      },
+      {
+        "text": "**Five credential fields were being returned on a user record.** `GET /api/users/:id` stripped",
+        "type": "Fix"
+      },
+      {
+        "text": "**`admin@C7NTAX.com` is the local development account again** — Super Admin, password",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.10.012",
+    "date": "2026-10-10",
+    "title": "An instance tier above Admin",
+    "changes": [
+      {
+        "text": "**Three instance permissions, held by the Super Admin alone.** `instance:security` — who may",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The per-account half of MFA stays with administrators.** `mfa:enforce` and",
+        "type": "Update"
+      },
+      {
+        "text": "**The tier cannot be granted by anyone below it, enforced in three places rather than one.**",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Reads are unchanged; only writes moved.** An administrator can still see the values —",
+        "type": "Update"
+      },
+      {
+        "text": "**The tier would have locked the instance out of fixing itself.** Once enforcement bites, the",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.10.011",
+    "date": "2026-10-10",
+    "title": "The two interfaces are called Modern and Classic",
+    "changes": [
+      {
+        "text": "**One word per layout, everywhere.** `useRedesign()` is `useModernInterface()`,",
+        "type": "Update"
+      },
+      {
+        "text": "**The old names are still read, and nothing writes them.** A browser that chose before",
+        "type": "Update"
+      },
+      {
+        "text": "**Two mockups were renamed** — `docs/mockups/login-redesign.html` and",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.10.010",
+    "date": "2026-10-10",
+    "title": "A rehearsal of the second factor",
+    "changes": [
+      {
+        "text": "**An end-to-end MFA setup simulator** (`apps/web/src/components/MfaSetupSimulator.tsx`),",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The live half is the API's own answer, not a mock.** The one call it makes is",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The script half walks the states that actually differ**, and the picker starts on the one the",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The failures support actually gets are in the notes**, at the step they belong to: a",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Both widths, side by side** — a 900 px desktop frame and a 375 px phone frame, in their own",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Two arrangements for every surface, designed individually**, as the repository's rule",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.10.009",
+    "date": "2026-10-10",
+    "title": "The second factor, on screen",
+    "changes": [
+      {
+        "text": "**The first-touch enrolment wizard.** One component for both moments a second factor is set up:",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The gate**, beside and **after** the password gate — a person can owe both, and the password is",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Recovery codes are acknowledged, not just displayed.** Ten codes, a copy and a download, and a",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A countdown instead of a cliff.** Somebody inside the grace period gets a banner on every",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A truthful refusal from the mail relay.** If the SMTP server refuses the enrolment code, the",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The sign-in challenge now asks for what the account has.** `mfaMethod` decides the field, so",
+        "type": "Update"
+      },
+      {
+        "text": "**My Account → Two-Factor Authentication** is now the change/re-enrol screen: what the",
+        "type": "Update"
+      },
+      {
+        "text": "**The per-account policy on Users**, which is where \"everyone except this one\" finally has a",
+        "type": "New Feature"
+      },
+      {
+        "text": "**\"Without 2FA\" counted passkey holders as having none.** The count, the CSV column and the",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.10.008",
+    "date": "2026-10-10",
+    "title": "Multi-factor authentication as a policy",
+    "changes": [
+      {
+        "text": "**A grace period instead of a cliff.** Switching enforcement on does not stop anybody: every",
+        "type": "New Feature"
+      },
+      {
+        "text": "**A browser may be remembered.** After a second factor is proved, a browser can be trusted for",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Three methods, and one place that decides.** Authenticator app, passkey and emailed code,",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Recovery codes work, for the first time.** They were documented as hashed, compared as plain",
+        "type": "Fix"
+      },
+      {
+        "text": "**The emailed code is compared in constant time.** A plain `===` on a six-digit secret leaks",
+        "type": "Fix"
+      },
+      {
+        "text": "**Two safeguards against locking an instance out of itself.** A saved setting that would",
+        "type": "New Feature"
+      },
+      {
+        "text": "**`mfa:enforce` finally does something.** The permission was declared and granted to",
+        "type": "New Feature"
+      },
+      {
+        "text": "**API keys are not stopped by the gate.** A key is a credential issued to a system that",
+        "type": "Update"
+      },
+      {
+        "text": "**The emailed fallback at sign-in ignored whether the deployment offers it.** `POST",
+        "type": "Fix"
+      },
+      {
+        "text": "**`GET /api/users/me` no longer returns the second factor's secrets.** It returned",
+        "type": "Fix"
+      },
+      {
+        "text": "**`POST /api/users/:id/reset-mfa` answers with the resolved policy**, matching the `PATCH`.",
+        "type": "Update"
+      },
+      {
+        "text": "The API guide (§2.1) and the generated specification carry the gate, the policy object and",
+        "type": "Update"
+      },
+      {
+        "text": "**The transport honours `SMTP_SECURE`.** `secure: config?.secure ?? process.env.SMTP_SECURE",
+        "type": "Fix"
+      },
+      {
+        "text": "**The template says which value is which.** `false` is port 587 with STARTTLS, `true` is",
+        "type": "Update"
+      },
+      {
+        "text": "**The env scan's last blind spot is bounded rather than described.** The one computed read,",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.10.007",
     "date": "2026-10-10",
     "title": "A screen that contradicts the wire",

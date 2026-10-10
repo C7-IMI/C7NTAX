@@ -7,7 +7,7 @@ import {
   ArrowUpRight, Info, RefreshCw, ShieldCheck, Wrench,
 } from "lucide-react";
 import { PageHeader } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 /**
  * The Assistant: ask the model something, and let it use this application's own functions to answer.
@@ -75,7 +75,7 @@ function ArgumentList({ args }: { args: Record<string, unknown> }) {
 }
 
 export function AssistantPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [status, setStatus] = useState<ModelStatus | null>(null);
   const [tools, setTools] = useState<ToolEntry[]>([]);
   const [maxSteps, setMaxSteps] = useState(6);
@@ -220,13 +220,13 @@ export function AssistantPage() {
               {showTools ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
               What it can look up, as you
             </span>
-            <span className={redesign ? "text-[11px] text-gray-500 tabular-nums" : "text-[11px] text-gray-500"}>{tools.length} functions · {tools.filter(t => t.kind === "propose").length} propose changes</span>
+            <span className={modern ? "text-[11px] text-gray-500 tabular-nums" : "text-[11px] text-gray-500"}>{tools.length} functions · {tools.filter(t => t.kind === "propose").length} propose changes</span>
           </button>
           {showTools ? (
             <div className="mt-3 space-y-1.5">
               {tools.map(tool => (
                 <div key={tool.name} className="flex items-start gap-2 text-xs">
-                  {redesign ? (
+                  {modern ? (
                     <span className={`chip text-[10px] ${tool.kind === "read" ? "" : "chip--warn"}`}>
                       {tool.kind === "read" ? "reads" : "proposes"}
                     </span>
@@ -284,7 +284,7 @@ export function AssistantPage() {
                     {result.detail ?? "No reason was given."} — this is the vendor's own answer, and it is the useful part: a rejected key, a
                     model that does not exist for this key, or a vendor quota.
                   </p>
-                  <p className={redesign ? "text-[11px] text-gray-500 mt-1 tabular-nums" : "text-[11px] text-gray-500 mt-1"}>
+                  <p className={modern ? "text-[11px] text-gray-500 mt-1 tabular-nums" : "text-[11px] text-gray-500 mt-1"}>
                     {result.provider}{result.model ? ` · ${result.model}` : ""} · {result.modelCalls} call{result.modelCalls === 1 ? "" : "s"}
                   </p>
                 </div>
@@ -296,7 +296,7 @@ export function AssistantPage() {
                 <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
                   <Sparkles size={13} className="text-cyber-400" /> Answer
                 </h3>
-                <span className={redesign ? "text-[11px] text-gray-500 tabular-nums" : "text-[11px] text-gray-500"}>
+                <span className={modern ? "text-[11px] text-gray-500 tabular-nums" : "text-[11px] text-gray-500"}>
                   {result.provider}{result.model ? ` · ${result.model}` : ""} · {result.modelCalls} call{result.modelCalls === 1 ? "" : "s"}
                   {result.tokensUsed ? ` · ${result.tokensUsed} tokens` : ""}
                 </span>
@@ -328,7 +328,7 @@ export function AssistantPage() {
                         : <AlertTriangle size={13} className="text-amber-400 shrink-0" />}
                       <span className="text-xs font-mono text-gray-300">{toolLabel(step.tool)}</span>
                       <span className="text-xs text-gray-500 truncate flex-1">{step.summary}</span>
-                      <span className={redesign ? "text-[10px] text-gray-600 shrink-0 tabular-nums" : "text-[10px] text-gray-600 shrink-0"}>{step.durationMs}ms</span>
+                      <span className={modern ? "text-[10px] text-gray-600 shrink-0 tabular-nums" : "text-[10px] text-gray-600 shrink-0"}>{step.durationMs}ms</span>
                     </button>
                     {expanded === index ? (
                       <div className="px-3 pb-2 pt-0.5 border-t border-surface-border">

@@ -29,7 +29,7 @@ import { Permission } from "@C7NTAX/shared";
 import { PageHeader } from "../components/ui";
 import { Band, LoadingBlock, UnavailablePanel } from "../components/email/emailChrome";
 import { useAuth } from "../hooks/useAuth";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import { useBrand, saveBrandFields, useLastGood } from "../components/brand/brandApi";
 import {
   IDENTITY_SUBJECTS,
@@ -64,7 +64,7 @@ const PROMISE =
 const NEEDS_MANAGE = "Changing the brand is branding:manage, which this account does not hold. The screen is readable and every control is disabled.";
 
 export function BrandingIdentityPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const brand = useBrand();
   const { permissions } = useAuth();
   const canManage = permissions.includes(Permission.BrandingManage);
@@ -149,7 +149,7 @@ export function BrandingIdentityPage() {
     );
   }
 
-  if (redesign) {
+  if (modern) {
     const spec = IDENTITY_SUBJECTS.find((entry) => entry.id === subject) ?? IDENTITY_SUBJECTS[0]!;
     const fields = fieldsIn(subject);
     const marks = fieldsIn("marks");
@@ -283,7 +283,7 @@ export function BrandingIdentityPage() {
               )}
 
               <SaveBar
-                redesign
+                modern
                 dirty={dirty}
                 saving={saving}
                 canManage={canManage}
@@ -397,7 +397,7 @@ export function BrandingIdentityPage() {
 
 /** The Save/Cancel pair, with the one sentence about what an unsaved draft means. */
 function SaveBar({
-  redesign = false,
+  modern = false,
   dirty,
   saving,
   canManage,
@@ -405,7 +405,7 @@ function SaveBar({
   onSave,
   onUndo,
 }: {
-  redesign?: boolean;
+  modern?: boolean;
   dirty: boolean;
   saving: boolean;
   canManage: boolean;
@@ -414,9 +414,9 @@ function SaveBar({
   onUndo: () => void;
 }) {
   return (
-    <div className={redesign ? "card space-y-2.5" : "space-y-3"}>
+    <div className={modern ? "card space-y-2.5" : "space-y-3"}>
       <div className="flex flex-wrap items-center gap-2">
-        <button type={redesign ? "button" : "submit"} className="btn-primary" disabled={!canManage || saving} onClick={redesign ? onSave : undefined}>
+        <button type={modern ? "button" : "submit"} className="btn-primary" disabled={!canManage || saving} onClick={modern ? onSave : undefined}>
           {saving ? <Loader2 size={13} className="animate-spin" /> : null}
           <span className={saving ? "ml-1.5" : ""}>Save the brand</span>
         </button>

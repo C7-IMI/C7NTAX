@@ -1,4 +1,4 @@
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import type { HealthCheck, HealthStatus, Read, RepoHealth } from "./developerApi";
 import { LoadingBlock, StateChip, UnavailablePanel, formatCount } from "./developerUi";
 
@@ -20,7 +20,7 @@ import { LoadingBlock, StateChip, UnavailablePanel, formatCount } from "./develo
  * columns, which is how every classic screen shows a list of results.
  */
 export function RepoHealthPanel({ read }: { read: Read<RepoHealth> }) {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
 
   const checks: HealthCheck[] = read.data?.checks ?? [];
   const passed = checks.filter((c) => c.status === "pass").length;
@@ -29,7 +29,7 @@ export function RepoHealthPanel({ read }: { read: Read<RepoHealth> }) {
 
   const header = (
     <div className="flex flex-wrap items-center gap-2">
-      <h3 className={redesign ? "text-sm font-semibold text-white" : "text-lg font-semibold text-white"}>Repo health</h3>
+      <h3 className={modern ? "text-sm font-semibold text-white" : "text-lg font-semibold text-white"}>Repo health</h3>
       <span className="text-xs text-gray-500">the guards, as they answer on this working copy</span>
       {read.status === "ok" ? (
         <span className="ml-auto flex flex-wrap items-center gap-1.5">
@@ -71,7 +71,7 @@ export function RepoHealthPanel({ read }: { read: Read<RepoHealth> }) {
   }
 
   // ── Classic: a table of results, one row per check ─────────────────────────────────────────────
-  if (!redesign) {
+  if (!modern) {
     return (
       <div className="space-y-3">
         {header}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import api from "../api";
 import { PageHeader, ListViews, ListFooter } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 import toast from "react-hot-toast";
 import { SortableHeader, sortData, nextSort, type SortState } from "../components/SortableHeader";
 import { Plus, Search, Monitor, Server, Laptop, Smartphone, Network, Database, Wrench, FileText, Upload, Download, AlertTriangle, CheckCircle, XCircle, ArrowUpDown, Wifi } from "lucide-react";
@@ -57,7 +57,7 @@ const ASSET_FIELDS = [
 ];
 
 export function AssetsPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [view, setView] = useState("all");
   const [loading, setLoading] = useState(true);
@@ -159,9 +159,9 @@ export function AssetsPage() {
         <button onClick={() => setShowNew(true)} className="btn-primary flex items-center gap-2"><Plus size={16} /> Add Asset</button>
       </PageHeader>
 
-      {/* Filters + Sort — the redesigned toolbar states the working set and offers the two states
+      {/* Filters + Sort — the Modern toolbar states the working set and offers the two states
           worth acting on as views, rather than leaving them to be found by scrolling. */}
-      {redesign ? (
+      {modern ? (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews views={views} value={view} onChange={setView} label="Asset views" />
           <div className="relative min-w-[13rem] max-w-xs flex-1">
@@ -315,7 +315,7 @@ export function AssetsPage() {
          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="group"><tr className="border-b border-surface-border text-left text-gray-400">
-              <SortableHeader field="name" label="Asset" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3" /><th className="px-4 py-3 hidden md:table-cell">Tag</th><th className="px-4 py-3 hidden lg:table-cell">Type</th><th className="px-4 py-3 hidden sm:table-cell">Status</th><th className="px-4 py-3 hidden lg:table-cell">Location</th><th className="px-4 py-3 hidden md:table-cell">Assigned To</th>{redesign && <th className="px-4 py-3 hidden lg:table-cell">Warranty</th>}{redesign && <th className="px-4 py-3 w-20"></th>}
+              <SortableHeader field="name" label="Asset" sort={sort} onSort={(f) => setSort(nextSort(sort, f))} className="px-4 py-3" /><th className="px-4 py-3 hidden md:table-cell">Tag</th><th className="px-4 py-3 hidden lg:table-cell">Type</th><th className="px-4 py-3 hidden sm:table-cell">Status</th><th className="px-4 py-3 hidden lg:table-cell">Location</th><th className="px-4 py-3 hidden md:table-cell">Assigned To</th>{modern && <th className="px-4 py-3 hidden lg:table-cell">Warranty</th>}{modern && <th className="px-4 py-3 w-20"></th>}
             </tr></thead>
             <tbody>
               {rows.map(a => {
@@ -336,14 +336,14 @@ export function AssetsPage() {
                     <td className="px-4 py-3 hidden sm:table-cell"><span className={`badge text-xs ${STATUS_COLORS[a.status] || ""}`}>{a.status}</span></td>
                     <td className="px-4 py-3 hidden lg:table-cell text-gray-400">{a.location || a.department || "—"}</td>
                     <td className="px-4 py-3 hidden md:table-cell text-gray-400">{a.assignments?.[0]?.assignedTo ? `${a.assignments[0].assignedTo.firstName} ${a.assignments[0].assignedTo.lastName}` : "—"}</td>
-                    {redesign && (
+                    {modern && (
                       <td className="px-4 py-3 hidden lg:table-cell">
                         {a.warrantyExpiry ? (
                           <span className={warrantySoon(a) ? "text-amber-400" : "text-gray-400"}>{new Date(a.warrantyExpiry).toLocaleDateString()}</span>
                         ) : <span className="text-gray-600">—</span>}
                       </td>
                     )}
-                    {redesign && (
+                    {modern && (
                       <td className="px-4 py-3 text-right">
                         <button
                           type="button"
@@ -358,7 +358,7 @@ export function AssetsPage() {
             </tbody>
           </table>
         </div>}
-        {redesign && !loading && rows.length > 0 && (
+        {modern && !loading && rows.length > 0 && (
           <ListFooter from={1} to={rows.length} total={rows.length} page={1} pages={1} onPage={() => {}} note={`Sorted by ${SORT_OPTIONS.find(o => o.value === sortBy)?.label ?? sortBy}`} />
         )}
       </div>

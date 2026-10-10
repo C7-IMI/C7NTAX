@@ -4,7 +4,7 @@ import {
   Activity, AlertTriangle, ArrowUpDown, Database, ExternalLink, Plug, ShieldCheck, SlidersHorizontal,
   type LucideIcon,
 } from "lucide-react";
-import { useRedesign } from "../../hooks/useNavigationStyle";
+import { useModernInterface } from "../../hooks/useNavigationStyle";
 import {
   CATALOGUE, CATALOGUE_GROUPS, type CatalogueEntry, type CatalogueGroup, type CatalogueGroupId, type EntryState,
 } from "./catalogueData";
@@ -84,7 +84,7 @@ function EntryLink({ entry }: { entry: CatalogueEntry }) {
 }
 
 export function Catalogue() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [group, setGroup] = useState<CatalogueGroupId | "all">("all");
   const [sort, setSort] = useState<{ key: "group" | "name"; dir: 1 | -1 }>({ key: "group", dir: 1 });
 
@@ -98,7 +98,7 @@ export function Catalogue() {
     group === "all" ? CATALOGUE_GROUPS : CATALOGUE_GROUPS.filter((g) => g.id === group);
 
   // ── Classic: five labelled columns, sorted by whichever column you press ───────────────────────
-  if (!redesign) {
+  if (!modern) {
     const groupOrder = new Map(CATALOGUE_GROUPS.map((g, index) => [g.id, index]));
     const sorted = [...CATALOGUE].sort((a, b) => {
       const primary =

@@ -9,10 +9,10 @@ import { copyText, openInNewTab, openInNewWindow, viewMenuEntries } from "../lib
 import { toCsv, downloadCsv, fileStamp, type CsvColumn } from "../lib/csv";
 import { TableSkeleton } from "../components/ui/Skeleton";
 import { ListFooter, ListViews, PageHeader, StatCard } from "../components/ui";
-import { useRedesign } from "../hooks/useNavigationStyle";
+import { useModernInterface } from "../hooks/useNavigationStyle";
 
 export function KumoConfigsPage() {
-  const redesign = useRedesign();
+  const modern = useModernInterface();
   const [configs, setConfigs] = useState<any[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,9 +56,9 @@ export function KumoConfigsPage() {
     if (match && selected?.id !== match.id) setSelected(match);
   }, [selectId, configs]);
 
-  /** The redesigned views strip: virtual machines and bare metal, from rows already loaded. */
+  /** The Modern views strip: virtual machines and bare metal, from rows already loaded. */
   const serverSlice = (c: Record<string, any>) =>
-    !redesign || serverView === "" || (serverView === "virtual" ? !!c.virtualization : !c.virtualization);
+    !modern || serverView === "" || (serverView === "virtual" ? !!c.virtualization : !c.virtualization);
 
   const filtered = configs.filter(c => {
     if (!serverSlice(c)) return false;
@@ -74,7 +74,7 @@ export function KumoConfigsPage() {
   /*
    * The figures and the one slice this list can honestly offer — how many of the servers are
    * virtual machines and how many run on their own hardware — taken from the rows already loaded.
-   * The slice applies only while the redesigned interface is on, so the classic list is unchanged.
+   * The slice applies only while the Modern interface is on, so the classic list is unchanged.
    */
   const virtualised = configs.filter((c: any) => !!c.virtualization).length;
   const withIp = configs.filter((c: any) => !!c.ipAddress).length;
@@ -184,7 +184,7 @@ export function KumoConfigsPage() {
       </div>
 
       {/* Figures — what the estate's configurations hold, counted from the rows already loaded. */}
-      {redesign && (
+      {modern && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatCard label="Servers" value={configs.length} icon={<Server size={13} />} />
           <StatCard label="Virtualised" value={virtualised} icon={<Monitor size={13} />} tone={virtualised > 0 ? "green" : "neutral"} />
@@ -194,7 +194,7 @@ export function KumoConfigsPage() {
       )}
 
       {/* Views — how the server fleet is hosted, as chips you press. */}
-      {redesign && (
+      {modern && (
         <div className="flex flex-wrap items-center gap-2">
           <ListViews views={serverViews} value={serverView} onChange={setServerView} label="Configuration views" />
           <span className="text-xs text-gray-500 tabular-nums">{filtered.length} of {configs.length} server{configs.length === 1 ? "" : "s"}</span>
@@ -223,11 +223,11 @@ export function KumoConfigsPage() {
                   <p className="text-sm text-white truncate">{c.kumoAsset?.name || c.hostname}</p>
                   <p className="text-xs text-gray-500">{c.operatingSystem || "-"}</p>
                 </div>
-                {redesign && c.virtualization ? <span className="chip shrink-0">{c.virtualization}</span> : null}
+                {modern && c.virtualization ? <span className="chip shrink-0">{c.virtualization}</span> : null}
               </div>
             </button>
           ))}
-           {redesign && (
+           {modern && (
              <ListFooter from={1} to={filtered.length} total={filtered.length} page={1} pages={1} onPage={() => {}}
                note={`${virtualised} virtual · ${configs.length - virtualised} on bare metal`} />
            )}
