@@ -210,7 +210,12 @@ jobs:
             az containerapp job create \
               --name "$JOB" --resource-group "$RG" --environment "aca-c7ntax-${ENVIRONMENT}" \
               --image "$IMAGE" \
-              --command "npx prisma migrate deploy" \
+              # `--command` is a list of space-separated values, not one string (az containerapp job
+              # create --help: "A list of supported commands on the container that will executed during
+              # startup. Space-separated values e.g. '/bin/queue' 'mycommand'"). Quoted as one argument
+              # it becomes a single argv entry and the container tries to exec a program named
+              # "npx prisma migrate deploy", so the job fails with the previous revision still serving.
+              --command npx prisma migrate deploy \
               --cpu 0.5 --memory 1.0Gi --replica-timeout 900 --replica-retry-limit 1 \
               --registry-server "${{ needs.build.outputs.registry }}" \
               --mi-user-assigned "$ID" --registry-identity "$ID" \
@@ -251,6 +256,7 @@ jobs:
       # A new revision is created and left at 0% traffic, then checked. Only a healthy
       # revision is promoted, so a bad build never takes the environment down.
       - name: Create the revision
+        id: revision
         run: |
           ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
           RG="rg-c7ntax-${ENVIRONMENT}"
@@ -260,20 +266,40 @@ jobs:
           az containerapp update --name "$APP" --resource-group "$RG" \
             --image "${{ needs.build.outputs.registry }}/c7ntax:${{ needs.build.outputs.tag }}" \
             --revision-suffix "$SUFFIX" --only-show-errors
+          # The revision name is `<app>--<suffix>`, but it is read back from the API rather than
+          # assembled, and the health is read from that one revision. `properties.revisionSuffix` is
+          # not a property of a revision (the CLI's Revision serializer carries the suffix only on
+          # properties.template), so the filter that used to be here matched nothing and this step
+          # could never see the new revision become healthy. See scripts/azure/deploy-env.ps1 for the
+          # full note.
+          REVISION=""
+          state=""
           for i in $(seq 1 60); do
-            state=$(az containerapp revision list --name "$APP" --resource-group "$RG" --query "[?properties.revisionSuffix=='$SUFFIX'].properties.healthState | [0]" -o tsv)
-            [ "$state" = "Healthy" ] && exit 0
-            [ "$state" = "Unhealthy" ] && { echo "new revision is unhealthy"; exit 1; }
+            if [ -z "$REVISION" ]; then
+              REVISION=$(az containerapp revision list --name "$APP" --resource-group "$RG" \
+                --query "[?properties.template.revisionSuffix=='$SUFFIX'].name | [0]" -o tsv)
+            fi
+            if [ -n "$REVISION" ]; then
+              state=$(az containerapp revision show --name "$APP" --resource-group "$RG" \
+                --revision "$REVISION" --query "properties.healthState" -o tsv)
+            fi
+            if [ "$state" = "Healthy" ]; then break; fi
+            if [ "$state" = "Unhealthy" ]; then echo "new revision $REVISION is unhealthy"; exit 1; fi
             sleep 10
           done
-          echo "new revision did not become healthy in 10 minutes"; exit 1
+          if [ "$state" != "Healthy" ]; then
+            echo "new revision did not become healthy in 10 minutes (state: '$state', revision: '$REVISION')"
+            exit 1
+          fi
+          echo "revision $REVISION is healthy"
+          echo "name=$REVISION" >> "$GITHUB_OUTPUT"
 
       - name: Health gate on the new revision
         run: |
           ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
           RG="rg-c7ntax-${ENVIRONMENT}"
           APP="c7ntax-${ENVIRONMENT}"
-          FQDN=$(az containerapp revision show --name "$APP" --resource-group "$RG" --revision "${ENVIRONMENT}-${{ needs.build.outputs.tag }}" --query "properties.fqdn" -o tsv)
+          FQDN=$(az containerapp revision show --name "$APP" --resource-group "$RG" --revision "${{ steps.revision.outputs.name }}" --query "properties.fqdn" -o tsv)
           # /api/ready, not /api/health: this gate decides whether a revision takes 100% of traffic, and
           # "Node is listening" is not the same as "this revision can serve" — a wrong DATABASE_URL or a
           # failed migration passes the shallow check. deep=1 is safe here: migrations have already run
@@ -290,8 +316,10 @@ jobs:
           ENVIRONMENT="${{ github.event.inputs.environment || 'dev' }}"
           RG="rg-c7ntax-${ENVIRONMENT}"
           APP="c7ntax-${ENVIRONMENT}"
+          # `ingress traffic set` takes `--revision-weight <revision-name>=<weight>`. It has no
+          # `--revision`/`--weight`; the old form failed with `unrecognized arguments: --weight 100`.
           az containerapp ingress traffic set --name "$APP" --resource-group "$RG" \
-            --revision "${ENVIRONMENT}-${{ needs.build.outputs.tag }}" --weight 100 --only-show-errors
+            --revision-weight "${{ steps.revision.outputs.name }}=100" --only-show-errors
 
       - name: Verify the public endpoint
         run: |
@@ -313,6 +341,6 @@ jobs:
           APP="c7ntax-${ENVIRONMENT}"
           if [ -n "${{ steps.previous.outputs.revision }}" ]; then
             az containerapp ingress traffic set --name "$APP" --resource-group "$RG" \
-              --revision "${{ steps.previous.outputs.revision }}" --weight 100 --only-show-errors
+              --revision-weight "${{ steps.previous.outputs.revision }}=100" --only-show-errors
             echo "traffic returned to ${{ steps.previous.outputs.revision }}"
           fi

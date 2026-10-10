@@ -473,7 +473,7 @@ paths:
       tags: ["Auth"]
       operationId: "getAuthclientIp"
       summary: "The address this connection is arriving from"
-      description: "Unauthenticated, because the sign-in screen asks before a session exists and this is the first fact worth having when a sign-in behaves oddly from a VPN, a proxy or a client's network. Answers with the same value the session record and the audit trail carry — `req.ip`, which is the socket address while `trust proxy` is unset — so the screen and the trail agree. Behind a reverse proxy that address is the proxy's until `trust proxy` is configured. Nothing here is instance data: the caller is being handed their own address back."
+      description: "Unauthenticated, because the sign-in screen asks before a session exists and this is the first fact worth having when a sign-in behaves oddly from a VPN, a proxy or a client's network. Answers with `req.ip` — the same value the session record and the audit trail carry — so the screen and the trail agree. How much of a forwarded header is believed is `TRUST_PROXY`: unset (the dev default) it is the socket address, while a deployment sets it to the number of proxies in front of the app (1 for the Container Apps ingress, 2 once Front Door precedes it), so there the address is the caller's rather than a proxy's. The rate limiter buckets on this same value. Nothing here is instance data: the caller is being handed their own address back."
       security: [{ "bearerAuth": [] }]
       x-required-permissions: []
       x-permission-note: "Reachable before a session exists."

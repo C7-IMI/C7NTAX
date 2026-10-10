@@ -296335,5 +296335,2934 @@
     "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
     "ipAddress": "::1",
     "createdAt": "2026-10-10T03:11:56.798Z"
+  },
+  {
+    "id": "cdd4cd30-841e-4db5-97d3-e1672b91ce47",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:27:14.905Z"
+  },
+  {
+    "id": "cbb257d7-3572-492f-85bf-7cbaf781f1f7",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:27:37.670Z"
+  },
+  {
+    "id": "4a52a227-fa94-4eb2-aad9-d9ce0ec19857",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:28:03.845Z"
+  },
+  {
+    "id": "e998dbd6-6bab-4537-bf47-fce1dc3170f4",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.note",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:28:03.869Z"
+  },
+  {
+    "id": "7fbc73fc-352c-4478-bf4e-d8e4b2ef9f55",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "invoice.send",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:28:03.878Z"
+  },
+  {
+    "id": "bed5b0f9-2332-45d5-aa7e-852cacaf3e68",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.reopened_internal",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:28:03.891Z"
+  },
+  {
+    "id": "e245d27e-5b9a-427f-8dc9-f46582a6bffe",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "report.scheduled",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:28:03.901Z"
+  },
+  {
+    "id": "dc93a49e-ed68-4b86-b6ae-2915f7fd58ad",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.reopened_internal",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:35:28.993Z"
+  },
+  {
+    "id": "8b718c12-4d3e-4b1a-8a2b-06c678cde462",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.follow_up",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:35:29.000Z"
+  },
+  {
+    "id": "cb5130de-1243-4ca0-a6fc-852f5a039145",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "report.scheduled",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:35:29.007Z"
+  },
+  {
+    "id": "ed5bfa7e-1d52-47a1-87d4-bf6bf34eee49",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:28:29.552Z"
+  },
+  {
+    "id": "2a2b9bfb-151b-4e0e-9723-6a988d15d8d6",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:32:02.543Z"
+  },
+  {
+    "id": "40bb59ea-bf9e-4b5f-9b41-2bb787e3f9dc",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:32:40.011Z"
+  },
+  {
+    "id": "978f670d-d7c4-498c-84dd-1d1ad9da29ed",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:33:21.420Z"
+  },
+  {
+    "id": "79852d1a-9e89-4aa2-a5ba-32e8a8de3b57",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:33:38.938Z"
+  },
+  {
+    "id": "fa5dd541-7740-44ef-8081-ab767c545fef",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:34:38.420Z"
+  },
+  {
+    "id": "56ddb57e-a638-49c4-b3ba-f6c5494e21a0",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:35:14.135Z"
+  },
+  {
+    "id": "805e993f-6555-4030-8cfe-2f3f604d0bb2",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:35:28.956Z"
+  },
+  {
+    "id": "849439b5-db26-41f9-966a-31b6d716ed14",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.note",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:35:28.965Z"
+  },
+  {
+    "id": "76b2dc0f-f01b-4bc3-b3a5-253b111aa080",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "invoice.send",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:35:28.972Z"
+  },
+  {
+    "id": "1aa45a8c-0d10-4c4d-833a-764ec004b70a",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "invoice.overdue",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:35:28.979Z"
+  },
+  {
+    "id": "d961a522-6622-47cd-8cb5-41cde06e9c38",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "quote.send",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:35:29.014Z"
+  },
+  {
+    "id": "1ec9abb5-a8fb-4b82-bfa8-a3c1e2e9906b",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "auth.mfa_code",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:35:29.021Z"
+  },
+  {
+    "id": "be68b7f3-2556-466b-afc2-6a9e228afbef",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "user.invite",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:35:29.028Z"
+  },
+  {
+    "id": "2ec82303-1de1-4c12-9a2d-8e7dab0bb59f",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "report.scheduled",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "kind": "heading",
+          "text": "What changed",
+          "level": 2
+        },
+        {
+          "html": "A paragraph long enough to wrap more than once at 375px, so the line length can be judged rather than guessed. It carries a <a href=\"https://demo.c7ntax.example/tickets/MSP-1001-1001\">link to the ticket</a> as well.",
+          "kind": "paragraph"
+        },
+        {
+          "kind": "facts",
+          "items": [
+            {
+              "label": "Report",
+              "value": "Monthly Ticket Volume"
+            },
+            {
+              "label": "Schedule",
+              "value": "weekly · Monday · 06:00"
+            },
+            {
+              "label": "Format",
+              "value": "PDF"
+            }
+          ],
+          "title": "The run"
+        },
+        {
+          "html": "This is still happening — the queue built up again overnight, and it only clears when the connector is restarted. Nobody is watching it out of hours.",
+          "kind": "quote",
+          "title": "The client's reply",
+          "source": "David Chen, Acme Corporation"
+        },
+        {
+          "kind": "table",
+          "rows": [
+            [
+              "Managed firewall licence renewal for the head office",
+              "1",
+              "$1,240.00"
+            ],
+            [
+              "On-site support, half day",
+              "1",
+              "$650.00"
+            ],
+            [
+              "Total",
+              "",
+              "$1,890.00"
+            ]
+          ],
+          "title": "Line items",
+          "columns": [
+            "Description",
+            "Qty",
+            "Amount"
+          ]
+        },
+        {
+          "kind": "note",
+          "text": "The portal will be briefly unavailable on Saturday morning while the certificates are replaced.",
+          "tone": "warn"
+        },
+        {
+          "kind": "note",
+          "text": "The queue is draining again, and no messages were lost.",
+          "tone": "good"
+        },
+        {
+          "alt": "The queue, draining",
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAADwCAIAAADXdz0mAAAElElEQVR4nO3WMQ0AMAzAsHIagoEofyqDkWOWDCBn5twFAIDE5AUAAHzLjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGQe1++gi6n1R80AAAAASUVORK5CYII=",
+          "kind": "image"
+        },
+        {
+          "href": "https://demo.c7ntax.example/tickets/MSP-1001-1001",
+          "kind": "button",
+          "label": "Open the ticket in the portal"
+        },
+        {
+          "kind": "divider"
+        },
+        {
+          "kind": "attachment",
+          "name": "queue-report-2026-10-09.csv",
+          "note": "generated when the report runs"
+        },
+        {
+          "kind": "signature"
+        },
+        {
+          "kind": "footer"
+        }
+      ],
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:35:29.038Z"
+  },
+  {
+    "id": "f0a867bc-72a1-45e5-87ac-463bd003eea0",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.note",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "kind": "heading",
+          "text": "What changed",
+          "level": 2
+        },
+        {
+          "html": "A paragraph long enough to wrap more than once at 375px, so the line length can be judged rather than guessed. It carries a <a href=\"https://demo.c7ntax.example/tickets/MSP-1001-1001\">link to the ticket</a> as well.",
+          "kind": "paragraph"
+        },
+        {
+          "kind": "facts",
+          "items": [
+            {
+              "label": "Report",
+              "value": "Monthly Ticket Volume"
+            },
+            {
+              "label": "Schedule",
+              "value": "weekly · Monday · 06:00"
+            },
+            {
+              "label": "Format",
+              "value": "PDF"
+            }
+          ],
+          "title": "The run"
+        },
+        {
+          "html": "This is still happening — the queue built up again overnight, and it only clears when the connector is restarted. Nobody is watching it out of hours.",
+          "kind": "quote",
+          "title": "The client's reply",
+          "source": "David Chen, Acme Corporation"
+        },
+        {
+          "kind": "table",
+          "rows": [
+            [
+              "Managed firewall licence renewal for the head office",
+              "1",
+              "$1,240.00"
+            ],
+            [
+              "On-site support, half day",
+              "1",
+              "$650.00"
+            ],
+            [
+              "Total",
+              "",
+              "$1,890.00"
+            ]
+          ],
+          "title": "Line items",
+          "columns": [
+            "Description",
+            "Qty",
+            "Amount"
+          ]
+        },
+        {
+          "kind": "note",
+          "text": "The portal will be briefly unavailable on Saturday morning while the certificates are replaced.",
+          "tone": "warn"
+        },
+        {
+          "kind": "note",
+          "text": "The queue is draining again, and no messages were lost.",
+          "tone": "good"
+        },
+        {
+          "alt": "The queue, draining",
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAADwCAIAAADXdz0mAAAElElEQVR4nO3WMQ0AMAzAsHIagoEofyqDkWOWDCBn5twFAIDE5AUAAHzLjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGQe1++gi6n1R80AAAAASUVORK5CYII=",
+          "kind": "image"
+        },
+        {
+          "href": "https://demo.c7ntax.example/tickets/MSP-1001-1001",
+          "kind": "button",
+          "label": "Open the ticket in the portal"
+        },
+        {
+          "kind": "divider"
+        },
+        {
+          "kind": "attachment",
+          "name": "queue-report-2026-10-09.csv",
+          "note": "generated when the report runs"
+        },
+        {
+          "kind": "signature"
+        },
+        {
+          "kind": "footer"
+        }
+      ],
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:35:29.045Z"
+  },
+  {
+    "id": "c174e710-76e4-4f8f-9217-b94ece5c8ae2",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:35:41.743Z"
+  },
+  {
+    "id": "23b51dbe-8d53-44c7-ad1b-f74bf996691f",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:35:58.902Z"
+  },
+  {
+    "id": "cc285140-882c-4a4d-9702-d8988f70f283",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:37:00.412Z"
+  },
+  {
+    "id": "4098824f-e0c5-4ac3-ba51-e8c1fc9d9811",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:37:23.692Z"
+  },
+  {
+    "id": "d126b0ac-e87e-4400-b657-a06c1e86b523",
+    "action": "email_template.test_sent",
+    "entity": "email",
+    "entityId": "ticket.activity",
+    "changes": {
+      "to": "probe@example.com",
+      "sent": true,
+      "error": null
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:37:23.717Z"
+  },
+  {
+    "id": "c3513acf-5f3f-4fc8-aa29-fdc9e80a6498",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "test",
+    "changes": {
+      "to": "probe@example.com",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:37:23.719Z"
+  },
+  {
+    "id": "77d9f55a-b3f7-457c-84bb-00fc576a9287",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "report.scheduled",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "A pasted screenshot travels as a cid: part rather than a data: URI.",
+          "kind": "paragraph"
+        },
+        {
+          "alt": "A pasted screenshot",
+          "src": "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+          "kind": "image"
+        },
+        {
+          "kind": "footer"
+        }
+      ],
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:37:23.727Z"
+  },
+  {
+    "id": "65714547-1cc3-4608-bdec-b258835b3070",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:38:01.015Z"
+  },
+  {
+    "id": "3d024702-4cbe-4805-b5a7-a49686b9421b",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:40:59.403Z"
+  },
+  {
+    "id": "4c4360c4-44e7-46f2-ade1-cc019011421e",
+    "action": "email_template.test_sent",
+    "entity": "email",
+    "entityId": "ticket.activity",
+    "changes": {
+      "to": "probe@example.com",
+      "sent": true,
+      "error": null
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:40:59.412Z"
+  },
+  {
+    "id": "35b56ae9-d9a2-46f5-ae60-00b91f97c6b0",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "test",
+    "changes": {
+      "to": "probe@example.com",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:40:59.414Z"
+  },
+  {
+    "id": "bb0b926d-8b3b-4654-baf7-b4c4f769a1dd",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "report.scheduled",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "A pasted screenshot travels as a cid: part rather than a data: URI.",
+          "kind": "paragraph"
+        },
+        {
+          "alt": "A pasted screenshot",
+          "src": "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+          "kind": "image"
+        },
+        {
+          "kind": "footer"
+        }
+      ],
+      "target": {
+        "kind": "sample"
+      },
+      "subject": "A pasted screenshot"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:40:59.420Z"
+  },
+  {
+    "id": "bfacd0ed-acd2-4422-84f0-4a77f3064be9",
+    "action": "email_template.test_sent",
+    "entity": "email",
+    "entityId": "report.scheduled",
+    "changes": {
+      "to": "probe@example.com",
+      "sent": true,
+      "error": null
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:40:59.429Z"
+  },
+  {
+    "id": "f2a32e69-aeaa-4dd3-8eaf-0f3b15d4efe5",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "test",
+    "changes": {
+      "to": "probe@example.com",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "A pasted screenshot travels as a cid: part rather than a data: URI.",
+          "kind": "paragraph"
+        },
+        {
+          "alt": "A pasted screenshot",
+          "src": "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+          "kind": "image"
+        },
+        {
+          "kind": "footer"
+        }
+      ],
+      "target": {
+        "kind": "sample"
+      },
+      "subject": "A pasted screenshot"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:40:59.431Z"
+  },
+  {
+    "id": "e89b2d10-3193-4d50-9f57-783ff4df4ac4",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:41:58.934Z"
+  },
+  {
+    "id": "f43a36ab-f23d-46f8-b2f8-8933c505cf2c",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:42:16.762Z"
+  },
+  {
+    "id": "8a8f8411-6e81-4e79-8025-9cbbd7711ffa",
+    "action": "email_template.test_sent",
+    "entity": "email",
+    "entityId": "ticket.activity",
+    "changes": {
+      "to": "probe@example.com",
+      "sent": true,
+      "error": null
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:42:16.804Z"
+  },
+  {
+    "id": "f3faba83-eb83-497a-accc-897eb0cf1a9c",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "test",
+    "changes": {
+      "to": "probe@example.com",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:42:16.807Z"
+  },
+  {
+    "id": "57a1a5b8-b6be-4a9b-bd95-9a2c36230f0f",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "report.scheduled",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "A pasted screenshot travels as a cid: part rather than a data: URI.",
+          "kind": "paragraph"
+        },
+        {
+          "alt": "A pasted screenshot",
+          "src": "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+          "kind": "image"
+        },
+        {
+          "kind": "footer"
+        }
+      ],
+      "target": {
+        "kind": "sample"
+      },
+      "subject": "A pasted screenshot"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:42:16.813Z"
+  },
+  {
+    "id": "f479d2e3-fc76-44c1-82ae-a74c85fc263f",
+    "action": "email_template.test_sent",
+    "entity": "email",
+    "entityId": "report.scheduled",
+    "changes": {
+      "to": "probe@example.com",
+      "sent": true,
+      "error": null
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:42:16.820Z"
+  },
+  {
+    "id": "6944f351-e4fc-4dbe-9a62-341a0db63269",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "test",
+    "changes": {
+      "to": "probe@example.com",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "A pasted screenshot travels as a cid: part rather than a data: URI.",
+          "kind": "paragraph"
+        },
+        {
+          "alt": "A pasted screenshot",
+          "src": "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+          "kind": "image"
+        },
+        {
+          "kind": "footer"
+        }
+      ],
+      "target": {
+        "kind": "sample"
+      },
+      "subject": "A pasted screenshot"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:42:16.821Z"
+  },
+  {
+    "id": "c6c69830-df29-4a8c-94f9-966205984020",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:43:49.824Z"
+  },
+  {
+    "id": "93103192-5423-44fc-8391-e84935a5093f",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:43:57.426Z"
+  },
+  {
+    "id": "d1df180f-ad38-43fa-bee0-2562835b4f3d",
+    "action": "email_template.test_sent",
+    "entity": "email",
+    "entityId": "ticket.activity",
+    "changes": {
+      "to": "probe@example.com",
+      "sent": true,
+      "error": null
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:43:57.434Z"
+  },
+  {
+    "id": "07a6ad3b-c048-4712-a456-bfd46fe3de42",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "test",
+    "changes": {
+      "to": "probe@example.com",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:43:57.436Z"
+  },
+  {
+    "id": "00b06b3f-661a-403a-9eda-d9a362e5c677",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "report.scheduled",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "A pasted screenshot travels as a cid: part rather than a data: URI.",
+          "kind": "paragraph"
+        },
+        {
+          "alt": "A pasted screenshot",
+          "src": "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+          "kind": "image"
+        },
+        {
+          "kind": "footer"
+        }
+      ],
+      "target": {
+        "kind": "sample"
+      },
+      "subject": "A pasted screenshot"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:43:57.443Z"
+  },
+  {
+    "id": "175e6657-68c8-4d22-8c24-3d4f498692e2",
+    "action": "email_template.test_sent",
+    "entity": "email",
+    "entityId": "report.scheduled",
+    "changes": {
+      "to": "probe@example.com",
+      "sent": true,
+      "error": null
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:43:57.453Z"
+  },
+  {
+    "id": "b92cecf1-1aed-4b5b-b28c-b8dd6a049f48",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "test",
+    "changes": {
+      "to": "probe@example.com",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "A pasted screenshot travels as a cid: part rather than a data: URI.",
+          "kind": "paragraph"
+        },
+        {
+          "alt": "A pasted screenshot",
+          "src": "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",
+          "kind": "image"
+        },
+        {
+          "kind": "footer"
+        }
+      ],
+      "target": {
+        "kind": "sample"
+      },
+      "subject": "A pasted screenshot"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:43:57.455Z"
+  },
+  {
+    "id": "ddd4bf2f-14a0-4a79-b2f5-1ee80e510553",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "invoice.send",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Invoice {{invoice.number}}",
+          "level": 1
+        },
+        {
+          "html": "Amount Due:",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<span style=\"font-size:28px;font-weight:700;color:#ff5c5c\">{{invoice.total}}</span>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Due Date: <strong style=\"color:#ffffff\">{{invoice.dueDate}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "href": "{{invoice.url}}",
+          "kind": "button",
+          "label": "View & Pay Invoice"
+        }
+      ],
+      "target": {
+        "id": "e32346d9-5997-4902-9fd1-0f56ff668340",
+        "kind": "invoice"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:48:30.867Z"
+  },
+  {
+    "id": "e4cecd2e-38b0-462e-854f-634650a54479",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "invoice.send",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Invoice {{invoice.number}}",
+          "level": 1
+        },
+        {
+          "html": "Amount Due:",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<span style=\"font-size:28px;font-weight:700;color:#ff5c5c\">{{invoice.total}}</span>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Due Date: <strong style=\"color:#ffffff\">{{invoice.dueDate}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "href": "{{invoice.url}}",
+          "kind": "button",
+          "label": "View & Pay Invoice"
+        }
+      ],
+      "target": {
+        "id": "e32346d9-5997-4902-9fd1-0f56ff668340",
+        "kind": "invoice"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:48:31.220Z"
+  },
+  {
+    "id": "f9034cc5-3ea3-4570-961c-f961d3d68f34",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:49:44.526Z"
+  },
+  {
+    "id": "b41e52ac-ddc0-491b-802b-6a48b9c2ddf7",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:50:56.382Z"
+  },
+  {
+    "id": "1c7a8702-69be-4dc6-a8ad-808af91fde9d",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.note",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:50:56.390Z"
+  },
+  {
+    "id": "b23113f6-b118-4448-8b29-a2f9eaab0662",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "invoice.send",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:50:56.396Z"
+  },
+  {
+    "id": "b9dbcd38-4080-40c7-b22d-d6a7d274e53e",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "invoice.overdue",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:50:56.402Z"
+  },
+  {
+    "id": "282639a6-1bd6-4942-b744-161d633ddbc3",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.reopened_internal",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:50:56.409Z"
+  },
+  {
+    "id": "ff7c73b4-c0f7-49d7-bfa2-22d00497b819",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.follow_up",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:50:56.416Z"
+  },
+  {
+    "id": "681e4755-d8ce-4df6-8bc0-feb1140fa433",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "report.scheduled",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:50:56.422Z"
+  },
+  {
+    "id": "232e8226-ae86-4b88-94e4-8e7f62b56021",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "quote.send",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:50:56.429Z"
+  },
+  {
+    "id": "cab574f1-3005-4c71-9a40-e0731f85271f",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "auth.mfa_code",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:50:56.435Z"
+  },
+  {
+    "id": "68bff64d-5fdd-45a2-a0af-35494b720c53",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "user.invite",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:50:56.440Z"
+  },
+  {
+    "id": "f959281a-55c8-4aac-ac8e-15346f716f36",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "report.scheduled",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "kind": "heading",
+          "text": "What changed",
+          "level": 2
+        },
+        {
+          "html": "A paragraph long enough to wrap more than once at 375px, so the line length can be judged rather than guessed. It carries a <a href=\"https://demo.c7ntax.example/tickets/MSP-1001-1001\">link to the ticket</a> as well.",
+          "kind": "paragraph"
+        },
+        {
+          "kind": "facts",
+          "items": [
+            {
+              "label": "Report",
+              "value": "Monthly Ticket Volume"
+            },
+            {
+              "label": "Schedule",
+              "value": "weekly · Monday · 06:00"
+            },
+            {
+              "label": "Format",
+              "value": "PDF"
+            }
+          ],
+          "title": "The run"
+        },
+        {
+          "html": "This is still happening — the queue built up again overnight, and it only clears when the connector is restarted. Nobody is watching it out of hours.",
+          "kind": "quote",
+          "title": "The client's reply",
+          "source": "David Chen, Acme Corporation"
+        },
+        {
+          "kind": "table",
+          "rows": [
+            [
+              "Managed firewall licence renewal for the head office",
+              "1",
+              "$1,240.00"
+            ],
+            [
+              "On-site support, half day",
+              "1",
+              "$650.00"
+            ],
+            [
+              "Total",
+              "",
+              "$1,890.00"
+            ]
+          ],
+          "title": "Line items",
+          "columns": [
+            "Description",
+            "Qty",
+            "Amount"
+          ]
+        },
+        {
+          "kind": "note",
+          "text": "The portal will be briefly unavailable on Saturday morning while the certificates are replaced.",
+          "tone": "warn"
+        },
+        {
+          "kind": "note",
+          "text": "The queue is draining again, and no messages were lost.",
+          "tone": "good"
+        },
+        {
+          "alt": "The queue, draining",
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAADwCAIAAADXdz0mAAAElElEQVR4nO3WMQ0AMAzAsHIagoEofyqDkWOWDCBn5twFAIDE5AUAAHzLjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGQe1++gi6n1R80AAAAASUVORK5CYII=",
+          "kind": "image"
+        },
+        {
+          "href": "https://demo.c7ntax.example/tickets/MSP-1001-1001",
+          "kind": "button",
+          "label": "Open the ticket in the portal"
+        },
+        {
+          "kind": "divider"
+        },
+        {
+          "kind": "attachment",
+          "name": "queue-report-2026-10-09.csv",
+          "note": "generated when the report runs"
+        },
+        {
+          "kind": "signature"
+        },
+        {
+          "kind": "footer"
+        }
+      ],
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:50:56.451Z"
+  },
+  {
+    "id": "b662b3db-a18e-4786-8589-0ed2ce184977",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.note",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "kind": "heading",
+          "text": "What changed",
+          "level": 2
+        },
+        {
+          "html": "A paragraph long enough to wrap more than once at 375px, so the line length can be judged rather than guessed. It carries a <a href=\"https://demo.c7ntax.example/tickets/MSP-1001-1001\">link to the ticket</a> as well.",
+          "kind": "paragraph"
+        },
+        {
+          "kind": "facts",
+          "items": [
+            {
+              "label": "Report",
+              "value": "Monthly Ticket Volume"
+            },
+            {
+              "label": "Schedule",
+              "value": "weekly · Monday · 06:00"
+            },
+            {
+              "label": "Format",
+              "value": "PDF"
+            }
+          ],
+          "title": "The run"
+        },
+        {
+          "html": "This is still happening — the queue built up again overnight, and it only clears when the connector is restarted. Nobody is watching it out of hours.",
+          "kind": "quote",
+          "title": "The client's reply",
+          "source": "David Chen, Acme Corporation"
+        },
+        {
+          "kind": "table",
+          "rows": [
+            [
+              "Managed firewall licence renewal for the head office",
+              "1",
+              "$1,240.00"
+            ],
+            [
+              "On-site support, half day",
+              "1",
+              "$650.00"
+            ],
+            [
+              "Total",
+              "",
+              "$1,890.00"
+            ]
+          ],
+          "title": "Line items",
+          "columns": [
+            "Description",
+            "Qty",
+            "Amount"
+          ]
+        },
+        {
+          "kind": "note",
+          "text": "The portal will be briefly unavailable on Saturday morning while the certificates are replaced.",
+          "tone": "warn"
+        },
+        {
+          "kind": "note",
+          "text": "The queue is draining again, and no messages were lost.",
+          "tone": "good"
+        },
+        {
+          "alt": "The queue, draining",
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAADwCAIAAADXdz0mAAAElElEQVR4nO3WMQ0AMAzAsHIagoEofyqDkWOWDCBn5twFAIDE5AUAAHzLjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGQe1++gi6n1R80AAAAASUVORK5CYII=",
+          "kind": "image"
+        },
+        {
+          "href": "https://demo.c7ntax.example/tickets/MSP-1001-1001",
+          "kind": "button",
+          "label": "Open the ticket in the portal"
+        },
+        {
+          "kind": "divider"
+        },
+        {
+          "kind": "attachment",
+          "name": "queue-report-2026-10-09.csv",
+          "note": "generated when the report runs"
+        },
+        {
+          "kind": "signature"
+        },
+        {
+          "kind": "footer"
+        }
+      ],
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:50:56.458Z"
+  },
+  {
+    "id": "8459add8-7757-4392-b266-cf45ad549b38",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:53:04.283Z"
+  },
+  {
+    "id": "86ade710-a63c-4f5f-9f9e-4d194ccaca95",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:54:59.966Z"
+  },
+  {
+    "id": "003159f4-c8e6-497c-a010-deb9cf1d0aaa",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.note",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:54:59.973Z"
+  },
+  {
+    "id": "1b61fd85-13d4-4162-a1de-2813e1b0742a",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "invoice.send",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:54:59.979Z"
+  },
+  {
+    "id": "280b3c54-c230-45bd-9ce5-e3b7585db752",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "invoice.overdue",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:54:59.986Z"
+  },
+  {
+    "id": "6d1c4bb5-428d-43e2-956e-21c56c8a5250",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.reopened_internal",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:54:59.993Z"
+  },
+  {
+    "id": "6d5450ed-ed32-47e3-b907-52f6d4b5d2bf",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.follow_up",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:55:00.000Z"
+  },
+  {
+    "id": "64b16e24-4b7e-438c-986f-bb4cd820ffb5",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "report.scheduled",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:55:00.008Z"
+  },
+  {
+    "id": "5200c567-7147-416d-8182-836116ce1a2b",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "quote.send",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:55:00.016Z"
+  },
+  {
+    "id": "38a9734e-c8b9-4545-9b89-480c9debe0d2",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "auth.mfa_code",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:55:00.025Z"
+  },
+  {
+    "id": "57d99110-b371-4d4e-abf0-8de9909acc1b",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "user.invite",
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:55:00.032Z"
+  },
+  {
+    "id": "598a5192-ce83-4464-bed6-de21aa0df955",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "report.scheduled",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "kind": "heading",
+          "text": "What changed",
+          "level": 2
+        },
+        {
+          "html": "A paragraph long enough to wrap more than once at 375px, so the line length can be judged rather than guessed. It carries a <a href=\"https://demo.c7ntax.example/tickets/MSP-1001-1001\">link to the ticket</a> as well.",
+          "kind": "paragraph"
+        },
+        {
+          "kind": "facts",
+          "items": [
+            {
+              "label": "Report",
+              "value": "Monthly Ticket Volume"
+            },
+            {
+              "label": "Schedule",
+              "value": "weekly · Monday · 06:00"
+            },
+            {
+              "label": "Format",
+              "value": "PDF"
+            }
+          ],
+          "title": "The run"
+        },
+        {
+          "html": "This is still happening — the queue built up again overnight, and it only clears when the connector is restarted. Nobody is watching it out of hours.",
+          "kind": "quote",
+          "title": "The client's reply",
+          "source": "David Chen, Acme Corporation"
+        },
+        {
+          "kind": "table",
+          "rows": [
+            [
+              "Managed firewall licence renewal for the head office",
+              "1",
+              "$1,240.00"
+            ],
+            [
+              "On-site support, half day",
+              "1",
+              "$650.00"
+            ],
+            [
+              "Total",
+              "",
+              "$1,890.00"
+            ]
+          ],
+          "title": "Line items",
+          "columns": [
+            "Description",
+            "Qty",
+            "Amount"
+          ]
+        },
+        {
+          "kind": "note",
+          "text": "The portal will be briefly unavailable on Saturday morning while the certificates are replaced.",
+          "tone": "warn"
+        },
+        {
+          "kind": "note",
+          "text": "The queue is draining again, and no messages were lost.",
+          "tone": "good"
+        },
+        {
+          "alt": "The queue, draining",
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAADwCAIAAADXdz0mAAAElElEQVR4nO3WMQ0AMAzAsHIagoEofyqDkWOWDCBn5twFAIDE5AUAAHzLjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGQe1++gi6n1R80AAAAASUVORK5CYII=",
+          "kind": "image"
+        },
+        {
+          "href": "https://demo.c7ntax.example/tickets/MSP-1001-1001",
+          "kind": "button",
+          "label": "Open the ticket in the portal"
+        },
+        {
+          "kind": "divider"
+        },
+        {
+          "kind": "attachment",
+          "name": "queue-report-2026-10-09.csv",
+          "note": "generated when the report runs"
+        },
+        {
+          "kind": "signature"
+        },
+        {
+          "kind": "footer"
+        }
+      ],
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:55:00.043Z"
+  },
+  {
+    "id": "34d2a625-38a8-4ac2-a52c-7f427da335ed",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.note",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "kind": "heading",
+          "text": "What changed",
+          "level": 2
+        },
+        {
+          "html": "A paragraph long enough to wrap more than once at 375px, so the line length can be judged rather than guessed. It carries a <a href=\"https://demo.c7ntax.example/tickets/MSP-1001-1001\">link to the ticket</a> as well.",
+          "kind": "paragraph"
+        },
+        {
+          "kind": "facts",
+          "items": [
+            {
+              "label": "Report",
+              "value": "Monthly Ticket Volume"
+            },
+            {
+              "label": "Schedule",
+              "value": "weekly · Monday · 06:00"
+            },
+            {
+              "label": "Format",
+              "value": "PDF"
+            }
+          ],
+          "title": "The run"
+        },
+        {
+          "html": "This is still happening — the queue built up again overnight, and it only clears when the connector is restarted. Nobody is watching it out of hours.",
+          "kind": "quote",
+          "title": "The client's reply",
+          "source": "David Chen, Acme Corporation"
+        },
+        {
+          "kind": "table",
+          "rows": [
+            [
+              "Managed firewall licence renewal for the head office",
+              "1",
+              "$1,240.00"
+            ],
+            [
+              "On-site support, half day",
+              "1",
+              "$650.00"
+            ],
+            [
+              "Total",
+              "",
+              "$1,890.00"
+            ]
+          ],
+          "title": "Line items",
+          "columns": [
+            "Description",
+            "Qty",
+            "Amount"
+          ]
+        },
+        {
+          "kind": "note",
+          "text": "The portal will be briefly unavailable on Saturday morning while the certificates are replaced.",
+          "tone": "warn"
+        },
+        {
+          "kind": "note",
+          "text": "The queue is draining again, and no messages were lost.",
+          "tone": "good"
+        },
+        {
+          "alt": "The queue, draining",
+          "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA4QAAADwCAIAAADXdz0mAAAElElEQVR4nO3WMQ0AMAzAsHIagoEofyqDkWOWDCBn5twFAIDE5AUAAHzLjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGTMKAAAGTMKAEDGjAIAkDGjAABkzCgAABkzCgBAxowCAJAxowAAZMwoAAAZMwoAQMaMAgCQMaMAAGQe1++gi6n1R80AAAAASUVORK5CYII=",
+          "kind": "image"
+        },
+        {
+          "href": "https://demo.c7ntax.example/tickets/MSP-1001-1001",
+          "kind": "button",
+          "label": "Open the ticket in the portal"
+        },
+        {
+          "kind": "divider"
+        },
+        {
+          "kind": "attachment",
+          "name": "queue-report-2026-10-09.csv",
+          "note": "generated when the report runs"
+        },
+        {
+          "kind": "signature"
+        },
+        {
+          "kind": "footer"
+        }
+      ],
+      "target": {
+        "kind": "sample"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T03:55:00.054Z"
+  },
+  {
+    "id": "81c37ff3-9672-4009-ac25-422e8508185e",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T04:08:52.769Z"
+  },
+  {
+    "id": "7bb875ce-45c6-4f27-afe5-abf262351d86",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T04:16:37.780Z"
+  },
+  {
+    "id": "e5dc2aa0-e555-4fc0-8ae6-2f826b35e86a",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "invoice.send",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Invoice {{invoice.number}}",
+          "level": 1
+        },
+        {
+          "html": "Amount Due:",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<span style=\"font-size:28px;font-weight:700;color:#ff5c5c\">{{invoice.total}}</span>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Due Date: <strong style=\"color:#ffffff\">{{invoice.dueDate}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "href": "{{invoice.url}}",
+          "kind": "button",
+          "label": "View & Pay Invoice"
+        }
+      ],
+      "target": {
+        "id": "e32346d9-5997-4902-9fd1-0f56ff668340",
+        "kind": "invoice"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T04:16:58.391Z"
+  },
+  {
+    "id": "b76d4ce1-e5c1-4706-978f-7a80ef1a9483",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "invoice.send",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Invoice {{invoice.number}}",
+          "level": 1
+        },
+        {
+          "html": "Amount Due:",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<span style=\"font-size:28px;font-weight:700;color:#ff5c5c\">{{invoice.total}}</span>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Due Date: <strong style=\"color:#ffffff\">{{invoice.dueDate}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "href": "{{invoice.url}}",
+          "kind": "button",
+          "label": "View & Pay Invoice"
+        }
+      ],
+      "target": {
+        "id": "e32346d9-5997-4902-9fd1-0f56ff668340",
+        "kind": "invoice"
+      }
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T04:16:58.740Z"
+  },
+  {
+    "id": "2cb4cc6c-38f0-48ed-b580-62f5b0b4a2de",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T04:20:50.200Z"
+  },
+  {
+    "id": "f9d637bb-b5d5-4136-80ac-78f6c731bf3d",
+    "action": "email:create",
+    "entity": "email",
+    "entityId": "preview",
+    "changes": {
+      "key": "ticket.activity",
+      "blocks": [
+        {
+          "kind": "heading",
+          "text": "Ticket Update",
+          "level": 1
+        },
+        {
+          "html": "{{message.greeting}}",
+          "kind": "paragraph"
+        },
+        {
+          "html": "Ticket <strong style=\"color:#ffffff\">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "<strong style=\"color:#ffffff\">{{event.label}}</strong>",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{note.body}}",
+          "kind": "quote"
+        },
+        {
+          "html": "If you have any questions, simply reply to this email.",
+          "kind": "paragraph"
+        },
+        {
+          "html": "{{message.clientLine}}",
+          "kind": "paragraph"
+        }
+      ],
+      "target": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "context": {
+        "id": "fc781390-5fb5-4758-ae49-a1c9555d4ccf",
+        "kind": "ticket"
+      },
+      "subject": "[{{ticket.number}}] {{event.label}} — {{ticket.title}}"
+    },
+    "userId": "8c30a256-55ea-4650-8fb5-58a336b1bf8b",
+    "ipAddress": "::1",
+    "createdAt": "2026-10-10T04:22:53.210Z"
   }
 ]

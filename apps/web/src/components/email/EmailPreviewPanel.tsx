@@ -8,154 +8,82 @@
  * failed and draws **nothing** in either frame, rather than drawing a plausible message that no
  * send path would produce.
  *
- * **The two frames are two arrangements, not one squeezed.** Each frame is an iframe whose viewport
- * *is* the width being asked about — 520 px, the width the message is mailed at, and 340 px, the width
- * it is most often opened at — so the mobile frame is a different arrangement by computed style rather
- * than by eye: inside it the fact pairs and the invoice lines stack to one column, the call to action
- * becomes a full-width target because a thumb is not a cursor, and the body padding comes in so the
- * blocks keep a readable measure. A phone frame holding the 520 px layout would answer no question
- * anybody has.
+ * **Two widths, and neither is a setting.** A frame is a *viewport*: 600 px is the measure the message's
+ * body is drawn at and 375 px is an iPhone SE/13 mini class screen, so the mobile frame is a different
+ * arrangement by computed style rather than by eye. The frame component and the two honest sentences
+ * about it live in `emailMailFrame.tsx`, shared with the send sheet and the simulation window, because
+ * three surfaces looking at one message must not describe the widths three ways.
  *
- * Two interfaces, two arrangements: the modern screen shows both widths at once, because the question
- * being asked is *"does it still read on a phone"* and a select answers it one click at a time. The
- * classic screen is a Record select and a Preview button opening a dialog with a Width select — the
- * classic way to ask the same question.
+ * **The frames follow their content.** Their height is measured from the frame's own document rather
+ * than fixed, so a short message is a short frame. A fixed height is what leaves a few hundred pixels of
+ * nothing under the message, which reads as a panel nobody finished.
+ *
+ * **Simulate** opens the same message at both widths in a window of its own, where there is room for the
+ * two devices side by side — `EmailSimulation.tsx`. Same frames, same renderer, same words; it differs
+ * only in having somewhere to put them.
+ *
+ * Two interfaces, two arrangements: the modern screen draws both widths at once, because the question
+ * being asked is *"does it still read on a phone"* and showing both answers it in one look. The classic
+ * screen is a Record select and a Preview button opening a dialog with a Width select, with Simulate
+ * beside them — the classic way to ask the same question, one width at a time.
  */
 import { useEffect, useState } from "react";
-import { Eye, Mail, Paperclip, Smartphone } from "lucide-react";
+import { Mail, Monitor, Paperclip, Smartphone } from "lucide-react";
 import type { EmailBlock } from "@C7NTAX/shared";
 import { useRedesign } from "../../hooks/useNavigationStyle";
 import { Band, MonoTm, StateChip, UnavailablePanel, plural } from "./emailChrome";
-import { EMAIL_RECORDS } from "./emailRecords";
+import { EMAIL_RECORDS, resolveFields } from "./emailRecords";
 import { compareTextFacts } from "./emailBlocks";
 import type { PreviewState } from "./emailStudioApi";
+import { MAIL_DEVICES, MailFrame, type MailDevice } from "./emailMailFrame";
+import { EmailSimulation, type SimulationMessage } from "./EmailSimulation";
 
 /**
- * The email's own viewport, plus the phone refinements the mockup draws as `.mail--mobile`.
- *
- * A media query rather than a transform, because the iframe's width *is* the phone's width — so the
- * rules cannot reach the 520 px frame, and what the reader sees at each width is what the layout
- * genuinely does at that width.
+ * What a frame says when the renderer did not answer. One sentence for both widths, because the fact is
+ * the same fact: the width is real and the words are not.
  */
-function frameDocument(html: string): string {
-  /*
-   * The frame is a **mail document**, so it must not follow this application's theme — the same reason
-   * `.print-letterhead` uses literal colours. It gets there without a colour literal: `color-scheme: light`
-   * makes the `canvas` and `canvastext` system colours resolve to the white page and black text a mail
-   * client shows, whatever theme, palette or density the person reading this screen has chosen.
-   */
-  return [
-    "<!DOCTYPE html><html><head><meta charset=\"utf-8\">",
-    "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
-    "<meta name=\"color-scheme\" content=\"light\">",
-    "<style>",
-    "html{color-scheme:light;}",
-    "html,body{margin:0;padding:0;background:canvas;color:canvastext;}",
-    "body{font:14px/1.5 -apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;padding:8px;}",
-    "@media (max-width:420px){",
-    "  body{padding:6px 16px;font-size:15px;}",
-    "  table{width:100% !important;border-collapse:collapse;}",
-    "  table tr{display:block !important;}",
-    "  table td,table th{display:block !important;width:auto !important;text-align:left !important;}",
-    "  dl{display:block !important;}",
-    "  dl dt,dl dd{display:block !important;width:auto !important;margin:0 !important;}",
-    "  dl dt{margin-top:6px !important;}",
-    "  a{display:block !important;width:100% !important;box-sizing:border-box;text-align:center !important;}",
-    "}",
-    "</style></head><body>",
-    html,
-    "</body></html>",
-  ].join("\n");
-}
+const NO_MESSAGE =
+  "The renderer did not answer, so this frame holds a layout sample rather than the message. The width is real; the words are not.";
 
-function Frame({
-  title,
-  width,
+/**
+ * One device's card: the honest label, the viewport itself, and the sentence about what it is for.
+ *
+ * The head says `600 px — desktop`, which is the **viewport**; the note says so in words. The two used to
+ * describe the number as "the width the message is mailed at", which is a claim about the mail path that
+ * nothing in the product makes. The card hugs its frame (`w-fit`) so that a row of two devices reads as
+ * two devices rather than as two columns stretched to the same width — and so the phone frame cannot be
+ * silently narrowed, which is the one thing that would stop it being a phone.
+ */
+function FrameCard({
+  device,
   html,
-  phone,
   placeholder,
 }: {
-  title: string;
-  width: number;
-  /** The API's own HTML. Absent when the renderer did not answer. */
+  device: MailDevice;
   html: string | null;
-  phone?: boolean;
-  /** Why there is no message in the frame, when there is not. */
+  /** Why there is a layout sample in the frame instead of the message, when there is. */
   placeholder?: string;
 }) {
   return (
-    <div className="card !p-0">
+    <div className="card w-fit max-w-full !p-0">
       <div className="flex flex-wrap items-center gap-2 border-b border-surface-border px-3.5 py-2">
-        {phone ? <Smartphone size={14} className="text-gray-400" /> : <Eye size={14} className="text-cyber-400" />}
-        <span className="text-xs font-semibold text-white">{title}</span>
-        <span className="ml-auto font-mono text-[11px] text-gray-500">{width} px</span>
+        {device === "mobile" ? (
+          <Smartphone size={14} className="text-gray-400" />
+        ) : (
+          <Monitor size={14} className="text-cyber-400" />
+        )}
+        <span className="text-xs font-semibold text-white">{MAIL_DEVICES[device].label}</span>
       </div>
       <div className="overflow-x-auto p-3">
-        {/*
-          * `allow-same-origin` and deliberately **not** `allow-scripts`: the message's own scripts can
-          * never run in here, and the frame's document stays readable so the two widths can be checked by
-          * computed style — which is the only way to check that the phone frame is an arrangement rather
-          * than a narrower copy of the desktop one.
-          */}
-        <iframe
-          title={`${title} — ${html ? "rendered by the API" : "a width frame, without the message"}`}
-          srcDoc={frameDocument(html ?? layoutSample(width))}
-          sandbox="allow-same-origin"
-          data-frame-width={width}
-          data-frame-content={html ? "message" : "layout-sample"}
-          style={{ width, height: 420 }}
-          className="block max-w-full rounded-lg border border-surface-border"
-        />
+        <MailFrame device={device} html={html} title={MAIL_DEVICES[device].label} className="w-fit" />
       </div>
-      <p className="border-t border-surface-border px-3.5 py-2 text-[11px] leading-relaxed text-gray-500">
-        {placeholder
-          ? placeholder
-          : phone
-            ? "Reflowed rather than squeezed: the fact pairs and any table columns stack to one column, the call to action fills the width, and the padding comes in."
-            : "The width the message is mailed at. The API's own HTML, in a frame this wide."}
+      <p className="max-w-[560px] border-t border-surface-border px-3.5 py-2 text-[11px] leading-relaxed text-gray-500">
+        {placeholder ?? MAIL_DEVICES[device].note}
       </p>
     </div>
   );
 }
 
-/**
- * What is inside a frame when the renderer has not answered: **a layout sample, never a message.**
- *
- * Drawing the widths matters — they are the question the preview exists to ask, and the phone frame is
- * an arrangement rather than a narrower copy of the desktop one. Drawing the *message* does not: that
- * would be a second renderer, and the preview would stop being the thing that goes out. So the sample is
- * a table and a fact list, which is what actually has to reflow, and the frame says what it is.
- */
-function layoutSample(width: number): string {
-  /*
-   * No colour literal anywhere in it: the sample is drawn with `currentColor`, `opacity` and the two
-   * system colour keywords the frame already sets, so the guard that refuses a hex outside the print
-   * document and the user's own colours is satisfied — and there is nothing here to read as copy.
-   */
-  const rule = 'border-bottom:1px solid';
-  const cell = "padding:4px 12px 4px 0;font-size:12px";
-  return [
-    '<div style="max-width:480px">',
-    '<h2 style="margin:0 0 10px;font-size:17px">The message is not drawn here</h2>',
-    '<p style="opacity:.75;margin:0 0 14px;font-size:13px">',
-    `This is a ${width} px frame with a layout sample in it, not the message. The message comes from the one`,
-    " renderer and it did not answer — so what is inside is what has to reflow, and nothing that reads as copy.",
-    "</p>",
-    "<table><thead><tr>",
-    `<th style="${cell};${rule};text-align:left">Line</th>`,
-    `<th style="${cell};${rule};text-align:left">Amount</th>`,
-    "</tr></thead><tbody>",
-    `<tr><td style="${cell};${rule}">A managed-services line</td><td style="${cell};${rule}">$0.00</td></tr>`,
-    `<tr><td style="${cell};${rule}">Tax</td><td style="${cell};${rule}">$0.00</td></tr>`,
-    "</tbody></table>",
-    '<dl style="margin:14px 0 0;font-size:12px">',
-    '<dt style="opacity:.7;font-size:11px">Status</dt><dd style="margin:0 0 6px">one column on a phone</dd>',
-    '<dt style="opacity:.7;font-size:11px">Priority</dt><dd style="margin:0 0 6px">label above value</dd>',
-    "</dl>",
-    '<p style="margin:16px 0 0"><span style="display:inline-block;border:1px solid;border-radius:6px;padding:10px 18px;font-size:13px">a full-width target on a phone</span></p>',
-    "</div>",
-  ].join("\n");
-}
 
 function TextPart({ text, derived, html }: { text: string; derived: string; html: string }) {
   const overridden = text !== derived;
@@ -227,6 +155,8 @@ function Attachments({ files, allowed }: { files: { filename: string; contentTyp
 
 export interface EmailPreviewProps {
   messageKey: string;
+  /** The message's own name from the catalogue, so a simulation is identifiable in a screenshot. */
+  messageName?: string | null;
   subject: string;
   blocks: EmailBlock[];
   /** The derived text part, for use when the renderer has not answered. */
@@ -243,10 +173,46 @@ export interface EmailPreviewProps {
   onTestAddress: (value: string) => void;
 }
 
+/**
+ * The panel's state as the simulation wants it.
+ *
+ * Written once, so the Simulate control in either arrangement opens the same window — and so the window
+ * cannot claim a fact the panel does not: the key, the record, the resolved subject and the renderer's
+ * own two parts all come from here.
+ */
+function simulationOf(props: EmailPreviewProps): SimulationMessage {
+  const answer = props.preview.status === "ok" ? props.preview.data : null;
+  return {
+    messageKey: props.messageKey,
+    messageName: props.messageName ?? null,
+    recordId: props.recordId,
+    /*
+     * The renderer's own resolved subject when it answered, and the draft's subject with the fields
+     * resolved here when it did not — the same fallback the derived text part already uses in that state,
+     * and never the raw `{{ticket.number}}` tokens in a window somebody is about to screenshot.
+     */
+    subject: answer?.subject || resolveFields(props.subject, props.recordId) || null,
+    html: answer?.html ?? null,
+    text: answer?.text ?? null,
+    derivedText: answer?.derivedText ?? props.derivedText,
+    warnings: answer?.warnings ?? [],
+    failure:
+      props.preview.status === "unavailable"
+        ? {
+            message: props.preview.message ?? "The preview could not be rendered.",
+            endpoint: "POST /api/email/preview",
+            onRetry: props.onRender,
+          }
+        : null,
+    loading: props.preview.status === "loading" || props.preview.status === "idle",
+  };
+}
+
 export function EmailPreviewPanel(props: EmailPreviewProps) {
   const redesign = useRedesign();
   const { preview } = props;
   const answer = preview.status === "ok" ? preview.data : null;
+  const simulation = simulationOf(props);
 
   if (redesign) {
     return (
@@ -280,6 +246,8 @@ export function EmailPreviewPanel(props: EmailPreviewProps) {
             <button type="button" className="btn-secondary text-xs" onClick={props.onRender}>
               Render again
             </button>
+            {/* Beside Render again, because it renders the same thing — in somewhere with room for it. */}
+            <EmailSimulation {...simulation} className="btn-secondary text-xs" />
           </span>
         </div>
 
@@ -306,28 +274,11 @@ export function EmailPreviewPanel(props: EmailPreviewProps) {
           />
         )}
 
-        <div className="grid gap-3.5 xl:grid-cols-2">
-          <Frame
-            title="Desktop — the width it is mailed at"
-            width={520}
-            html={answer?.html ?? null}
-            placeholder={
-              answer
-                ? undefined
-                : "The renderer did not answer, so this frame holds a layout sample rather than the message. The width is real; the words are not."
-            }
-          />
-          <Frame
-            title="Mobile — the reflowing arrangement"
-            width={340}
-            html={answer?.html ?? null}
-            phone
-            placeholder={
-              answer
-                ? undefined
-                : "A different arrangement, not a narrower one: inside a 340 px viewport the table columns and the fact pairs stack to one column and the call to action fills the width. The sample shows that; the message is not drawn."
-            }
-          />
+        {/* The two devices wrap rather than share a grid: each card is its frame's own width, so the
+          * desktop card is never squeezed below the measure the message is drawn at. */}
+        <div className="flex flex-wrap items-start gap-3.5">
+          <FrameCard device="desktop" html={answer?.html ?? null} placeholder={answer ? undefined : NO_MESSAGE} />
+          <FrameCard device="mobile" html={answer?.html ?? null} placeholder={answer ? undefined : NO_MESSAGE} />
         </div>
 
         {answer && answer.warnings.length > 0 && (
@@ -406,9 +357,22 @@ function TestSend(props: EmailPreviewProps) {
   );
 }
 
+/**
+ * The classic arrangement: a form, and one width at a time.
+ *
+ * A Record `<select>` and a Preview button opening a dialog with a Width select — the classic way to ask
+ * "does it still read on a phone", one width per look, because a form is read top to bottom once rather
+ * than scanned. **Simulate sits in the same control row** and takes the same handler as the modern
+ * control; it is the one action here that shows both widths at once, and that is why it is the one that
+ * opens a window of its own.
+ *
+ * The widths the dialog offers are the viewport's own — 600 px and 375 px — and the caption under the
+ * frame is the shared sentence from `emailMailFrame.tsx`, so the classic frame and the modern frame
+ * cannot describe the same number differently.
+ */
 function ClassicPreview(props: EmailPreviewProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [width, setWidth] = useState<"desktop" | "mobile">("desktop");
+  const [width, setWidth] = useState<MailDevice>("desktop");
   const answer = props.preview.status === "ok" ? props.preview.data : null;
 
   useEffect(() => {
@@ -444,19 +408,21 @@ function ClassicPreview(props: EmailPreviewProps) {
               {(["desktop", "mobile"] as const).map((option) => (
                 <label key={option} className="flex items-center gap-1.5 text-gray-300">
                   <input type="radio" name="preview-width" checked={width === option} onChange={() => setWidth(option)} />
-                  {option === "desktop" ? "Desktop (520 px)" : "Mobile (340 px)"}
+                  {MAIL_DEVICES[option].label}
                 </label>
               ))}
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button type="submit" className="btn-primary" disabled={props.preview.status === "loading"}>
             {props.preview.status === "loading" ? "Rendering…" : "Preview"}
           </button>
           <button type="button" className="btn-secondary" onClick={() => setDialogOpen(true)} disabled={!answer}>
             Open the rendered message
           </button>
+          {/* The panel's own control row: the same handler, the same window as the modern control. */}
+          <EmailSimulation {...simulationOf(props)} className="btn-secondary text-sm" />
           <span className="text-xs text-gray-500">
             {answer ? "The API's own HTML, rendered when you pressed Preview." : "Nothing rendered yet."}
           </span>
@@ -491,26 +457,23 @@ function ClassicPreview(props: EmailPreviewProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-label="Rendered message">
           <div className="card max-h-[90vh] w-full max-w-3xl overflow-auto !p-0">
             <div className="flex flex-wrap items-center gap-3 border-b border-surface-border px-4 py-3">
-              <h3 className="text-sm font-semibold text-white">
-                {props.messageKey} — {width === "desktop" ? "desktop, 520 px" : "mobile, 340 px"}
-              </h3>
+              <h3 className="text-sm font-semibold text-white">Rendered message</h3>
+              <span className="font-mono text-[11px] text-gray-500">{props.messageKey}</span>
+              <span className="chip">{MAIL_DEVICES[width].label}</span>
               <button type="button" className="btn-secondary ml-auto text-xs" onClick={() => setDialogOpen(false)}>
                 Close
               </button>
             </div>
             <div className="flex justify-center overflow-x-auto p-4">
-              <iframe
-                title="Rendered message"
-                srcDoc={frameDocument(answer.html)}
-                sandbox="allow-same-origin"
-                style={{ width: width === "desktop" ? 520 : 340, height: 600 }}
-                className="block max-w-full rounded-lg border border-surface-border"
+              <MailFrame
+                device={width}
+                html={answer.html}
+                title={`Rendered message — ${MAIL_DEVICES[width].label}`}
+                className="w-fit"
               />
             </div>
-            <p className="border-t border-surface-border px-4 py-2 text-[11px] text-gray-500">
-              {width === "desktop"
-                ? "The width the message is mailed at."
-                : "Reflowed rather than squeezed: columns stack, the call to action fills the width, the padding comes in."}
+            <p className="max-w-[640px] border-t border-surface-border px-4 py-2 text-[11px] leading-relaxed text-gray-500">
+              {MAIL_DEVICES[width].note}
             </p>
           </div>
         </div>

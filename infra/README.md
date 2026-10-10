@@ -30,10 +30,15 @@ built again. PLAN-016 §16 is the full description of that model.
 > deployment — the bootstrap image's port is handled, ingress `traffic` restates the serving revision
 > instead of being omitted, and the pipeline's migration step uses the app's user-assigned identity.
 > Two things only a subscription can settle: whether the bootstrap image answers the probe's path on
-> port 80, and the port hand-off on the first `-Create` run — the script's `--target-port` is confirmed
-> against the CLI's own command module, but a probe's `port` belongs to the revision template, so the
-> ingress port moves and the probes do not until the next Bicep run. Review §4's option (b) — create
-> the app only against the real tag — avoids the hand-off altogether and is the cleaner fix.
+> port 80, and the port hand-off on the first `-Create` run — a probe's `port` belongs to the revision
+> template, so the ingress port moves and the probes do not until the next Bicep run. Review §4's
+> option (b) — create the app only against the real tag — avoids the hand-off altogether and is the
+> cleaner fix.
+>
+> **Correction (round 3).** This section used to say the script's `--target-port` was "confirmed
+> against the CLI's own command module". It was not, and `az containerapp update` rejects it:
+> `ERROR: unrecognized arguments: --target-port 4000`. The port is set by a separate
+> `az containerapp ingress update --target-port 4000`. See `PlanDocs/PLAN-030-Review-Round-3.md`.
 
 ## What is in the package
 
@@ -213,7 +218,7 @@ Three levels, fastest first:
 ```powershell
 # 1. Traffic back to the previous revision (seconds, no rebuild)
 az containerapp revision list --name c7ntax-prod --resource-group rg-c7ntax-prod -o table
-az containerapp ingress traffic set --name c7ntax-prod --resource-group rg-c7ntax-prod --revision <previous> --weight 100
+az containerapp ingress traffic set --name c7ntax-prod --resource-group rg-c7ntax-prod --revision-weight <previous-revision-name>=100
 
 # 2. Previous image tag (that tag already exists, so -SkipBuild deploys it as it is —
 #    without it the script refuses rather than rebuilding and overwriting the tag)

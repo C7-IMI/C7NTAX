@@ -74,8 +74,11 @@ version: changing the password invalidates tokens issued before it.
 `GET /api/auth/client-ip` answers with the address the server sees the connection arriving from. It is
 unauthenticated on purpose — it is what the sign-in screen shows, and the same value the session record
 and the audit trail carry, so a support conversation about "sign-in fails from the office but works from
-home" can compare the two. While `trust proxy` is unset it is the socket address, which behind a reverse
-proxy is the proxy's own until that is configured.
+home" can compare the two. It answers with `req.ip`, and how much of a forwarded header goes into that
+is `TRUST_PROXY`: unset — the default on a dev machine — it is the socket address; on a deployment it is
+set to the number of proxies in front of the app (`1` for the Container Apps ingress, `2` once Front
+Door precedes it), so the address is the caller's rather than a proxy's. The rate limiter buckets on
+this same value, so it also decides who shares a limit with whom.
 
 Signing in is rate limited hard (see §5), and a wrong password repeatedly will lock the account. For
 anything unattended, use an API key.

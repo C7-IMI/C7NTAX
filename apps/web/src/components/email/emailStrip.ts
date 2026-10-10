@@ -14,7 +14,7 @@
  *  · **dropped** — `script`, `style`, `iframe`, `object`, `embed`, `form`, `svg` and `template` are
  *    removed *with everything inside them*;
  *  · **attribute** — every `on*` handler and every `srcdoc` is refused, and a `style` value is
- *    filtered declaration by declaration against 11 allowed properties;
+ *    filtered declaration by declaration against the 34 allowed properties;
  *  · **url** — a link or image that is not `https:`, `mailto:`, `tel:`, `cid:` or a path is refused
  *    rather than escaped, so `javascript:` never becomes a link.
  */
@@ -26,8 +26,15 @@ const EMAIL_TAGS = new Set([
 ]);
 const EMAIL_DROP_WITH_CONTENT = ["script", "style", "iframe", "object", "embed", "form", "svg", "template"];
 const EMAIL_STYLE_PROPS = new Set([
+  // Type, colour and the words themselves.
   "color", "background-color", "font-size", "font-family", "font-weight", "font-style",
-  "text-decoration", "text-align", "margin-left", "padding-left", "line-height",
+  "text-decoration", "text-align", "line-height", "letter-spacing", "text-transform", "white-space",
+  // Geometry: the card, the body inset, and the boxes inside it.
+  "max-width", "width", "box-sizing", "display", "vertical-align",
+  "padding", "padding-top", "padding-right", "padding-bottom", "padding-left",
+  "margin", "margin-top", "margin-right", "margin-bottom", "margin-left",
+  // Rules and edges: a hairline under a header row, the accent on a quote.
+  "border", "border-top", "border-right", "border-bottom", "border-left", "border-collapse", "border-radius",
 ]);
 const EMAIL_SAFE_URL = /^(https?:|mailto:|tel:|cid:|\/)/i;
 const EMAIL_DATA_IMAGE = /^data:image\/(png|jpe?g|gif|webp|bmp);base64,/i;

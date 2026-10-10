@@ -10280,3 +10280,175 @@ the one alarming number on the rail survives the section becoming a single click
 both A–Z and learned modes (A–Z sorts inside each subject and keeps the hub ahead of its own children),
 Service Alerts navigating to `/service-alerts` with no panel, its badge still reading 4, and the classic
 sidebar unchanged — it reads the tree, which never moved.
+
+---
+
+### Prompt 373 — The ticket emails as a document, and a window to see them in
+
+**Timestamp:** 2026-10-09 23:25 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.9.035** — The message a client actually reads, and a window to see it in.
+
+**Prompt**
+
+> See if you can clean up the layout/formatting of the tickets a bit, especially on mobile. There's random
+> wrapping. Make it look more professional, because it looks cobbled together in the previews. And once you
+> fix it, make sure that the emails will actually look like the preview.
+>
+> Add a simulation button, which would pop up a window and let me see both style exactly as they would look
+> on desktep and mobile.
+
+**The root cause, found before writing any markup**
+
+"Make sure the emails will actually look like the preview" was the sentence that located it. `renderEmail`
+**sanitises its own output**, so the preview and the delivered message are the same document by construction —
+they could not disagree. What they agreed on was the problem: `EMAIL_STYLE_PROPS` allowed eleven properties
+and not one of them was `padding`, `margin` or `max-width`, so the renderer had no way to say "a card with an
+inset body" and the words sat against the left edge of the reading pane. The preview was honest about a
+message nobody had designed. Fixing one and not the other would have *created* the lie the owner was checking
+for, so both moved together.
+
+**The one channel there is.** A mail client must honour an inline style; a `<style>` block is dropped with its
+content and Outlook's Word engine ignores one anyway. That rules out a media query, and it rules out a
+"phone version" of a message that could be designed separately and then drift. So the message reflows: the
+markup at 375 px *is* the markup at 600 px, and what changes is only what has to. Spacing is carried as
+`padding` rather than `margin` throughout, which is a compatibility decision rather than a preference — Word's
+engine drops margins, so a margin is a gap that arrives closed.
+
+**The simulation window.** The Preview panel is narrower than the desktop frame and the phone frame together,
+so one was always being scrolled past; the window answers the other question. It draws the two frames through
+the *same* component the panel uses, so the window cannot show a different message from the panel, and it
+draws the plain-text part on the same footing rather than only the pretty half. `window.open` can return
+`null`, and when it does the same content is drawn over the panel — a sheet modern, a dialog with a heading
+and a Close classic, sharing the state, the frames and the words.
+
+**Both copies of the rule set, because the canvas must not lie.** `apps/web/src/components/email/emailStrip.ts`
+is the editor's copy of the sanitiser's lists, kept so the paste panel can show a decision while somebody is
+typing. Left at eleven, it would have promised an author that `padding`, `margin` and `max-width` were stripped
+at the moment the send path started keeping them — the exact failure its own header warns about. It now carries
+the same 34.
+
+**Parity proved rather than asserted.** A throwaway SMTP catcher and a second API instance, then the same
+template rendered through `POST /api/email/preview` and through the real send: the captured `text/html` part and
+the preview's `html` are identical after normalising the only thing the wire is allowed to change (the
+transport's CRLF), and the `text/plain` part matches the same way. `pnpm --filter @C7NTAX/api probe:email` is
+35/35, including every rendered default's style properties being inside the allowlist.
+
+**Help corrected, not just extended.** The walkthrough's Preview section claimed the phone frame was a
+*different arrangement* in which facts stack — true of the design it was written against, false of this one.
+That claim is now the opposite of the truth and would have taught a reader to expect something that never
+arrives, so it was rewritten, and the section gained a screenshot of the simulation window per the standing
+instruction that walkthroughs carry screenshots.
+
+---
+
+### Prompt 374 — Claude's round-3 review of the Azure package
+
+**Timestamp:** 2026-10-09 23:25 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.9.036** — The deployment package, run rather than read.
+
+**Prompt**
+
+> When you are done:
+>
+> Here is Claude's response:
+>
+> **The Azure package is not ready to deploy.** Neither the deploy script nor the CI workflow can complete a
+> deployment as written. I wrote the round-3 review, `PlanDocs/PLAN-030-Review-Round-3.md`, addressed to the
+> agent that applied PLAN-030. The earlier checks passed because the templates compile and the scripts parse.
+> Nobody had run the `az` commands through the Azure CLI, and the CLI can check arguments without a
+> subscription. So I installed Azure CLI 2.91.0 and the Bicep compiler and ran every `az` command in the script
+> and the workflow with placeholder values. The Bicep compile reproduced (0 warnings).
+>
+> **Five defects stop a deployment from finishing:**
+>
+> - **`--target-port`:** `az containerapp update` rejects it, so every script run stops at the revision step.
+>   The earlier docs called this flag "confirmed", and it wasn't.
+> - **Health check:** it filters on a property revisions don't have (`properties.revisionSuffix`), so it can
+>   never see a new revision become healthy.
+> - **`revision show --revision`:** it takes the revision name (`app--suffix`), not the suffix.
+> - **Traffic shift:** `ingress traffic set` has no `--revision` or `--weight`, so a new revision is never
+>   promoted. The printed rollback command has the same error.
+> - **Migration job:** its command is passed as one word instead of four, so the container tries to run a
+>   program that doesn't exist.
+>
+> **What stands from Deepseek's round 2:** the `job update` fix is correct (the CLI confirms it), and
+> `/api/ready` is the right design. One flaw is that its deep check would refuse every rollback, because it
+> demands the newest shipped migration equal the newest applied.
+>
+> **Also flagged for before production:**
+>
+> - **Proxy setting:** `trust proxy` is unset, so behind Container Apps every user shares one rate-limit
+>   bucket and audit rows record the proxy's address.
+> - **Replica count:** prod is set to two replicas, but the plan says not to run more than one until
+>   in-memory state is made safe. That also covers the background workers and the WebSocket registry, which
+>   the plan never lists.
+> - **Prod rehearsal:** dev can't prove the closed Key Vault, zone-redundant HA, or the one-way
+>   geo-redundant backup, so I recommend a one-time throwaway run of the prod parameter set.
+> - **pgaudit:** the extension is never created in the database.
+> - **Missing review file:** `PLAN-030-Review-of-Applied-Changes.md` is cited in several docs but isn't on
+>   `main` or the PLAN-030 branch.
+>
+> I also corrected the earlier assumption that Deepseek was the reviewer. Deepseek applied the plan, and the
+> earlier Claude instance reviewed it.
+>
+> **Updated:** the PLAN-030 status line and a new §8.15, the go-live briefing (now opens with the verdict),
+> `infra/README.md`, and the first response's wrong "confirmed". I also added `Retrace.md` and `BuildNotes.md`
+> entries (2026.10.9.035) per the repo rules.
+
+**What I did with it: checked it, then fixed what it found**
+
+The review's own method — run the command, classify the error — is the only one that could have caught these,
+because the two checks that had passed (the Bicep compiles, the PowerShell parses) are both satisfied by a
+script whose flags do not exist. I installed Azure CLI 2.91.0 and re-ran all five myself rather than taking
+the report on trust, and **all five reproduce**.
+
+Two of them are worse than the review's wording, and the difference matters to whoever writes the fix:
+
+- **`--revision` on `ingress traffic set` is not rejected — it is silently absorbed** by argparse as an
+  unambiguous prefix of `--revision-weight`. A fix that changed `--weight` and kept `--revision` would have
+  produced `--revision-weight probe`, been accepted, and set a weight from a revision's name. Correcting the
+  flag that errors and missing the one that does not is how a "fixed" script stays broken.
+- **The one-word `--command` parses without complaint.** It fails only at container runtime, which is the one
+  failure mode no argument-level check sees. It is the reason the parse test cannot be the whole method.
+
+**One claim in the review was wrong in the safe direction.** `properties.revisionSuffix` does not exist on a
+revision — the review is right — but `properties.fqdn`, `properties.healthState` and `properties.trafficWeight`
+do, so the workflow's rollback capture was already correct and would have been broken by "fixing" it. I read
+the field list out of the CLI's own serialiser rather than the documentation.
+
+**The `/api/ready` flaw, confirmed and fixed.** The deep check required the newest shipped migration to equal
+the newest applied, which is false after any forward migration — so a rollback answered `503` and both
+promotion gates refused to shift traffic to a revision that was working. It is a subset test now: every
+migration *shipped* must appear *applied*. That is what "this revision can serve" actually means.
+
+**`TRUST_PROXY` as a hop count, not a boolean.** Unset, every request behind Container Apps arrives from the
+front door, so the whole instance shared one rate-limit bucket and the audit trail recorded the proxy's
+address as the client's. `true` would let a caller choose its own address, so the setting is a count: `0`
+default (the existing behaviour), `1` from the Bicep, `2` when the ingress is locked to the front door.
+
+**The four decisions I left as decisions.** Prod's replica count — the plan and the cost table *deliberately*
+price two always-on replicas, and five background loops start unconditionally in every process with no leader
+election anywhere, so capping at one before real data and making the loops leader-safe is the honest choice
+rather than a line edit. `CREATE EXTENSION pgaudit` — the Bicep preloads it and no SQL creates it, but an
+untestable migration would run on every environment, so it is recorded with the deferred role bootstrap.
+A one-time rehearsal of the prod parameter set, because dev cannot prove the closed Key Vault or the backup
+topology. And the missing review file, which is cited by five documents and has never been on this branch.
+
+---
+
+### Prompt 375 — Install whatever the verification needs
+
+**Timestamp:** 2026-10-09 23:25 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** none of its own — this authorises the tooling used by **2026.10.9.036**.
+
+**Prompt**
+
+> Install the Azure CLI if you need to. I approve you installing any application required
+
+**What it unblocked.** The Azure CLI, which is what turned the review from a reading into a test: without it
+there was no way to tell a flag that does not exist from one nobody had tried. Installed 2.91.0 into the
+existing Python 3.10 rather than a system-wide installer, with `core.first_run` and telemetry turned off so
+the first-run banner could not be mistaken for output while capturing what the commands actually said.

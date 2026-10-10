@@ -20,10 +20,38 @@ export const EMAIL_TAGS = new Set([
 ]);
 const EMAIL_VOID_TAGS = new Set(["br", "hr", "img"]);
 const EMAIL_DROP_WITH_CONTENT = ["script", "style", "iframe", "object", "embed", "form", "svg", "template"];
-/** The inline style properties that survive; everything else is dropped rather than escaped. */
+/**
+ * The inline style properties that survive; everything else is dropped rather than escaped.
+ *
+ * The set carries the **geometry** of a document as well as its type, and that is deliberate rather than
+ * convenient. An inline style is the only styling a mail client is obliged to honour — a `<style>` block
+ * is dropped with its content (see `EMAIL_DROP_WITH_CONTENT`) and Outlook's Word engine ignores one in
+ * any case — so a property missing from this list is not a message made safer, it is a message that
+ * arrives shapeless: without `padding` and `max-width` there is no way to say "a 600px card with an
+ * inset body" and the words sit against the left edge of the reading pane, which is what the message
+ * used to look like. This is the same reasoning that exempts `apps/web/src/components/reportKit.tsx`
+ * from the design-token lint, and it is the test applied to each property here: a document that leaves
+ * the building and must look the same whatever the reader's mail client does with it, compared with
+ * what the *author* could reach with the theme — for these, there is genuinely no other way.
+ *
+ * What is still out is everything that can move, cover or hide *another* element, because this list is
+ * also the composer's paste sanitiser (`routes/checklists.ts`, `routes/tickets/index.ts`) and pasted
+ * markup is a stranger's clipboard rather than a document this product wrote: `position`,
+ * `top`/`right`/`bottom`/`left`, `z-index`, `float`, `transform` and `opacity`. The `background`
+ * shorthand is out too — `background-color` says the same thing without resetting the rest of the
+ * shorthand. Every value is still refused if it carries `url(...)`, `expression`, `javascript:` or
+ * `@import`, so nothing here can fetch or compute anything.
+ */
 export const EMAIL_STYLE_PROPS = new Set([
+  // Type, colour and the words themselves.
   "color", "background-color", "font-size", "font-family", "font-weight", "font-style",
-  "text-decoration", "text-align", "margin-left", "padding-left", "line-height",
+  "text-decoration", "text-align", "line-height", "letter-spacing", "text-transform", "white-space",
+  // Geometry: the card, the body inset, and the boxes inside it.
+  "max-width", "width", "box-sizing", "display", "vertical-align",
+  "padding", "padding-top", "padding-right", "padding-bottom", "padding-left",
+  "margin", "margin-top", "margin-right", "margin-bottom", "margin-left",
+  // Rules and edges: a hairline under a header row, the accent on a quote.
+  "border", "border-top", "border-right", "border-bottom", "border-left", "border-collapse", "border-radius",
 ]);
 const EMAIL_SAFE_URL = /^(https?:|mailto:|tel:|cid:|\/)/i;
 /** Inline images arrive as data URIs; they are pulled out into cid parts before sending. */

@@ -116,6 +116,28 @@ export const app = express();
 // flushed (broke login tokens / JSON parsing in browsers).
 import zlib from "zlib";
 app.set("etag", "weak");
+
+// TRUST_PROXY says how many proxies sit in front of this process. Express uses it to decide whether a
+// forwarded `X-Forwarded-For` entry may be believed, and every `req.ip` in the audit trail — and every
+// rate-limit bucket, which is keyed on `req.ip` — is built from that answer. Left unset, Container
+// Apps puts its ingress in front and every request arrives with the ingress's address: all users share
+// one rate-limit bucket and the trail records the proxy.
+//
+// It is a hop *count*, never `true`. Container Apps always fronts the app with its ingress, so a
+// deployment behind it wants 1; Front Door adds a second hop, so the ingress-locked deployment wants
+// 2. `true` would believe any number of hops, which lets a client choose its own address by sending
+// its own `X-Forwarded-For` — the spoof the count exists to prevent.
+//
+// Unset stays the closed default (0, the socket address). CVE-2026-90711 in `proxy-addr` <2.0.8 was
+// the reason this was left alone; `pnpm.overrides` now resolves 2.0.8, so that reason is gone and
+// leaving it unset behind the ingress is no longer the safe choice it looks like.
+const trustProxyHops = Number(process.env.TRUST_PROXY ?? 0);
+if (Number.isFinite(trustProxyHops) && trustProxyHops > 0) {
+  app.set("trust proxy", trustProxyHops);
+  logger.info("startup", `trust proxy: ${trustProxyHops} hop(s) — req.ip is the forwarded client address`);
+} else {
+  logger.info("startup", "trust proxy: off — req.ip is the socket address, i.e. the proxy's when there is one");
+}
 app.use((req, res, next) => {
   if (req.method === "HEAD") return next();
   const accept = String(req.headers["accept-encoding"] || "");
@@ -194,9 +216,11 @@ app.get("/api/health", (_req, res) => res.json({ status: "ok", version: "1.0.0" 
  * failed migration is declared healthy and takes 100% of traffic. This is what the readiness probe and
  * both deployment gates ask (PLAN-030 §8, review round 2 §2).
  *
- * `?deep=1` additionally checks that the newest migration this image ships has been applied, which is a
+ * `?deep=1` additionally checks that every migration this image ships has been applied, which is a
  * question only worth asking *after* migrations have run — the deploy script's gate, not the probe. On
- * a first run the app is created before the migration job runs, so the probe must not ask it.
+ * a first run the app is created before the migration job runs, so the probe must not ask it. "Every
+ * one it ships", not "the newest of them": see the note in `migrationsApplied`, where the difference is
+ * what lets a rollback be promoted.
  *
  * The body says ready or not-ready and nothing else, because this route is unauthenticated: an
  * anonymous caller learns nothing about the host, the database or the driver's error from it.
@@ -234,20 +258,25 @@ async function migrationsApplied(): Promise<boolean | "unknown"> {
     logger.warn("ready", `migration state not checked — no migrations directory at ${dir}`);
     return "unknown";
   }
-  const newest = readdirSync(dir)
+  const shipped = readdirSync(dir)
     .filter((name) => /^\d{14}_/.test(name))
-    .sort()
-    .pop();
-  if (!newest) return "unknown";
+    .sort();
+  if (shipped.length === 0) return "unknown";
   const rows = await prisma.$queryRaw<Array<{ migration_name: string }>>`
-    SELECT migration_name FROM _prisma_migrations
-    WHERE finished_at IS NOT NULL ORDER BY finished_at DESC LIMIT 1
+    SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NOT NULL
   `;
-  const applied = rows[0]?.migration_name;
-  if (applied !== newest) {
-    logger.info("ready", `not ready: this image ships ${newest}, the database has ${applied ?? "nothing"} applied`);
+  const applied = new Set(rows.map((row) => row.migration_name));
+  // Every migration *this image ships* must be applied. The older test here asked whether the newest
+  // row in the database equalled the newest migration in the image, which reads naturally and answers
+  // the wrong question: after any forward migration a rolled-back image ships an *older* set while the
+  // database legitimately holds newer rows, so that test returns false and the readiness gate refuses
+  // the rollback - at exactly the moment it exists to permit it. Asking "is anything this image needs
+  // missing?" is true both for a fresh deploy and for a rollback.
+  const missing = shipped.filter((name) => !applied.has(name));
+  if (missing.length > 0) {
+    logger.info("ready", `not ready: ${missing.length} of ${shipped.length} shipped migrations are not applied (first: ${missing[0]})`);
   }
-  return applied === newest;
+  return missing.length === 0;
 }
 
 app.get("/api/ready", async (req, res) => {

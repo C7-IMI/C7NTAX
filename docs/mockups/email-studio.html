@@ -32,7 +32,7 @@
      `<hr>` and a fixed paragraph naming the ticket and the client — which is the "these words are in a
      string literal today" example;
    · the safe tag set and inline-style allowlist in `apps/api/src/services/emailHtml.ts` (30 tags, a
-     drop-with-content list of 8, 11 allowed style properties, a safe-URL rule and the inline-image
+     drop-with-content list of 8, 34 allowed style properties, a safe-URL rule and the inline-image
      limits), which the editor enforces *visibly* rather than silently;
    · the records: tickets `MSP-1001-1001` "Email server not sending outbound messages" (Acme
      Corporation, David Chen, John Smith), `MSP-1003-1001` (Initech Solutions, waiting on client) and
@@ -1137,7 +1137,7 @@
         · a CONDITIONAL block — "only when there is a note to quote" — drawn as a rail on the block;
         · the SAFE-TAG CONSTRAINT. `services/emailHtml.ts` keeps 30 tags, unwraps what is not in the
           set (keeping the text), drops 8 elements with their content, refuses every `on*` handler and
-          every `style` value it does not recognise, allows 11 style properties, and rules on URLs.
+          every `style` value it does not recognise, allows 34 style properties, and rules on URLs.
           A pasted element that the sanitiser would strip is shown stripped *now*, at editing time,
           with the reason — because the alternative is discovering it after the client has read it.
 
@@ -1442,8 +1442,12 @@
                   <b>Unwrapped:</b> <code>h5</code> is not in the tag set — the 30 tags are
                   <code>p br div span strong b em i u s del sub sup ul ol li blockquote a h1 h2 h3 h4 hr pre code table thead tbody tr td th img</code>,
                   so the tag goes and the text is kept.
-                  <b>Dropped:</b> <code>position</code> is not one of the 11 allowed style properties
-                  (<code>color background-color font-size font-family font-weight font-style text-decoration text-align margin-left padding-left line-height</code>),
+                  <b>Dropped:</b> <code>position</code> is not one of the 34 allowed style properties
+                  (<code>color background-color font-size font-family font-weight font-style text-decoration text-align
+                  line-height letter-spacing text-transform white-space max-width width box-sizing display vertical-align
+                  padding padding-top padding-right padding-bottom padding-left margin margin-top margin-right
+                  margin-bottom margin-left border border-top border-right border-bottom border-left border-collapse
+                  border-radius</code>),
                   so the whole declaration goes.
                 </div>
                 <div class="strip__kept">The message will read: <b>Service notice</b></div>
@@ -2424,7 +2428,7 @@ Attached: invoice-INV-2026-003.pdf</pre>
     <b>Drawn from the modern interface only</b> (<code>useRedesign()</code> — the classic screens keep their forms,
     grids and dialogs, and nothing above is a proposal for them). <b>10 messages across 5 groups</b> ·
     8 live senders and 7 template functions in <code>EmailService.ts</code> · <b>2 written and never called</b>
-    (<code>sendInvoice</code>, <code>sendTicketAutoClose</code>) · 30 tags and 11 style properties in the
+    (<code>sendInvoice</code>, <code>sendTicketAutoClose</code>) · 30 tags and 34 style properties in the
     sanitiser · 8 configuration sections and none of them Email · 4 vocabulary keys with no sender at all.
     Figures read from the working copy on 9 October 2026; where a figure could not be read it is absent rather
     than illustrated. Reverting: delete this file.

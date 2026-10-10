@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.9.034 | Last Updated: 2026-10-09
+## Version: 2026.10.9.036 | Last Updated: 2026-10-09
 
 ---
 
@@ -11,6 +11,102 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.9.036 — The deployment package, run rather than read
+
+The Azure round-3 review had been passed twice by checks that could not have caught what it was checking:
+the Bicep compiled and the PowerShell parsed, so every command in the deploy script was "confirmed" by
+reading it. Running them changed the answer — five of them cannot complete a deployment as written.
+
+- **[Fix]** **`az containerapp update --target-port` is not a flag.** The deploy script stopped at the
+  revision step on every run; the CLI rejects the argument outright. The port belongs to the ingress, so
+  the script now makes its own `az containerapp ingress update --target-port` call, which parses and is
+  the only place the setting has ever lived.
+- **[Fix]** **The health check waited on a property that does not exist.** The loop polled
+  `properties.revisionSuffix` on a revision, which Azure never returns — the field belongs to the
+  *template*, not the revision — so no revision could ever be seen to become healthy and the step timed
+  out on a deployment that had worked. It now resolves the newest revision's **name** and reads
+  `properties.healthState`, whose real vocabulary (`Healthy`, `Unhealthy`, `None`) is what it waits on.
+- **[Fix]** **`az containerapp revision show --revision` takes the revision's name**, `app--suffix`,
+  not the suffix. The workflow was passing the suffix and would have failed on the first deployment that
+  got that far.
+- **[Fix]** **A new revision was never promoted, and the rollback it printed did the same wrong thing.**
+  `ingress traffic set` has no `--revision` and no `--weight`; the weight is written on
+  `--revision-weight`. Worse, `--revision` alone is silently absorbed by the CLI as an unambiguous
+  abbreviation of `--revision-weight`, so the corrected call would have read `--revision-weight probe` and
+  been accepted. Both the shift and the printed rollback now name the revision and the weight explicitly,
+  and the workflow publishes the resolved revision name as an output the later steps consume rather than
+  re-deriving it.
+- **[Fix]** **The migration job ran a program that does not exist.** `job create --command` takes
+  space-separated values, and the one-string form is *accepted* by the CLI — it only fails at container
+  runtime, which is the one failure mode no amount of argument checking sees. The command is now four
+  tokens.
+- **[Fix]** **`/api/ready` refused every rollback.** Its deep check required the newest migration in the
+  image to equal the newest one applied, which is false after any forward migration — so a rollback
+  reported `503` and both promotion gates declined to shift traffic to a perfectly healthy revision. The
+  check is now a subset test: every migration *shipped* must appear *applied*, which is what "this
+  revision can serve" actually means and what allows a rollback to serve an older schema.
+- **[New]** **`TRUST_PROXY` — how many proxies to believe.** Behind Container Apps every request arrives
+  from the front door, so with the setting unset the whole instance shared one rate-limit bucket and the
+  audit trail recorded the proxy's address as the client's. It defaults to `0` (the behaviour that was
+  already there) and is set to `1` by the Bicep — `2` when the ingress is locked to the front door —
+  because a hop *count* cannot be chosen by the caller, while `true` can. The address the API resolves is
+  exposed at `GET /api/auth/client-ip` and is documented in the API guide.
+- **[Update]** **The review is a document in the repository**, `PlanDocs/PLAN-030-Review-Round-3.md`,
+  with each defect beside the command that was executed to establish it, the two claims of the previous
+  round that were wrong, and the four items left as decisions. `infra/README.md` no longer says the
+  `--target-port` flag was confirmed.
+
+---
+
+## 2026.10.9.035 — The message a client actually reads, and a window to see it in
+
+The ticket emails were the one thing this product sends that nobody had looked at as a document. The
+preview was honest — it renders the API's own HTML, so it showed the real message — and the real message
+was shapeless: text against the left edge of the reading pane, facts squeezed into two columns until
+they broke mid-phrase, a quoted note indented forty pixels by the browser's own `blockquote` rule.
+
+- **[Fix]** **The mail body had no geometry because the sanitiser would not allow any.** `EMAIL_STYLE_PROPS`
+  listed eleven properties — colours, type, `margin-left`, `padding-left`, `line-height` — and not
+  `padding`, `margin` or `max-width`. An inline style is the only styling a mail client must honour (a
+  `<style>` block is dropped with its content, and Outlook's Word engine ignores one anyway), so a
+  property missing from that list is not a safer message, it is a message that arrives shapeless. The
+  list is now 34 properties, and the renderer was extended in the same change so the two cannot drift:
+  `renderEmail` sanitises its own output, which is why the preview and the delivered mail are the same
+  document by construction rather than by hope.
+- **[New]** **A mail card, at both widths a reader opens it at.** The page carries a centred, 600 px card
+  with an inset body, the masthead a full-bleed bar in the brand's primary, facts stacked as a dim
+  upper-case label over a white value instead of pairs in columns, a quote as a tinted box with a brand
+  accent rather than an indented paragraph, tables ruled with hairlines and no fixed widths, and the call
+  to action an inline pill that never stretches. **Spacing is padding, never margin**, and that is a
+  compatibility decision rather than a preference: Outlook renders with Word's engine, which drops
+  margins, so a margin is a gap that arrives closed.
+- **[Update]** **One column at 375 px, with no media query and no second layout.** Because a `<style>`
+  block is dropped, there is no channel for a media query — so the message had to be built to reflow, and
+  it is: the card narrows to the screen and each line wraps into it. The markup at 375 px is the markup at
+  600 px, which is what stops a phone-shaped second design from drifting away from the first.
+- **[New]** **Simulate — the message at both widths in a window of its own.** The Preview panel is
+  narrower than the desktop frame and the phone frame together, so at least one of them was always being
+  scrolled past. A **Simulate** button on the Preview tab and in the send sheet opens a real window
+  (`window.open`) holding both, side by side and resizeable, through the *same* frame component the panel
+  draws — so the window cannot show a different message from the panel. It names the message, the record
+  the fields resolved against and the subject, so a screenshot of it explains itself in a ticket, and it
+  draws the **plain-text part** on the same footing rather than only the pretty half. Nothing is sent from
+  it and nothing in it changes the template. When a browser blocks the window the same content is drawn
+  over the panel instead — a sheet in the modern interface, a dialog with a heading and a Close in the
+  classic one, sharing the state, the frames and the words.
+- **[Update]** **The paste panel now tells the truth about what it keeps.** `emailStrip.ts` is the
+  editor's copy of the sanitiser's rules, kept so the canvas can show a decision while somebody is typing.
+  It still held the old eleven, so it would have promised an author that `padding`, `margin` and
+  `max-width` were stripped at the moment the send path started keeping them — a canvas lying about the
+  message, which is the exact failure its own header warns against. It carries the same 34.
+- **[Update]** **The Help walkthrough was corrected, not just extended.** Its Preview section claimed the
+  phone frame was a *different arrangement* in which facts stack — true of the design it was written
+  against and untrue of this one, where the message is one column at both widths. The walkthrough now
+  says that, explains why there is no media query, documents **Simulate** and carries a screenshot of the
+  window.
 
 ---
 

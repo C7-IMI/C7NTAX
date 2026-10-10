@@ -361,6 +361,7 @@ export function EmailStudioPage() {
           </p>
           <EmailPreviewPanel
             messageKey={selectedKey}
+            messageName={fact?.name ?? null}
             subject={subject}
             blocks={blocks}
             derivedText={derivedText}

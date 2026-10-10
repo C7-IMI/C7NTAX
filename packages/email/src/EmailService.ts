@@ -203,6 +203,11 @@ export class EmailService {
 }
 
 // ─── Email Templates (inline HTML, production should use MJML) ────────
+// The words here are kept in step with `apps/api/src/services/emailMessages.ts` by `probe:email`, which
+// renders each default and compares it line for line against what these functions produce. Two pieces of
+// markup are mirrored on purpose: the `<br>` after the dash in the meta line and `white-space: nowrap`
+// on the ticket number. Both exist because a ticket identifier, or a subject, broken across a line at
+// 375px is what the owner called "random wrapping"; change one side without the other and the probe says so.
 
 function mfaTemplate(code: string): string {
   return `
@@ -228,7 +233,7 @@ function followUpTemplate(num: string, title: string, days: number, portal: stri
       <h1 style="color: #0f1923; margin: 0; font-size: 20px;">Action Required</h1>
     </div>
     <div style="padding: 32px 24px;">
-      <p style="color: #94a3b8; margin: 0 0 16px;">Ticket <strong style="color: #fff;">${num}</strong> — <em>${title}</em></p>
+      <p style="color: #94a3b8; margin: 0 0 16px;">Ticket <strong style="color: #fff; white-space: nowrap;">${num}</strong> —<br><em>${title}</em></p>
       <p style="color: #cbd5e1; margin: 0 0 16px;">We are waiting on your response. This ticket has been idle for <strong>${days} day${days === 1 ? "" : "s"}</strong>.</p>
       <p style="color: #cbd5e1; margin: 0 0 24px;">If no response is received within the timeframe, this ticket may be automatically closed.</p>
       <a href="${portal}" style="display: inline-block; background: #c00000; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">Respond Now</a>
@@ -243,7 +248,7 @@ function autoCloseTemplate(num: string, title: string): string {
       <h1 style="color: #0f1923; margin: 0; font-size: 20px;">Ticket Closed</h1>
     </div>
     <div style="padding: 32px 24px;">
-      <p style="color: #94a3b8; margin: 0 0 16px;">Ticket <strong style="color: #fff;">${num}</strong> — <em>${title}</em></p>
+      <p style="color: #94a3b8; margin: 0 0 16px;">Ticket <strong style="color: #fff; white-space: nowrap;">${num}</strong> —<br><em>${title}</em></p>
       <p style="color: #cbd5e1; margin: 0;">This ticket was automatically closed due to inactivity. If this issue persists, please open a new ticket.</p>
     </div>
   </div>`;
@@ -301,7 +306,7 @@ function ticketActivityTemplate(o: {
     </div>
     <div style="padding: 32px 24px;">
       ${greeting}
-      <p style="color: #94a3b8; margin: 0 0 8px;">Ticket <strong style="color: #fff;">${escapeHtml(o.ticketNumber)}</strong> — <em>${escapeHtml(o.ticketTitle)}</em></p>
+      <p style="color: #94a3b8; margin: 0 0 8px;">Ticket <strong style="color: #fff; white-space: nowrap;">${escapeHtml(o.ticketNumber)}</strong> —<br><em>${escapeHtml(o.ticketTitle)}</em></p>
       <p style="color: #cbd5e1; margin: 0 0 16px;"><strong style="color: #fff;">${escapeHtml(o.eventLabel)}</strong></p>
       <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 16px; color: #cbd5e1; margin-bottom: 24px;">${escapeHtml(o.details).replace(/\r?\n/g, "<br>")}</div>
       <p style="color: #94a3b8; margin: 0;">If you have any questions, simply reply to this email.</p>
@@ -331,7 +336,7 @@ function ticketReopenedTemplate(o: {
       <h1 style="color: #ffffff; margin: 0; font-size: 20px;">Reopened by the client</h1>
     </div>
     <div style="padding: 32px 24px;">
-      <p style="color: #94a3b8; margin: 0 0 8px;">Ticket <strong style="color: #fff;">${escapeHtml(o.ticketNumber)}</strong> — <em>${escapeHtml(o.ticketTitle)}</em></p>
+      <p style="color: #94a3b8; margin: 0 0 8px;">Ticket <strong style="color: #fff; white-space: nowrap;">${escapeHtml(o.ticketNumber)}</strong> —<br><em>${escapeHtml(o.ticketTitle)}</em></p>
       <p style="color: #cbd5e1; margin: 0 0 16px;">${escapeHtml(o.contactName || o.clientName || "The client")} replied to the closing email, so this ticket is back in the queue as <strong style="color: #fff;">Customer reopened</strong>.</p>
       <div style="background: #1e293b; border: 1px solid #334155; border-left: 3px solid #ea580c; border-radius: 8px; padding: 16px; color: #cbd5e1; margin-bottom: 24px;">${escapeHtml(o.replyExcerpt).replace(/\r?\n/g, "<br>")}</div>
       ${o.ticketUrl ? `<a href="${o.ticketUrl}" style="display: inline-block; background: #c00000; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">Open the ticket</a>` : ""}

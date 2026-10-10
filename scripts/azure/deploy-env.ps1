@@ -54,7 +54,8 @@
 
     The reason the app cannot simply be created first is the defect review 4 records: a probe's
     `port` is a required field of the container *revision template*, not part of the ingress, so
-    `az containerapp update --target-port` moves the ingress and leaves the probes where the last
+    `az containerapp ingress update --target-port` moves the ingress and leaves the probes where the
+    last
     deployment declared them. An app created against the placeholder image therefore keeps probing
     the placeholder's port after the real image is installed, its revision goes Unhealthy, and the
     health gate below stops the run. From pass 2 onwards - and on every later run, where the single
@@ -505,7 +506,12 @@ if (-not $SkipMigrations) {
     } else {
         Invoke-Az @('containerapp', 'job', 'create',
             '--name', $jobName, '--resource-group', $rg, '--environment', "aca-$appName",
-            '--image', $image, '--command', 'npx prisma migrate deploy',
+            # `--command` is a list, not a command line: the CLI documents it as "A list of supported
+            # commands on the container that will executed during startup. Space-separated values e.g.
+            # '/bin/queue' 'mycommand'". Passed as one string it becomes a single argv entry, and the
+            # container tries to exec a program literally named `npx prisma migrate deploy`, so the job
+            # fails with the previous revision still serving. The workflow passes the same four tokens.
+            '--image', $image, '--command', 'npx', 'prisma', 'migrate', 'deploy',
             '--cpu', '0.5', '--memory', '1.0Gi', '--replica-timeout', '900', '--replica-retry-limit', '1',
             '--registry-server', "$Registry.azurecr.io",
             '--mi-user-assigned', $jobIdentity, '--registry-identity', $jobIdentity,
@@ -533,10 +539,11 @@ $revisionSuffix = "$Environment-$ImageTag".ToLowerInvariant() -replace '[^a-z0-9
 # already taking traffic. The template declares Multiple as well, so this is a restatement — but
 # the script must not depend on the template having been applied.
 Invoke-Az @('containerapp', 'revision', 'set-mode', '--name', $appName, '--resource-group', $ResourceGroup, '--mode', 'multiple') | Out-Null
-# --target-port is what installs the *application's* port. On the normal path it is now a harmless
-# restatement: a first run creates the app in pass 2 (PLAN-030 review 4, option (b)), against the
+# --target-port is what installs the *application's* port. It is set by the separate `ingress update`
+# call below, because `containerapp update` does not accept it - see the note there for the proof.
+# On the normal path it is a harmless restatement: a first run creates the app in pass 2 (PLAN-030 review 4, option (b)), against the
 # image just built, so the app already has port 4000 here - and so do its probes, because the
-# template set them to 4000 when it was applied with a tagged image. Passing the flag on every run
+# template set them to 4000 when it was applied with a tagged image. Setting the port on every run
 # keeps that true whatever the environment's history.
 #
 # It still earns its place on the one path the two-pass create does not cover: an app created by an
@@ -545,25 +552,63 @@ Invoke-Az @('containerapp', 'revision', 'set-mode', '--name', $appName, '--resou
 # ingress, so no `az containerapp update` can move it - this flag moves the *ingress* to 4000, which
 # is what lets this revision answer /api/health at all, and the next Bicep pass moves the probes to
 # 4000 with it. That is why the flag is kept rather than dropped.
-# The flag itself is confirmed: `target_port` is declared on the `containerapp` argument context
-# (arg_group 'Ingress') in the CLI's own command module, so `az containerapp update` accepts it; the
-# equivalent if a future CLI disagrees is `az containerapp ingress update --target-port 4000`.
+# This comment used to claim the flag was confirmed - that `target_port` is declared on the
+# `containerapp` argument context, and so `az containerapp update` accepts it. That claim was wrong,
+# and running the command is what disproves it. On Azure CLI 2.91.0:
+#
+#   az containerapp update -n app -g rg --image img:1 --target-port 4000
+#   ERROR: unrecognized arguments: --target-port 4000
+#
+# So the old call did not fail *later*, at the revision gate - it failed on its first invocation,
+# before any revision existed, and no deploy could get past it. `--target-port` is an argument of
+# `az containerapp ingress update`, which accepts it (verified: that run reaches the auth check).
 #
 # What is still unrun, and why: there is no Azure subscription in this repository's environment, so
-# none of this has been executed - compiling the template (node scripts/azure/validate-bicep.mjs)
-# and parsing this script are all that have run. The part that specifically wants a dev resource
-# group is the second `az deployment group create` (createApp=true) and the first revision it
-# produces: that is the call that was never possible before, and the one this fix turns on.
+# the CLI has been taken to the edge of what it can prove without one - every `az` command below has
+# been executed with placeholder names to separate "the CLI rejects this" from "this parses". What a
+# parse-level check cannot show is whether the arguments succeed against a real resource group, so
+# compiling the template (node scripts/azure/validate-bicep.mjs) and parsing this script remain the
+# only whole-file checks. The part that specifically wants a dev resource group is the second
+# `az deployment group create` (createApp=true) and the first revision it produces.
 Invoke-Az @('containerapp', 'update', '--name', $appName, '--resource-group', $ResourceGroup,
-    '--image', $image, '--target-port', '4000', '--revision-suffix', $revisionSuffix) | Out-Null
+    '--image', $image, '--revision-suffix', $revisionSuffix) | Out-Null
+# The port, in the call that takes it. This is the line the old `--target-port` was meant to be.
+Invoke-Az @('containerapp', 'ingress', 'update', '--name', $appName, '--resource-group', $ResourceGroup,
+    '--target-port', '4000') | Out-Null
 if (-not $WhatIf) {
     Write-Info 'waiting for the new revision to become healthy…'
+    # Wait on the revision by *name*, and read its health from `properties.healthState`.
+    #
+    # `properties.revisionSuffix` is not a property of a revision. The CLI's own Revision serializer
+    # (azure/cli/command_modules/containerapp/_sdk_models.py) declares exactly: id, name, type,
+    # systemData, properties.createdTime, properties.lastActiveTime, properties.fqdn,
+    # properties.template, properties.active, properties.replicas, properties.trafficWeight,
+    # properties.provisioningError, properties.healthState, properties.provisioningState and
+    # properties.runningState. `revisionSuffix` appears on the Template model only, which a revision
+    # nests at properties.template. The query that used to be here filtered
+    # `[?properties.revisionSuffix=='…']` at the revision's own level, so it matched nothing, `$state`
+    # stayed empty, and every deploy ended in the throw below - healthy or not.
+    #
+    # `revision show --revision` wants the revision *name* (`<app>--<suffix>`, required, "Name of the
+    # revision"), not the suffix, which the old call also passed. The name is read back from the API
+    # through the property that does hold the suffix rather than assembled from the two halves here,
+    # so this does not assume the `--` separator either.
+    #
+    # The health vocabulary is Healthy / Unhealthy / None (RevisionHealthState). `Degraded`, which the
+    # old test also waited for, is not one of the three.
+    $newRevision = ''
+    $state = ''
     for ($i = 0; $i -lt 60; $i++) {
         Start-Sleep -Seconds 10
-        $state = (& az containerapp revision list --name $appName --resource-group $ResourceGroup --query "[?properties.revisionSuffix=='$revisionSuffix'].properties.healthState | [0]" -o tsv 2>$null)
-        if ($state -in @('Healthy', 'Unhealthy', 'Degraded')) { break }
+        if (-not $newRevision) {
+            $newRevision = (& az containerapp revision list --name $appName --resource-group $ResourceGroup --query "[?properties.template.revisionSuffix=='$revisionSuffix'].name | [0]" -o tsv 2>$null)
+        }
+        if ($newRevision) {
+            $state = (& az containerapp revision show --name $appName --resource-group $ResourceGroup --revision $newRevision --query "properties.healthState" -o tsv 2>$null)
+        }
+        if ($state -in @('Healthy', 'Unhealthy')) { break }
     }
-    if ($state -ne 'Healthy') { throw "New revision is '$state'. Traffic was not shifted; the previous revision is still serving." }
+    if ($state -ne 'Healthy') { throw "New revision '$newRevision' is '$state'. Traffic was not shifted; the previous revision is still serving." }
 }
 
 Write-Step 'Health gate (on the new revision, before any traffic)'
@@ -573,14 +618,22 @@ Write-Step 'Health gate (on the new revision, before any traffic)'
 # migrations would hold the revision at 0% for ever. See GET /api/ready.
 if ($WhatIf) { Write-Info 'would call /api/ready?deep=1 on the new revision with 0% traffic' }
 else {
-    $probe = & az containerapp revision show --name $appName --resource-group $ResourceGroup --revision $revisionSuffix --query "properties.fqdn" -o tsv
+    # The revision name that was resolved above - not the suffix. `properties.fqdn` is correct here:
+    # the serializer maps fqdn to properties.fqdn. Only the suffix was ever wrong on this line.
+    $probe = & az containerapp revision show --name $appName --resource-group $ResourceGroup --revision $newRevision --query "properties.fqdn" -o tsv
     $health = Invoke-WebRequest -Uri "https://$probe/api/ready?deep=1" -UseBasicParsing -TimeoutSec 30
     if ($health.StatusCode -ne 200) { throw "New revision did not answer /api/ready (HTTP $($health.StatusCode)); traffic not shifted." }
     Write-Info "ready: $($health.Content)"
 }
 
 Write-Step 'Traffic shift'
-Invoke-Az @('containerapp', 'ingress', 'traffic', 'set', '--name', $appName, '--resource-group', $ResourceGroup, '--revision', $revisionSuffix, '--weight', '100') | Out-Null
+# `ingress traffic set` has no `--revision` and no `--weight`. It takes `--revision-weight`, a list of
+# `<revision-name>=<weight>` (or `latest=<weight>`). The old form failed with
+# `unrecognized arguments: --weight 100`; `--revision` was not itself rejected, because argparse
+# accepted it as an unambiguous prefix of `--revision-weight`, so the run stopped on a parse error
+# rather than shifting anything - and the value it had absorbed was a bare suffix, not a name.
+Invoke-Az @('containerapp', 'ingress', 'traffic', 'set', '--name', $appName, '--resource-group', $ResourceGroup,
+    '--revision-weight', "$newRevision=100") | Out-Null
 
 Write-Step 'Verification'
 if ($WhatIf) { Write-Info 'would re-check /api/health on the public endpoint' }
@@ -591,8 +644,8 @@ else {
         Write-Info "$path -> HTTP $($response.StatusCode)"
         if ($response.StatusCode -ne 200) { throw "$path answered $($response.StatusCode) after the traffic shift. Roll back with: ./scripts/azure/deploy-env.ps1 -Environment $Environment -ImageTag <previous-tag>" }
     }
-    Write-Host "`n$Environment deployed: https://$fqdn (revision $revisionSuffix, image $ImageTag)" -ForegroundColor Green
-    Write-Host "Rollback: az containerapp ingress traffic set --name $appName --resource-group $ResourceGroup --revision <previous-revision> --weight 100" -ForegroundColor Yellow
+    Write-Host "`n$Environment deployed: https://$fqdn (revision $newRevision, image $ImageTag)" -ForegroundColor Green
+    Write-Host "Rollback: az containerapp ingress traffic set --name $appName --resource-group $ResourceGroup --revision-weight <previous-revision-name>=100" -ForegroundColor Yellow
     if ($Environment -eq 'dev') {
         Write-Host "Next step in the path: ./scripts/azure/deploy-env.ps1 -Environment prod -PromoteFrom dev -Yes" -ForegroundColor DarkGray
     } else {

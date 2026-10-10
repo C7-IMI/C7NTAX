@@ -7,6 +7,12 @@
  * `POST /templates/:key/reset` is a delete rather than a restored copy of something somebody could have
  * edited into disagreement with the code.
  *
+ * The migration is word for word but not byte for byte: **markup may differ, the words may not.** The
+ * meta line carries a `<br>` after the dash and the ticket number carries `white-space: nowrap`, so that
+ * line breaks between the identifier and the subject rather than mid-phrase at 375px.
+ * `EmailService` mirrors both, which is why the probe's line-for-line comparison still holds — the two
+ * move together or the check says so.
+ *
  * Two rows are deliberately *not* live. `ticket.closure` and `invoice.send` are well-formed senders
  * with no caller anywhere in the repository (`sendTicketAutoClose`, `sendInvoice`), and the closure a
  * client actually receives rides on `ticket.activity` through `notifyTicketClosure` — which carries the
@@ -129,7 +135,7 @@ function fieldsFor(tokens: string[]): EmailMessageField[] {
 const TICKET_ACTIVITY: EmailBlock[] = [
   { kind: "heading", level: 1, text: "Ticket Update" },
   { kind: "paragraph", html: "{{message.greeting}}" },
-  { kind: "paragraph", html: 'Ticket <strong style="color:#ffffff">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>' },
+  { kind: "paragraph", html: 'Ticket <strong style="color:#ffffff;white-space:nowrap">{{ticket.number}}</strong> —<br><em>{{ticket.title}}</em>' },
   { kind: "paragraph", html: '<strong style="color:#ffffff">{{event.label}}</strong>' },
   { kind: "quote", html: "{{note.body}}" },
   { kind: "paragraph", html: "If you have any questions, simply reply to this email." },
@@ -202,7 +208,7 @@ export const EMAIL_MESSAGES: EmailMessageDefinition[] = [
     defaultSubject: "[{{ticket.number}}] Ticket Closed — {{ticket.title}}",
     defaultBlocks: [
       { kind: "heading", level: 1, text: "Ticket Closed" },
-      { kind: "paragraph", html: 'Ticket <strong style="color:#ffffff">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>' },
+      { kind: "paragraph", html: 'Ticket <strong style="color:#ffffff;white-space:nowrap">{{ticket.number}}</strong> —<br><em>{{ticket.title}}</em>' },
       {
         kind: "paragraph",
         html: "This ticket was automatically closed due to inactivity. If this issue persists, please open a new ticket.",
@@ -228,7 +234,7 @@ export const EMAIL_MESSAGES: EmailMessageDefinition[] = [
     defaultSubject: "[{{ticket.number}}] Action Required — {{ticket.title}}",
     defaultBlocks: [
       { kind: "heading", level: 1, text: "Action Required" },
-      { kind: "paragraph", html: 'Ticket <strong style="color:#ffffff">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>' },
+      { kind: "paragraph", html: 'Ticket <strong style="color:#ffffff;white-space:nowrap">{{ticket.number}}</strong> —<br><em>{{ticket.title}}</em>' },
       { kind: "paragraph", html: "We are waiting on your response. This ticket has been idle for <strong>{{message.idleFor}}</strong>." },
       { kind: "paragraph", html: "If no response is received within the timeframe, this ticket may be automatically closed." },
       { kind: "button", label: "Respond Now", href: "{{ticket.url}}" },
@@ -252,7 +258,7 @@ export const EMAIL_MESSAGES: EmailMessageDefinition[] = [
     defaultSubject: "[{{ticket.number}}] Reopened by the client — {{ticket.title}}",
     defaultBlocks: [
       { kind: "heading", level: 1, text: "Reopened by the client" },
-      { kind: "paragraph", html: 'Ticket <strong style="color:#ffffff">{{ticket.number}}</strong> — <em>{{ticket.title}}</em>' },
+      { kind: "paragraph", html: 'Ticket <strong style="color:#ffffff;white-space:nowrap">{{ticket.number}}</strong> —<br><em>{{ticket.title}}</em>' },
       {
         kind: "paragraph",
         html: '{{message.reopenedBy}} replied to the closing email, so this ticket is back in the queue as <strong style="color:#ffffff">Customer reopened</strong>.',
@@ -359,8 +365,12 @@ export const EMAIL_MESSAGES: EmailMessageDefinition[] = [
       { kind: "paragraph", html: "An account has been created for you in {{instance.name}}." },
       {
         kind: "paragraph",
+        // The one raw link in any default, and the reason it carries a colour: a client draws an
+        // unstyled link in its own blue, which on this card is nearly invisible. The accent is the
+        // brand kit's own (`documentBrand.ts`), and it is written into the markup rather than a
+        // `<style>` block because the sanitiser drops one with its content.
         html:
-          '<strong>Sign in:</strong> <a href="{{instance.signInUrl}}">{{instance.signInUrl}}</a><br>' +
+          '<strong>Sign in:</strong> <a href="{{instance.signInUrl}}" style="color:#00c0f4">{{instance.signInUrl}}</a><br>' +
           "<strong>Email:</strong> {{contact.email}}<br>" +
           "<strong>Temporary password:</strong> {{message.credential}}",
       },

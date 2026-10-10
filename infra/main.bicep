@@ -102,8 +102,8 @@ param imageTag string
 // Whether this deployment creates the container app (review §4, option (b)). The app is created
 // once, against the real image, because a probe's `port` is a required field of the *revision
 // template* rather than part of the ingress: an app first created against a placeholder image keeps
-// probing the placeholder's port, and the ingress-only `az containerapp update --target-port` that
-// later installs the real image cannot move the probes with it — the new revision goes Unhealthy
+// probing the placeholder's port, and the ingress-only `az containerapp ingress update --target-port`
+// that later installs the real image cannot move the probes with it — the new revision goes Unhealthy
 // and the first `-Create` run cannot finish. A first run therefore deploys this file twice:
 // `createApp=false` for everything except the app (the registry above all), then `createApp=true`
 // with the tag the script has already built and pushed. False only on that first pass; an ordinary
@@ -659,6 +659,11 @@ resource containerApp 'Microsoft.App/containerApps@2024-03-01' = if (createApp) 
             { name: 'WEB_ORIGIN', value: webOrigin }
             { name: 'CORS_ORIGIN', value: webOrigin }
             { name: 'AUTH_HARDENING_ENABLED', value: 'true' }
+            // The Container Apps ingress is a proxy, so the app is one hop behind it — two once
+            // Front Door is in front (PLAN-016 §4). Without this the rate limiter keys every request
+            // on the ingress address, so all users share one bucket, and every audit row records the
+            // ingress instead of the person. See the TRUST_PROXY note in apps/api/src/index.ts.
+            { name: 'TRUST_PROXY', value: lockIngressToFrontDoor ? '2' : '1' }
             { name: 'JWT_SECRET', secretRef: 'jwt-secret' }
             { name: 'KUMO_MASTER_KEY', secretRef: 'kumo-master-key' }
             { name: 'DATABASE_URL', secretRef: 'database-url' }

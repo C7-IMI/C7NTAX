@@ -60,6 +60,7 @@ import {
   withBlockText,
   type AttachmentRef, type CallFailure, type EmailBlock, type EmailTemplate, type PreviewState,
 } from "./sendKit";
+import { EmailSimulation, type SimulationMessage } from "./EmailSimulation";
 
 // ── What a caller hands the sheet ────────────────────────────────────────────
 
@@ -778,6 +779,29 @@ export function EmailSendDialog({
     : null;
   /** Null while there is no API text to compare against, so the note can say that rather than claim agreement. */
   const agree = preview.status === "ready" ? !textEdited : null;
+
+  /**
+   * The same message, for the simulation window.
+   *
+   * It holds what this pane holds and nothing it does not, which is what keeps a window opened from here
+   * showing *this* send's render rather than a second one: the HTML and both text parts are the preview's
+   * own answer, and the record is the one the recipient rules are about.
+   */
+  const simulation: SimulationMessage = {
+    messageKey: templateKey,
+    messageName: fact?.name ?? null,
+    recordId,
+    subject: (preview.status === "ready" ? preview.preview.subject : "") || outgoingSubject || null,
+    html: preview.status === "ready" ? preview.preview.html : null,
+    text: preview.status === "ready" ? preview.preview.text : null,
+    derivedText: preview.status === "ready" ? preview.preview.derivedText : localText,
+    warnings: preview.status === "ready" ? preview.preview.warnings : [],
+    failure:
+      preview.status === "failed"
+        ? { message: `${preview.failure.endpoint} — ${preview.failure.reason}`, endpoint: preview.failure.endpoint }
+        : null,
+    loading: preview.status === "loading",
+  };
   const sendLabel = recipientCount
     ? `Send to ${recipientCount} ${recipientCount === 1 ? "person" : "people"}`
     : "Send";
@@ -1321,6 +1345,8 @@ export function EmailSendDialog({
                       <span className="chip chip--on">Preview</span>
                       <span className="font-mono text-[11px] text-gray-500">{templateKey}</span>
                       <span className="text-[11px] text-gray-500">the exact message, not a picture of it</span>
+                      {/* Both widths at once, from this sheet's own render — see `EmailSimulation.tsx`. */}
+                      <EmailSimulation {...simulation} className="btn-secondary ml-auto text-xs" />
                     </div>
                     <div className="mt-2">
                       {preview.status === "ready" ? (
@@ -1575,7 +1601,10 @@ export function EmailSendDialog({
             {/* The preview pane, permanently in view rather than revealed behind a toggle. */}
             <div className="space-y-3">
               <div>
-                <span className="chip">Preview</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="chip">Preview</span>
+                  <EmailSimulation {...simulation} className="btn-secondary text-xs" />
+                </div>
                 <div className="mt-2">
                   {preview.status === "ready" ? (
                     <PreviewFrame html={preview.preview.html} title="The message as the recipient will receive it" className="h-72" />

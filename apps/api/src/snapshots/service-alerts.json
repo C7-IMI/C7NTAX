@@ -2000,5 +2000,33 @@
     "resolvedAt": null,
     "createdAt": "2026-10-09T17:26:38.784Z",
     "updatedAt": "2026-10-10T00:29:57.639Z"
+  },
+  {
+    "id": "bf8b3cb6-abd1-4646-8ae8-0a90929ac49f",
+    "serviceId": "d2abce0b-f02e-46c4-86c4-441a23f69571",
+    "title": "Sample Website Monitor: website check failed: fetch failed",
+    "description": "Auto-resolved: no monitored source reports an active incident or degradation for Sample Website Monitor (website clear).\n\nwebsite monitor (https://example.com)",
+    "severity": "outage",
+    "status": "resolved",
+    "source": "website",
+    "sourceUrl": "https://example.com",
+    "detectedAt": "2026-10-10T03:47:44.053Z",
+    "resolvedAt": "2026-10-10T03:55:04.413Z",
+    "createdAt": "2026-10-10T03:47:44.055Z",
+    "updatedAt": "2026-10-10T03:55:04.415Z"
+  },
+  {
+    "id": "13ba0192-b8c1-4a7b-a29f-6a7562042ba2",
+    "serviceId": "d2abce0b-f02e-46c4-86c4-441a23f69571",
+    "title": "Sample Website Monitor: website check failed: Could not resolve example.com",
+    "description": "Auto-resolved: no monitored source reports an active incident or degradation for Sample Website Monitor (website clear).\n\nwebsite monitor (https://example.com)",
+    "severity": "outage",
+    "status": "resolved",
+    "source": "website",
+    "sourceUrl": "https://example.com",
+    "detectedAt": "2026-10-10T04:07:24.884Z",
+    "resolvedAt": "2026-10-10T04:17:14.849Z",
+    "createdAt": "2026-10-10T04:07:24.886Z",
+    "updatedAt": "2026-10-10T04:17:14.850Z"
   }
 ]

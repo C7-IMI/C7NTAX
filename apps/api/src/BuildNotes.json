@@ -1,5 +1,75 @@
 [
   {
+    "version": "2026.10.9.036",
+    "date": "2026-10-09",
+    "title": "The deployment package, run rather than read",
+    "changes": [
+      {
+        "text": "**`az containerapp update --target-port` is not a flag.** The deploy script stopped at the",
+        "type": "Fix"
+      },
+      {
+        "text": "**The health check waited on a property that does not exist.** The loop polled",
+        "type": "Fix"
+      },
+      {
+        "text": "**`az containerapp revision show --revision` takes the revision's name**, `app--suffix`,",
+        "type": "Fix"
+      },
+      {
+        "text": "**A new revision was never promoted, and the rollback it printed did the same wrong thing.**",
+        "type": "Fix"
+      },
+      {
+        "text": "**The migration job ran a program that does not exist.** `job create --command` takes",
+        "type": "Fix"
+      },
+      {
+        "text": "**`/api/ready` refused every rollback.** Its deep check required the newest migration in the",
+        "type": "Fix"
+      },
+      {
+        "text": "**`TRUST_PROXY` — how many proxies to believe.** Behind Container Apps every request arrives",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The review is a document in the repository**, `PlanDocs/PLAN-030-Review-Round-3.md`,",
+        "type": "Update"
+      }
+    ]
+  },
+  {
+    "version": "2026.10.9.035",
+    "date": "2026-10-09",
+    "title": "The message a client actually reads, and a window to see it in",
+    "changes": [
+      {
+        "text": "**The mail body had no geometry because the sanitiser would not allow any.** `EMAIL_STYLE_PROPS`",
+        "type": "Fix"
+      },
+      {
+        "text": "**A mail card, at both widths a reader opens it at.** The page carries a centred, 600 px card",
+        "type": "New Feature"
+      },
+      {
+        "text": "**One column at 375 px, with no media query and no second layout.** Because a `<style>`",
+        "type": "Update"
+      },
+      {
+        "text": "**Simulate — the message at both widths in a window of its own.** The Preview panel is",
+        "type": "New Feature"
+      },
+      {
+        "text": "**The paste panel now tells the truth about what it keeps.** `emailStrip.ts` is the",
+        "type": "Update"
+      },
+      {
+        "text": "**The Help walkthrough was corrected, not just extended.** Its Preview section claimed the",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.9.034",
     "date": "2026-10-09",
     "title": "Administration grouped into subjects, and a section that stops moving",

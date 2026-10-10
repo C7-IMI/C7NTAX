@@ -27,7 +27,17 @@ export interface EmailPlainTextProps {
   derived: string;
   /** Somebody's own text part, or `null` while the derived one is what is sent. */
   edited: string | null;
-  onEdit: (text: string | null) => void;
+  /** Omitted by the read-only uses (the simulation window), where there is nothing to correct. */
+  onEdit?: (text: string | null) => void;
+  /**
+   * Show the message's text part without offering to change it.
+   *
+   * The pane is reused rather than restated wherever the text part is *shown* rather than edited — the
+   * simulation window, and the fallback overlay beside it — so those surfaces cannot describe the text
+   * part differently from the screen that writes it. Read-only also means the edit affordances are not
+   * drawn: a control that cannot act is worse than no control.
+   */
+  readOnly?: boolean;
   /** The HTML the two parts are compared against, when the renderer has answered. */
   html?: string;
   /** True when the derivation came from the code's blocks rather than from the API's answer. */
@@ -58,7 +68,7 @@ function DifferenceWarning({ html, text }: { html: string; text: string }) {
   );
 }
 
-export function EmailPlainText({ derived, edited, onEdit, html, derivedLocally = false, className = "" }: EmailPlainTextProps) {
+export function EmailPlainText({ derived, edited, onEdit, readOnly = false, html, derivedLocally = false, className = "" }: EmailPlainTextProps) {
   const redesign = useRedesign();
   const [draft, setDraft] = useState(edited ?? "");
   const shown = edited ?? derived;
@@ -91,30 +101,30 @@ export function EmailPlainText({ derived, edited, onEdit, html, derivedLocally =
           <pre className="max-h-96 overflow-auto rounded-lg border border-surface-border bg-surface-light p-3 font-mono text-[11.5px] leading-relaxed text-gray-300 whitespace-pre-wrap">
             {shown}
           </pre>
-          {overridden && (
+          {overridden && !readOnly && (
             <div className="space-y-2">
               <textarea
                 className="input-field h-32 w-full font-mono text-[11.5px]"
                 value={draft}
                 onChange={(event) => {
                   setDraft(event.target.value);
-                  onEdit(event.target.value);
+                  onEdit?.(event.target.value);
                 }}
                 aria-label="Edited plain-text part"
               />
               <div className="flex flex-wrap items-center gap-2">
-                <button type="button" className="btn-secondary" onClick={() => { onEdit(null); setDraft(""); }}>
+                <button type="button" className="btn-secondary" onClick={() => { onEdit?.(null); setDraft(""); }}>
                   Use the derived text
                 </button>
                 <span className="text-[11px] text-gray-500">Restores the derivation above and clears the override.</span>
               </div>
             </div>
           )}
-          {!overridden && (
+          {!overridden && !readOnly && (
             <button
               type="button"
               className="text-xs text-cyber-400 hover:underline"
-              onClick={() => { setDraft(derived); onEdit(derived); }}
+              onClick={() => { setDraft(derived); onEdit?.(derived); }}
             >
               Edit the text part instead
             </button>
@@ -141,18 +151,21 @@ export function EmailPlainText({ derived, edited, onEdit, html, derivedLocally =
         <textarea
           className="input-field mt-1 h-64 w-full font-mono text-[11.5px]"
           value={overridden ? draft : derived}
-          readOnly={!overridden}
+          readOnly={readOnly || !overridden}
           onChange={(event) => {
+            if (readOnly) return;
             setDraft(event.target.value);
-            onEdit(event.target.value);
+            onEdit?.(event.target.value);
           }}
         />
       </label>
 
       <div className="flex flex-wrap items-center gap-3">
-        <button type="button" className="btn-secondary" disabled={!overridden} onClick={() => { onEdit(null); setDraft(""); }}>
-          Use the derived text
-        </button>
+        {!readOnly && (
+          <button type="button" className="btn-secondary" disabled={!overridden} onClick={() => { onEdit?.(null); setDraft(""); }}>
+            Use the derived text
+          </button>
+        )}
         {overridden ? (
           <span className="chip chip--warn">plain text overridden</span>
         ) : (
