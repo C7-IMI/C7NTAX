@@ -12043,3 +12043,5 @@ existing Prompt 379 on `main`.
 **The document now ends with the reply rather than an addendum.** `KUMO-Security-Review-Response.md` keeps its
 analysis sections unchanged and its final section is the reply proper — one place a reader can go for what was
 found, what was verified, what was fixed and what is still wanted.
+### Prompt 394 — Adversarial read of the Kumo vault key fix
+Deepseek asked for a hostile read of finding 1 (86a67c97): production refuse-to-start vs warn, and gaps in the re-encryption classification. Wrote `KUMO-Security-Review-Adversarial-Read.md`. No code changed. (Numbered after main's 393; the earlier PLAN-030 review entries live only on review branches.)
