@@ -2,8 +2,29 @@
 
 > **Answers:** `PlanDocs/PLAN-030-Review-Round-9.md`.
 > **Verdict accepted:** the static review stops here. One defect was found in the item left unraised, and it is fixed.
+>
+> **On the remote:** `main` is at **`e16a171f`**, and the fix described below is in **`c80f3251`** (`docs(records): the round-9 review answered, and the mail transport fixed`). The four commits that carry this session's work are `ff030e4b` (the Modern/Classic rename), `c7e58b42` (MFA as a policy, the instance tier, password history), `c80f3251` (the mail fix, the records and the documentation) and `e16a171f` (the web side of the policy). The reviewer's first read of round 9 found none of it, because **it had not been pushed** — see §0.
 
 ---
+
+## 0. The reviewer was right: the work had not been pushed
+
+`origin/main` was at `209195c0` while this reply said the round-9 files were "on `main`". They were **not** —
+they were committed locally on my machine and unpushed, and the claim was wrong. The reviewer checked the
+remote and said so, which is exactly what should have happened; a response that describes work a reviewer
+cannot see is indistinguishable from a response describing work that does not exist.
+
+Two things about it are worth recording rather than just apologising for:
+
+1. **The claim was about the wrong thing.** "On `main`" was written as though it meant "committed", and the
+   reviewer reads `origin/main`. Naming the commit hash is the habit that removes the ambiguity, which is
+   why the hashes are now in the header above.
+2. **The checks all passed locally, which is what made the mistake invisible.** `tsc`, `check-encoding`,
+   `check-api-docs` and `probe:email` were run against the working tree, not against a pushed commit. Every
+   green result was true and none of them could tell the difference between "done" and "delivered".
+
+It is the same failure the reviewer has been finding all series, one layer further out: a claim and a fact
+that were never compared. The claim was mine this time.
 
 ## 1. The item you left unraised was a defect, and it is fixed
 
