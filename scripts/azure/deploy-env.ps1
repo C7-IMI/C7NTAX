@@ -634,7 +634,14 @@ if (-not $WhatIf) {
         throw "The update produced revision '$newRevision', which is not '<app>--$revisionSuffix'. A revision with that suffix already exists, so this run may not have created the one it asked for — the health gate below would have read the older, already-serving revision and passed. Inspect with: az containerapp revision list --name $appName --resource-group $ResourceGroup; nothing has been shifted."
     }
     $runningImage = (& az containerapp revision show --name $appName --resource-group $ResourceGroup --revision $newRevision --query "properties.template.containers[0].image" -o tsv 2>$null)
-    if ($runningImage -and $runningImage -notlike "*:$ImageTag") {
+    # An empty reading is a failure, not a skip. The first version of this check tested
+    # `$runningImage -and …`, which meant a query that returned nothing promoted the revision
+    # unchecked — the one case where the guard is most needed, since it is the case where we cannot
+    # say what is about to take traffic. The workflow version has always stopped on an empty read.
+    if (-not $runningImage) {
+        throw "Could not read the image on revision '$newRevision', so it cannot be checked against '$image'. Nothing has been shifted."
+    }
+    if ($runningImage -notlike "*:$ImageTag") {
         throw "Revision '$newRevision' is running '$runningImage', which is not the image this run deployed ('$image'). Nothing has been shifted."
     }
     Write-Info "waiting for $newRevision to become healthy…"

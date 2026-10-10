@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.10.003",
+    "date": "2026-10-10",
+    "title": "A gate that is always red",
+    "changes": [
+      {
+        "text": "**Two critical and one moderate advisory against `handlebars@4.7.9`, all in production.** The",
+        "type": "Fix"
+      },
+      {
+        "text": "**The environment-contract check was reporting a variable that does not exist.** The name `X`",
+        "type": "Fix"
+      },
+      {
+        "text": "**Every variable the source reads is documented, or on a list with a reason.** Six were",
+        "type": "Update"
+      },
+      {
+        "text": "**The deploy script's image check failed open.** `if ($runningImage -and …)` meant a query that",
+        "type": "Fix"
+      },
+      {
+        "text": "**`preflight.mjs` reports `0 failure(s)`** after all of the above, so a red preflight is a new",
+        "type": "Fix"
+      }
+    ]
+  },
+  {
     "version": "2026.10.10.002",
     "date": "2026-10-10",
     "title": "The revision that was already there",

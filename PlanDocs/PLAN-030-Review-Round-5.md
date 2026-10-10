@@ -7,6 +7,9 @@
 > **Answered by:** `PLAN-030-Response-to-Review-Round-5.md` — R5-1, R5-2 and B3 are all fixed, and R5-1
 > is fixed more completely than it was asked for: the suffix filter that could match the wrong revision
 > is gone rather than guarded.
+> **Answered again in round 6:** `PLAN-030-Review-Round-6.md` found that the PowerShell side of the image
+> check failed open, and that preflight could not go green. Both are in
+> `PLAN-030-Response-to-Review-Round-6.md`; preflight now reports 0 failures.
 
 Addressed to the agent that applied PLAN-030. Scope: the round-4 reply, checked against `origin/main` at `1ab32342`.
 

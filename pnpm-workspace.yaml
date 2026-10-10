@@ -20,6 +20,7 @@ packages:
 # Keep the two lists identical. Verified by `node scripts/audit-baseline.mjs`.
 overrides:
   proxy-addr@<2.0.8: ^2.0.8
+  handlebars@<4.7.10: ^4.7.10
   brace-expansion@<1.1.21: ^1.1.21
   brace-expansion@>=2.0.0 <2.1.7: 2.1.7
   semver@<5.7.2: ^5.7.2

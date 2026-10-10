@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.10.002 | Last Updated: 2026-10-10
+## Version: 2026.10.10.003 | Last Updated: 2026-10-10
 
 ---
 
@@ -11,6 +11,42 @@
 - This file is the authoritative source for the What's New changelog
 - Each entry uses type indicators: `[New]`, `[Update]`, `[Fix]`
 - **Definition of done for every change:** update all three records — `BuildNotes.md` (this file), `Retrace.md` (prompt log), and What's New. What's New is served live by `GET /api/system/changelog`, which reads this file and re-reads it only when the file changes, so no manual copy is required for it to refresh; the static fallbacks (`apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`) are regenerated automatically by `scripts/generate-buildnotes.mjs` (run by the pre-commit git hook and by `verify-post-change.ts`).
+
+---
+
+## 2026.10.10.003 — A gate that is always red
+
+Deployment preflight reported two failures on a clean tree, and a check that is always red stops being
+read — the next real finding arrives looking like the fourth reading of an old one. Both are now
+finished: one was two critical advisories that nobody had looked at, the other was the check reporting a
+variable that does not exist.
+
+- **[Fix]** **Two critical and one moderate advisory against `handlebars@4.7.9`, all in production.** The
+  package comes in through `packages/email`, whose range (`^4.7.8`) was never the problem — the lockfile
+  had simply resolved to the newest version at the time. 4.7.10 exists, so it is a floor like the others:
+  declared in `pnpm.overrides` **and** in `pnpm-workspace.yaml`, because both pnpm 9 and pnpm 10 read the
+  list and an override only one of them sees is a floor that stops applying. `guard:deps` caught the first
+  attempt for exactly that. The audit is now `4 advisories, 0 in production`, and the renderer was
+  exercised rather than assumed: `probe:email` is still 35/35.
+- **[Fix]** **The environment-contract check was reporting a variable that does not exist.** The name `X`
+  came from two *comment* lines in `packages/shared/src/appConfiguration.ts` that document a flag test by
+  naming `process.env.X` — the scan reads source for a pattern and a comment is not source. Comments are
+  stripped before the scan now, which is the part worth keeping: the false positive was one name, but the
+  habit of a gate that reports things that are not there is what makes people stop reading it.
+- **[Update]** **Every variable the source reads is documented, or on a list with a reason.** Six were
+  added to the production template — `PUBLIC_BASE_URL` above all, because behind the App Gateway an unset
+  one serves an add-in manifest naming an internal host no user's Outlook can reach — and six are on a
+  list that carries *why* each is not a production setting (the two aliases of `WEB_ORIGIN`, the three
+  probe knobs and the developer-admin seed's password). The list is a `Map` rather than a set of names
+  because the reason is the reviewable part, the failure message says what to do about a new name, and the
+  pass line reports how many are on it so its size stays visible.
+- **[Fix]** **The deploy script's image check failed open.** `if ($runningImage -and …)` meant a query that
+  returned nothing — which is also what a CLI error looks like, because the call is `2>$null` — skipped
+  the check and promoted the revision unchecked. The workflow version has always stopped on an empty read;
+  the script now does too, with its own message, since "could not read it" and "it is the wrong one" are
+  different failures. Two gates that disagree about the same condition are worse than either answer.
+- **[Fix]** **`preflight.mjs` reports `0 failure(s)`** after all of the above, so a red preflight is a new
+  fact again.
 
 ---
 

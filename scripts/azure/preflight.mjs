@@ -168,11 +168,29 @@ console.log("\nenvironment contract");
         .map(line => line.match(/^([A-Z][A-Z0-9_]*)=/)?.[1])
         .filter(Boolean),
     );
-    // Variables the API reads that are optional or local-only.
-    const ignored = new Set([
-      "C7NTAX_ROOT", "DD_READER_BASE_URL", "EMAIL_EWS_MAX_MESSAGES", "EMAIL_EWS_TIMEOUT_MS",
-      "EMAIL_IMAP_ALLOW_SELF_SIGNED", "EWS_ALLOW_SELF_SIGNED", "EWS_ENDPOINT", "GRAPH_API_BASE",
-      "GRAPH_TOKEN_BASE", "AUTH_TEST_BYPASS", "AUTH_TEST_BYPASS_ACCOUNT", "AUTH_TEST_BYPASS_TOKEN_TTL",
+    // Variables the source reads that are deliberately not in the production template, each with the
+    // reason it is not. A bare list of names drifts into a place to put things, and a gate that always
+    // fails stops being read — so the reason is data, not a comment, and it is printed when the list is
+    // what somebody is looking at.
+    const ignored = new Map([
+      ["WEB_PUBLIC_URL", "an alias of WEB_ORIGIN, kept as a fallback in one place; WEB_ORIGIN is the documented name"],
+      ["APP_URL", "an alias of WEB_ORIGIN, same fallback chain"],
+      ["PROBE_SMTP_PORT", "a probe's own tuning (email-studio-probe.ts), defaulted, never set in a deployment"],
+      ["PROBE_EXPECT", "a probe's expected subject, defaulted, dev-only"],
+      ["PROBE_TIMEOUT", "a probe's wait, defaulted, dev-only"],
+      ["DEVADMIN_PASSWORD", "the developer-admin seed's password, defaulted, dev-only"],
+      ["C7NTAX_ROOT", "a script's own working directory, never a deployment setting"],
+      ["DD_READER_BASE_URL", "the documentation reader, local-only"],
+      ["EMAIL_EWS_MAX_MESSAGES", "an EWS transport limit with a working default"],
+      ["EMAIL_EWS_TIMEOUT_MS", "an EWS transport limit with a working default"],
+      ["EMAIL_IMAP_ALLOW_SELF_SIGNED", "a local-mail-server allowance that must not be set in production"],
+      ["EWS_ALLOW_SELF_SIGNED", "a local-mail-server allowance that must not be set in production"],
+      ["EWS_ENDPOINT", "an EWS override for a non-Exchange server"],
+      ["GRAPH_API_BASE", "a base URL that exists so tests can point at a stub"],
+      ["GRAPH_TOKEN_BASE", "a base URL that exists so tests can point at a stub"],
+      ["AUTH_TEST_BYPASS", "refuses to run in production; it exists for local testing"],
+      ["AUTH_TEST_BYPASS_ACCOUNT", "the account the bypass matches, dev-only"],
+      ["AUTH_TEST_BYPASS_TOKEN_TTL", "how long the bypass account's token lasts, dev-only"],
     ]);
     const sources = ["apps/api/src", "packages/email/src", "packages/shared/src", "packages/integrations/src"];
     const used = new Set();
@@ -182,14 +200,22 @@ console.log("\nenvironment contract");
         // A worktree mid-edit can name files that are staged for deletion; skipping them keeps
         // the preflight useful before a commit instead of crashing on it.
         if (!existsSync(path.join(root, file))) continue;
-        const body = readFileSync(path.join(root, file), "utf8");
+        // Comments are removed first. Prose that *documents* the pattern — `process.env.X`, which
+        // packages/shared/src/appConfiguration.ts uses to explain a flag test — was being read as a
+        // variable named `X` and reported as undocumented. A gate that reports things that are not
+        // there is the reason this section stopped being read.
+        const body = readFileSync(path.join(root, file), "utf8")
+          .replace(/\/\*[\s\S]*?\*\//g, "")
+          .replace(/(^|[^:])\/\/.*$/gm, "$1");
         for (const match of body.matchAll(/process\.env\.([A-Z][A-Z0-9_]*)/g)) used.add(match[1]);
       }
     }
-    const undocumented = [...used].filter(name => !documented.has(name) && !ignored.has(name) && !name.startsWith("npm_"));
+    const undocumented = [...used]
+      .filter(name => !documented.has(name) && !ignored.has(name) && !name.startsWith("npm_"))
+      .sort();
     undocumented.length === 0
-      ? ok(`all ${used.size} variables the source reads are documented (or explicitly local-only)`)
-      : fail(`undocumented in the template: ${undocumented.join(", ")}`);
+      ? ok(`all ${used.size} variables the source reads are documented, or on the not-in-production list with a reason (${ignored.size} of those)`)
+      : fail(`undocumented in the template: ${undocumented.join(", ")} — document each one, or add it to the list in this file with the reason it is not a production setting`);
     for (const name of ["JWT_SECRET", "KUMO_MASTER_KEY", "DATABASE_URL", "WEB_ORIGIN"]) {
       documented.has(name) ? ok(`${name} documented`) : fail(`${name} is missing from the template`);
     }

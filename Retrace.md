@@ -10624,3 +10624,57 @@ missing from `infra/env/.env.production.example`. That is the repository's own r
 environment variable being part of the change, and the environment-contract check is what caught it. It is
 documented there now; the rest of that failure list is the pre-existing one recorded in the go-live
 briefing.
+
+---
+
+### Prompt 379 — Round 6: a gate that is always red
+
+**Timestamp:** 2026-10-10 05:38 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.10.003** — A gate that is always red.
+
+**Prompt**
+
+> Claude's response. Review, update, and reply here:
+>
+> Deepseek's round-5 fixes check out, and two things remain before a first deploy. I wrote the round-6
+> review as `PlanDocs/PLAN-030-Review-Round-6.md` on branch `claude/plan-030-review-round-6` …
+>
+> **Still open:** (1) PowerShell image check fails open — in `deploy-env.ps1` (about L636), an empty image
+> result skips the check and promotes; the workflow stops on the same empty result; the script should throw
+> too. (2) Preflight ends red with 2 failures: the environment-contract check (at least 13 variables the
+> code reads are missing from the production template, which Deepseek called pre-existing) and a
+> dependency-baseline failure I couldn't diagnose here, so please confirm it on a normal machine. "A gate
+> that always fails stops being read, so each variable should be documented or put on an allow-list with a
+> reason."
+
+**R6-1, fixed.** `if ($runningImage -and …)` became an explicit empty check with its own message. The `-and`
+was written to tolerate a query returning nothing — which is also what a CLI error looks like, since the
+call is `2>$null` — so it could not fire in the case it existed for. The two gates now agree.
+
+**R6-2, and the dependency failure was real.** Confirmed on a machine with pnpm on `PATH`: **seven
+advisories, three in production, two of them critical** — all `handlebars@4.7.9`, reached through
+`packages/email` (whose `^4.7.8` range was never the problem; the lockfile had resolved to the newest at
+the time). Fixed with a floor in `pnpm.overrides` **and** `pnpm-workspace.yaml`; the first attempt put it in
+`package.json` only and `guard:deps` refused it — *"an override only one package manager reads is a floor
+that stops applying"* — which is the check earning its place. The audit is now **4 advisories, 0 in
+production**, and `probe:email` is still 35/35, so the bump is exercised rather than assumed.
+
+**R6-2, and one of the failures was the check itself.** The first "undocumented" name was `X`, which is not
+a variable: it comes from two comment lines in `appConfiguration.ts` that document a flag test by naming
+`process.env.X`. The scan now strips comments before it looks, which is the part worth keeping — the false
+positive was one name, but a gate that reports things that are not there is why the section stopped being
+read. Then six real ones were documented in the template (`PUBLIC_BASE_URL` above all: behind the App
+Gateway an unset one serves an add-in manifest naming an internal host nobody's Outlook can reach) and six
+went on a list that carries *why* each is not a production setting — a `Map`, not a set of names, with the
+reason printed and the list's size reported.
+
+**`preflight.mjs` now ends `0 failure(s), 2 warning(s)`.** Worth recording for the next person: this
+machine has no `pnpm` on `PATH`, so the first run showed three failures that were all "pnpm is not
+recognized" — a red preflight here can be the shell, not the repository.
+
+**One correction sent back.** The review's remark that a re-run of the same commit "returns the existing
+revision" is right about the name and wrong about the mechanism: `containerapp update --image` with the same
+tag creates a new revision, and `latestRevisionName` is that new one. The conclusion stands and differs in
+the safe direction; the rollback case is the one where the suffix already exists with a different tag, and
+that is what the three assertions cover.
