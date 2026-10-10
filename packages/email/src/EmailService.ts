@@ -25,10 +25,23 @@ export class EmailService {
        * which is how every other flag in this application is read.
        */
       secure: config?.secure ?? process.env.SMTP_SECURE === "true",
-      auth: {
-        user: config?.user ?? process.env.SMTP_USER ?? "",
-        pass: config?.pass ?? process.env.SMTP_PASS ?? "",
-      },
+      /*
+       * `auth` is **omitted entirely** when there are no credentials, rather than passed as an object
+       * holding empty strings.
+       *
+       * That distinction is not tidiness: an `auth` object that is present tells the transport to
+       * authenticate, so an unauthenticated relay — an internal relay, an address-allowlisted one, or
+       * the local one a developer runs — was handed an AUTH attempt with a blank username. Some relays
+       * answer that with an authentication failure instead of simply skipping auth, so a deployment
+       * that needs no credentials could not send, and the error it produced looked like a wrong
+       * password rather than a configuration that never had one.
+       *
+       * The condition is "either half is set", not "both": a relay that wants a username and no
+       * password is unusual but real, and silently dropping a username somebody configured would be a
+       * worse bug than the one being fixed. Verified by reading the transport's own options — absent
+       * with no credentials, present when either is set.
+       */
+      ...(resolveSmtpCredentials(config) ? { auth: resolveSmtpCredentials(config)! } : {}),
     });
   }
 
@@ -210,6 +223,20 @@ export class EmailService {
       html: overdueTemplate(invoiceNumber, amount, daysOverdue, portalUrl),
     });
   }
+}
+
+/**
+ * The SMTP credentials this deployment has configured, or null when it has none.
+ *
+ * A caller's own config wins; otherwise the environment, read exactly as it was read before. Kept as a
+ * function rather than inline in the constructor so the question "is there anything to authenticate
+ * with" is asked once, in one place — by the transport, which must *omit* `auth` entirely when the
+ * answer is no. See the note in the constructor for why that distinction matters.
+ */
+function resolveSmtpCredentials(config?: { user?: string; pass?: string }): { user: string; pass: string } | null {
+  const user = config?.user ?? process.env.SMTP_USER ?? "";
+  const pass = config?.pass ?? process.env.SMTP_PASS ?? "";
+  return user || pass ? { user, pass } : null;
 }
 
 // ─── Email Templates (inline HTML, production should use MJML) ────────

@@ -9,6 +9,14 @@
 > **compile** against the real Bicep CLI (0.48.1, no warnings). Four items were deliberately **not**
 > applied and six decisions are still the operator's: see *§7 What landed, and what did not* below.
 >
+> **The static review is closed at round 9.** Nine rounds took this from "cannot complete a deployment" to
+> "no further findings"; round 9 raised nothing and fixed one defect the reviewer had deliberately left
+> out (the mail transport authenticating with credentials that were never configured —
+> **2026.10.10.014**). **It is still not deployed and not ready.** Nothing further can be settled by
+> reading: the next evidence is a dev deploy that runs one commit twice and then does a deliberate
+> rollback, plus the prod rehearsal and the four operator decisions listed in
+> `PLAN-030-Response-to-Review-Round-9.md` §3.
+>
 > **Revised against the review of the applied changes** (`PLAN-030-Review-of-Applied-Changes.md`, §1–§6
 > applied; §7 there — the least-privilege Postgres role, this plan's 2.3 — is tracked separately and
 > deliberately not applied):

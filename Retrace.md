@@ -10823,3 +10823,925 @@ operation than the tidiness is worth.
 
 **Agreed on stopping.** The static review has converged; what is left is a dev deploy, four operator
 decisions and the prod rehearsal, all of which need a subscription and money.
+
+---
+
+### Prompt 383 — MFA as a policy, with a wizard to enrol
+
+**Timestamp:** 2026-10-10 06:42 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.10.008** — Multi-factor authentication as a policy.
+
+**Prompt**
+
+> I need a way to enable MFA for C7NTAX in Administration settings. I should be able to turn it on globally for all accounts, also options to enforce it or enable on a per user basis. I also need to be able to choose different allowed MFA types for users, such as Authenticaor app, passkey, OTP, e-mail, etc. Look into adding a wizard for users at first login to select an MFA type and get it setup, based on what is allowed and set in the Administratio settings. Build out the necessary subsections, screens, configurations, options etc.
+>
+> You can use how Microsoft 365 does it as a reference.
+
+**What was already there, and what was missing.** The instance had one half of the feature: `User.mfaEnabled`,
+`mfaSecret` and `mfaBackupCodes` existed, `POST /auth/mfa/setup` and `/mfa/verify` worked for an
+authenticator app, and the sign-in already had the password-then-challenge handshake. What did not exist was
+any way to *require* a second factor, any way to exempt an account from a requirement, any statement of
+which methods a deployment accepts, and any wizard — an account either stumbled onto the setup screen or did
+without. `Permission.MFAEnforce` (`mfa:enforce`) had been declared and granted to Admin and Super Admin and
+**no route read it**, which is what the per-account control now uses it for.
+
+**The shape chosen, and why.** The feature is a policy laid over the enrolment, not a replacement for it:
+`mfaEnabled`/`mfaSecret`/`mfaBackupCodes` stay the account's facts, and four new columns carry the policy —
+`mfaState` (`default`/`disabled`/`enforced`, Entra's words, because an administrator who has used Entra
+already knows them), `mfaMethod`, `mfaEnrolledAt` and `mfaGraceUntil`. Settings live in a new `mfa`
+configuration section, so the administration screen needed **no web code at all** — the configuration
+screens are generated from the registry, which is exactly what that registry is for. One resolver,
+`services/mfaPolicy.ts`, answers "will this account be asked, and will it be stopped", because the sign-in,
+the middleware gate, the wizard and the administrator's screen must not each reach their own conclusion; if
+the gate and the wizard disagree by one day, a person is stopped while the wizard still says they have time.
+
+The gate mirrors the one mechanism already proven here: the `mustChangePassword` gate — a server-side
+`403` with a code, an exact exempt list, and a client component that replaces the routed tree. It runs
+**second**, after the password gate, because a person can owe both and a password change is what proves the
+account is theirs. Three deliberate exemptions: the deployment's test-bypass account, `req.apiKey` holders
+(a key is a credential issued to a system that cannot open a browser, so demanding an interactive wizard of
+it would break the integration rather than protect it), and an account with no method left to choose.
+
+**Two defects introduced and found by running it, not by reading it.** Both were in the safety net rather
+than the feature, and both would have been invisible to a code review:
+
+- **The refusal restored the wrong value.** A save that would leave enforcement on with no method offered is
+  refused and the previous value put back. The first version called `clearConfigValue`, which removes the
+  row and restores the field's *default* — not the previous answer. When the default happens to equal the
+  refused value the two are indistinguishable and the bug is silent; for the emailed-code switch, whose
+  default is `false`, clearing the row left the refused change fully in effect while returning a refusal.
+  Read `savedValue` first and write it back; the row is cleared only when there was no row. Observed:
+  `allowAuthenticator=false` on the last remaining method answered `REFUSED` and left `methods = []`.
+- **A switch-off retired every deadline, so the second switch-on locked everyone out instantly.** Switching
+  enforcement off moved every future deadline into the past, and the stamping rule only gave a deadline to
+  accounts that had *none* — so the next time enforcement was turned on, every unenrolled account was
+  already past its deadline and was stopped at its next request with no warning. Enforcement is switched off
+  and on again constantly while an administrator is deciding, so this was the ordinary path rather than an
+  edge case. The retire step is deleted and stamping now replaces any deadline that is not in the future.
+  Observed: the off/on cycle gives `daysLeft=7` where it previously gave `mustEnrolNow=True`.
+
+**Two pre-existing defects fixed, both in the recovery path.** `mfaBackupCodes` was documented in the schema
+as hashed, compared as **plain text** with `indexOf`, and **generated by nothing at all** — so recovery was
+unreachable and an account whose phone was lost needed an administrator. Enrolment now issues ten codes
+(shown once), stores them bcrypt-hashed, compares them with bcrypt, and spends them by the attempt. The
+emailed code was also compared with `===`, which leaks how many leading digits were right; it now uses the
+`codesMatch` helper the sign-in path already had.
+
+**Verified against the running server** rather than by reading: an instance with MFA off resolves an empty
+method list and requires nothing of anyone (the compatibility promise); the catalogue resolves passkeys'
+governance to `sessions.passkeys` rather than the `mfa` section, so there is not a second switch to forget;
+the lockout guard refuses the last method and restores it; the off/on cycle gives a real grace period;
+`GET /api/tickets` answers `403 MFA_ENROLMENT_REQUIRED` while `GET /api/auth/me`, `GET /api/users/me` and the
+enrolment endpoints answer `200`; enrolment issues ten codes and opens the gate; and a recovery code is
+accepted once, refused the second time, with a wrong code refused. `tsc` clean for the API and the shared
+package, `check-api-docs` (473 operations, 117 curated), `check-route-guards` (476 routes) and `guard:config`
+all pass.
+
+**Two decisions taken without the operator, and changeable.** The grace period defaults to **7 days** rather
+than 0, on the grounds that a requirement which stops people at their next request is the one that gets
+switched off again — the existing test account is exempt from the gate by design, which is why the gate had
+to be verified with a second account. And the per-account state beats the instance setting **in both
+directions**, so `enforced` holds one sensitive account to a higher standard than the deployment and
+`disabled` exempts one, which is what makes turning enforcement on safe to contemplate at all.
+
+**The interface half, and the screenshots.** The policy above is the wire; the screens that make it usable
+were built next and are recorded as **2026.10.10.009** and Prompt 384 — the wizard, the gate, the countdown
+banner, the sign-in challenge that asks for what the account actually has, and the per-account controls on
+Users. The user asked, in an earlier prompt, that help documentation always carry screenshots; the
+walkthrough written for this feature has its figures added once the interfaces are final, and the naming in
+that walkthrough is the **Modern/Classic** pair rather than the old "Redesign", because the interface was
+renamed in the same piece of work.
+
+**Two holes the UI work found in this half, both fixed here.** `POST /api/auth/send-mfa-email` had no
+offered-method check while the enrolment endpoint did, so switching emailed codes off still sent them at
+sign-in — and that switch is specifically the one an administrator uses to keep the second factor off the
+password-reset channel. And `GET /api/users/me` returned `mfaBackupCodes` and the **plaintext** pending
+`mfaEmailCode`. Neither was visible to a code review of the files I wrote; both were visible to somebody
+reading the endpoints against each other, which is what the UI work did.
+
+**Also reconciled.** The changelog gained a second entry for the UI half, so this entry's premature
+"wizard" bullets were removed rather than duplicated — this entry now owns the schema, the settings, the
+policy resolver and the gate; **`.009`** owns the screens.
+
+---
+
+### Prompt 384 — The second factor on screen: the wizard, the gate and the challenge
+
+**Timestamp:** 2026-10-10 07:02 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.10.009** — The second factor, on screen.
+
+**Prompt**
+
+> You are working in the C7NTAX monorepo at `c:\OneDrive\OneDrive - Cyber 7 Group\GHRepo\Kun\C7NTAX`
+> (Windows). The API for a new multi-factor authentication feature is **already built, running and
+> verified**. Your job is the **web UI**: the first-touch enrolment wizard and the gate that forces it.
+>
+> Read these first for house style and conventions:
+> - `apps/web/src/components/CloseTicketDialog.tsx` and `apps/web/src/components/PurchaseOrderDialog.tsx` —
+>   the mandated pattern for "one component, one set of handlers, two returns" (modern + classic
+>   interfaces). Read the comments at the top of each.
+> - `apps/web/src/pages/MFASetup.tsx` — the existing authenticator enrolment screen. Build ON this, do not
+>   discard it.
+> - `apps/web/src/App.tsx` around `<PasswordChangeGate />` (~line 124) and
+>   `apps/web/src/pages/PasswordChangeGate.tsx` if it exists — this is the exact model to mirror.
+> - `apps/web/src/hooks/useAuth.tsx` — carries `mustChangePassword`; you will add the MFA policy alongside
+>   it.
+> - `apps/web/src/index.css` — design tokens and `.card`.
+>
+> ## THE RULE THAT IS EASIEST TO GET WRONG
+>
+> The product has **two interfaces of the same screen, not one screen with a class toggled**.
+> `useRedesign()` from `hooks/useNavigationStyle` says which is in use. Every surface you build needs a
+> **modern arrangement and a classic arrangement, each designed individually**. The modern one uses the
+> redesign's furniture (a status track you step along, pills you press, sheets, sentences beside the control
+> that acts). The classic one is a form: labelled fields in a grid, a dialog with a heading and Save/Cancel.
+> If they would come out identical, it probably belongs in `components/ui/*` — say so in a comment. Never a
+> restyle of the other.
+>
+> ## WHAT WAS BUILT ON THE API (verified working)
+>
+> Session-authenticated, all under `/api/auth`:
+> - `GET /mfa/policy` →
+>   ```
+>   { enabled: boolean, mode: "optional"|"enforced", methods: ("totp"|"passkey"|"email_code")[],
+>     method: "totp"|"passkey"|"email_code"|null, enrolled: boolean, required: boolean,
+>     mustEnrolNow: boolean, mustEnrol: boolean, graceUntil: string|null, daysLeft: number|null,
+>     state: "default"|"disabled"|"enforced",
+>     catalogue: { id, label, summary, offered: boolean, standalone: boolean,
+>                  governedBy: { sectionId: string, fieldId: string } }[],
+>     enforcementPossible: { ok: boolean, reason: string|null } }
+>   ```
+>   Read `catalogue` — do **not** hard-code the method list. `offered: false` means the deployment does not
+>   allow it: show it greyed with the reason, do not hide it, because "why can't I use my passkey" is what
+>   the screen is for. `governedBy` names the config section/field that controls it (passkeys are governed
+>   by `sessions.passkeys`, not by the mfa section), so a "change this in X" link can be rendered
+>   truthfully. `standalone: false` (passkey) means a passkey cannot be the *first* method — it is
+>   registered from an already-signed-in session, so do not offer it as the only choice for a user with
+>   nothing enrolled.
+> - `POST /mfa/setup` (no body) → `{ secret, qrCode }` (qrCode is a data URL). 403 if authenticator is not
+>   offered.
+> - `POST /mfa/verify-setup` `{ code }` → `{ verified: true, method: "totp", backupCodes: string[] /*10*/,
+>   policy }`. **`backupCodes` are shown exactly once and can never be retrieved again** — the screen must
+>   make the person acknowledge they have stored them before it finishes.
+> - `POST /mfa/enrol/email/start` (no body) → `{ sent: true, expiresInMinutes: 15, email }`; **502** if the
+>   mail relay rejects it (show the error, offer another method).
+> - `POST /mfa/enrol/email/verify` `{ code }` → `{ verified: true, method: "email_code", policy }`
+> - `GET /me` now includes `mfaPolicy` (same shape as above).
+> - The sign-in response (`POST /auth/login`) returns `{ token, user, permissions, landingPage,
+>   mustChangePassword, mfaPolicy }`, or when a second factor is owed: `{ mfaRequired: true, mfaToken,
+>   mfaMethod, rememberDays, mustChangePassword }`.
+> - `POST /auth/mfa/verify` `{ code, mfaToken, remember?: boolean }` → session, `{ ..., mfaPolicy }`.
+>   `remember !== false` grants a trusted-browser cookie for `rememberDays`. A **recovery code** may be
+>   entered in the same `code` field — it is single-use and the response is identical. `rememberDays` of 0
+>   means the deployment does not remember browsers, so **do not show the "don't ask again" control** then.
+> - `POST /auth/send-mfa-email` `{ mfaToken }`, then `POST /auth/mfa/verify-email` `{ code, mfaToken,
+>   remember? }`.
+> - **The gate**: every non-exempt route answers `403 { error: { message, code: "MFA_ENROLMENT_REQUIRED" }
+>   }` while `mustEnrolNow` is true. The exempt set is `/api/auth/me`, `/api/auth/logout`,
+>   `/api/auth/change-password`, `/api/auth/mfa/policy`, `/api/auth/mfa/setup`, `/api/auth/mfa/verify-setup`,
+>   `/api/auth/mfa/enrol/email/start`, `/api/auth/mfa/enrol/email/verify`, `/api/users/me`,
+>   `/api/auth/webauthn/register/options`, `/api/auth/webauthn/register/verify`. So a gate component must
+>   render the wizard **outside** the normal routed tree, exactly like `PasswordChangeGate`.
+>
+> ## WHAT TO BUILD
+>
+> 1. **`MfaPolicyProvider` / carry the policy through `useAuth`.** The policy rides on `/auth/me` and on
+>    every sign-in response. Expose it from `useAuth` (`mfaPolicy`) and refresh it after enrolment.
+> 2. **The gate** — in `App.tsx`, alongside and *after* the password-change gate (a person can owe both;
+>    password first, because it proves the account is theirs). It renders when `mfaPolicy.mustEnrolNow` is
+>    true, and it must not be dismissable. Mirror `PasswordChangeGate`'s structure precisely.
+> 3. **The enrolment wizard.** Steps, driven by `catalogue`:
+>    - Choose a method (only `offered && standalone` are choosable for a first enrolment; a passkey is
+>      offered as "add later" with the reason).
+>    - Authenticator: `/mfa/setup` → QR + the manual secret → verify with `/mfa/verify-setup`.
+>    - Emailed code: `/mfa/enrol/email/start` → code field → `/mfa/enrol/email/verify`.
+>    - **Recovery codes**: after a successful enrolment, present the ten codes with a copy and a download,
+>      and require an explicit acknowledgement before finishing.
+>    - A "remind me later" affordance **only when `!mustEnrolNow`** — i.e. inside the grace period. Show
+>      `daysLeft` as a real countdown in words ("6 days left"). When `mustEnrolNow` is true there is no
+>      skip.
+> 4. **The reminder banner** for a signed-in person inside the grace period (`mustEnrol === true &&
+>    mustEnrolNow === false`): visible, dismissable for the session, linking to the wizard. Modern and
+>    classic arrangements both.
+> 5. **`MFASetup.tsx`** — keep it working, and make it the "change / re-enrol my method" screen reachable
+>    from My Account. Preserve the existing screenshot-decoding QR helper (`lib/qrEnrolment`) rather than
+>    reimplementing it.
+> 6. **The sign-in challenge** (`apps/web/src/pages/Login.tsx` or wherever `mfaRequired` is handled):
+>    honour the returned `mfaMethod` so an emailed-code account is not shown an authenticator field, offer
+>    "email me a code instead" when `email_code` is offered, accept a recovery code in the same field with
+>    a hint that it can be one, and only show the "don't ask again for N days" control when
+>    `rememberDays > 0`.
+>
+> ## HARD CONSTRAINTS
+>
+> - **Do NOT touch** `apps/web/src/pages/Users.tsx`, `apps/web/src/components/users/*`, anything under
+>   `apps/web/src/pages/HelpDoc.tsx`, or `docs/` — other work owns those.
+> - **Do NOT touch** the API (`apps/api/**`) — it is finished and verified. If you believe the API is
+>   wrong, say so in your final report instead of changing it.
+> - Keep the **classic interface fully working**: `localStorage.setItem("c7_ui_redesign", "0")` must give a
+>   usable screen, and `removeItem` must return to the instance default. Both must be real designs.
+> - Use existing `components/ui/*` primitives and design tokens; do not invent colours or spacing. There is
+>   a lint guard (`pnpm lint-design-tokens`) — no raw hex colours or arbitrary pixel values where a token
+>   exists.
+> - Never round-trip UTF-8 files through PowerShell (it corrupts them) — use the file editing tools.
+>
+> ## VERIFY BEFORE YOU REPORT
+>
+> The API is already running on `http://localhost:4000`. The web dev server may not be running; start it
+> with the pnpm shim at `%TEMP%\pnpm-shim\pnpm.cmd` prepended to `PATH` (pnpm is not otherwise on PATH),
+> i.e.:
+> `$env:PATH = "$env:TEMP\pnpm-shim;$env:PATH"` then `pnpm --filter @C7NTAX/web dev` from the repo root.
+> You must:
+> 1. Run `pnpm exec tsc --noEmit` in `apps/web` (use the shim) and get **zero errors**.
+> 2. Run `node scripts/check-encoding.mjs`, `node scripts/lint-design-tokens.mjs` and
+>    `node scripts/check-help-links.mjs` from the repo root — all must pass.
+> 3. Actually drive both interfaces in a browser (you have Playwright browser tools) and confirm the
+>    wizard, the banner and the gate render and work. `localStorage.setItem("c7_ui_redesign","0")` for
+>    classic.
+>
+> To exercise it: sign in as `john.smith@c7ntax.com` with password `TempVerify!2026Test` — but note that
+> account currently HAS an authenticator enrolled, so the sign-in asks for a code; the current TOTP can be
+> read by running `node tmp-totp.cjs john.smith@c7ntax.com` from `apps/api`. To see the **gate**, use the
+> admin account `admin@c7ntax.com` / `TempVerify!2026Test` — but that account is the auth test-bypass
+> account and is deliberately exempt from the gate, so it will NOT show it. If you need a third account,
+> you may create one by copying the pattern in `apps/api/tmp-pick.cjs` (it snapshots the account to JSON
+> first — always snapshot before changing anything, and restore afterwards). Enforcement is currently ON
+> with `graceDays: 0`, so an unenrolled, non-exempt account gets the blocking gate.
+>
+> **Clean up every temporary file you create** (including the browser session screenshots you do not keep)
+> before you finish. Do not commit anything.
+>
+> Report concisely: what you built, the two arrangements for each surface, the exact verification commands
+> and their results, anything you could not verify, and any API problem you found.
+
+**The interface half of a feature whose policy half had already shipped.** The API was finished, running and
+verified: `mfaPolicy` on `/auth/me` and on every sign-in response, a catalogue of methods resolved from the
+settings that govern them, `/auth/mfa/*` for enrolment, and a `403 MFA_ENROLMENT_REQUIRED` gate over
+everything outside a short exempt list. What was missing was every screen, so that is what this prompt
+produced — `components/mfa/MfaEnrolWizard.tsx`, `components/mfa/MfaReminderBanner.tsx`, `lib/mfa.ts`, the
+gate in `App.tsx`, the policy on `useAuth`, a rebuilt `MFASetup.tsx`, and the sign-in challenge.
+
+**The policy is carried, never recomputed.** `useAuth` holds `mfaPolicy` and exposes `refreshMfaPolicy()`.
+The sign-in responses already carry the policy, so the gate is decided from the answer that signed the
+person in rather than from a request that follows it; a page load with an existing session has no sign-in
+response to read, so the bootstrap asks `/auth/me` (exempt from the gate, so it answers while the gate is
+closed) for the policy alone. The catalogue — which only `GET /auth/mfa/policy` carries — is fetched by the
+wizard on mount. Nothing on the client decides what "required" means: that decision is
+`services/mfaPolicy.ts`'s, and a client that guessed "required" would hold somebody behind a gate the
+deployment does not have.
+
+**One component, two designs, and the refusals are the design.** The wizard is a single component with two
+returns. Modern: a sheet whose top line is the question, the three steps as a **track you step along**
+(`aria-current="step"`), methods as cards **you press** — the refusal written inside the card of the method
+that cannot be chosen — and the acting control beside the sentence that explains it ("Send me a code" beside
+the address it goes to, "Verify and continue" beside the field). Classic: a form — a labelled **Method
+select** in which the unavailable methods are kept as disabled options ("Passkey — not offered") with the
+reason and the governing configuration area printed underneath, a checkbox that has to be ticked before
+Save will do anything, and Save/Cancel. Neither is a restyle of the other, and the check for that was
+deliberate: the two arrangements were screenshotted side by side and compared.
+
+**The sequence rule that matters: the gate opens on acknowledgement, not on enrolment.** `/mfa/verify-setup`
+returns ten recovery codes that can never be fetched again, and the obvious implementation — refresh the
+policy as soon as the enrolment succeeds — unmounts the wizard (the gate it is inside disappears) and throws
+the codes away before anybody has written them down. So the policy is refreshed only in `finish()`, behind
+the acknowledgement, and that is stated where it happens because it looks like an omission.
+
+**Verified by driving both interfaces in a browser**, not by reading the code. The graceful path first: with
+the account given a six-day deadline, the modern banner reads "Set up a second factor — 6 days left before
+it is required" with a countdown pill and a dismissal; the wizard opens on `/mfa-setup` with the three
+methods and "Remind me later"; the emailed-code route shows the relay's own refusal verbatim ("The
+verification code could not be emailed — check the SMTP configuration or use another method", 502, the
+local relay is not running) and keeps the way past it; the authenticator route pairs a real secret, the ten
+codes appear, the Finish stays disabled until the box is ticked, and finishing clears the banner and turns
+the status to "Authenticator app / Active". Then the enforced path: with the deadline in the past the gate
+replaces the whole application (no sidebar, no reminder-later, "This step is required by your administrator"
+and a sign-out), and completing the wizard inside it opens the door. Both surfaces were then re-checked in
+the classic interface. Finally the challenge: `mfaMethod` decides the field (an emailed-code account got no
+authenticator field at all, and its code was sent for it), a recovery code typed **without its hyphen** was
+accepted into the same field and completed the sign-in, the "Don't ask again on this browser for 30 days"
+control appears only because `rememberDays` is 30 — and it was proved both ways: ticked, the next sign-in
+skipped the second factor; cleared, the API was sent `remember: false` and the next sign-in asked again.
+`pnpm exec tsc --noEmit` (zero errors), `check-encoding`, `lint-design-tokens` and `check-help-links` all
+pass.
+
+**Could not be verified, and why.** The successful emailed-code paths — enrolment by email and the emailed
+sign-in code — need a mail relay, and `SMTP_HOST` here is `localhost:587` with nothing listening, so only
+the **refusal** path could be exercised. The recovery-code download could not be confirmed as a downloaded
+file because the browser harness suppresses download events; the button, its blob and the absence of a
+console error were checked instead. The account used for the gate was the existing `john.smith@c7ntax.com`
+rather than a third account: his row was snapshotted to JSON before any change and restored exactly
+afterwards, as were the only two settings touched (the passkey switch, temporarily on, to prove the "cannot
+be your first method" reason renders) — both are back where they were.
+
+**Two API observations, reported rather than changed** (the API is out of scope). `GET /api/users/me`
+returns the whole account but **not** `mfaPolicy`, unlike `/api/auth/me`; the web interface therefore asks
+`/auth/me` for it, which is one extra request per page load. And `POST /api/auth/send-mfa-email` has no
+`offeredMfaMethods().includes("email_code")` guard, unlike `/mfa/enrol/email/start` — so at sign-in the
+emailed fallback is reachable even on a deployment that has switched emailed codes off, which is the one
+place the configuration's intent is not enforced. The page cannot read that setting before it signs in
+(nothing publishes it unauthenticated), so it offers the fallback until the API refuses it; if the intent is
+that a deployment without emailed codes should not accept one at sign-in, the guard belongs on the endpoint.
+
+---
+
+### Prompt 385 — A rehearsal of the second factor: the MFA setup simulator
+
+**Timestamp:** 2026-10-10 07:15 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.10.010** — A rehearsal of the second factor.
+
+**Prompt**
+
+> You are working in the C7NTAX monorepo at `c:\OneDrive\OneDrive - Cyber 7 Group\GHRepo\Kun\C7NTAX`
+> (Windows). A multi-factor authentication feature has just been built; its API is **finished, running on
+> http://localhost:4000 and verified**. Your job is one new thing: an **end-to-end MFA setup simulator** — a
+> rehearsal a support person can drive *while on the phone to somebody who cannot get MFA working*, so they
+> can see what that person is seeing and what to tell them at each step.
+>
+> The user asked for this explicitly: *"create an end-to-end MFA setup simulator place it in a logical place,
+> so that we can follow along and troubleshoot if users are having difficulty setting it up or using it.
+> Similar concept as the other simulators you've already built."*
+>
+> ## READ THESE FIRST — the concept already exists, match it
+>
+> - `apps/web/src/components/email/EmailSimulation.tsx` — **the model.** Read it in full, including its long
+>   header comment. It establishes the idiom you must follow: it opens a **real window** (`window.open`)
+>   holding both widths side by side, **copies the app's stylesheets and theme attributes into that window**
+>   (never re-types a colour), falls back to an **in-app overlay** when the window is blocked (a **sheet** in
+>   the modern interface, a **dialog with a heading and a Close button** in the classic one), and **never
+>   draws a blank frame** — a failure shows the read's own sentence and a retry.
+> - `apps/web/src/components/PortalPreviewDialog.tsx` — a second example of the same idea.
+> - `apps/web/src/pages/Configuration.tsx` — where this is going (see Placement).
+> - `packages/shared/src/mfa.ts` — `MFA_METHODS`, `MFA_STATES`, `MfaPolicy`. **Source every label from
+>   here.** Do not retype "Authenticator app", "Passkey", "Code by email", "Follow the instance setting",
+>   "Not required", "Required" — import them, so the simulator and the product cannot disagree about what a
+>   method is called.
+> - `apps/web/src/hooks/useNavigationStyle` — `useRedesign()` says which interface is in use.
+>
+> ## THE RULE THAT IS EASIEST TO GET WRONG
+>
+> The product has **two interfaces of the same screen, not one screen with a class toggled.** `useRedesign()`
+> decides. Every surface you build needs a **modern arrangement and a classic arrangement, designed
+> individually**: the modern one from the redesign's furniture (rails, pills you press, sheets, sentences
+> beside the control that acts); the classic one a form — labelled fields in a grid, a `select` where the
+> modern screen has a segmented control, a dialog with Save/Cancel. The shared part is the state, the API
+> call and the words — never the layout. If the two would come out identical, it belongs in
+> `components/ui/*`; say so in a comment instead of leaving the reader to guess.
+>
+> ## WHAT THE SIMULATOR IS, AND WHAT IT MUST NOT BE
+>
+> It is a **rehearsal and a diagnostic**, not a fake instance:
+>
+> 1. **The live half — read the real thing.** Call `GET /api/auth/mfa/policy`. That returns, for the
+>    signed-in account:
+>    ```
+>    { enabled, mode: "optional"|"enforced", methods: [...], method, enrolled, required,
+>      mustEnrolNow, mustEnrol, graceUntil, daysLeft, state,
+>      catalogue: [{ id, label, summary, offered, standalone, governedBy: { sectionId, fieldId } }],
+>      enforcementPossible: { ok, reason } }
+>    ```
+>    Show this plainly as **"what this instance currently does"**: whether a second factor is available,
+>    whether it is required, how long the grace period is, which methods are offered. This is the half that
+>    answers *"why is this person being asked, or not asked?"* — so it must be the real answer, not a mock.
+>    Read `catalogue[].offered` for availability and `catalogue[].governedBy` to say where a method is
+>    switched on (passkeys are governed by `sessions.passkeys`, not by the MFA section).
+> 2. **The script half — step through it.** A scenario picker covering the states that actually differ, and
+>    for each a numbered, walkable script the support person can follow in time with the user:
+>    - **Second factor switched off** — nothing is asked of anyone.
+>    - **Optional** — a person enrols themselves on purpose.
+>    - **Required, inside the grace period** — they are reminded, and a countdown is shown; they can carry on
+>      working.
+>    - **Required, grace expired** — they are stopped: every screen is replaced by the enrolment, and only
+>      the enrolment works.
+>    - **Signing in with an authenticator code.**
+>    - **Signing in with an emailed code.**
+>    - **A lost phone — a recovery code.** Include that it works **once** and cannot be reused.
+>    - **"Don't ask me again on this browser"** — and that an administrator's reset takes it away.
+>    Drive the steps from `MFA_METHODS`/`MFA_STATES`; never hard-code the method list.
+> 3. **Per-step troubleshooting notes.** This is the point of the whole thing. For each step: what the person
+>    should be seeing, what to check if they are not, and the one thing to say. Include the real failure
+>    modes: the authenticator code is time-based so a wrong device clock is the usual cause; the emailed code
+>    needs a working mail relay; a passkey cannot be the *first* method (it is registered from a signed-in
+>    session) so a user with nothing enrolled cannot choose it; a recovery code is single-use; and the app is
+>    stopped **only** by the gate, so "it works in one tab and not another" means one of them has a session
+>    and the other does not.
+> 4. **Both widths.** Desktop and phone, side by side, exactly as the email simulation does — because "it
+>    looks fine on my desktop" is half the support calls.
+> 5. **Nothing is written.** The simulator must be **read-only**: it must never save a setting, enrol
+>    anything, mint a secret or change anybody's account. A rehearsal that could alter the instance is a
+>    footgun. Say so in a comment and in the interface.
+> 6. **Never a blank frame.** If the policy read fails, show its own message and a retry.
+>
+> **Do not wait for, depend on, or import the enrolment wizard** — another agent is building it right now in
+> `apps/web/src/components/mfa/**`, `App.tsx`, `useAuth.tsx`, `Login.tsx` and `MFASetup.tsx`. The frames you
+> draw are a **rehearsal** of what the person sees, and your header comment must say exactly that, and that
+> the real screens are the authority if the two ever differ. Do not duplicate the wizard's files or prop
+> types.
+>
+> ## PLACEMENT
+>
+> - A **"Simulate a setup"** action on the **Multi-factor authentication** configuration section at
+>   `/admin/configuration/mfa`, because that is the feature's own screen — the precedent is the email
+>   simulator living in the Email Studio — and it is where an administrator is standing when users start
+>   reporting trouble. `apps/web/src/pages/Configuration.tsx` renders every section from the registry; add
+>   the action for the `mfa` section only, in **both** the modern branch and the classic branch (find
+>   `if (redesign)` — there are two section-detail branches, around lines 832 and 926). Keep the conditional
+>   explicit and commented rather than inventing a registry field for it.
+> - Add a `related` link from the Help walkthrough later — **do not edit `apps/web/src/pages/HelpDoc.tsx`**,
+>   it is owned by other work.
+>
+> ## HARD CONSTRAINTS
+>
+> - **Create** `apps/web/src/components/MfaSetupSimulator.tsx`. **Edit**
+>   `apps/web/src/pages/Configuration.tsx`. Those two files are yours.
+> - **Do NOT touch** `apps/web/src/components/mfa/**`, `apps/web/src/pages/Users.tsx`,
+>   `apps/web/src/components/users/**`, `apps/web/src/pages/MFASetup.tsx`, `apps/web/src/pages/Login.tsx`,
+>   `apps/web/src/App.tsx`, `apps/web/src/hooks/useAuth.tsx`, `apps/web/src/pages/HelpDoc.tsx`, or anything
+>   in `apps/api/**` or `docs/**`. Other work owns all of those and you will conflict.
+> - Use `components/ui/*` primitives and design tokens; `node scripts/lint-design-tokens.mjs` must pass (no
+>   raw hex, no arbitrary pixel values where a token exists).
+> - Never round-trip a UTF-8 file through PowerShell — it corrupts them. Use the file editing tools.
+>
+> ## VERIFY BEFORE YOU REPORT
+>
+> pnpm is not on PATH; the shim already exists. From any directory:
+> `$env:PATH = "$env:TEMP\pnpm-shim;$env:PATH"`. The web dev server is **already running on
+> http://localhost:3010**. The API is on `http://localhost:4000`.
+>
+> 1. `pnpm exec tsc --noEmit` in `apps/web` → **zero errors**.
+> 2. From the repo root: `node scripts/check-encoding.mjs`, `node scripts/lint-design-tokens.mjs`,
+>    `node scripts/check-help-links.mjs` → all pass.
+> 3. **Drive it in a browser** (you have Playwright tools). Sign in at `http://localhost:3010/login` as
+>    `admin@c7ntax.com` / `TempVerify!2026Test`. Open `/admin/configuration/mfa`, press **Simulate a
+>    setup**, and confirm: the live read matches what the API returns, the scenarios all render, the
+>    stepper walks forward and back, both widths are drawn, the pop-up-blocked fallback works (the overlay
+>    must appear), and no console errors. Then set `localStorage.setItem("c7_ui_redesign","0")` and confirm
+>    the **classic** arrangement really is a different design — not the modern one restyled. Take a
+>    screenshot of both. Enforcement is currently **on** with `graceDays: 0`, so an unenrolled account is in
+>    the "stopped" state — the live read should reflect that.
+>
+> **Clean up every temporary file you create** before you finish, and do not commit anything.
+>
+> Report concisely: what you built, the two arrangements, the exact verification commands and their results,
+> what you could not verify, and anything you found wrong with the API.
+
+**A rehearsal is a second drawing, and it says so.** The one thing this screen must not be is a copy of the
+wizard: `MfaSetupSimulator.tsx` deliberately does not import `components/mfa/**`, `lib/mfa.ts` or the
+wizard's prop types, because the enrolment work was in flight beside it and because a rehearsal has a
+different job — it carries the troubleshooting notes a real component has no business holding, and it has to
+be able to describe states the real component only renders in the moment (a stopped account, a spent
+recovery code, a reset that retired a trusted browser). The header comment states the rule plainly: **if the
+rehearsal and the real screen ever differ, the real screen is right**, and a mismatch is a bug in this file.
+The method labels and account states are the only things it does share, and those come from
+`MFA_METHODS`/`MFA_STATES` in `packages/shared/src/mfa.ts` so the two cannot disagree about what a method is
+called.
+
+**The live half is read, the script half is drawn, and the screen says which is which.** The only request
+the simulator makes is `GET /auth/mfa/policy`; every line of the top half is a field of that answer — the
+instance mode, whether the requirement lands on *this* account, the deadline and the whole days left (or
+that it has passed), the account state in the product's own words, and the catalogue with each method marked
+offered or not and the configuration area that governs it named. `enforcementPossible` is shown when the
+settings would demand a factor while offering none. Nothing recomputes the policy: `services/mfaPolicy.ts`
+resolves "does this account have to have a second factor, and is it about to be stopped without one" once,
+and a simulator that reached its own conclusion would be the fifth place to disagree with the other four.
+
+**The scripts are driven by the deployment's answer.** Eight scenarios — switched off, optional, inside the
+grace period, stopped, an authenticator sign-in, an emailed sign-in, a recovery code, and a trusted browser —
+each with a numbered script whose every step says what the person does, what they should be seeing, what to
+check when they are not, and the one line to say. The wizard frames' method chooser is the catalogue, so a
+method this deployment does not offer is refused **in the frame** with the area that governs it: the passkey
+in this instance reads "This deployment does not offer passkey. It is switched on under Administration →
+Configuration → Sessions & Security" — the `sessions.passkeys` governance question, answered on the screen
+rather than in a comment. The five failure modes the brief named are placed where they belong: the clock at
+the authenticator step, the mail relay at the emailed-code step, the passkey's standalone rule in the
+chooser, single use at the recovery code, and the session-not-the-browser rule at the gate.
+
+**Read-only, and it says so twice.** No enrolment, no secret, no setting, no change to anybody's account; the
+promise is in the header comment and in the interface (`Nothing is written from here: …`), because the
+person most likely to press the wrong thing is the one driving this while distracted on a call.
+
+**Two designs for every surface.** Three surfaces, each with a modern and a classic arrangement, designed
+individually rather than restyled: the action is a strip with the sentence beside the control that acts in
+the modern interface, against a headed card with a control row in the classic one; the blocked-pop-up
+fallback is a sheet against a dialog with a heading and a Close button; and the content is a rail of scenario
+pills with a step track you step along and the widths side by side, against a labelled `select` with numbered
+fieldsets read top to bottom and the widths stacked. The pieces that *are* identical in both — the frames,
+the fact rows, the notices — carry the reason where they are written: they are the thing being rehearsed and
+the statements about the read, not the furniture around it. This is a deliberate departure from the email
+simulation, whose **window** is a single arrangement: here the window is the surface an administrator opens
+and screenshots for a ticket, so it wears the interface it was opened from, and that is stated in the comment
+on `WindowDocument`.
+
+**Verified by driving it, and the read was cross-checked against the endpoint.** `GET
+/api/auth/mfa/policy` answered `enabled: true, mode: "enforced", methods: ["totp","email_code"],
+enrolled: false, required: false, mustEnrolNow: false, graceUntil: 2026-10-10T11:36:54.855Z` on this
+instance, and the live half printed exactly that — including `Passkey (off — set under Sessions & Security)`.
+In the browser: the action renders on `/admin/configuration/mfa` in both interfaces, the window opens and
+holds both frames side by side (900 px and 375 px), all eight scenarios are present in the picker, the
+stepper walked 1→2 of 7 and back, switching to "Required, grace expired" drew the gate frame on step 2 in
+both widths, a forced 500 on the policy read showed "This could not be read" with the API's own sentence,
+the endpoint and a Retry that recovered, and denying `window.open` produced the sheet and then the classic
+dialog with the same content. `Escape` closes the overlay. No console errors in a clean run.
+
+`pnpm exec tsc --noEmit` — zero errors. `node scripts/check-encoding.mjs` — no double-encoded text.
+`node scripts/lint-design-tokens.mjs` — OK, no new raw hex. `node scripts/check-help-links.mjs` — 100 routes,
+35 walkthroughs, every link resolves. Nowhere in the file is there a raw colour: the window inherits the
+app's stylesheets and theme attributes by cloning them, exactly as the email simulation does.
+
+**One bug found in my own work by verifying rather than assuming.** The first version asked for
+`/api/auth/mfa/policy` through the shared axios instance, which already carries `/api` as its base URL — so
+the request went to `/api/api/auth/mfa/policy` and 404'd. It was caught by watching the network on the
+button press, not by reading the code (the call site looked right); the constant now holds the documented
+address and the path is derived from it, with the reason written beside it.
+
+**Could not be verified, and why.** The window itself is not visible to the browser harness — `window.open`
+does not surface a popup page — so the *window's* arrangement was verified by reading the popup's DOM back
+through its window name: the modern window shows eight scenario pills, no `select` and the widths in a row;
+the classic window shows a labelled `select`, no pills and two stacked frames with no orphaned captions. The
+two frames' own layouts and the fallback overlays were screenshotted normally. The **emailed-code** success
+paths could not be exercised (no mail relay on this machine, the same limitation the wizard's entry records);
+the scenario that covers them is a rehearsal, and its step says what to check when the code never arrives.
+And the live read on this instance does **not** show the "stopped" state the brief expected: the admin
+account is the `AUTH_TEST_BYPASS` account and `mfaPolicyFor` exempts it, so `required` is false even with
+enforcement on and `graceDays: 0`. That is correct behaviour — the exempt account is stopped by nothing —
+and the "Required, grace expired" scenario in the picker is where the stopped state is rehearsed.
+
+**Three API observations, reported rather than changed** (the API is out of scope). `GET /auth/mfa/policy`
+carries the **deadline** and the whole days left but not the settings that produced them, so the live half
+prints the deadline and names the **Grace period** field rather than the length of the period; `rememberDays`
+is likewise only on the sign-in response, which is why the trusted-browser step says "for N days" rather than
+quoting a number it cannot read. With the instance switch **off**, `mfaPolicyFor` resolves `methods: []` and
+every `catalogue` entry therefore reads `offered: false`, so the wizard's refusal sentence blames the
+individual method's own setting rather than the master switch that is actually off — the simulator's
+"switched off" script says which of the two it is, but the wizard itself would misdirect an administrator
+who followed it. And `enforcementPossible` is the one place the endpoint volunteers a configuration
+mistake; the other half of the same problem — a deployment offering only a non-standalone method (passkeys
+alone) — is not reported there, and would leave people required to enrol something they cannot choose.
+
+---
+
+### Prompt 386 — Modern and Classic, and the word "Redesign" retired
+
+**Timestamp:** 2026-10-10 07:32 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.10.011** — The two interfaces are called Modern and Classic.
+
+**Prompt**
+
+> You are working in the C7NTAX monorepo at `c:\OneDrive\OneDrive - Cyber 7 Group\GHRepo\Kun\C7NTAX` (Windows).
+> Your single job is a **rename**: the application's two interfaces are called **Modern** and **Classic**, and
+> the word "Redesign"/"redesign" must stop being used for them anywhere in the application, the code, or the
+> design documentation. The user asked for this explicitly:
+>
+> > "Rename the interface from Redesign to Modern. The interface choices should be Modern and Classic, not
+> Redesign and Classic. Update references in the app and code as well as the design docs/framework that other
+> models will use as a reference."
+>
+> This is a **behaviour-preserving rename, not a redesign of anything.** Nothing about what either interface
+> looks like or does may change.
+>
+> ## The canonical names — the exact targets
+>
+> | Old | New |
+> |---|---|
+> | `useRedesign()` | `useModernInterface()` |
+> | the local boolean `redesign` | `modern` — so the branch reads `if (modern) { … }` |
+> | `redesignOverride()` | `modernScreensOverride()` |
+> | `setUiRedesign()` | `setUiModernScreens()` |
+> | `UI_REDESIGN` | `UI_MODERN_SCREENS` |
+> | `UI_REDESIGN_AVAILABLE` | `UI_MODERN_SCREENS_AVAILABLE` |
+> | `UI_REDESIGN_STORAGE_KEY` | `UI_MODERN_SCREENS_STORAGE_KEY` |
+> | the storage key `"c7_ui_redesign"` | `"c7_ui_modern"` |
+> | `VITE_UI_REDESIGN` | `VITE_UI_MODERN` |
+> | the attribute `data-ui-redesign` | `data-ui-modern` |
+> | `InterfaceStyle = "redesign" \| "classic"` | `"modern" \| "classic"` |
+> | the setting default `interfaceStyle: "redesign"` | `"modern"` |
+> | the choice label `"Redesign (default)"` | `"Modern (default)"` |
+> | prose "the redesign", "redesigned" | "the Modern interface", "Modern" |
+>
+> The files that anchor all of this are `apps/web/src/lib/uiFlags.ts`,
+> `apps/web/src/hooks/useNavigationStyle.ts`, `apps/web/src/components/Layout.tsx` (it sets the attribute) and
+> `apps/web/src/index.css` (20 rules scoped to the attribute). Read those four first. Then
+> `packages/shared/src/appConfiguration.ts` holds the `interfaceStyle` field — its `default`, its `choices`
+> label and its prose.
+>
+> ## Two compatibility requirements — do not skip these
+>
+> 1. **Keep reading the old storage key and the old build flag.** Somebody's browser may hold `c7_ui_redesign`,
+> and a deployment's build may set `VITE_UI_REDESIGN`. Dropping them silently resets a person's interface
+> preference and quietly disables a build constraint. So: **read both** (new first, old as a fallback), and
+> **write only the new one**. Comment why, and say the aliases can be retired in a later release.
+> 2. **A stored `appearance.interfaceStyle` value of `"redesign"` must keep giving the Modern interface.** The
+> resolver already treats anything that is not `"classic"` as Modern, so this falls out — but confirm it by
+> reading the resolver rather than assuming, and make sure the default is `"modern"` so an instance that never
+> chose is unchanged.
+>
+> ## Do NOT touch
+>
+> - **`Retrace.md`, `BuildNotes.md`, `apps/web/public/BuildNotes.md`, `apps/api/src/BuildNotes.json`** — these
+> are **historical records** of what was said and released at the time. Rewriting them would falsify the log.
+> Leave every one of them exactly as it is. (This is ~190 of the ~1077 matches; it is deliberate.)
+> - **`.github/copilot-instructions.md`, `AGENTS.md`, `CLAUDE.md`, `DESIGN.md`** — already updated by the
+> coordinator. Do not touch.
+> - **`apps/web/src/pages/HelpDoc.tsx`** — the coordinator is editing it concurrently. Do not touch it at all;
+> the coordinator will handle its `c7_ui_redesign` references and its "Redesign (default)" table row.
+> - `INTERFACE-ROLLBACK.md` — this one **is** yours: update its content (its filename stays as it is).
+>
+> ## Verify before you report
+>
+> pnpm is not on PATH; the shim exists. Prepend it: `$env:PATH = "$env:TEMP\pnpm-shim;$env:PATH"`.
+> The web dev server is running on **http://localhost:3010**; the API on **http://localhost:4000**.
+> 1. `pnpm exec tsc --noEmit` in **both** `apps/web` and `apps/api` → zero errors. (`apps/api` matters:
+> `packages/shared` is consumed as source by both.)
+> 2. From the repo root: `node scripts/check-encoding.mjs`, `node scripts/lint-design-tokens.mjs`, `node
+> scripts/check-help-links.mjs` → all pass.
+> 3. **Prove in a browser** (Playwright tools) that nothing changed behaviourally: sign in at
+> `http://localhost:3010/login` as `admin@c7ntax.com` / `TempVerify!2026Test`. Then:
+>    - `localStorage.setItem("c7_ui_modern", "0")` + reload → the **Classic** interface, and
+> `document.documentElement.getAttribute("data-ui-modern")` is `"false"`.
+>    - `localStorage.setItem("c7_ui_modern", "1")` + reload → the Modern interface.
+>    - `localStorage.removeItem("c7_ui_modern")` → the instance default.
+>    - **The legacy alias test, which is the important one:** set `localStorage.setItem("c7_ui_redesign", "0")`
+> (the OLD key, nothing else) + reload, and confirm the Classic interface still appears. Then remove it.
+>    - The interface switch still names its choices **Modern** and **Classic** wherever it is drawn.
+> 4. Confirm no page logs a React error in either interface.
+>
+> ## Finally — the records for this change
+>
+> Per the repo's standing rules, add a dated entry to the root `BuildNotes.md` using `node
+> scripts/next-version.mjs` (do not guess the number), describing this as a rename: what was renamed, the two
+> compatibility aliases, and that behaviour is unchanged. Run `node scripts/generate-buildnotes.mjs` afterwards.
+> Then append the user's prompt above, verbatim in a blockquote, to `Retrace.md` following the existing entry
+> format — the next Prompt number after the last one in that file.
+>
+> **Clean up every temporary file you create** and commit nothing.
+>
+> Report concisely: the file count touched, each verification command and its result, the legacy-alias test
+> result, anything you could not verify, and anything you found that looks like a genuine `redesign`-vs-`Modern`
+> ambiguity you had to decide (for example prose where the two words are not interchangeable).
+
+**A rename, and nothing else.** The application has always offered **Modern** and **Classic** in the
+My Account menu; the word "Redesign" survived in the code, the comments, the settings prose and the
+design notes as the name of the second layout. It is now retired, with the behaviour left exactly as
+it was: same screens, same switch, same defaults, same routes, same permissions, same colours. One
+hundred and twenty-five files carry the change — the great majority mechanically, since
+`useRedesign()` and the local `redesign` account for most of the eight hundred and eighty-odd
+occurrences in code.
+
+**The four anchor files were read before anything was touched, and edited by hand.** `uiFlags.ts`
+owns the flag and the storage key, `useNavigationStyle.ts` resolves the three layers into
+`interfaceStyle` and exports the hook, `Layout.tsx` sets the attribute the stylesheet is scoped to,
+and `index.css` carries the twenty rules under it. Reading them first is what made the rest safe: the
+rename is one vocabulary change and four files that decide everything else follow from it.
+`appConfiguration.ts` (the `interfaceStyle` field, its `default`, its choices and its prose) and
+`MyAccountMenu.tsx` (the chip that draws the switch) were edited the same way.
+
+**The mechanical pass, and the one thing it caught that it should not have.** A throwaway Node
+script applied the identifier and prose mappings across the repository, then reported every file
+still containing the word so the residue could be reviewed rather than assumed. It walked the tree
+without excluding build output, so it also rewrote a stale, git-ignored copy of this changelog inside
+`apps/desktop/dist-electron/win-unpacked/resources/webui/` — which is a copy of a **historical**
+record. It was repaired exactly: the script found the git blob whose content, put through the same
+mapping, reproduces the edited file byte for byte, and restored that blob, including the twenty-seven
+lines that had CRLF endings among LF ones. That file is a build artifact, ignored by git and
+regenerated by a desktop build, but a record is a record.
+
+**The two aliases are read, never written.** `readFlag()` now takes an optional legacy name, and
+`UI_MODERN_SCREENS` and `modernScreensOverride()` consult it only when the new key is absent:
+
+```ts
+const override = localStorage.getItem(key) ?? (legacy ? localStorage.getItem(legacy.key) : null);
+```
+
+The build side composes the same way — `readBuildFlag("VITE_UI_MODERN") && readBuildFlag("VITE_UI_REDESIGN")`
+— so a deployment that set the old variable still means it, and `UI_MODERN_SCREENS_AVAILABLE` reports
+it. `writeFlag()` only ever writes `c7_ui_modern`, so the old key drains away as people use the
+switch. Both are commented at the definition with why, and with the note that they can be retired in
+a later release. The second requirement needed no code: `parseNavigationSettings` already read
+`interfaceStyle === "classic" ? "classic" : "modern"`, so a stored `"redesign"` was Modern before the
+rename and is Modern after it — and the comment now says so, because that is exactly the kind of
+coincidence that gets "tidied" into a bug.
+
+**The design material went with it, since other work reads it as the reference.** `INTERFACE-ROLLBACK.md`
+(its filename deliberately unchanged) now names the two layouts Modern and Classic, documents the
+aliases and the value a stored `"redesign"` still gives, and gives the retirement rule; two mockups
+were renamed — `login-modern.html` and `contacts-boards-modern.html`, with the four mockups that
+copied the second one's tokens updated with it. `docs/api-operations.json`'s worked example of the
+environment dump reported `"effective": "redesign"` for `UI_INTERFACE_STYLE`, which is the setting's
+default and therefore no longer true; it says `modern`, and `generate-openapi.mjs` was re-run so the
+specification carries it.
+
+**Prose where the two words are not interchangeable, decided rather than pattern-matched.** Four
+places needed a judgement and are worth naming, because a blind replacement gets each of them wrong.
+The nav pane's comment said "redesigning every page to fit a narrower column" — the ordinary verb, not
+the layout, so it now says "reworking". A mockup quoted the owner verbatim ("I like how you redesigned
+them originally") and a blanket pass had turned a quotation into "I like how you Modern them
+originally"; the quote is restored, and the word stays in it because changing a quotation falsifies
+it. A mockup's aside, "a reimagining that quietly drops them is a redesign nobody asked for", is the
+noun in its general sense and now reads "a change nobody asked for". And a `Tickets.tsx` comment that
+became "and, Modern, the composer" reads "and, in the Modern interface, the composer". Four other
+mentions of the old name are deliberate and stay: `"redesign"` as a stored value, `c7_ui_redesign` and
+`VITE_UI_REDESIGN` as aliases, and the sentence in `INTERFACE-ROLLBACK.md` and `uiFlags.ts` that
+explains what the interface used to be called — a rename has to be able to name what it renamed.
+
+**Verified by running it, in both layouts.** `pnpm exec tsc --noEmit` is clean in `apps/web` and
+`apps/api`. `check-encoding`, `lint-design-tokens`, `check-help-links`, `check-api-docs` and
+`check-route-guards` all pass, and `next-version.mjs` followed by `generate-buildnotes.mjs` put this
+entry at the top of all three records. In the browser, signed in as the administrator, the matrix is:
+
+| Set | `data-ui-modern` | Layout drawn |
+|---|---|---|
+| nothing | `true` | Modern — the instance default |
+| `c7_ui_modern=0` | `false` | Classic |
+| `c7_ui_modern=1` | `true` | Modern |
+| `c7_ui_modern` removed | `true` | Modern — the default again |
+| **`c7_ui_redesign=0` alone** | `false` | **Classic** — the alias |
+| `c7_ui_modern=0` with `c7_ui_redesign=1` | `false` | Classic — the new name wins |
+
+Ten page loads across both layouts (`/tickets`, `/clients`, `/help`, the Interface walkthrough and
+`/admin/configuration`) rendered in full with **no page errors and no console errors** beyond the
+pre-existing unauthenticated 401s the sign-in page always logs. The two screenshots are the Today
+page in each layout: one-row header in Modern, three-line header with the trail and the widget grid
+in Classic. The switch itself was driven both ways from **My Account → Appearance → Interface**,
+which reads `Modern` and `Classic`, and writes `0` and `1` to `c7_ui_modern` as it does so.
+
+**Two things could not be verified in the browser.** The **Interface** select on
+`Administration → Configuration → Workspace` was not reachable as the administrator: an
+instance-permission tier has been added to that section concurrently, and this role no longer has it,
+so the page renders "Deployment settings — read only for your role" with no fields. Its label was
+therefore verified at the source instead — `appConfiguration.ts` now reads
+`{ value: "modern", label: "Modern (default)" }` with `default: "modern"`. And `apps/api`'s
+type-check covers `packages/shared`, which is how the `default` change is proven to be consumed.
+
+**One file outside this task's scope had to be touched, and the reason is worth stating.**
+`HelpDoc.tsx` was the coordinator's to rename, and the brief says not to touch it. Its last remaining
+`import { useRedesign }` was in the module graph, so removing the export took the whole application
+down — the page rendered an empty `#root` and every layout check was impossible. The minimum change
+was made to that file so the build and the browser would work: the import, the `useRedesign()` call
+and the two `className` expressions that used the local boolean, three lines, all of them the
+mechanical rename and none of them the prose, the `c7_ui_redesign` references or the
+"Redesign (default)" table row the coordinator owns. Their content edits are untouched. It is the one
+place where "keep the application working" and "do not touch this file" could not both be satisfied,
+and the application winning is the smaller risk.
+---
+
+### Prompt 387 — Settings that belong to the instance, not to an administrator
+
+**Timestamp:** 2026-10-10 07:45 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.10.012** — An instance tier above Admin.
+
+**Prompt**
+
+> Certain global settings should only be available to super admins. Settings that affect the entire application as a whole as well as potentially destructive options should be made only available to the Super Admin role. For instance turning on MFA for the entire application and enforcing it should only be something a super admin can do. Admins can still reset and enable/disable MFA for the users. Look through the configuration options and the application itself, then create a list of permissions and options/configurations that you think should be made available to Super Admins only. Super Admin is the highest tier of access. Admin is a lower tier. Admins would not be able to grant themselves permissions only designated as a Super admin level permission. Go ahead and build out any relevant screens, options, configurations and move the permissions around. We can review and adjust them later.
+
+**What the survey found.** Admin and Super Admin were 113 and 115 permissions apart by exactly two keys —
+`developer:view` and `developer:purge`. Nothing else. So an ordinary administrator could turn MFA on *and
+enforce it*, change the session ceiling, switch authentication hardening off, enable the test-bypass
+exemption, change what every client sees in the portal, and pause the instance's background pollers.
+`Permission.SystemConfig` alone guarded 44 route references, nearly all of them instance-wide.
+
+**The list, and the three calls the operator delegated.** Three new permissions — `instance:security`,
+`instance:config`, `instance:maintenance` — split by *kind of decision* rather than by audience, because
+the reason each is protected is what a reviewer needs to read. The three judgement calls were delegated
+back to me: **SSO settings move with their switch** (splitting the on/off from the issuer and secret would
+let an administrator change who can sign in without holding the tier); **integrations stay with Admin**
+(moving them blocks routine connector repair, for a benefit that is mostly theoretical since a connector's
+blast radius is its own credentials); and **email templates stay with Admin** but want a bulk-send guard
+rather than a tier, because the risk there is volume rather than authority. All three are written into the
+tier's documentation so they remain visible for review rather than being decisions that quietly happened.
+
+**Three enforcement points, because hiding a checkbox is presentation.** A role's permissions live in an
+editable database column, so a picker that omits a key proves nothing: `ROLE_PERMISSIONS` withholds the
+tier from Admin, `computePermissions` subtracts it from any role whose own declared set does not include
+it, and the role and user routes refuse it **by name** — on create, on edit, and through both halves of a
+user's permission lists. Proven against a tampered Admin row, a personal override and a technician row,
+each of which lost the tier while keeping its ordinary permissions. An API key needed no special case: its
+scopes are intersected with its owner's permissions on every request, so a key cannot carry what its owner
+does not hold.
+
+**A lockout I created and then closed.** The tier put the switches that turn enforcement off *behind* the
+permission the gate was enforcing — so once grace periods expired, the one person able to fix a mistake
+would have been the one person the gate stopped. An account holding `instance:security` is now exempt from
+the gate while still owing the enrolment, so the reminder stands. It is the same shape as the three
+lockouts already found in this feature and it is closed the same way: by deciding it in the one place the
+gate, the wizard, the banner and the administrator's screen all read from.
+
+**Verified by running.** An Admin writing the MFA section, the Workspace section, or the instance pollers:
+`403`. Creating a role carrying `instance:security`: `403`, naming the key and the reason. Granting it
+through a user edit, on either the grant or the removal half: `403`. The paired gate test with the
+requirement biting: an ordinary unenrolled account `403`, the Super Admin `200`, both reporting
+`mustEnrolNow: true`. A migration carried the data half — `super_admin` and `developer_admin` given the
+three keys, `admin` deliberately not, and any tier key found on an admin role removed rather than trusted.
+
+---
+
+### Prompt 388 — The development account, and the last five passwords
+
+**Timestamp:** 2026-10-10 07:52 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.10.013** — The last five passwords, and a development account.
+
+**Prompt**
+
+> make the admin user account with the bypass enabled a super admin. Also allow it to bypass the MFA enrollment requirement for now. I don't want to have to enroll for that account as we will be disabling/deleting it once we move to Azure. It's only being used right now for local development and testing. reset the password to admin. So it should go back to being admin/admin like it was before.
+>
+> Also for password resets, there should be standard complexity requirements along with not being able to use the last 5 passwords.
+
+**The account.** `admin@C7NTAX.com` moved onto the Super Admin role, `mfaState` set to `disabled` so the
+record itself says *Not required* rather than depending on a deployment exemption being understood, and
+the password set to `admin` with `mustChangePassword` cleared and `tokenVersion` bumped so anything signed
+in before is retired. The password is written **directly to the database**, and that is the honest part:
+the product's own policy refuses a five-character password and was not weakened for this — so signing in
+works, while changing it through the interface still demands twelve characters and three character
+classes. The account will be deleted when the deployment moves to Azure, which is why the exemption is
+stated on the record rather than inferred.
+
+**Complexity already existed; reuse did not.** Twelve characters, three of four character classes, a
+common-word list, the account's own name and address, no single repeated character. What was missing was
+history, and that is the half that makes the other half mean anything: an account alternating between two
+favourites satisfies every complexity rule forever while never actually changing its password. Five
+previous passwords, stored as **bcrypt hashes** — a history is a list of credentials that used to work, so
+the only question asked of it is "is this one of them", which bcrypt answers without the database holding
+the password — and compared with bcrypt. The rule applies to an administrator's reset as well as to a
+self-service change, because "reset it back to what it was" is exactly the instruction that would undo a
+change somebody made because their password had been exposed. A generated reset password skips the check:
+it is random, so it cannot be a reuse, and refusing it would leave an administrator unable to reset an
+account at all.
+
+**Four credential fields were leaking, and mine would have been the fifth.** `GET /api/users/:id` stripped
+only `passwordHash` and `mfaSecret`, so it returned `mfaBackupCodes`, the **plaintext** pending
+`mfaEmailCode`, and would have returned the new history — a list of every credential an account had ever
+had, handed to anybody holding `user:manage`, from a route whose purpose is to show one person's record.
+All five now go through one helper, which is the fix rather than five fixes: the leak existed because each
+call site remembered a different subset and nothing made them agree.
+
+**Verified by running.** Short, one-class and common-word passwords each refused with their own message;
+a valid one accepted; returning to a previous password refused with the history sentence; the current
+password refused; seven changes in a row leaving the history at **exactly five**, after which the oldest
+became reusable — which is what "the last five" means, and is the difference between a rule and a
+plausible-looking rule. Credential fields on `/users/:id` and `/users/me`: none.
+
+---
+
+### Prompt 389 — Confirming the bypass still bypasses
+
+**Timestamp:** 2026-10-10 07:56 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.10.013** — folded into the entry above; no separate change.
+
+**Prompt**
+
+> the admin account shuld still be able to bypass everything like it could before
+
+**Right to ask, because I had changed the things it bypasses.** The gate was rewritten and a permission
+tier was added underneath it in the same stretch of work, so "it bypasses everything" stopped being
+something that could be assumed from the account's name. Verified by exercising it rather than reading it:
+`admin/admin` signs in with **no** second-factor challenge and **no** forced password change, and then
+reaches tickets, the MFA policy and Workspace (both tier writes), the instance pollers, the role list, and
+the developer surface — `environment`, `deployment` and `purge/preview` — while reporting
+`required: false` and `mustEnrolNow: false`. The exemption comes from `AUTH_TEST_BYPASS`, which is refused
+outright when `NODE_ENV` is production, plus the per-account `mfaState` added in the previous prompt; both
+apply, and the second is the one an administrator can see on the record.
+---
+
+### Prompt 390 — Round 9: a relay that had no password, asked for one
+
+**Timestamp:** 2026-10-10 08:05 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.10.014** — A relay that had no password, asked for one.
+
+**Prompt**
+
+> After you're done:
+>
+> Here is Claude's response. Review, update, and reply: [round-9 review — the round-8 fixes hold, nothing further raised, the review loop proposed as finished, and one item deliberately left out: the mail sender passes empty credentials when none are set, which the reviewer did not test]
+
+**The item left unraised was a defect, and it is fixed.** `EmailService` built its transport with
+`auth: { user: SMTP_USER ?? "", pass: SMTP_PASS ?? "" }`, and a *present* `auth` object is an instruction
+to authenticate rather than a statement that there is nothing to authenticate with. A relay needing no
+credentials — internal, address-allowlisted, or the local one a developer runs — was therefore handed an
+AUTH attempt with a blank username, and some relays answer that with an authentication failure rather
+than skipping authentication. The error it produced reads as a wrong password, which is the least useful
+thing it could have said.
+
+`auth` is now omitted entirely when there is nothing to authenticate with. Proved by reading the
+transport's own options: absent with no credentials and with explicitly empty ones; `{user, pass}` when
+both are set; and **not dropped** when only one half is — a relay wanting a username and no password is
+unusual but real, and discarding a configured username would be a worse bug than the one being fixed.
+`secure` still honours `SMTP_SECURE`, so round 8 is intact, and `probe:email` is 35/35, so no message
+body moved with it.
+
+This is the third time in the PLAN-030 series that the defect lived in the gap between what a setting is
+*said* to do and what the code does: a screen reporting `secure: true` while the wire was clear, a report
+of "all variables documented" that could not see an aliased read, and now a transport authenticating with
+credentials that were never configured. The common cause is that each was invisible to reading either half
+in isolation — the reviewer found it by noticing the *shape* of the code, not by tracing a symptom.
+
+**Agreed on stopping.** Nine rounds have taken this from "cannot complete a deployment" to "no further
+findings", and the marginal round now costs more than it returns. What remains is not text in a script but
+the difference between what a script says and what Azure does, and no further reading closes that gap. The
+response records the three evidence items and the four operator decisions as the next artefacts, and says
+plainly that the next document in this series should be a deploy transcript rather than another review.

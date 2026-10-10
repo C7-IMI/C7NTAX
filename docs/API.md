@@ -66,10 +66,78 @@ curl -s https://psa.example.com/api/auth/login \
 ```
 
 A response with `"mfaRequired": true` means no token was issued: send the returned `mfaToken` and the
-six-digit code to `POST /api/auth/mfa/verify` (e-mail codes use `POST /api/auth/mfa/verify-email`).
+code to `POST /api/auth/mfa/verify` (e-mail codes use `POST /api/auth/verify-email` after
+`POST /api/auth/send-mfa-email`). The response names `mfaMethod`, so a client shows the challenge the
+account actually uses — `totp`, `email_code` or `passkey` — rather than always offering an authenticator
+field, and `rememberDays`, which is the number of days a browser may skip the second factor after it has
+proved one. Send `remember: false` on the verify call to refuse that; a deployment configured to zero
+never issues the cookie at all. **A recovery code is accepted in the same `code` field** and is spent by
+the attempt, so a replayed one is refused.
+
+A successful sign-in carries `mfaPolicy` (below). Use it rather than inferring anything from the
+instance's settings: it is the resolved answer for *this* account, and the wizard and the reminder
+banner read the same object, so they cannot disagree about a deadline.
+
 `GET /api/auth/me` describes the caller, `POST /api/auth/session/extend` pushes the expiry out, and
 `POST /api/auth/logout` ends it. A session token is tied to the account's password and session
 version: changing the password invalidates tokens issued before it.
+
+#### The second factor, and what it means for an integration
+
+The instance can require a second factor, and when it does, an interactive session that has not set one
+up is stopped by a gate: every route answers
+
+```json
+{ "error": { "message": "Set up multi-factor authentication before continuing",
+             "code": "MFA_ENROLMENT_REQUIRED" } }
+```
+
+with `403`, except the handful the enrolment itself needs — `GET /api/auth/me`, `GET /api/users/me`,
+`GET /api/auth/mfa/policy`, `POST /api/auth/mfa/setup`, `POST /api/auth/mfa/verify-setup`,
+`POST /api/auth/mfa/enrol/email/start`, `POST /api/auth/mfa/enrol/email/verify`,
+`POST /api/auth/change-password`, `POST /api/auth/logout`,
+`POST /api/auth/webauthn/register/options` and `POST /api/auth/webauthn/register/verify`. A client sees
+this as "signed in, but owing an enrolment". The paths are matched exactly rather than by prefix, so the
+list is short enough to read and does not exempt something merely because it starts the same way.
+
+**An API key is not stopped by the gate.** A key is a credential an administrator issued to a system
+that cannot open a browser, so asking it to complete an interactive wizard would break the integration
+rather than protect it; the key's own scopes are the control that applies. So an unattended integration
+is unaffected by an MFA requirement and needs no change — which is also why the requirement is not a
+substitute for narrowing a key. A *user* token is stopped, because the person behind it can be asked.
+
+`GET /api/auth/mfa/policy` is the one call that answers everything about the caller's second factor:
+
+```json
+{ "enabled": true, "mode": "enforced",
+  "methods": ["totp", "email_code"], "method": null,
+  "enrolled": false, "required": true,
+  "mustEnrolNow": false, "mustEnrol": true,
+  "graceUntil": "2026-10-17T11:36:07.317Z", "daysLeft": 7,
+  "state": "default",
+  "catalogue": [ { "id": "totp", "label": "Authenticator app",
+                   "offered": true, "standalone": true,
+                   "governedBy": { "sectionId": "mfa", "fieldId": "allowAuthenticator" } } ],
+  "enforcementPossible": { "ok": true, "reason": null } }
+```
+
+Read `catalogue` rather than hard-coding the three method ids: `offered` is whether this deployment
+allows the method, and `governedBy` names the configuration section and field that decides it — passkeys
+are governed by the Sessions & Security switch, not by the MFA section, so a screen can say where to
+change it instead of offering a control it cannot honour. `standalone` is false for a passkey, which is
+registered from an already-signed-in session and so cannot be the method that gets somebody in the door
+for the first time.
+
+When `mustEnrol` is true and `mustEnrolNow` is false the account is inside a **grace period**:
+`graceUntil` is the deadline and `daysLeft` is how long is left. That is the state where an integration
+should surface a warning; `mustEnrolNow` is the state where the gate is shut.
+
+Enforcement is an administrator's decision and is stored in the `mfa` configuration section
+(Administration → Configuration → Multi-factor authentication), alongside the grace period and which
+methods are offered. Two safeguards are built into the server, so a
+client does not have to remember them: a saved setting that would require a second factor while offering
+none is **refused**, because that is a door with no handle; and an account with no method left to choose
+is never stopped, so a misconfigured deployment degrades to a warning rather than locking everyone out.
 
 `GET /api/auth/client-ip` answers with the address the server sees the connection arriving from. It is
 unauthenticated on purpose — it is what the sign-in screen shows, and the same value the session record
@@ -88,6 +156,15 @@ anything unattended, use an API key.
 An API key is a credential that acts **as an account**, narrowed to a set of permissions. Issuing one
 is the same kind of act as creating a user, so it is gated on `user:manage`, and every issuance,
 rotation and revocation is written to the audit log (`entity: "api_key"`).
+
+**A key can never carry a Super-Admin-only permission.** Three of them exist — `instance:security`,
+`instance:config` and `instance:maintenance` — and they are reserved to the Super Admin role because
+they decide who may reach the instance at all, what the application is for everybody, and which
+instance-wide processes may be paused, forced or reset. This needs no special case here, which is the
+point worth knowing: a key's scopes are intersected with its **owner's** permissions on every request,
+so a key whose owner does not hold one of those three cannot carry it however the key was issued. An
+unattended integration is unaffected in every other respect — in particular it is not stopped by a
+multi-factor requirement, for the reason given in §2.1.
 
 ```bash
 # 1. What can a key be given? (permissions and source kinds)

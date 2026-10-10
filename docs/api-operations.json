@@ -24,7 +24,7 @@
   ],
   "POST /api/auth/login": {
     "summary": "Sign in and receive a session token",
-    "description": "Email and password in, a bearer token out. When MFA is enabled the answer is an mfaToken instead, which POST /api/auth/verify-mfa exchanges for the real token. A token is what the Authorization header carries for a person; a program should use an API key instead.",
+    "description": "Email and password in, a bearer token out. When the account has a second factor the answer is an `mfaToken` instead, which POST /api/auth/mfa/verify exchanges for the real token — the response also names `mfaMethod` so a client shows the right challenge rather than always offering an authenticator field, and `rememberDays` so it only offers a \"do not ask again\" control when the deployment honours one. A browser that already proved a factor for this account's current enrolment is not challenged again and is signed in here, with the skip recorded. Every successful answer carries `mfaPolicy` (see GET /api/auth/mfa/policy), because an account can be signed in and still owe an enrolment the deployment now requires. A token is what the Authorization header carries for a person; a program should use an API key instead.",
     "requestExample": {
       "email": "person@example.com",
       "password": "…"
@@ -40,7 +40,37 @@
   },
   "POST /api/auth/mfa/verify": {
     "summary": "Exchange an MFA challenge for a session token",
-    "description": "The second half of MFA sign-in: the mfaToken from POST /api/auth/login plus a TOTP code."
+    "description": "The second half of MFA sign-in: the mfaToken from POST /api/auth/login plus either a six-digit code from the account's authenticator app **or a single-use recovery code**, which is accepted in the same `code` field. A recovery code is spent by the attempt, so a second use of the same one is refused; the sign-in is recorded with a reason naming it, because a session that was opened with a recovery code is the most interesting row an administrator will read all week. Send `remember: false` to withhold the trusted-browser cookie; anything else grants one for the number of days the deployment configured, and a deployment configured to zero never issues one. The answer carries `mfaPolicy` so a client knows whether the account still owes an enrolment — the two are separate questions: this endpoint answers \"is this the right person\", the policy answers \"have they done everything the deployment requires\".",
+    "requestExample": {
+      "code": "123456",
+      "mfaToken": "eyJhbGciOi…",
+      "remember": true
+    }
+  },
+  "GET /api/auth/mfa/policy": {
+    "summary": "What this account owes, and which methods it may choose from",
+    "description": "One call that answers every question about the caller's second factor, so the enrolment wizard, the reminder banner and the account screen cannot disagree about the deadline. The answer resolves the instance settings against the account's own row and returns the conclusion rather than the settings: `enabled`, `mode`, the methods actually offered, the method this account enrolled, whether it is `required`, whether it `mustEnrolNow`, and — while a grace period is running — `graceUntil` and `daysLeft`. `catalogue` lists every method this build supports with `offered` resolved for this deployment (**not** the same question as `available`: an unoffered method is reported rather than hidden, because \"why can I not use my passkey\" is what the screen exists to answer) and `governedBy`, the configuration section and field that decides it — passkeys are governed by `sessions.passkeys`, so a screen can say where to change it instead of offering a control it cannot honour. `enforcementPossible` reports whether the deployment's current settings permit requiring a second factor at all.",
+    "responseExample": {
+      "enabled": true,
+      "mode": "enforced",
+      "methods": ["totp", "email_code"],
+      "method": null,
+      "enrolled": false,
+      "required": true,
+      "mustEnrolNow": false,
+      "mustEnrol": true,
+      "graceUntil": "2026-10-17T11:36:07.317Z",
+      "daysLeft": 7,
+      "state": "default"
+    }
+  },
+  "POST /api/auth/mfa/enrol/email/start": {
+    "summary": "Email an enrolment code to the signed-in account",
+    "description": "Sends a fifteen-minute code to the address on the caller's own account, so somebody who cannot install an authenticator app can still satisfy a requirement. Distinct from POST /api/auth/send-mfa-email, which continues a **sign-in** that has already proved a password and carries an `mfaToken`; this one belongs to a session that is already open. Refused with `403` when the deployment does not offer emailed codes, and answers `502` when the relay rejects the message — a code nobody can read is worse than a visible failure, so the caller is told not to wait for it. Requires a session. Rate limited with the credential endpoints."
+  },
+  "POST /api/auth/mfa/enrol/email/verify": {
+    "summary": "Finish enrolling an emailed code as the second factor",
+    "description": "Completes the enrolment begun by POST /api/auth/mfa/enrol/email/start: the code is compared in constant time, and on success the account is marked enrolled with `email_code` as its method, the pending code is cleared and any grace deadline is satisfied. A code that has expired is refused with a message saying so rather than a generic failure. Requires a session."
   },
   "GET /api/api-keys/permissions": {
     "summary": "Every scope a key may be issued with",
@@ -450,6 +480,13 @@
     "summary": "Edit a person: profile, placement, status, role, permissions",
     "description": "Only the fields sent are changed; a role or permission change needs `role:manage` **and** can never be applied to your own account. An account wearing the **Developer Admin** role may only be changed by a Super Admin: every write to one from anybody else is refused, by name — `Refused: devadmin@example.com. Only a Super Admin may see or change an account on the Developer Admin role.` — whether it edits the profile, activation, the password, MFA, the role or a permission override. `GET /api/users/:id`, `DELETE /api/users/:id`, `POST /api/users/:id/lock`, `POST /api/users/:id/reset-password` and `POST /api/users/:id/reset-mfa` answer the same way, and the single fetch answers `404` instead, so an id learned elsewhere is not a way round the directory. Requires `user:manage` (`security:manage` for the two reset routes)."
   },
+  "PATCH /api/users/:id/mfa": {
+    "summary": "Say whether one account has to have a second factor",
+    "description": "The per-account half of the MFA policy, and the answer to \"everyone except this one\". `state` is `default` (follow the instance setting), `disabled` (exempt from a requirement — an account that has already enrolled keeps being asked for its factor, because this exempts it from being *required* to have one, not from having one) or `enforced` (required whichever way the instance setting is set). The words are Entra's on purpose: an administrator who has used Entra already knows them. **Requiring is not enrolling** — nothing here touches what the account has set up, and an account that is required but has not enrolled is given the configured grace period rather than stopped on the spot, so the answer includes the resolved `policy` for the target. Moving an account to `disabled` clears any deadline it was given, since the countdown no longer applies. Requires the `mfa:enforce` permission, which is what that permission was declared for.",
+    "requestExample": {
+      "state": "enforced"
+    }
+  },
   "GET /api/security/sign-ins": {
     "summary": "The sign-in log: every attempt, and how it ended",
     "description": "Newest first, filterable by `result` (`success`, `failure`, `locked`, `mfa_failed`, `code_failed`, `signed_out`), `userId`, a `from`/`to` window and a `search` across the address, device, IP address and reason. The `summary` beside the rows counts the whole **filtered** set, not the page, so \"how many of these were lockouts\" is answerable per window. Each row names the `method` — password, authenticator app, emailed code, passkey, single sign-on or portal code — which is what separates \"signed in\" from \"signed in with a second factor\". A row is written for every way in and for signing out, successes included, and `userId` is null when the address typed was not an account. Events about an account on the **Developer Admin** role are withheld from a caller who is not a Super Admin — by account *and* by address, because a row records what was typed and can be written with no `userId` at all — and the `summary` is counted over the same filtered set. A row whose address is not an account at all still reads, because what it holds is what somebody typed. Requires `security:manage`."
@@ -538,7 +575,7 @@
       "badge": { "nodeEnv": "development", "isProduction": false, "host": "…", "port": 4000, "version": "2026.10.9.123", "commit": "0bfb0e8" },
       "env": [
         { "name": "DATABASE_URL", "set": true, "effective": null, "source": "env", "secret": true, "hint": "set; ends …c7ntax", "withheld": true, "declaredBy": "read directly by the API" },
-        { "name": "UI_INTERFACE_STYLE", "set": false, "effective": "redesign", "source": "default", "secret": false, "hint": null, "declaredBy": "Workspace · Interface style" }
+        { "name": "UI_INTERFACE_STYLE", "set": false, "effective": "modern", "source": "default", "secret": false, "hint": null, "declaredBy": "Workspace · Interface style" }
       ]
     }
   },
