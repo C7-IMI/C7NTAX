@@ -1,5 +1,32 @@
 [
   {
+    "version": "2026.10.10.018",
+    "date": "2026-10-10",
+    "title": "A reply to the reviewer, and the document made to carry it",
+    "changes": [
+      {
+        "text": "**`KUMO-Security-Review-Response.md` now ends with the reply rather than an addendum.** The",
+        "type": "Update"
+      },
+      {
+        "text": "**Three additions to the Critical, all about how it stayed invisible.** The startup line",
+        "type": "New Feature"
+      },
+      {
+        "text": "**Findings 2, 3 and 5 share one path rather than being three problems.** API keys carry a subset",
+        "type": "Update"
+      },
+      {
+        "text": "**Two findings restated precisely because it changes what to do with them.** Finding 4 is",
+        "type": "Update"
+      },
+      {
+        "text": "**A hypothesis withdrawn rather than presented as a find.** The module-load key freeze looked",
+        "type": "Update"
+      }
+    ]
+  },
+  {
     "version": "2026.10.10.017",
     "date": "2026-10-10",
     "title": "The vault key the deployment documented is now the key the vault uses",

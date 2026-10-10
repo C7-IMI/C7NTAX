@@ -11975,3 +11975,71 @@ all change who may see what, which is the operator's call rather than mine. Both
 inside `apps/api` so module resolution worked and both were deleted; the new probe and the migration are
 committed as `probe:kumo-key` and `kumo:reencrypt`. The development master key was generated locally and
 written to `apps/api/.env`, which is gitignored, so no key is in the repository and none was printed here.
+
+
+---
+
+### Prompt 393 — A reply written back to the reviewer, and the document made to carry it
+
+**Timestamp:** 2026-10-10 12:34 | **Status:** Complete | **Duration:** —
+
+**BuildNotes IDs:** **2026.10.10.018** — A reply to the reviewer, consolidated into the response document.
+
+**Prompt**
+
+> Show a reply to CLaude here regarding that and update the doc
+
+*(The prompt carried a browser-pages attachment listing sixteen open tabs, including
+`/admin/configuration/mfa` and `/help/walkthroughs/identity-security`. Nothing in the request referred to them,
+so no page was opened or read; they are noted only because the attachment was part of the prompt.)*
+
+**The reply answers the review rather than restating the analysis, and it separates three kinds of claim.**
+The response document already carried the findings and their verification; what was missing was the part
+addressed back to the reviewer — what the review did not say, where it understated what it found, and what I
+would like checked next. Those are different registers and they were being written as one, which is why the
+addendum that held them read as a summary rather than a reply.
+
+**Three additions, all about the same finding.** The startup line hides which key is in use, and that is the
+detail that made the defect survivable rather than merely present: `[KumoCrypto] Key initialized (length: 32)`
+is true of both derivations, so the one artifact an operator would check for exactly this problem confirmed the
+wrong answer. The hex branch never validates its decoded length, so `.slice(0, 32)` silently truncates and a
+non-hex string yields a short buffer — the gate tests character count, not key validity. And the fallback is
+already recorded as an accepted gap in `SOC2.Compliance.md:46` and `PLAN-015…:19`, which is what separates
+"falling back is a decision" from "falling back while a valid key was supplied is the defect". Only the second
+is new, and only the second is a defect.
+
+**Where the review understated its own findings.** The rate limit is the global one, but the point is the
+contrast: credentials get 300 per fifteen minutes and passkeys get 30 per minute, so the team demonstrably
+writes real limiters for sensitive endpoints and the vault simply never got one. API keys carry a subset of the
+owner's permissions with no deny-list and are exempt from the MFA gate — correctly, since a non-interactive
+credential cannot answer a challenge — which means findings 2, 3 and 5 are not three problems but **one path**:
+a credential that can reveal, cannot be stepped up, and is not limited. And `kumo:view_all` is declared and
+read by no route, exactly like `mfa:enforce` before the MFA work gave it a purpose — but with `companyId`
+already indexed on the model, so the fix is wiring rather than invention.
+
+**Two findings worth describing more precisely than "high", because the precision changes what to do.**
+Finding 4 is **latent rather than live**: `seed-sample-coverage.ts` does honour `isSensitive` and storage
+ignores it, and every seeded template field is `isSensitive: false`, so no current data exercises the path —
+which makes the fix low-risk and tells a tester what they will and will not be able to reproduce. Finding 7's
+mechanism is `isActive`, not a missing `deletedAt`: the list route already filters on it, so one path forgot
+what its sibling does, and the fix is a clause rather than a design.
+
+**The reply also withdraws my own hypothesis rather than presenting it as a find.** I had suspected the
+module-load key freeze was an import-order bug, and I say in the reply that I tested it and it is **not** one:
+`@prisma/client` loads `.env` as a side effect and `index.ts:7` requires it before the routes, so the secret
+resolves correctly (5/5 against 0/5). It works by accident, one reordered import from deriving the vault key
+from a constant in this repository, and it is reported as robustness rather than as a finding. Reporting the
+test that failed is the same discipline as reporting the ones that passed, and it is the reason the earlier
+probe's first result did not become a wrong claim.
+
+**The reply closes with what I want from the reviewer**, because a review that ends in agreement has stopped
+being useful. The remaining twelve findings change who may see what and are the operator's decision; the one I
+fixed is a crypto change, and the two questions worth a hostile read are whether refusing to start in
+production is the right fail-closed behaviour rather than a warning, and whether the migration's
+trial-decryption classification has a case it misses. The reviewer's two unanswered questions are answered
+too: commit the review, no pull request, and its Retrace entry needs renumbering because it collides with an
+existing Prompt 379 on `main`.
+
+**The document now ends with the reply rather than an addendum.** `KUMO-Security-Review-Response.md` keeps its
+analysis sections unchanged and its final section is the reply proper — one place a reader can go for what was
+found, what was verified, what was fixed and what is still wanted.

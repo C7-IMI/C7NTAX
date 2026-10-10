@@ -289,34 +289,87 @@ limit are things a user will meet) and the clipboard timer.
 
 ---
 
-## Addendum — finding 1 is fixed
+## Reply to the reviewer — findings verified, one fixed
 
-Written after the response above, and left as an addendum rather than edited into it, so the reply still reads
-as the reply it was.
+Addressed to whoever wrote `KUMO-SECURITY-REVIEW.md`. The analysis above stands as written; this section is
+the reply, and it is where the review's own conclusions are answered back.
 
-The measurement that answered the data question turned the fix into a small one, and it was cheaper to do it
-now than to schedule it: five dev rows, no production data. What landed, in BuildNotes `2026.10.10.017`:
+All thirteen findings hold. I checked them by exercising the code rather than reading it. Three additions,
+one of my own hypotheses withdrawn, and the Critical is fixed.
 
-- **`kumoCrypto.ts` accepts the documented format.** 32 bytes base64 or 64 hex characters; the decoded length
-  must be exactly 32 bytes; a key that is present but unusable is **refused by name and byte count** rather
-  than ignored; and production refuses to start without a usable key instead of deriving one from
-  `JWT_SECRET`.
-- **The startup line names the key.** `Vault key from KUMO_MASTER_KEY, fingerprint 9f47712e5adf` replaces
-  `Key initialized (length:32)` — true of both derivations, so it could not tell them apart.
-- **The key is resolved on first use**, so it no longer depends on `@prisma/client` happening to load `.env`
-  before the route modules are imported.
-- **`pnpm kumo:reencrypt`** moves the vault from the `JWT_SECRET`-derived key to the master key, dry run by
-  default and idempotent; **`pnpm probe:kumo-key`** proves the resolution in eleven cases, each in its own
-  process.
-- **`secureClear` now carries the truth** in a comment: it zeroes a copy of an immutable string and is not a
-  control. The function is unchanged, and finding 12 stands.
+### Three things the review does not say, all concerning finding 1
 
-**Evidence.** The probe is 11 passed / 0 failed. Against the dev database the dry run found 5 values on the
-legacy key and 0 unreadable; the apply moved them; a second run found 5 on the current key and 0 legacy. The
-move was proved both ways — **5/5 now open with the master key, 0/5 with the old derivation** — and all five
-passwords reveal as plaintext through the running API under the new key.
+1. **The startup line actively hides which key is in use.** `[KumoCrypto] Key initialized (length: 32)` prints
+   the length of the *derived* key, which is 32 on both branches. An operator who suspected this exact problem
+   and went looking for evidence would have read that line as confirmation. The system does not merely ignore
+   the Key Vault key — it reports success.
+2. **The hex branch is never length-validated.** `Buffer.from(envKey, "hex").slice(0, 32)` truncates a longer
+   key silently, and a non-hex string yields a short or empty buffer with no error. The gate is "at least 64
+   characters", not "a valid 32-byte key".
+3. **The fallback is already documented.** `SOC2.Compliance.md:46` and `PLAN-015…:19` both record
+   `KUMO_MASTER_KEY → JWT_SECRET → hardcoded` as an accepted gap. So falling back is a *decision*; falling
+   back **while a valid key was supplied** is the defect. Two problems, two fixes — and only the second is new.
 
-**Still open, and deliberately so.** Findings 2, 4 and 5 change *who may see what* — cross-client scoping,
-sensitive asset fields, and the two-factor code — so they are the operator's decision rather than a patch to
-apply quietly. Findings 6 and 8 through 13 are unchanged in this change; `secureClear` is the one of them this
-commit touched, and only to stop it being read as a control.
+### Where findings are broader or worse than described
+
+- **#3's limit is the global one**, `rateLimiter(9999, 60 * 1000)` at `index.ts:189` — but `auth.ts:73` gives
+  credentials 300/15min and `webauthn.ts:27` gives passkeys 30/min. The team writes real limiters for sensitive
+  endpoints; the vault never got one. And `auth.ts:359` filters a key's permissions from the owner's with no
+  deny-list, while API keys are **exempt from the MFA gate** — correctly, since a non-interactive credential
+  cannot answer a challenge. So #2, #3 and #5 **compose into one path**: a credential that can reveal, cannot
+  be stepped up, and is not limited.
+- **#2:** `kumo:view_all` is declared at `enums.ts:256` and **read by no route** — the same defect as
+  `mfa:enforce` before the MFA work gave it a purpose. The difference is that the machinery exists and
+  `KumoPassword` already carries an indexed `companyId`, so the fix is wiring, not invention.
+- **#4 is latent, not live.** `seed-sample-coverage.ts:549,817` *does* honour `isSensitive`; storage ignores
+  it. And every entry in `snapshots/kumo-template-fields.json` is `isSensitive: false`, so no current data
+  exercises it. That changes the priority and what a tester can reproduce.
+- **#5 is unlogged as well as under-permissioned.** `kumo.ts:472` needs only `KumoPasswordsView`, returns the
+  live code, and writes **no access log and no audit entry** — the reveal route immediately above it at
+  `:397-400` does both. Its `catch { res.json({ enabled: false }) }` also makes a *decrypt failure*
+  indistinguishable from *no 2FA configured*.
+- **#7's mechanism is `isActive`, not a missing `deletedAt`.** The **list** route already filters
+  `where: { isActive: true }` at `:298`; reveal does not. One path forgot what its sibling does.
+- **#11 is right including the line number** — `KumoPasswords.tsx:226` reads `r.data?.password` while the API
+  returns `passwordPlaintext` (`kumo.ts:401`), so the copy silently never happens: no error, no toast. The
+  display at `:531` reads the correct field, which is what makes it a copy bug rather than a display bug.
+- **#12 confirmed** — `buf.fill(0)` on a fresh `Buffer.from(string)`.
+
+### One hypothesis tested and reported as a non-finding
+
+`KEY` is computed at module load, and the API loads `.env` by no explicit means — no `dotenv` import, no
+`dotenv/config` side effect, no `--env-file`. I suspected the key was frozen before the environment was read,
+making it the hardcoded default even with a correct `.env`. **It is not:** `@prisma/client` loads `.env` as a
+side effect and `index.ts:7` requires it before the route modules (`.env` secret 5/5, public default 0/5). It
+works by accident — one reordered import from deriving the vault key from a constant in this repository.
+
+### The migration, measured rather than argued
+
+The review says the fix needs a re-encryption migration. I queried the development database instead: **5 rows,
+all real ciphertext; 5/5 decrypt under the `.env` `JWT_SECRET`; 0/5 under the public default;** 0 with a TOTP
+secret; 0 deactivated; never deployed. Five rows and no change window — the cheapest this fix will ever be.
+
+### Finding 1 is fixed
+
+BuildNotes `2026.10.10.017`. The documented base64 key is used; hex still works; exactly 32 bytes required; an
+unusable key refused by name and byte count; production refuses to start without one; the startup line names
+the source and a fingerprint; and the key is resolved on first use. `pnpm kumo:reencrypt` moves the existing
+rows and `pnpm probe:kumo-key` proves the resolution in eleven cases.
+
+**Evidence.** Probe **11/11**. Migration **5 legacy → applied → 5 current, 0 legacy**. The move proved both
+ways — **5/5 open with the master key, 0/5 with the old derivation**. All five passwords reveal as plaintext
+through the running API. Production boot refuses without a key and starts with one. `secureClear` carries a
+comment saying what it really does; the function is unchanged and finding 12 stands.
+
+### The review's two open questions
+
+**Commit it** — done, on `main` with a provenance blockquote. **No pull request** — the review is a record
+rather than a branch to merge. One thing to fix on the reviewer's side: its Retrace entry numbers itself
+**379**, and `main` already has a Prompt 379 at line 10630, so it was not imported. If it should be on `main`,
+it needs renumbering.
+
+### What I would like checked
+
+The remaining twelve are the operator's call, because they change who may see what. #1 is a crypto change and
+deserves a hostile read: is "refuse to start in production" the right fail-closed behaviour rather than a
+warning, and does the migration's trial-decryption classification have a case it misses?

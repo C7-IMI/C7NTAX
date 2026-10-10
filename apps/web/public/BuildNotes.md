@@ -1,5 +1,5 @@
 # C7NTAX — Feature List Summary
-## Version: 2026.10.10.017 | Last Updated: 2026-10-10
+## Version: 2026.10.10.018 | Last Updated: 2026-10-10
 
 ---
 
@@ -14,6 +14,37 @@
 
 ---
 
+## 2026.10.10.018 — A reply to the reviewer, and the document made to carry it
+
+The Kumo security review produced thirteen findings, all of them verified and the Critical fixed. What was
+missing was the reply addressed back to the reviewer — what the review did not say, where it understated what
+it found, and what should be checked next.
+
+- **[Update]** **`KUMO-Security-Review-Response.md` now ends with the reply rather than an addendum.** The
+  analysis sections are unchanged; the closing section is the reply proper, so a reader has one place for what
+  was found, what was verified, what was fixed and what is still wanted.
+- **[New]** **Three additions to the Critical, all about how it stayed invisible.** The startup line
+  `[KumoCrypto] Key initialized (length: 32)` is true of both derivations, so the one artifact an operator
+  would check for exactly this problem confirmed the wrong answer. The hex branch never validates the decoded
+  length, so it silently truncates and the gate tests character count rather than key validity. And the
+  fallback is already recorded as an accepted gap in `SOC2.Compliance.md:46`, which separates a documented
+  decision from the defect: falling back **while a valid key was supplied**.
+- **[Update]** **Findings 2, 3 and 5 share one path rather than being three problems.** API keys carry a subset
+  of the owner's permissions with no deny-list and are exempt from the MFA gate, correctly; the vault has no
+  limiter of its own where credentials get 300/15min and passkeys get 30/min; and `kumo:view_all` is declared
+  and read by no route, with `companyId` already indexed on the model — so the fix is wiring, not invention.
+- **[Update]** **Two findings restated precisely because it changes what to do with them.** Finding 4 is
+  latent rather than live: the seed generator honours `isSensitive` and storage ignores it, and every seeded
+  template field is `isSensitive: false`, so no current data exercises the path. Finding 7's mechanism is
+  `isActive`, not a missing `deletedAt`, and the list route already filters on it — so the fix is a clause.
+- **[Update]** **A hypothesis withdrawn rather than presented as a find.** The module-load key freeze looked
+  like an import-order bug; it was tested and is not one, because requiring `@prisma/client` loads `.env`
+  before the routes. Reported as robustness, one reordered import from being real.
+
+**Verification:** no code changed. `Retrace.md` Prompt 393 records the prompt, and the reply's claims about
+the code are the ones verified in BuildNotes `2026.10.10.017`.
+
+---
 ## 2026.10.10.017 — The vault key the deployment documented is now the key the vault uses
 
 `KUMO_MASTER_KEY` is documented as 32 bytes base64 in `infra/env/.env.production.example`, `infra/README.md`
